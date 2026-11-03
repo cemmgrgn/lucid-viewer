@@ -748,6 +748,10 @@ void CWindowChrome::ExecuteItem(int nIndex) {
 }
 
 void CWindowChrome::ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bDoubleClick) {
+	// the expand button of the collapsed panel is where the collapse button was, a double click must not toggle twice
+	if (bDoubleClick && (hit.Type == SH_Collapse || hit.Type == SH_Expand)) {
+		return;
+	}
 	switch (hit.Type) {
 		case SH_Collapse:
 			SetSidePanelCollapsed(true);

@@ -3571,8 +3571,14 @@ static void AppendMenuItemCopy(HMENU hSource, int nPos, HMENU hTarget) {
 	::InsertMenuItem(hTarget, ::GetMenuItemCount(hTarget), TRUE, &info);
 }
 
-static void AppendMenuString(HMENU hMenu, UINT nCommand, LPCTSTR sEnglishText, bool bChecked, bool bEnabled) {
-	::AppendMenu(hMenu, MF_STRING | (bChecked ? MF_CHECKED : 0) | (bEnabled ? 0 : MF_GRAYED), nCommand, CNLS::GetString(sEnglishText));
+// Appends a menu item with the translated text and the keyboard shortcut of the command
+static void AppendMenuString(CKeyMap* pKeyMap, HMENU hMenu, UINT nCommand, LPCTSTR sEnglishText, bool bChecked, bool bEnabled) {
+	CString sText = CNLS::GetString(sEnglishText);
+	CString sKey = (pKeyMap != NULL) ? pKeyMap->GetKeyStringForCommand(nCommand) : CString();
+	if (!sKey.IsEmpty()) {
+		sText += _T("	") + sKey;
+	}
+	::AppendMenu(hMenu, MF_STRING | (bChecked ? MF_CHECKED : 0) | (bEnabled ? 0 : MF_GRAYED), nCommand, sText);
 }
 
 // Removes separators at the start, at the end and following each other
@@ -3626,39 +3632,39 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 					(UINT_PTR)Converter::CreatePresetMenu(IDM_FIRST_CONVERT_CMD), CNLS::GetString(_T("Convert to")));
 				break;
 			case MBAR_TOOLBAR:
-				AppendMenuString(hMenu, IDM_TOGGLE_TOOLBAR, _T("Toolbar"), m_pChrome->GetShowToolbar(), true);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_TOGGLE_TOOLBAR, _T("Toolbar"), m_pChrome->GetShowToolbar(), true);
 				break;
 			case MBAR_STATUSBAR:
-				AppendMenuString(hMenu, IDM_TOGGLE_STATUSBAR, _T("Status bar"), m_pChrome->GetShowStatusBar(), true);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_TOGGLE_STATUSBAR, _T("Status bar"), m_pChrome->GetShowStatusBar(), true);
 				break;
 			case MBAR_SIDEPANEL:
-				AppendMenuString(hMenu, IDM_TOGGLE_SIDEPANEL, _T("Information panel"), m_pChrome->GetShowSidePanel(), true);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_TOGGLE_SIDEPANEL, _T("Information panel"), m_pChrome->GetShowSidePanel(), true);
 				break;
 			case MBAR_EDITPANEL:
-				AppendMenuString(hMenu, IDM_TOGGLE_EDITPANEL, _T("Image processing panel"),
+				AppendMenuString(m_pKeyMap, hMenu, IDM_TOGGLE_EDITPANEL, _T("Image processing panel"),
 					m_pChrome->IsEnabled() ? m_pChrome->IsEditTabShown() : m_pImageProcPanelCtl->IsPinned(), m_pCurrentImage != NULL);
 				break;
 			case MBAR_COMPARE:
-				AppendMenuString(hMenu, IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing"), m_bCompareMode, m_pCurrentImage != NULL);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing"), m_bCompareMode, m_pCurrentImage != NULL);
 				break;
 			case MBAR_RESET:
-				AppendMenuString(hMenu, IDM_RESET_PROCESSING, _T("Reset all values to the defaults"), false, m_pCurrentImage != NULL);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_RESET_PROCESSING, _T("Reset all values to the defaults"), false, m_pCurrentImage != NULL);
 				break;
 			case MBAR_UNSHARP:
-				AppendMenuString(hMenu, IDM_UNSHARP_MASK, _T("Unsharp mask..."), false, m_pCurrentImage != NULL);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_UNSHARP_MASK, _T("Unsharp mask..."), false, m_pCurrentImage != NULL);
 				break;
 			case MBAR_COLLAPSE:
-				AppendMenuString(hMenu, IDM_TOGGLE_SIDEPANEL_COLLAPSED, _T("Collapse the side panel"),
+				AppendMenuString(m_pKeyMap, hMenu, IDM_TOGGLE_SIDEPANEL_COLLAPSED, _T("Collapse the side panel"),
 					m_pChrome->GetShowSidePanel() && m_pChrome->GetSidePanelCollapsed(), m_pChrome->GetShowSidePanel());
 				break;
 			case MBAR_EXPLORER_MENU:
-				AppendMenuString(hMenu, IDM_EXPLORER_CONVERT_MENU, _T("'Convert to' in the Explorer context menu"), Converter::IsExplorerMenuRegistered(), true);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_EXPLORER_CONVERT_MENU, _T("'Convert to' in the Explorer context menu"), Converter::IsExplorerMenuRegistered(), true);
 				break;
 			case MBAR_FIRST_IMAGE:
-				AppendMenuString(hMenu, IDM_FIRST, _T("First image"), false, m_pCurrentImage != NULL);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_FIRST, _T("First image"), false, m_pCurrentImage != NULL);
 				break;
 			case MBAR_LAST_IMAGE:
-				AppendMenuString(hMenu, IDM_LAST, _T("Last image"), false, m_pCurrentImage != NULL);
+				AppendMenuString(m_pKeyMap, hMenu, IDM_LAST, _T("Last image"), false, m_pCurrentImage != NULL);
 				break;
 			case MBAR_HELP:
 				::AppendMenu(hMenu, MF_STRING, IDM_HELP, CString(CNLS::GetString(_T("Help and keyboard shortcuts"))) + _T("\tF1"));
