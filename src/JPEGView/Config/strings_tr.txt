@@ -553,3 +553,6 @@ Switch this correction on or off	Bu düzeltmeyi aç veya kapat
 Tone and color	Ton ve renk
 Unknown conversion:	Bilinmeyen dönüştürme:
 Valid conversions:	Geçerli dönüştürmeler:
+Scale to %d %%	%%%d boyutuna ölçekle
+Fit long edge to %d px	Uzun kenarı %d piksele sığdır
+Rotate 180	180° döndür

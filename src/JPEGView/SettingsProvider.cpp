@@ -191,6 +191,8 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bSidePanelCollapsed = GetBool(_T("SidePanelCollapsed"), false);
 	m_nSidePanelWidth = GetInt(_T("SidePanelWidth"), 290, 180, 800);
 	m_bChromeDarkTheme = GetString(_T("ChromeTheme"), _T("dark")).CompareNoCase(_T("light")) != 0;
+	m_sConvertCustomPresets = GetString(_T("ConvertCustomPresets"), _T(""));
+	m_sConvertOutputFolder = GetString(_T("ConvertOutputFolder"), _T(""));
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
 	m_bSaveWithoutPrompt = GetBool(_T("OverwriteOriginalFileWithoutSaveDialog"), false);
 	m_bCropWithoutPromptLosslessJPEG = GetBool(_T("CropWithoutPromptLosslessJPEG"), false);

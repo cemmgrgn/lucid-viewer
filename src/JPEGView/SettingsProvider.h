@@ -138,6 +138,8 @@ public:
 	bool SidePanelCollapsed() { return m_bSidePanelCollapsed; }
 	int SidePanelWidth() { return m_nSidePanelWidth; }
 	bool ChromeDarkTheme() { return m_bChromeDarkTheme; }
+	LPCTSTR ConvertCustomPresets() { return m_sConvertCustomPresets; }
+	LPCTSTR ConvertOutputFolder() { return m_sConvertOutputFolder; }
 
 	double ZoomPauseFactor() { return m_zoomPauseFactor; }  // while internally this is represented in doubles, using a whole number percent simplifies it for the user... configuring doubles is not user friendly at all
 
@@ -318,6 +320,8 @@ private:
 	bool m_bSidePanelCollapsed;
 	int m_nSidePanelWidth;
 	bool m_bChromeDarkTheme;
+	CString m_sConvertCustomPresets;
+	CString m_sConvertOutputFolder;
 
 	std::list<CUserCommand*> m_userCommands;
 	std::list<CUserCommand*> m_openWithCommands;

@@ -90,6 +90,70 @@ namespace Converter {
 		return eFormat == OF_SameAsSource || eFormat == OF_JPEG || eFormat == OF_PNG || eFormat == OF_WEBP;
 	}
 
+	static const CFormat* FindFormat(LPCTSTR sId) {
+		for (const CFormat& format : s_formats) {
+			if (_tcsicmp(format.Id, sId) == 0) {
+				return &format;
+			}
+		}
+		return NULL;
+	}
+
+	// Parses a conversion id 'format' or 'operation:format' with any number in the operations scaleN and fitN,
+	// e.g. 'fit2560:webp'. The parsed preset has no operation group (Operation = -1). Returns false for invalid ids.
+	static bool ParsePresetId(LPCTSTR sId, CPreset& preset) {
+		CString sPresetId = CString(sId).Trim();
+		int nColon = sPresetId.Find(_T(':'));
+		CString sOperation = (nColon < 0) ? CString(_T("")) : sPresetId.Left(nColon).MakeLower();
+		const CFormat* pFormat = FindFormat((nColon < 0) ? sPresetId : sPresetId.Mid(nColon + 1));
+		if (pFormat == NULL || (sOperation.IsEmpty() && pFormat->Format == OF_SameAsSource)) {
+			return false;
+		}
+		preset.Id = sOperation.IsEmpty() ? CString(pFormat->Id) : sOperation + _T(":") + pFormat->Id;
+		preset.Operation = -1;
+		preset.Format = pFormat->Format;
+		preset.ScalePercent = 100;
+		preset.MaxLongEdge = 0;
+		preset.Rotation = 0;
+		preset.KeepMetadata = true;
+		CString sText;
+		if (sOperation.IsEmpty()) {
+			sText = CNLS::GetString(pFormat->MenuText);
+		} else {
+			bool bScale = sOperation.Left(5) == _T("scale");
+			bool bFit = sOperation.Left(3) == _T("fit");
+			CString sNumber = bScale ? sOperation.Mid(5) : bFit ? sOperation.Mid(3) : CString(_T(""));
+			if ((bScale || bFit) && (sNumber.IsEmpty() || sNumber.SpanIncluding(_T("0123456789")) != sNumber)) {
+				return false;
+			}
+			int nNumber = _ttoi(sNumber);
+			if (bScale && nNumber >= 1 && nNumber <= 1000) {
+				preset.ScalePercent = nNumber;
+				sText.Format(CNLS::GetString(_T("Scale to %d %%")), nNumber);
+			} else if (bFit && nNumber >= 16 && nNumber <= 65535) {
+				preset.MaxLongEdge = nNumber;
+				sText.Format(CNLS::GetString(_T("Fit long edge to %d px")), nNumber);
+			} else if (sOperation == _T("rotl")) {
+				preset.Rotation = 270;
+				sText = CNLS::GetString(_T("Rotate left"));
+			} else if (sOperation == _T("rotr")) {
+				preset.Rotation = 90;
+				sText = CNLS::GetString(_T("Rotate right"));
+			} else if (sOperation == _T("rot180")) {
+				preset.Rotation = 180;
+				sText = CNLS::GetString(_T("Rotate 180"));
+			} else if (sOperation == _T("nometa")) {
+				preset.KeepMetadata = false;
+				sText = CNLS::GetString(_T("Remove metadata (EXIF, GPS)"));
+			} else {
+				return false;
+			}
+			sText += CString(_T(" \x2192 ")) + CNLS::GetString(pFormat->MenuText);
+		}
+		preset.MenuText = sText;
+		return true;
+	}
+
 	static std::vector<CPreset> CreatePresets() {
 		std::vector<CPreset> presets;
 		for (int nOperation = 0; nOperation < sizeof(s_operations) / sizeof(COperation); nOperation++) {
@@ -115,6 +179,24 @@ namespace Converter {
 				if (sOperation == _T("nometa")) preset.KeepMetadata = false;
 				presets.push_back(preset);
 			}
+		}
+
+		// user defined conversions from the INI file, shown after the built in ones
+		CString sCustom = CSettingsProvider::This().ConvertCustomPresets();
+		int nStart = 0;
+		CString sToken = sCustom.Tokenize(_T(";,"), nStart);
+		while (nStart >= 0) {
+			CPreset preset;
+			if (ParsePresetId(sToken, preset)) {
+				bool bExists = false;
+				for (const CPreset& existing : presets) {
+					bExists |= existing.Id.CompareNoCase(preset.Id) == 0;
+				}
+				if (!bExists) {
+					presets.push_back(preset);
+				}
+			}
+			sToken = sCustom.Tokenize(_T(";,"), nStart);
 		}
 		return presets;
 	}
@@ -152,13 +234,24 @@ namespace Converter {
 		return OF_JPEG;
 	}
 
-	// Gets a file name next to the source file that does not exist yet: 'name.png', 'name (1).png', 'name (2).png'...
+	// Gets a file name in the output folder that does not exist yet: 'name.png', 'name (1).png', 'name (2).png'...
+	// The output folder is the folder of the source file or the folder set with ConvertOutputFolder in the INI file.
 	static CString GetUniqueOutputFileName(LPCTSTR sSourceFile, LPCTSTR sEnding) {
 		CString sBase = sSourceFile;
 		int nDot = sBase.ReverseFind(_T('.'));
 		int nSlash = sBase.ReverseFind(_T('\\'));
 		if (nDot > nSlash) {
 			sBase = sBase.Left(nDot);
+		}
+		CString sOutputFolder = CString(CSettingsProvider::This().ConvertOutputFolder()).Trim();
+		sOutputFolder.TrimRight(_T("\\/"));
+		if (!sOutputFolder.IsEmpty() && nSlash >= 0) {
+			bool bAbsolute = sOutputFolder.GetLength() >= 2 && (sOutputFolder[1] == _T(':') || sOutputFolder.Left(2) == _T("\\\\"));
+			CString sFolder = bAbsolute ? sOutputFolder : CString(sSourceFile).Left(nSlash) + _T("\\") + sOutputFolder;
+			int nResult = ::SHCreateDirectoryEx(NULL, sFolder, NULL);
+			if (nResult == ERROR_SUCCESS || nResult == ERROR_ALREADY_EXISTS || nResult == ERROR_FILE_EXISTS) {
+				sBase = sFolder + sBase.Mid(nSlash);
+			}
 		}
 		CString sCandidate = sBase + _T(".") + sEnding;
 		for (int i = 1; ::GetFileAttributes(sCandidate) != INVALID_FILE_ATTRIBUTES; i++) {
@@ -343,6 +436,10 @@ namespace Converter {
 		if (bRegister || bUnregister) {
 			return (bRegister ? RegisterExplorerMenu() : UnregisterExplorerMenu()) ? 0 : 1;
 		}
+		CPreset parsedPreset;
+		if (pPreset == NULL && ParsePresetId(sPresetId, parsedPreset)) {
+			pPreset = &parsedPreset;
+		}
 		if (pPreset == NULL) {
 			CString sValidIds;
 			for (const CPreset& preset : GetPresets()) {
@@ -395,6 +492,17 @@ namespace Converter {
 				// a single preset of an operation is shown with the text of the operation
 				LPCTSTR sText = (nOperation > 0 && nPresetsOfOperation == 1) ? pOperations[nOperation].MenuText : (LPCTSTR)presets[i].MenuText;
 				::AppendMenu(hTarget, MF_STRING, nFirstCommandId + i, CNLS::GetString(sText));
+			}
+		}
+		// user defined conversions
+		bool bFirstCustom = true;
+		for (int i = 0; i < (int)presets.size(); i++) {
+			if (presets[i].Operation < 0) {
+				if (bFirstCustom) {
+					::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+					bFirstCustom = false;
+				}
+				::AppendMenu(hMenu, MF_STRING, nFirstCommandId + i, presets[i].MenuText);
 			}
 		}
 		return hMenu;
@@ -467,6 +575,21 @@ namespace Converter {
 					}
 					bSeparatorBefore = false;
 				}
+			}
+			// user defined conversions
+			bool bFirstCustom = true;
+			for (const CPreset& preset : presets) {
+				if (preset.Operation >= 0) {
+					continue;
+				}
+				CString sKeyName, sCommand;
+				sKeyName.Format(_T("%02d_%s"), nKey++, (LPCTSTR)preset.Id);
+				sKeyName.Replace(_T(':'), _T('_'));
+				sCommand.Format(_T("\"%s\" %s%s \"%%1\""), (LPCTSTR)sExe, COMMAND_CONVERT, (LPCTSTR)preset.Id);
+				if (!WriteExplorerVerb(rootShell, sKeyName, preset.MenuText, bFirstCustom, sCommand, NULL)) {
+					bSuccess = false;
+				}
+				bFirstCustom = false;
 			}
 		}
 		NotifyShellAssociationsChanged();

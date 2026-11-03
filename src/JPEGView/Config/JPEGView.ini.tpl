@@ -175,6 +175,17 @@ SidePanelWidth=290
 ; Colors of toolbar, status bar, side panel and menus: dark or light
 ChromeTheme=dark
 
+; Additional conversions for the 'Convert to' menus, separated by semicolons. A conversion is 'format' or 'operation:format'
+; with the formats jpg, png, webp, webpll (lossless), bmp, tiff, gif, ico, pdf and same (format of the source file)
+; and the operations scaleN (N percent), fitN (long edge at most N pixels), rotl, rotr, rot180 and nometa (no EXIF/GPS).
+; Example: ConvertCustomPresets=fit2560:webp;scale30:jpg
+; Run JPEGView.exe /registerconvertmenu (or Tools menu) again after changing this to update the Explorer menu.
+ConvertCustomPresets=
+
+; Folder for converted files. Empty: next to the source file. A relative name such as 'converted' is a sub folder
+; of the source folder (created when needed), an absolute path is used for all files.
+ConvertOutputFolder=
+
 ; -----------------------------------------------
 ; - IMAGE CONTROL PANELS
 ; -----------------------------------------------
