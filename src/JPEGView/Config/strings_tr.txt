@@ -556,3 +556,7 @@ Valid conversions:	Geçerli dönüştürmeler:
 Scale to %d %%	%%%d boyutuna ölçekle
 Fit long edge to %d px	Uzun kenarı %d piksele sığdır
 Rotate 180	180° döndür
+Move the current image to the recycle bin?	Görüntü geri dönüşüm kutusuna taşınsın mı?
+Enter or Del: delete, Esc: cancel	Enter veya Del: sil, Esc: vazgeç
+The HEIF/AVIF encoder of Windows is not available (HEIF and HEVC video extensions, AVIF needs Windows 11).	Windows HEIF/AVIF kodlayıcısı kullanılamıyor (HEIF ve HEVC video uzantıları gerekli, AVIF için Windows 11).
+More	Daha fazla

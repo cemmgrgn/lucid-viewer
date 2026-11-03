@@ -10,8 +10,11 @@
 #include "WEBPWrapper.h"
 #include "QOIWrapper.h"
 #include <gdiplus.h>
+#include <wincodec.h>
 #include <string>
 #include <vector>
+
+#pragma comment(lib, "windowscodecs.lib")
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -549,6 +552,68 @@ bool CSaveImage::SaveImageAsIcon(LPCTSTR sFileName, CJPEGImage * pImage, const C
 	if (pStream != NULL) pStream->Release();
 	delete pBitmap;
 	delete[] pDIB24bpp;
+	return bSuccess;
+}
+
+bool CSaveImage::SaveImageAsHEIF(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams,
+	EProcessingFlags eFlags, CSize targetSize, bool bAV1) {
+	pImage->EnableDimming(false);
+	char* pDIB24bpp = GetScaledDIB24bpp(pImage, procParams, eFlags, targetSize);
+	pImage->EnableDimming(true);
+	if (pDIB24bpp == NULL) {
+		return false;
+	}
+
+	HRESULT hrInit = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	bool bSuccess = false;
+	IWICImagingFactory* pFactory = NULL;
+	IWICStream* pStream = NULL;
+	IWICBitmapEncoder* pEncoder = NULL;
+	IWICBitmapFrameEncode* pFrame = NULL;
+	IPropertyBag2* pOptions = NULL;
+	IWICBitmap* pBitmap = NULL;
+	UINT nStride = Helpers::DoPadding(targetSize.cx * 3, 4);
+	HRESULT hr = ::CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFactory));
+	if (SUCCEEDED(hr)) hr = pFactory->CreateStream(&pStream);
+	if (SUCCEEDED(hr)) hr = pStream->InitializeFromFilename(sFileName, GENERIC_WRITE);
+	if (SUCCEEDED(hr)) hr = pFactory->CreateEncoder(GUID_ContainerFormatHeif, NULL, &pEncoder);
+	if (SUCCEEDED(hr)) hr = pEncoder->Initialize(pStream, WICBitmapEncoderNoCache);
+	if (SUCCEEDED(hr)) hr = pEncoder->CreateNewFrame(&pFrame, &pOptions);
+	if (SUCCEEDED(hr) && pOptions != NULL) {
+		PROPBAG2 option{ 0 };
+		VARIANT value;
+		::VariantInit(&value);
+		option.pstrName = (LPOLESTR)L"ImageQuality";
+		value.vt = VT_R4;
+		value.fltVal = max(0.0f, min(1.0f, CSettingsProvider::This().JPEGSaveQuality() / 100.0f));
+		pOptions->Write(1, &option, &value);
+		option.pstrName = (LPOLESTR)L"HeifCompressionMethod";
+		value.vt = VT_UI1;
+		value.bVal = (BYTE)(bAV1 ? WICHeifCompressionAV1 : WICHeifCompressionHEVC);
+		// without AV1 support the encoder rejects the option, the frame must not be written with HEVC then
+		HRESULT hrOption = pOptions->Write(1, &option, &value);
+		if (bAV1 && FAILED(hrOption)) hr = hrOption;
+	}
+	if (SUCCEEDED(hr)) hr = pFrame->Initialize(pOptions);
+	if (SUCCEEDED(hr)) hr = pFrame->SetSize(targetSize.cx, targetSize.cy);
+	if (SUCCEEDED(hr)) hr = pFactory->CreateBitmapFromMemory(targetSize.cx, targetSize.cy, GUID_WICPixelFormat24bppBGR,
+		nStride, nStride * targetSize.cy, (BYTE*)pDIB24bpp, &pBitmap);
+	if (SUCCEEDED(hr)) hr = pFrame->WriteSource(pBitmap, NULL); // converts to the pixel format of the encoder
+	if (SUCCEEDED(hr)) hr = pFrame->Commit();
+	if (SUCCEEDED(hr)) hr = pEncoder->Commit();
+	bSuccess = SUCCEEDED(hr);
+
+	if (pBitmap != NULL) pBitmap->Release();
+	if (pOptions != NULL) pOptions->Release();
+	if (pFrame != NULL) pFrame->Release();
+	if (pEncoder != NULL) pEncoder->Release();
+	if (pStream != NULL) pStream->Release();
+	if (pFactory != NULL) pFactory->Release();
+	if (SUCCEEDED(hrInit)) ::CoUninitialize();
+	delete[] pDIB24bpp;
+	if (!bSuccess) {
+		_tunlink(sFileName);
+	}
 	return bSuccess;
 }
 

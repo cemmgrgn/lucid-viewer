@@ -189,6 +189,8 @@ public:
 	void OnImageProcessingChanged();
 	// Sets all image processing parameters and flags back to the defaults
 	void ResetImageProcessing();
+	// The default image processing parameters as set in the INI file
+	CImageProcessingParams GetDefaultImageProcessingParams();
 	// Creates the popup menu for the menu bar title with the given index (File, Edit, View, Navigate, Tools, Help).
 	// The caller must destroy the returned menu.
 	HMENU CreateMenuBarMenu(int nIndex);

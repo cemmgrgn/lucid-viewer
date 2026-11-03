@@ -152,6 +152,7 @@ private:
 	CPoint ScreenToWindow(CPoint ptScreen);
 	void SaveSettings();
 	void ExecuteItem(int nIndex);
+	int TrackOverflowMenu(const CRect& rectButton); // menu with the toolbar buttons not fitting, returns the command
 	void ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bDoubleClick);
 	CString GetTooltipText(LPCTSTR sTooltip, int nCommand);
 	void ScheduleTooltip(LPCTSTR sText, CRect rectWindow);
@@ -161,6 +162,7 @@ private:
 	double SliderToPosition(const CSideSlider& slider, double dValue);
 	double PositionToSlider(const CSideSlider& slider, double dPosition);
 	bool IsSliderGroupEnabled(int nGroup);
+	double GetSliderDefault(const CSideSlider& slider);
 
 	void PaintToolbar(CDC& dc);
 	void PaintStatusBar(CDC& dc);

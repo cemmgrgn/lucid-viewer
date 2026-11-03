@@ -19,6 +19,8 @@ namespace Converter {
 		OF_GIF,
 		OF_ICO,
 		OF_PDF,
+		OF_HEIC, // Windows HEIF encoder (WIC), needs the HEVC video extension
+		OF_AVIF, // Windows HEIF encoder with AV1 compression
 		OF_SameAsSource // keeps the source format if it can be written, JPEG otherwise
 	};
 

@@ -29,6 +29,8 @@ namespace Converter {
 		{ _T("gif"), _T("GIF"), OF_GIF },
 		{ _T("ico"), _T("ICO (icon)"), OF_ICO },
 		{ _T("pdf"), _T("PDF"), OF_PDF },
+		{ _T("heic"), _T("HEIC"), OF_HEIC },
+		// AVIF (OF_AVIF) is not offered: Windows has no AV1 encoder, it needs an encoder library such as libaom
 		{ _T("same"), _T("Same format"), OF_SameAsSource },
 	};
 
@@ -212,6 +214,8 @@ namespace Converter {
 			case OF_GIF: return _T("gif");
 			case OF_ICO: return _T("ico");
 			case OF_PDF: return _T("pdf");
+			case OF_HEIC: return _T("heic");
+			case OF_AVIF: return _T("avif");
 		}
 		return _T("jpg");
 	}
@@ -384,6 +388,10 @@ namespace Converter {
 			case OF_PDF:
 				bSuccess = CSaveImage::SaveImageAsPDF(sOutputFile, pImage, params, eFlags, targetSize);
 				break;
+			case OF_HEIC:
+			case OF_AVIF:
+				bSuccess = CSaveImage::SaveImageAsHEIF(sOutputFile, pImage, params, eFlags, targetSize, eFormat == OF_AVIF);
+				break;
 			default: {
 				EImageFormat eImageFormat = (eFormat == OF_JPEG) ? IF_JPEG : (eFormat == OF_PNG) ? IF_PNG : (eFormat == OF_BMP) ? IF_WindowsBMP :
 					(eFormat == OF_TIFF) ? IF_TIFF : (eFormat == OF_GIF) ? IF_GIF : IF_WEBP;
@@ -395,7 +403,9 @@ namespace Converter {
 		delete pImage;
 
 		if (!bSuccess) {
-			sError = CNLS::GetString(_T("Error writing file to disk!"));
+			sError = CNLS::GetString((eFormat == OF_HEIC || eFormat == OF_AVIF) ?
+				_T("The HEIF/AVIF encoder of Windows is not available (HEIF and HEVC video extensions, AVIF needs Windows 11).") :
+				_T("Error writing file to disk!"));
 			sOutputFile.Empty();
 		}
 		return bSuccess;

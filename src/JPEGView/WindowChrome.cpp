@@ -32,6 +32,7 @@ static const int SIDE_BUTTON_HEIGHT = 26;
 static const int HISTOGRAM_HEIGHT = 96;
 static const int STATUS_MESSAGE_TIMEOUT = 6000; // ms
 static const int TOOLTIP_DELAY = 450; // ms
+static const int OVERFLOW_COMMAND = -1; // toolbar button showing the buttons that do not fit into the toolbar
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -233,7 +234,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 		{ 0xE70F, _T("Edit"), IDM_TOGGLE_EDITPANEL, _T("Edit image (brightness, contrast, colors)"), false, true },
 		{ 0, _T("A|B"), IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing"), false, true },
 		{ 0, _T(""), 0, NULL, false, false },
-		{ 0xE74D, _T("Del"), IDM_MOVE_TO_RECYCLE_BIN_CONFIRM_PERMANENT_DELETE, _T("Move to recycle bin"), false, true },
+		{ 0xE74D, _T("Del"), IDM_MOVE_TO_RECYCLE_BIN_CONFIRM, _T("Move to recycle bin"), false, true },
 		{ 0, _T(""), 0, NULL, false, false },
 		{ 0xE946, _T("Info"), IDM_TOGGLE_SIDEPANEL, _T("Information panel"), false, false },
 		{ 0xE740, _T("Full"), IDM_FULL_SCREEN_MODE, _T("Full screen mode"), false, false },
@@ -243,6 +244,8 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 		CToolbarItem item = { eType, def.Text, def.Glyph, def.Command, def.Tooltip, def.Mirror, def.NeedsImage, CRect() };
 		m_items.push_back(item);
 	}
+	CToolbarItem overflowItem = { IT_Button, _T("..."), 0xE712, OVERFLOW_COMMAND, _T("More"), false, false, CRect() };
+	m_items.push_back(overflowItem);
 
 	// Sliders of the edit tab, same ranges as the image processing panel
 	const CSideSlider sliders[] = {
@@ -534,6 +537,15 @@ bool CWindowChrome::OnTimer(int nTimerId) {
 			::SendMessage(m_hTooltip, TTM_UPDATETIPTEXT, 0, (LPARAM)&toolInfo);
 			::SendMessage(m_hTooltip, TTM_TRACKPOSITION, 0, MAKELPARAM(m_tooltipPos.x, m_tooltipPos.y));
 			::SendMessage(m_hTooltip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&toolInfo);
+			// keep the tooltip on the monitor, it is shown at the left edge of the element and can leave the screen at the right
+			CRect tooltipRect;
+			MONITORINFO monitorInfo{ 0 };
+			monitorInfo.cbSize = sizeof(monitorInfo);
+			if (::GetWindowRect(m_hTooltip, &tooltipRect) && ::GetMonitorInfo(::MonitorFromPoint(m_tooltipPos, MONITOR_DEFAULTTONEAREST), &monitorInfo) &&
+				tooltipRect.right > monitorInfo.rcWork.right) {
+				int nX = max((int)monitorInfo.rcWork.left, (int)monitorInfo.rcWork.right - tooltipRect.Width());
+				::SendMessage(m_hTooltip, TTM_TRACKPOSITION, 0, MAKELPARAM(nX, m_tooltipPos.y));
+			}
 		}
 		return true;
 	}
@@ -579,6 +591,32 @@ int CWindowChrome::TrackConvertMenu() {
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Private
 //////////////////////////////////////////////////////////////////////////////////////////////
+
+int CWindowChrome::TrackOverflowMenu(const CRect& rectButton) {
+	HMENU hMenu = ::CreatePopupMenu();
+	bool bLastWasSeparator = true;
+	for (const CToolbarItem& item : m_items) {
+		if (!item.Rect.IsRectEmpty() || item.Command == OVERFLOW_COMMAND || item.Type == IT_Menu) {
+			continue;
+		}
+		if (item.Type == IT_Separator) {
+			if (!bLastWasSeparator) ::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+			bLastWasSeparator = true;
+			continue;
+		}
+		CString sText = CNLS::GetString(item.Tooltip);
+		CString sKey = (m_pMainDlg->GetKeyMap() != NULL) ? m_pMainDlg->GetKeyMap()->GetKeyStringForCommand(item.Command) : CString();
+		if (!sKey.IsEmpty()) sText += _T("\t") + sKey;
+		::AppendMenu(hMenu, MF_STRING | (IsItemEnabled(item) ? 0 : MF_GRAYED) | (IsItemChecked(item) ? MF_CHECKED : 0), item.Command, sText);
+		bLastWasSeparator = false;
+	}
+	int nCommand = m_pMainDlg->TrackPopupMenu(CPoint(m_windowRect.left + rectButton.left, m_windowRect.top + rectButton.bottom), hMenu);
+	::DestroyMenu(hMenu);
+	if (nCommand == IDM_CONVERT_MENU) {
+		nCommand = TrackConvertMenu();
+	}
+	return nCommand;
+}
 
 int CWindowChrome::ToolbarHeight() { return S(TOOLBAR_HEIGHT); }
 int CWindowChrome::StatusBarHeight() { return S(STATUSBAR_HEIGHT); }
@@ -639,26 +677,41 @@ void CWindowChrome::UpdateLayout() {
 	// toolbar items from left to right, items not fitting are hidden
 	HDC hDC = ::GetDC(NULL);
 	HFONT hOldFont = (HFONT)::SelectObject(hDC, m_hFont);
-	int nX = m_toolbarRect.left + S(6);
 	int nTop = m_toolbarRect.top + S(ITEM_MARGIN);
 	int nBottom = m_toolbarRect.bottom - S(ITEM_MARGIN);
-	for (CToolbarItem& item : m_items) {
-		int nWidth;
-		if (item.Type == IT_Separator) {
-			nWidth = S(SEPARATOR_WIDTH);
-		} else if (item.Type == IT_Menu || item.Glyph == 0 || !m_bHasIconFont) {
-			SIZE textSize;
-			::GetTextExtentPoint32(hDC, item.Text, item.Text.GetLength(), &textSize);
-			nWidth = max(S(BUTTON_WIDTH), (int)textSize.cx + 2 * S(MENU_TITLE_PADDING));
-		} else {
-			nWidth = S(BUTTON_WIDTH);
+	int nLast = (int)m_items.size() - 1; // the overflow button
+	// first without the overflow button, if not all items fit the overflow button gets the space at the right
+	for (int nPass = 0; nPass < 2; nPass++) {
+		int nRight = m_toolbarRect.right - S(4) - (nPass == 1 ? S(BUTTON_WIDTH) : 0);
+		bool bAllFit = true;
+		int nX = m_toolbarRect.left + S(6);
+		for (int i = 0; i < nLast; i++) {
+			CToolbarItem& item = m_items[i];
+			int nWidth;
+			if (item.Type == IT_Separator) {
+				nWidth = S(SEPARATOR_WIDTH);
+			} else if (item.Type == IT_Menu || item.Glyph == 0 || !m_bHasIconFont) {
+				SIZE textSize;
+				::GetTextExtentPoint32(hDC, item.Text, item.Text.GetLength(), &textSize);
+				nWidth = max(S(BUTTON_WIDTH), (int)textSize.cx + 2 * S(MENU_TITLE_PADDING));
+			} else {
+				nWidth = S(BUTTON_WIDTH);
+			}
+			if (m_toolbarRect.IsRectEmpty() || nX + nWidth > nRight) {
+				item.Rect = CRect(0, 0, 0, 0);
+				bAllFit &= item.Type == IT_Separator;
+			} else {
+				item.Rect = CRect(nX, nTop, nX + nWidth, nBottom);
+			}
+			nX += nWidth;
 		}
-		if (m_toolbarRect.IsRectEmpty() || nX + nWidth > m_toolbarRect.right - S(4)) {
-			item.Rect = CRect(0, 0, 0, 0);
-		} else {
-			item.Rect = CRect(nX, nTop, nX + nWidth, nBottom);
+		m_items[nLast].Rect = CRect(0, 0, 0, 0);
+		if (bAllFit || m_toolbarRect.IsRectEmpty()) {
+			break;
 		}
-		nX += nWidth;
+		if (nPass == 1) {
+			m_items[nLast].Rect = CRect(nRight, nTop, nRight + S(BUTTON_WIDTH), nBottom);
+		}
 	}
 	::SelectObject(hDC, hOldFont);
 	::ReleaseDC(NULL, hDC);
@@ -703,7 +756,7 @@ bool CWindowChrome::IsItemEnabled(const CToolbarItem& item) {
 	if (m_pMainDlg->GetCurrentImage() == NULL) {
 		return false;
 	}
-	if (item.Command == IDM_CONVERT_MENU || item.Command == IDM_MOVE_TO_RECYCLE_BIN_CONFIRM_PERMANENT_DELETE) {
+	if (item.Command == IDM_CONVERT_MENU || item.Command == IDM_MOVE_TO_RECYCLE_BIN_CONFIRM) {
 		return !m_pMainDlg->GetCurrentImage()->IsClipboardImage();
 	}
 	return true;
@@ -716,6 +769,12 @@ bool CWindowChrome::IsItemChecked(const CToolbarItem& item) {
 		case IDM_COMPARE_BEFORE_AFTER: return m_pMainDlg->IsCompareMode();
 	}
 	return false;
+}
+
+double CWindowChrome::GetSliderDefault(const CSideSlider& slider) {
+	// the default values of the INI file, e.g. Sharpen=0.3, not the neutral value of the parameter
+	CImageProcessingParams defaults = m_pMainDlg->GetDefaultImageProcessingParams();
+	return defaults.*slider.Value;
 }
 
 bool CWindowChrome::IsSliderGroupEnabled(int nGroup) {
@@ -739,6 +798,8 @@ void CWindowChrome::ExecuteItem(int nIndex) {
 		Paint();
 	} else if (item.Command == IDM_CONVERT_MENU) {
 		nCommand = TrackConvertMenu();
+	} else if (item.Command == OVERFLOW_COMMAND) {
+		nCommand = TrackOverflowMenu(item.Rect);
 	} else {
 		nCommand = item.Command;
 	}
@@ -774,7 +835,7 @@ void CWindowChrome::ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bD
 			if (bDoubleClick) {
 				// double click resets the value
 				const CSideSlider& slider = m_sliders[hit.Value];
-				m_pMainDlg->GetImageProcessingParams()->*slider.Value = slider.Default;
+				m_pMainDlg->GetImageProcessingParams()->*slider.Value = GetSliderDefault(slider);
 				m_pMainDlg->OnImageProcessingChanged();
 				Paint();
 			} else {
@@ -820,8 +881,8 @@ void CWindowChrome::SetSliderFromPosition(int nSlider, int nXWindow) {
 			const CSideSlider& slider = m_sliders[nSlider];
 			double dValue = PositionToSlider(slider, dPosition);
 			// snap to the default value close to it
-			if (fabs(SliderToPosition(slider, slider.Default) - dPosition) < 0.015) {
-				dValue = slider.Default;
+			if (fabs(SliderToPosition(slider, GetSliderDefault(slider)) - dPosition) < 0.015) {
+				dValue = GetSliderDefault(slider);
 			}
 			m_pMainDlg->GetImageProcessingParams()->*slider.Value = dValue;
 			m_pMainDlg->OnImageProcessingChanged();
@@ -1261,7 +1322,7 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 		dc.DrawText(CNLS::GetString(slider.Name), -1, &labelRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 		TCHAR buff[16];
 		_stprintf_s(buff, 16, _T("%.2f"), dValue);
-		dc.SetTextColor(fabs(dValue - slider.Default) > 0.005 ? m_colors.Accent : m_colors.DimText);
+		dc.SetTextColor(fabs(dValue - GetSliderDefault(slider)) > 0.005 ? m_colors.Accent : m_colors.DimText);
 		dc.DrawText(buff, -1, &labelRect, DT_RIGHT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 		nY += S(18);
 
@@ -1272,7 +1333,7 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 		int nTrackLeft = hitRect.left + nMargin, nTrackRight = hitRect.right - nMargin;
 		int nTrackY = hitRect.top + nTrackHeight / 2;
 		dc.FillSolidRect(nTrackLeft, nTrackY - S(1), nTrackRight - nTrackLeft, S(2), m_colors.Border);
-		int nDefaultX = nTrackLeft + (int)(SliderToPosition(slider, slider.Default) * (nTrackRight - nTrackLeft) + 0.5);
+		int nDefaultX = nTrackLeft + (int)(SliderToPosition(slider, GetSliderDefault(slider)) * (nTrackRight - nTrackLeft) + 0.5);
 		dc.FillSolidRect(nDefaultX, nTrackY - S(4), max(1, S(1)), S(8), m_colors.DimText);
 		int nKnobX = nTrackLeft + (int)(SliderToPosition(slider, dValue) * (nTrackRight - nTrackLeft) + 0.5);
 		if (bEnabled) {

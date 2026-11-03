@@ -34,6 +34,11 @@ public:
 	static bool SaveImageAsPDF(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams,
 		EProcessingFlags eFlags, CSize targetSize);
 
+	// Saves the image as HEIC (HEVC) or AVIF (AV1) with the Windows HEIF encoder (WIC). Needs the HEIF and HEVC video
+	// extensions of Windows, AV1 encoding needs Windows 11. Returns false if the encoder is not available.
+	static bool SaveImageAsHEIF(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams,
+		EProcessingFlags eFlags, CSize targetSize, bool bAV1);
+
 private:
 	CSaveImage(void);
 };

@@ -152,6 +152,31 @@ static void InitFromProcessingFlags(EProcessingFlags eFlags, bool& bHQResampling
 }
 
 // Sets the parameters according to the landscape enhancement mode
+static HHOOK s_hConfirmDeleteHook = NULL;
+
+// Message filter of the delete confirmation: pressing Del again (not the auto repeat of the first press) confirms
+static LRESULT CALLBACK ConfirmDeleteHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
+	if (nCode == MSGF_DIALOGBOX) {
+		MSG* pMsg = (MSG*)lParam;
+		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE && (pMsg->lParam & (1 << 30)) == 0) {
+			::PostMessage(::GetAncestor(pMsg->hwnd, GA_ROOT), WM_COMMAND, IDOK, 0);
+			return TRUE;
+		}
+	}
+	return ::CallNextHookEx(s_hConfirmDeleteHook, nCode, wParam, lParam);
+}
+
+// Asks to delete a file, Enter (default button) or a second Del press confirms, returns true if confirmed
+static bool ConfirmDelete(HWND hWnd, LPCTSTR sText, bool bHasRecycleBin) {
+	s_hConfirmDeleteHook = ::SetWindowsHookEx(WH_MSGFILTER, ConfirmDeleteHookProc, NULL, ::GetCurrentThreadId());
+	int nResult = ::MessageBox(hWnd, sText, CNLS::GetString(_T("Confirm")), MB_OKCANCEL | MB_DEFBUTTON1 | (bHasRecycleBin ? MB_ICONQUESTION : MB_ICONWARNING));
+	if (s_hConfirmDeleteHook != NULL) {
+		::UnhookWindowsHookEx(s_hConfirmDeleteHook);
+		s_hConfirmDeleteHook = NULL;
+	}
+	return nResult == IDOK;
+}
+
 static CImageProcessingParams _SetLandscapeModeParams(bool bLandscapeMode, const CImageProcessingParams& params) {
 	if (bLandscapeMode) {
 		return CSettingsProvider::This().LandscapeModeParams(params);
@@ -1590,8 +1615,11 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				LPCTSTR currentFileName = CurrentFileName(false);
 				bool noConfirmation = nCommand == IDM_MOVE_TO_RECYCLE_BIN ||
 					(nCommand == IDM_MOVE_TO_RECYCLE_BIN_CONFIRM_PERMANENT_DELETE && CFileList::DriveHasRecycleBin(currentFileName));
-				if (noConfirmation ||
-					IDYES == ::MessageBox(m_hWnd, CString(CNLS::GetString(_T("Do you really want to delete the current image file on disk?"))) + _T("\n") + currentFileName, CNLS::GetString(_T("Confirm")), MB_YESNOCANCEL | MB_ICONWARNING)) {
+				// with a recycle bin the file can be restored: Enter confirms (default button), Esc cancels
+				bool bHasRecycleBin = CFileList::DriveHasRecycleBin(currentFileName);
+				LPCTSTR sQuestion = bHasRecycleBin ? _T("Move the current image to the recycle bin?") : _T("Do you really want to delete the current image file on disk?");
+				if (noConfirmation || ConfirmDelete(m_hWnd, CString(CNLS::GetString(sQuestion)) + _T("\n\n") + currentFileName + _T("\n\n") +
+						CNLS::GetString(_T("Enter or Del: delete, Esc: cancel")), bHasRecycleBin)) {
 					CFileList* fileListOfDeletedImage = m_pFileList;
 					GotoImage(POS_AwayFromCurrent, NO_REQUEST);
 					if (m_pFileList->DeleteFile(currentFileName)) {
@@ -4033,6 +4061,10 @@ void CMainDlg::ToggleAlwaysOnTop() {
 void CMainDlg::OnImageProcessingChanged() {
 	m_bProcFlagsTouched = true;
 	Invalidate(FALSE);
+}
+
+CImageProcessingParams CMainDlg::GetDefaultImageProcessingParams() {
+	return _SetLandscapeModeParams(m_bLandscapeMode, GetDefaultProcessingParams());
 }
 
 void CMainDlg::ResetImageProcessing() {
