@@ -288,6 +288,9 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pHelpDlg = NULL;
 	m_pChrome = NULL;
 	m_nRunningConversions = 0;
+	m_bCompareMode = false;
+	m_dCompareSplit = 0.5;
+	m_bDraggingCompareSplit = false;
 }
 
 CMainDlg::~CMainDlg() {
@@ -523,9 +526,15 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			pDIBData = m_pTiltCorrectionPanelCtl->GetDIBForPreview(newSize, clippedSize, offsetsInImage, 
 				*m_pImageProcParams, CreateProcessingFlags(false, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, false, m_bLandscapeMode));
 		} else {
-			pDIBData = m_pCurrentImage->GetDIB(newSize, clippedSize, offsetsInImage, 
-				*m_pImageProcParams, 
+			if (m_bCompareMode) {
+				PrepareCompareDIB(newSize, clippedSize, offsetsInImage);
+			}
+			pDIBData = m_pCurrentImage->GetDIB(newSize, clippedSize, offsetsInImage,
+				*m_pImageProcParams,
 				CreateProcessingFlags(m_bHQResampling && !m_bTemporaryLowQ && !m_bZoomMode, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, false, m_bLandscapeMode));
+			if (m_bCompareMode && pDIBData != NULL) {
+				pDIBData = ComposeCompareDIB(pDIBData, clippedSize);
+			}
 		}
 
 		// Zoom navigator - check if visible and create exclusion rectangle
@@ -589,6 +598,9 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 
 	// let crop controller and panels paint its stuff
 	m_pCropCtl->OnPaint(dc);
+	if (m_bCompareMode && m_pCurrentImage != NULL) {
+		PaintCompareSplit(dc);
+	}
 	m_pPanelMgr->OnPostPaint(dc);
 
 	SetCursorForMoveSection();
@@ -767,6 +779,11 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	this->SetCapture();
 	bool isCropping = m_pCropCtl->IsCropping();
 	CPoint pointClicked(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+	if (m_bCompareMode && !isCropping && IsOnCompareSplit(pointClicked.x)) {
+		m_bDraggingCompareSplit = true;
+		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+		return 0;
+	}
 	bool bEatenByPanel = isCropping ? false : m_pPanelMgr->OnMouseLButton(MouseEvent_BtnDown, pointClicked.x, pointClicked.y);
 
 	if (!bEatenByPanel) {
@@ -801,7 +818,12 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 }
 
 LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
-	if (m_bZoomMode) {
+	if (m_pChrome->IsDragging()) {
+		// slider of the side panel, the drag was started in the non-client area
+		m_pChrome->EndDrag();
+	} else if (m_bDraggingCompareSplit) {
+		m_bDraggingCompareSplit = false;
+	} else if (m_bZoomMode) {
 		m_bZoomMode = false;
 		AdjustWindowToImage(false);
 		Invalidate(FALSE);
@@ -848,9 +870,9 @@ LRESULT CMainDlg::OnNCHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	return 0;
 }
 
-LRESULT CMainDlg::OnNCLButtonDown(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+LRESULT CMainDlg::OnNCLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
 	if (m_pChrome != NULL && wParam == CWindowChrome::HT_CHROME) {
-		m_pChrome->OnNCLButtonDown(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
+		m_pChrome->OnNCLButtonDown(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)), uMsg == WM_NCLBUTTONDBLCLK);
 		return 0;
 	}
 	m_dZoomAtResizeStart = m_dZoom;
@@ -993,6 +1015,18 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	int nOldMouseX = m_nMouseX;
 	m_nMouseX = GET_X_LPARAM(lParam);
 	m_nMouseY = GET_Y_LPARAM(lParam);
+	if (m_pChrome->IsDragging()) {
+		CPoint ptScreen(m_nMouseX, m_nMouseY);
+		ClientToScreen(&ptScreen);
+		m_pChrome->OnDragMove(ptScreen);
+		return 0;
+	}
+	if (m_bDraggingCompareSplit) {
+		m_dCompareSplit = max(0.0, min(1.0, (double)m_nMouseX / max(1, m_clientRect.Width())));
+		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+		Invalidate(FALSE);
+		return 0;
+	}
 	if (!m_bDragging) {
 		if (m_startMouse.x == -1 && m_startMouse.y == -1) {
 			m_startMouse.x = m_nMouseX;
@@ -1020,7 +1054,8 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	}
 	if (!m_bPanMouseCursorSet && !bMouseCursorSet) {
 		if (!m_pPanelMgr->MouseCursorCaptured()) {
-			::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+			bool bOnSplit = m_bCompareMode && !m_bDragging && !m_pCropCtl->IsCropping() && IsOnCompareSplit(m_nMouseX);
+			::SetCursor(::LoadCursor(NULL, bOnSplit ? IDC_SIZEWE : IDC_ARROW));
 		}
 	}
 
@@ -2251,8 +2286,35 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			Invalidate(FALSE);
 			break;
 		case IDM_TOGGLE_EDITPANEL:
-			m_pImageProcPanelCtl->SetPinned(!m_pImageProcPanelCtl->IsPinned());
+			if (m_pChrome->IsEnabled()) {
+				// the sliders are on the edit tab of the side panel, the panel over the image is not needed
+				m_pImageProcPanelCtl->SetPinned(false);
+				m_pChrome->ShowSideTab(m_pChrome->IsEditTabShown() ? CWindowChrome::TAB_INFO : CWindowChrome::TAB_EDIT);
+				Invalidate(FALSE);
+			} else {
+				m_pImageProcPanelCtl->SetPinned(!m_pImageProcPanelCtl->IsPinned());
+			}
 			m_pChrome->Paint();
+			break;
+		case IDM_TOGGLE_SIDEPANEL_COLLAPSED:
+			if (!m_pChrome->GetShowSidePanel()) {
+				m_pChrome->SetShowSidePanel(true);
+				m_pChrome->SetSidePanelCollapsed(false);
+			} else {
+				m_pChrome->SetSidePanelCollapsed(!m_pChrome->GetSidePanelCollapsed());
+			}
+			Invalidate(FALSE);
+			break;
+		case IDM_COMPARE_BEFORE_AFTER:
+			SetCompareMode(!m_bCompareMode);
+			break;
+		case IDM_RESET_PROCESSING:
+			ResetImageProcessing();
+			break;
+		case IDM_UNSHARP_MASK:
+			if (m_pCurrentImage != NULL) {
+				m_pUnsharpMaskPanelCtl->SetVisible(true);
+			}
 			break;
 		case IDM_CONVERT_MENU:
 			ShowConvertMenuAndExecute();
@@ -3451,18 +3513,19 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 #define MENUBAR_SUBMENU(cmd) ((cmd) | 0x40000000)
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
-	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10
+	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_CONVERT, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
-	MBAR_EDITPANEL, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
-static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_SIDEPANEL, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
+	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
+static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
 static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
 	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
-static const int s_menuBarTools[] = { MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
+static const int s_menuBarTools[] = { MBAR_CONVERT, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
 static const int s_menuBarHelp[] = { MBAR_HELP, IDM_ABOUT };
 
 // Position of the (non popup) item with the given command, -1 if not found
@@ -3572,7 +3635,21 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				AppendMenuString(hMenu, IDM_TOGGLE_SIDEPANEL, _T("Information panel"), m_pChrome->GetShowSidePanel(), true);
 				break;
 			case MBAR_EDITPANEL:
-				AppendMenuString(hMenu, IDM_TOGGLE_EDITPANEL, _T("Image processing panel"), m_pImageProcPanelCtl->IsPinned(), m_pCurrentImage != NULL);
+				AppendMenuString(hMenu, IDM_TOGGLE_EDITPANEL, _T("Image processing panel"),
+					m_pChrome->IsEnabled() ? m_pChrome->IsEditTabShown() : m_pImageProcPanelCtl->IsPinned(), m_pCurrentImage != NULL);
+				break;
+			case MBAR_COMPARE:
+				AppendMenuString(hMenu, IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing"), m_bCompareMode, m_pCurrentImage != NULL);
+				break;
+			case MBAR_RESET:
+				AppendMenuString(hMenu, IDM_RESET_PROCESSING, _T("Reset all values to the defaults"), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_UNSHARP:
+				AppendMenuString(hMenu, IDM_UNSHARP_MASK, _T("Unsharp mask..."), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_COLLAPSE:
+				AppendMenuString(hMenu, IDM_TOGGLE_SIDEPANEL_COLLAPSED, _T("Collapse the side panel"),
+					m_pChrome->GetShowSidePanel() && m_pChrome->GetSidePanelCollapsed(), m_pChrome->GetShowSidePanel());
 				break;
 			case MBAR_EXPLORER_MENU:
 				AppendMenuString(hMenu, IDM_EXPLORER_CONVERT_MENU, _T("'Convert to' in the Explorer context menu"), Converter::IsExplorerMenuRegistered(), true);
@@ -3624,10 +3701,8 @@ namespace {
 	unsigned __stdcall ConversionThread(void* pArgument) {
 		CConversionJob* pJob = (CConversionJob*)pArgument;
 		::CoInitialize(NULL);
-		int nCount;
-		const Converter::CPreset* pPresets = Converter::GetPresets(nCount);
 		CString sOutputFile, sError;
-		bool bSuccess = Converter::ConvertFile(pJob->SourceFile, pPresets[pJob->PresetIndex], sOutputFile, sError);
+		bool bSuccess = Converter::ConvertFile(pJob->SourceFile, Converter::GetPresets()[pJob->PresetIndex], sOutputFile, sError);
 		CString* pResult = new CString(bSuccess ? sOutputFile : (pJob->SourceFile + _T("\n") + sError));
 		::InterlockedDecrement(pJob->RunningConversions);
 		if (!::PostMessage(pJob->TargetWindow, WM_CONVERSION_FINISHED, bSuccess ? 1 : 0, (LPARAM)pResult)) {
@@ -3640,8 +3715,7 @@ namespace {
 }
 
 void CMainDlg::StartConversion(int nPresetIndex) {
-	int nCount;
-	Converter::GetPresets(nCount);
+	int nCount = (int)Converter::GetPresets().size();
 	if (nPresetIndex < 0 || nPresetIndex >= nCount || m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage()) {
 		return;
 	}
@@ -3944,4 +4018,111 @@ void CMainDlg::ToggleAlwaysOnTop() {
 		SWP_NOMOVE | SWP_NOSIZE  // causes SetWindowPos to ignore the parameters for top/left/width/height
 	);
 
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Image editing from the side panel, before/after comparison
+///////////////////////////////////////////////////////////////////////////////////
+
+void CMainDlg::OnImageProcessingChanged() {
+	m_bProcFlagsTouched = true;
+	Invalidate(FALSE);
+}
+
+void CMainDlg::ResetImageProcessing() {
+	if (m_pCurrentImage == NULL) {
+		return;
+	}
+	*m_pImageProcParams = _SetLandscapeModeParams(m_bLandscapeMode, GetDefaultProcessingParams());
+	bool bHQResampling, bLandscapeMode;
+	InitFromProcessingFlags(GetDefaultProcessingFlags(m_bLandscapeMode), bHQResampling, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, bLandscapeMode);
+	m_pChrome->ShowMessage(CNLS::GetString(_T("All values were reset to the defaults.")));
+	Invalidate(FALSE);
+}
+
+void CMainDlg::SetCompareMode(bool bCompare) {
+	m_bCompareMode = bCompare && m_pCurrentImage != NULL;
+	m_bDraggingCompareSplit = false;
+	if (!m_bCompareMode) {
+		std::vector<uint8>().swap(m_compareBuffer);
+	}
+	Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::PrepareCompareDIB(CSize newSize, CSize clippedSize, CPoint offsetsInImage) {
+	// the image as shown before editing: default parameters and flags
+	EProcessingFlags eFlags = SetProcessingFlag(GetDefaultProcessingFlags(m_bLandscapeMode), PFLAG_HighQualityResampling,
+		m_bHQResampling && !m_bTemporaryLowQ && !m_bZoomMode);
+	CImageProcessingParams beforeParams = _SetLandscapeModeParams(m_bLandscapeMode, GetDefaultProcessingParams());
+	void* pBefore = m_pCurrentImage->GetDIB(newSize, clippedSize, offsetsInImage, beforeParams, eFlags);
+	size_t nBytes = (size_t)clippedSize.cx * clippedSize.cy * 4;
+	m_compareBuffer.resize(nBytes);
+	if (pBefore != NULL && nBytes > 0) {
+		memcpy(&m_compareBuffer[0], pBefore, nBytes);
+	}
+}
+
+void* CMainDlg::ComposeCompareDIB(void* pProcessedDIB, CSize clippedSize) {
+	size_t nBytes = (size_t)clippedSize.cx * clippedSize.cy * 4;
+	if (m_compareBuffer.size() != nBytes || nBytes == 0) {
+		return pProcessedDIB;
+	}
+	// right of the split the processed image, the DIB is centered in the client area
+	int nDIBLeft = (m_clientRect.Width() - clippedSize.cx) / 2 + m_DIBOffsets.x;
+	int nSplit = max(0, min(clippedSize.cx, GetCompareSplitX() - nDIBLeft));
+	int nRightBytes = (clippedSize.cx - nSplit) * 4;
+	if (nRightBytes > 0) {
+		for (int y = 0; y < clippedSize.cy; y++) {
+			size_t nOffset = ((size_t)y * clippedSize.cx + nSplit) * 4;
+			memcpy(&m_compareBuffer[nOffset], (uint8*)pProcessedDIB + nOffset, nRightBytes);
+		}
+	}
+	return &m_compareBuffer[0];
+}
+
+int CMainDlg::GetCompareSplitX() {
+	return (int)(m_dCompareSplit * m_clientRect.Width() + 0.5);
+}
+
+bool CMainDlg::IsOnCompareSplit(int nX) {
+	return m_pCurrentImage != NULL && abs(nX - GetCompareSplitX()) <= HelpersGUI::ScaleToScreen(8);
+}
+
+void CMainDlg::PaintCompareSplit(CDC& dc) {
+	int nX = GetCompareSplitX();
+	int nLine = max(1, HelpersGUI::ScaleToScreen(2));
+	dc.FillSolidRect(nX - nLine / 2, m_clientRect.top, nLine, m_clientRect.Height(), RGB(255, 255, 255));
+
+	// round handle with arrows in the middle
+	int nRadius = HelpersGUI::ScaleToScreen(16);
+	int nY = m_clientRect.top + m_clientRect.Height() / 2;
+	CBrush brush;
+	brush.CreateSolidBrush(RGB(255, 255, 255));
+	CPen pen;
+	pen.CreatePen(PS_SOLID, 1, RGB(60, 60, 60));
+	HBRUSH hOldBrush = dc.SelectBrush(brush);
+	HPEN hOldPen = dc.SelectPen(pen);
+	dc.Ellipse(nX - nRadius, nY - nRadius, nX + nRadius, nY + nRadius);
+	CBrush arrowBrush;
+	arrowBrush.CreateSolidBrush(RGB(40, 40, 40));
+	dc.SelectBrush(arrowBrush);
+	dc.SelectPen((HPEN)::GetStockObject(NULL_PEN));
+	int nA = HelpersGUI::ScaleToScreen(5), nGap = HelpersGUI::ScaleToScreen(3);
+	POINT left[3] = { { nX - nGap - nA, nY }, { nX - nGap, nY - nA }, { nX - nGap, nY + nA } };
+	POINT right[3] = { { nX + nGap + nA, nY }, { nX + nGap, nY - nA }, { nX + nGap, nY + nA } };
+	dc.Polygon(left, 3);
+	dc.Polygon(right, 3);
+	dc.SelectPen(hOldPen);
+	dc.SelectBrush(hOldBrush);
+
+	// labels at the top
+	HelpersGUI::SelectDefaultFileNameFont(dc);
+	dc.SetBkMode(TRANSPARENT);
+	dc.SetTextColor(RGB(255, 255, 255));
+	int nMargin = HelpersGUI::ScaleToScreen(10);
+	int nTop = m_clientRect.top + HelpersGUI::ScaleToScreen(8);
+	int nHeight = HelpersGUI::ScaleToScreen(30);
+	HelpersGUI::DrawTextBordered(dc, CNLS::GetString(_T("Before")), CRect(m_clientRect.left, nTop, nX - nMargin, nTop + nHeight), DT_RIGHT);
+	HelpersGUI::DrawTextBordered(dc, CNLS::GetString(_T("After")), CRect(nX + nMargin, nTop, m_clientRect.right, nTop + nHeight), DT_LEFT);
 }

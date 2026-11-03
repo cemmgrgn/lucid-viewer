@@ -9,12 +9,14 @@
 #include "ImageProcPanelCtl.h"
 #include "HistogramCorr.h"
 #include "SettingsProvider.h"
+#include "KeyMap.h"
 #include "HelpersGUI.h"
 #include "Helpers.h"
 #include "NLS.h"
 #include "Converter.h"
 #include "TimerEventIDs.h"
 #include <shellapi.h>
+#include <math.h>
 
 // Sizes in pixels at 96 DPI
 static const int TOOLBAR_HEIGHT = 36;
@@ -24,8 +26,12 @@ static const int BUTTON_WIDTH = 34;
 static const int MENU_TITLE_PADDING = 10;
 static const int SEPARATOR_WIDTH = 11;
 static const int SIDE_PADDING = 14;
+static const int SIDE_HEADER_HEIGHT = 38;
+static const int SIDE_COLLAPSED_WIDTH = 32;
+static const int SIDE_BUTTON_HEIGHT = 26;
 static const int HISTOGRAM_HEIGHT = 96;
 static const int STATUS_MESSAGE_TIMEOUT = 6000; // ms
+static const int TOOLTIP_DELAY = 450; // ms
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -148,6 +154,16 @@ static void DrawHorizontalLine(CDC& dc, int nX1, int nX2, int nY, COLORREF color
 	dc.FillSolidRect(nX1, nY, nX2 - nX1, max(1, HelpersGUI::ScaleToScreen(1)), color);
 }
 
+// Text that is only wrapped at the given separator: the GPS location 'lat / lon' wraps between the coordinates, not inside them
+static CString KeepTogether(LPCTSTR sText, LPCTSTR sBreakAt) {
+	CString s(sText);
+	s.Replace(sBreakAt, _T("\n"));
+	s.Replace(_T(' '), (TCHAR)0x00A0);
+	return s;
+}
+
+static int S(int nValue) { return HelpersGUI::ScaleToScreen(nValue); }
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Public
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,10 +174,14 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_bShowToolbar = sp.ShowToolbar();
 	m_bShowStatusBar = sp.ShowStatusBar();
 	m_bShowSidePanel = sp.ShowSidePanel();
-	m_nHoverItem = m_nPressedItem = -1;
+	m_bSideCollapsed = sp.SidePanelCollapsed();
+	m_eSideTab = TAB_INFO;
+	m_nHoverItem = m_nPressedItem = m_nHoverSide = -1;
 	m_bTrackingMouse = false;
 	m_nSideScroll = 0;
 	m_nSideContentHeight = 0;
+	m_nDragSlider = -1;
+	m_hitOrigin = CPoint(0, 0);
 
 	if (sp.ChromeDarkTheme()) {
 		CColors dark = { RGB(32, 32, 32), RGB(26, 26, 26), RGB(58, 58, 58), RGB(232, 232, 232), RGB(150, 150, 150),
@@ -174,15 +194,15 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 		m_colors = light;
 	}
 
-	m_hFont = CreateUIFont(_T("Segoe UI"), HelpersGUI::ScaleToScreen(12), FW_NORMAL);
-	m_hBoldFont = CreateUIFont(_T("Segoe UI"), HelpersGUI::ScaleToScreen(13), FW_SEMIBOLD);
+	m_hFont = CreateUIFont(_T("Segoe UI"), S(12), FW_NORMAL);
+	m_hBoldFont = CreateUIFont(_T("Segoe UI"), S(13), FW_SEMIBOLD);
 	m_bHasIconFont = true;
-	if (FontExists(_T("Segoe Fluent Icons"))) {
-		m_hIconFont = CreateUIFont(_T("Segoe Fluent Icons"), HelpersGUI::ScaleToScreen(16), FW_NORMAL);
-	} else if (FontExists(_T("Segoe MDL2 Assets"))) {
-		m_hIconFont = CreateUIFont(_T("Segoe MDL2 Assets"), HelpersGUI::ScaleToScreen(16), FW_NORMAL);
+	LPCTSTR sIconFont = FontExists(_T("Segoe Fluent Icons")) ? _T("Segoe Fluent Icons") : FontExists(_T("Segoe MDL2 Assets")) ? _T("Segoe MDL2 Assets") : NULL;
+	if (sIconFont != NULL) {
+		m_hIconFont = CreateUIFont(sIconFont, S(16), FW_NORMAL);
+		m_hSmallIconFont = CreateUIFont(sIconFont, S(12), FW_NORMAL);
 	} else {
-		m_hIconFont = NULL;
+		m_hIconFont = m_hSmallIconFont = NULL;
 		m_bHasIconFont = false;
 	}
 
@@ -210,7 +230,8 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 		{ 0, _T(""), 0, NULL, false, false },
 		{ 0xE7AD, _T("L"), IDM_ROTATE_270, _T("Rotate -90"), true, true },
 		{ 0xE7AD, _T("R"), IDM_ROTATE_90, _T("Rotate +90"), false, true },
-		{ 0xE70F, _T("Edit"), IDM_TOGGLE_EDITPANEL, _T("Image processing panel"), false, true },
+		{ 0xE70F, _T("Edit"), IDM_TOGGLE_EDITPANEL, _T("Edit image (brightness, contrast, colors)"), false, true },
+		{ 0, _T("A|B"), IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing"), false, true },
 		{ 0, _T(""), 0, NULL, false, false },
 		{ 0xE74D, _T("Del"), IDM_MOVE_TO_RECYCLE_BIN_CONFIRM_PERMANENT_DELETE, _T("Move to recycle bin"), false, true },
 		{ 0, _T(""), 0, NULL, false, false },
@@ -218,18 +239,56 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 		{ 0xE740, _T("Full"), IDM_FULL_SCREEN_MODE, _T("Full screen mode"), false, false },
 	};
 	for (const ButtonDef& def : buttons) {
-		CToolbarItem item = { (def.Command == 0) ? IT_Separator : IT_Button, def.Text, def.Glyph, def.Command, def.Tooltip, def.Mirror, def.NeedsImage, CRect() };
+		EItemType eType = (def.Command == 0) ? IT_Separator : IT_Button;
+		CToolbarItem item = { eType, def.Text, def.Glyph, def.Command, def.Tooltip, def.Mirror, def.NeedsImage, CRect() };
 		m_items.push_back(item);
+	}
+
+	// Sliders of the edit tab, same ranges as the image processing panel
+	const CSideSlider sliders[] = {
+		{ _T("Brightness"), &CImageProcessingParams::Gamma, 0.5, 2.0, 1.0, true, true, 0 },
+		{ _T("Contrast"), &CImageProcessingParams::Contrast, -0.5, 0.5, 0.0, false, false, 0 },
+		{ _T("Saturation"), &CImageProcessingParams::Saturation, 0.0, 2.0, 1.0, false, false, 0 },
+		{ _T("Sharpen"), &CImageProcessingParams::Sharpen, 0.0, 0.5, 0.0, false, false, 0 },
+		{ _T("Cyan-Red"), &CImageProcessingParams::CyanRed, -1.0, 1.0, 0.0, false, false, 0 },
+		{ _T("Magenta-Green"), &CImageProcessingParams::MagentaGreen, -1.0, 1.0, 0.0, false, false, 0 },
+		{ _T("Yellow-Blue"), &CImageProcessingParams::YellowBlue, -1.0, 1.0, 0.0, false, false, 0 },
+		{ _T("Lighten Shadows"), &CImageProcessingParams::LightenShadows, 0.0, 1.0, 0.0, false, false, 1 },
+		{ _T("Darken Highlights"), &CImageProcessingParams::DarkenHighlights, 0.0, 1.0, 0.0, false, false, 1 },
+		{ _T("Deep Shadows"), &CImageProcessingParams::LightenShadowSteepness, 0.0, 1.0, 0.0, false, false, 1 },
+		{ _T("Color Correction"), &CImageProcessingParams::ColorCorrectionFactor, -0.5, 0.5, 0.0, false, false, 2 },
+		{ _T("Contrast Correction"), &CImageProcessingParams::ContrastCorrectionFactor, 0.0, 1.0, 0.0, false, false, 2 },
+	};
+	for (const CSideSlider& slider : sliders) {
+		m_sliders.push_back(slider);
+	}
+
+	// Tooltip shown in tracking mode for toolbar buttons and side panel elements
+	m_hTooltip = ::CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, pMainDlg->GetHWND(), NULL, _Module.GetModuleInstance(), NULL);
+	if (m_hTooltip != NULL) {
+		TOOLINFO toolInfo{ 0 };
+		toolInfo.cbSize = sizeof(toolInfo);
+		toolInfo.uFlags = TTF_TRACK | TTF_ABSOLUTE;
+		toolInfo.hwnd = pMainDlg->GetHWND();
+		toolInfo.uId = 1;
+		toolInfo.lpszText = (LPTSTR)_T("");
+		::SendMessage(m_hTooltip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+		::SendMessage(m_hTooltip, TTM_SETMAXTIPWIDTH, 0, S(400));
 	}
 
 	Helpers::SetAdditionalBorderSize(IsEnabled() ? GetExtraSize() : CSize(0, 0));
 }
 
 CWindowChrome::~CWindowChrome() {
+	if (m_hTooltip != NULL) {
+		::DestroyWindow(m_hTooltip);
+	}
 	::DeleteObject(m_hFont);
 	::DeleteObject(m_hBoldFont);
 	if (m_hIconFont != NULL) {
 		::DeleteObject(m_hIconFont);
+		::DeleteObject(m_hSmallIconFont);
 	}
 }
 
@@ -256,6 +315,27 @@ void CWindowChrome::SetShowSidePanel(bool bShow) {
 	UpdateFrame();
 }
 
+void CWindowChrome::SetSidePanelCollapsed(bool bCollapsed) {
+	m_bSideCollapsed = bCollapsed;
+	m_nSideScroll = 0;
+	HideTooltip();
+	SaveSettings();
+	UpdateFrame();
+}
+
+void CWindowChrome::ShowSideTab(ESideTab eTab) {
+	m_eSideTab = eTab;
+	m_nSideScroll = 0;
+	if (!m_bShowSidePanel || m_bSideCollapsed) {
+		m_bShowSidePanel = true;
+		m_bSideCollapsed = false;
+		SaveSettings();
+		UpdateFrame();
+	} else {
+		Paint();
+	}
+}
+
 CSize CWindowChrome::GetExtraSize() {
 	return CSize(m_bShowSidePanel ? SidePanelWidth() : 0,
 		(m_bShowToolbar ? ToolbarHeight() : 0) + (m_bShowStatusBar ? StatusBarHeight() : 0));
@@ -264,13 +344,15 @@ CSize CWindowChrome::GetExtraSize() {
 void CWindowChrome::SyncBorderSize() {
 	Helpers::SetAdditionalBorderSize(IsEnabled() ? GetExtraSize() : CSize(0, 0));
 	// the mouse leaves the toolbar without notification when the window mode changes
-	m_nHoverItem = m_nPressedItem = -1;
+	m_nHoverItem = m_nPressedItem = m_nHoverSide = -1;
 	m_bTrackingMouse = false;
+	HideTooltip();
 }
 
 void CWindowChrome::UpdateFrame() {
 	SyncBorderSize();
 	::SetWindowPos(m_pMainDlg->GetHWND(), NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+	::InvalidateRect(m_pMainDlg->GetHWND(), NULL, FALSE);
 }
 
 void CWindowChrome::OnNCCalcSize(RECT* pClientRect) {
@@ -282,7 +364,7 @@ void CWindowChrome::OnNCCalcSize(RECT* pClientRect) {
 	int nHeight = pClientRect->bottom - pClientRect->top;
 	int nToolbar = IsToolbarShown() ? min(ToolbarHeight(), nHeight) : 0;
 	int nStatusBar = IsStatusBarShown() ? min(StatusBarHeight(), nHeight - nToolbar) : 0;
-	int nSidePanel = IsSidePanelShown() ? min(SidePanelWidth(), max(0, (int)(pClientRect->right - pClientRect->left) - HelpersGUI::ScaleToScreen(120))) : 0;
+	int nSidePanel = IsSidePanelShown() ? min(SidePanelWidth(), max(0, (int)(pClientRect->right - pClientRect->left) - S(120))) : 0;
 	pClientRect->top += nToolbar;
 	pClientRect->bottom -= nStatusBar;
 	pClientRect->right -= nSidePanel;
@@ -315,6 +397,8 @@ void CWindowChrome::Paint() {
 			PaintToolbar(memDC);
 		} else if (i == 1) {
 			PaintStatusBar(memDC);
+		} else if (m_bSideCollapsed) {
+			PaintCollapsedSidePanel(memDC);
 		} else {
 			PaintSidePanel(memDC);
 		}
@@ -357,25 +441,40 @@ void CWindowChrome::OnNCMouseMove(CPoint ptScreen) {
 	if (nItem >= 0 && !IsItemEnabled(m_items[nItem])) {
 		nItem = -1;
 	}
-	if (nItem != m_nHoverItem) {
+	int nSide = (nItem < 0 && m_sidePanelRect.PtInRect(pt)) ? FindSideHit(pt) : -1;
+	if (nItem != m_nHoverItem || nSide != m_nHoverSide) {
 		m_nHoverItem = nItem;
+		m_nHoverSide = nSide;
+		if (nItem >= 0 && m_items[nItem].Tooltip != NULL) {
+			ScheduleTooltip(GetTooltipText(m_items[nItem].Tooltip, m_items[nItem].Type == IT_Button ? m_items[nItem].Command : 0), m_items[nItem].Rect);
+		} else if (nSide >= 0 && m_sideHits[nSide].Tooltip != NULL) {
+			ScheduleTooltip(CNLS::GetString(m_sideHits[nSide].Tooltip), m_sideHits[nSide].Rect);
+		} else {
+			HideTooltip();
+		}
 		Paint();
 	}
 }
 
 void CWindowChrome::OnNCMouseLeave() {
 	m_bTrackingMouse = false;
-	if (m_nHoverItem >= 0 || m_nPressedItem >= 0) {
-		m_nHoverItem = m_nPressedItem = -1;
+	HideTooltip();
+	if (m_nHoverItem >= 0 || m_nPressedItem >= 0 || m_nHoverSide >= 0) {
+		m_nHoverItem = m_nPressedItem = m_nHoverSide = -1;
 		Paint();
 	}
 }
 
-void CWindowChrome::OnNCLButtonDown(CPoint ptScreen) {
+void CWindowChrome::OnNCLButtonDown(CPoint ptScreen, bool bDoubleClick) {
+	HideTooltip();
 	UpdateLayout();
 	CPoint pt = ScreenToWindow(ptScreen);
-	if (!m_sLocationURL.IsEmpty() && m_locationRect.PtInRect(pt)) {
-		::ShellExecute(m_pMainDlg->GetHWND(), _T("open"), m_sLocationURL, NULL, NULL, SW_SHOWNORMAL);
+	if (m_sidePanelRect.PtInRect(pt)) {
+		int nHit = FindSideHit(pt);
+		if (nHit >= 0) {
+			CSideHit hit = m_sideHits[nHit]; // copy, painting rebuilds the list
+			ExecuteSideHit(hit, pt, bDoubleClick);
+		}
 		return;
 	}
 	int nItem = FindItem(pt);
@@ -402,15 +501,17 @@ void CWindowChrome::OnNCLButtonUp(CPoint ptScreen) {
 }
 
 bool CWindowChrome::OnMouseWheel(CPoint ptScreen, int nDelta) {
-	if (!IsSidePanelShown()) {
+	if (!IsSidePanelExpanded()) {
 		return false;
 	}
 	UpdateLayout();
 	if (!m_sidePanelRect.PtInRect(ScreenToWindow(ptScreen))) {
 		return false;
 	}
-	int nMaxScroll = max(0, m_nSideContentHeight - m_sidePanelRect.Height());
-	m_nSideScroll = max(0, min(nMaxScroll, m_nSideScroll - nDelta * HelpersGUI::ScaleToScreen(48) / WHEEL_DELTA));
+	int nVisibleHeight = m_sidePanelRect.Height() - S(SIDE_HEADER_HEIGHT);
+	int nMaxScroll = max(0, m_nSideContentHeight - nVisibleHeight);
+	m_nSideScroll = max(0, min(nMaxScroll, m_nSideScroll - nDelta * S(48) / WHEEL_DELTA));
+	HideTooltip();
 	Paint();
 	return true;
 }
@@ -422,7 +523,32 @@ bool CWindowChrome::OnTimer(int nTimerId) {
 		Paint();
 		return true;
 	}
+	if (nTimerId == TOOLTIP_TIMER_EVENT_ID) {
+		::KillTimer(m_pMainDlg->GetHWND(), TOOLTIP_TIMER_EVENT_ID);
+		if (m_hTooltip != NULL && !m_sTooltipText.IsEmpty()) {
+			TOOLINFO toolInfo{ 0 };
+			toolInfo.cbSize = sizeof(toolInfo);
+			toolInfo.hwnd = m_pMainDlg->GetHWND();
+			toolInfo.uId = 1;
+			toolInfo.lpszText = (LPTSTR)(LPCTSTR)m_sTooltipText;
+			::SendMessage(m_hTooltip, TTM_UPDATETIPTEXT, 0, (LPARAM)&toolInfo);
+			::SendMessage(m_hTooltip, TTM_TRACKPOSITION, 0, MAKELPARAM(m_tooltipPos.x, m_tooltipPos.y));
+			::SendMessage(m_hTooltip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&toolInfo);
+		}
+		return true;
+	}
 	return false;
+}
+
+void CWindowChrome::OnDragMove(CPoint ptScreen) {
+	if (m_nDragSlider >= 0) {
+		SetSliderFromPosition(m_nDragSlider, ScreenToWindow(ptScreen).x);
+	}
+}
+
+void CWindowChrome::EndDrag() {
+	m_nDragSlider = -1;
+	Paint();
 }
 
 void CWindowChrome::ShowMessage(LPCTSTR sMessage) {
@@ -432,6 +558,7 @@ void CWindowChrome::ShowMessage(LPCTSTR sMessage) {
 }
 
 int CWindowChrome::TrackConvertMenu() {
+	HideTooltip();
 	HMENU hMenu = Converter::CreatePresetMenu(IDM_FIRST_CONVERT_CMD);
 	CPoint pos;
 	::GetCursorPos(&pos);
@@ -453,16 +580,46 @@ int CWindowChrome::TrackConvertMenu() {
 // Private
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-int CWindowChrome::ToolbarHeight() { return HelpersGUI::ScaleToScreen(TOOLBAR_HEIGHT); }
-int CWindowChrome::StatusBarHeight() { return HelpersGUI::ScaleToScreen(STATUSBAR_HEIGHT); }
-int CWindowChrome::SidePanelWidth() { return HelpersGUI::ScaleToScreen(CSettingsProvider::This().SidePanelWidth()); }
+int CWindowChrome::ToolbarHeight() { return S(TOOLBAR_HEIGHT); }
+int CWindowChrome::StatusBarHeight() { return S(STATUSBAR_HEIGHT); }
+int CWindowChrome::SidePanelWidth() { return m_bSideCollapsed ? S(SIDE_COLLAPSED_WIDTH) : S(CSettingsProvider::This().SidePanelWidth()); }
 
 CPoint CWindowChrome::ScreenToWindow(CPoint ptScreen) {
 	return CPoint(ptScreen.x - m_windowRect.left, ptScreen.y - m_windowRect.top);
 }
 
 void CWindowChrome::SaveSettings() {
-	CSettingsProvider::This().SaveWindowChromeSettings(m_bShowToolbar, m_bShowStatusBar, m_bShowSidePanel);
+	CSettingsProvider::This().SaveWindowChromeSettings(m_bShowToolbar, m_bShowStatusBar, m_bShowSidePanel, m_bSideCollapsed);
+}
+
+CString CWindowChrome::GetTooltipText(LPCTSTR sTooltip, int nCommand) {
+	CString sText = CNLS::GetString(sTooltip);
+	if (nCommand != 0 && m_pMainDlg->GetKeyMap() != NULL) {
+		CString sKey = m_pMainDlg->GetKeyMap()->GetKeyStringForCommand(nCommand);
+		if (!sKey.IsEmpty()) {
+			sText += _T("  (") + sKey + _T(")");
+		}
+	}
+	return sText;
+}
+
+void CWindowChrome::ScheduleTooltip(LPCTSTR sText, CRect rectWindow) {
+	HideTooltip();
+	m_sTooltipText = sText;
+	m_tooltipPos = CPoint(m_windowRect.left + rectWindow.left, m_windowRect.top + rectWindow.bottom + S(4));
+	::SetTimer(m_pMainDlg->GetHWND(), TOOLTIP_TIMER_EVENT_ID, TOOLTIP_DELAY, NULL);
+}
+
+void CWindowChrome::HideTooltip() {
+	::KillTimer(m_pMainDlg->GetHWND(), TOOLTIP_TIMER_EVENT_ID);
+	m_sTooltipText.Empty();
+	if (m_hTooltip != NULL) {
+		TOOLINFO toolInfo{ 0 };
+		toolInfo.cbSize = sizeof(toolInfo);
+		toolInfo.hwnd = m_pMainDlg->GetHWND();
+		toolInfo.uId = 1;
+		::SendMessage(m_hTooltip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&toolInfo);
+	}
 }
 
 void CWindowChrome::UpdateLayout() {
@@ -482,21 +639,21 @@ void CWindowChrome::UpdateLayout() {
 	// toolbar items from left to right, items not fitting are hidden
 	HDC hDC = ::GetDC(NULL);
 	HFONT hOldFont = (HFONT)::SelectObject(hDC, m_hFont);
-	int nX = m_toolbarRect.left + HelpersGUI::ScaleToScreen(6);
-	int nTop = m_toolbarRect.top + HelpersGUI::ScaleToScreen(ITEM_MARGIN);
-	int nBottom = m_toolbarRect.bottom - HelpersGUI::ScaleToScreen(ITEM_MARGIN);
+	int nX = m_toolbarRect.left + S(6);
+	int nTop = m_toolbarRect.top + S(ITEM_MARGIN);
+	int nBottom = m_toolbarRect.bottom - S(ITEM_MARGIN);
 	for (CToolbarItem& item : m_items) {
 		int nWidth;
 		if (item.Type == IT_Separator) {
-			nWidth = HelpersGUI::ScaleToScreen(SEPARATOR_WIDTH);
+			nWidth = S(SEPARATOR_WIDTH);
 		} else if (item.Type == IT_Menu || item.Glyph == 0 || !m_bHasIconFont) {
 			SIZE textSize;
 			::GetTextExtentPoint32(hDC, item.Text, item.Text.GetLength(), &textSize);
-			nWidth = max(HelpersGUI::ScaleToScreen(BUTTON_WIDTH), (int)textSize.cx + 2 * HelpersGUI::ScaleToScreen(MENU_TITLE_PADDING));
+			nWidth = max(S(BUTTON_WIDTH), (int)textSize.cx + 2 * S(MENU_TITLE_PADDING));
 		} else {
-			nWidth = HelpersGUI::ScaleToScreen(BUTTON_WIDTH);
+			nWidth = S(BUTTON_WIDTH);
 		}
-		if (m_toolbarRect.IsRectEmpty() || nX + nWidth > m_toolbarRect.right - HelpersGUI::ScaleToScreen(4)) {
+		if (m_toolbarRect.IsRectEmpty() || nX + nWidth > m_toolbarRect.right - S(4)) {
 			item.Rect = CRect(0, 0, 0, 0);
 		} else {
 			item.Rect = CRect(nX, nTop, nX + nWidth, nBottom);
@@ -516,6 +673,29 @@ int CWindowChrome::FindItem(CPoint ptWindow) {
 	return -1;
 }
 
+int CWindowChrome::FindSideHit(CPoint ptWindow) {
+	for (int i = 0; i < (int)m_sideHits.size(); i++) {
+		if (m_sideHits[i].Rect.PtInRect(ptWindow)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+void CWindowChrome::AddSideHit(ESideHitType eType, int nValue, const CRect& rectPanel, LPCTSTR sTooltip) {
+	CSideHit hit = { eType, nValue, rectPanel, sTooltip };
+	hit.Rect.OffsetRect(m_hitOrigin);
+	// elements scrolled out of the content area of the panel can not be clicked
+	CRect visibleRect = m_sidePanelRect;
+	if (eType != SH_Collapse && eType != SH_Expand && eType != SH_Tab && !m_bSideCollapsed) {
+		visibleRect.top += S(SIDE_HEADER_HEIGHT);
+	}
+	hit.Rect.IntersectRect(&hit.Rect, &visibleRect);
+	if (!hit.Rect.IsRectEmpty()) {
+		m_sideHits.push_back(hit);
+	}
+}
+
 bool CWindowChrome::IsItemEnabled(const CToolbarItem& item) {
 	if (!item.NeedsImage) {
 		return true;
@@ -532,9 +712,16 @@ bool CWindowChrome::IsItemEnabled(const CToolbarItem& item) {
 bool CWindowChrome::IsItemChecked(const CToolbarItem& item) {
 	switch (item.Command) {
 		case IDM_TOGGLE_SIDEPANEL: return m_bShowSidePanel;
-		case IDM_TOGGLE_EDITPANEL: return m_pMainDlg->GetImageProcPanelCtl() != NULL && m_pMainDlg->GetImageProcPanelCtl()->IsPinned();
+		case IDM_TOGGLE_EDITPANEL: return IsEditTabShown();
+		case IDM_COMPARE_BEFORE_AFTER: return m_pMainDlg->IsCompareMode();
 	}
 	return false;
+}
+
+bool CWindowChrome::IsSliderGroupEnabled(int nGroup) {
+	if (nGroup == 1) return m_pMainDlg->IsLDC();
+	if (nGroup == 2) return m_pMainDlg->IsAutoContrast();
+	return true;
 }
 
 void CWindowChrome::ExecuteItem(int nIndex) {
@@ -560,13 +747,93 @@ void CWindowChrome::ExecuteItem(int nIndex) {
 	}
 }
 
+void CWindowChrome::ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bDoubleClick) {
+	switch (hit.Type) {
+		case SH_Collapse:
+			SetSidePanelCollapsed(true);
+			break;
+		case SH_Expand:
+			SetSidePanelCollapsed(false);
+			break;
+		case SH_Tab:
+			ShowSideTab((ESideTab)hit.Value);
+			break;
+		case SH_Location:
+			if (!m_sLocationURL.IsEmpty()) {
+				::ShellExecute(m_pMainDlg->GetHWND(), _T("open"), m_sLocationURL, NULL, NULL, SW_SHOWNORMAL);
+			}
+			break;
+		case SH_Slider:
+			if (m_pMainDlg->GetCurrentImage() == NULL || !IsSliderGroupEnabled(m_sliders[hit.Value].Group)) {
+				break;
+			}
+			if (bDoubleClick) {
+				// double click resets the value
+				const CSideSlider& slider = m_sliders[hit.Value];
+				m_pMainDlg->GetImageProcessingParams()->*slider.Value = slider.Default;
+				m_pMainDlg->OnImageProcessingChanged();
+				Paint();
+			} else {
+				m_nDragSlider = hit.Value;
+				::SetCapture(m_pMainDlg->GetHWND());
+				SetSliderFromPosition(hit.Value, ptWindow.x);
+			}
+			break;
+		case SH_GroupCheck:
+			if (m_pMainDlg->GetCurrentImage() != NULL) {
+				m_pMainDlg->ExecuteCommand(hit.Value == 1 ? IDM_LDC : IDM_AUTO_CORRECTION);
+				Paint();
+			}
+			break;
+		case SH_Button:
+			m_pMainDlg->ExecuteCommand(hit.Value);
+			Paint();
+			break;
+	}
+}
+
+double CWindowChrome::SliderToPosition(const CSideSlider& slider, double dValue) {
+	double dMin = slider.Logarithmic ? log10(slider.Min) : slider.Min;
+	double dMax = slider.Logarithmic ? log10(slider.Max) : slider.Max;
+	double dX = (slider.Logarithmic ? log10(max(1e-6, dValue)) : dValue) * (slider.Inverted ? -1 : 1);
+	return max(0.0, min(1.0, (dX - dMin) / (dMax - dMin)));
+}
+
+double CWindowChrome::PositionToSlider(const CSideSlider& slider, double dPosition) {
+	double dMin = slider.Logarithmic ? log10(slider.Min) : slider.Min;
+	double dMax = slider.Logarithmic ? log10(slider.Max) : slider.Max;
+	double dX = (dMin + dPosition * (dMax - dMin)) * (slider.Inverted ? -1 : 1);
+	return slider.Logarithmic ? pow(10.0, dX) : dX;
+}
+
+void CWindowChrome::SetSliderFromPosition(int nSlider, int nXWindow) {
+	for (const CSideHit& hit : m_sideHits) {
+		if (hit.Type == SH_Slider && hit.Value == nSlider) {
+			// the hit rectangle has the knob radius as margin on both sides
+			int nMargin = S(7);
+			double dPosition = (double)(nXWindow - hit.Rect.left - nMargin) / max(1, hit.Rect.Width() - 2 * nMargin);
+			dPosition = max(0.0, min(1.0, dPosition));
+			const CSideSlider& slider = m_sliders[nSlider];
+			double dValue = PositionToSlider(slider, dPosition);
+			// snap to the default value close to it
+			if (fabs(SliderToPosition(slider, slider.Default) - dPosition) < 0.015) {
+				dValue = slider.Default;
+			}
+			m_pMainDlg->GetImageProcessingParams()->*slider.Value = dValue;
+			m_pMainDlg->OnImageProcessingChanged();
+			Paint();
+			return;
+		}
+	}
+}
+
 void CWindowChrome::PaintItem(CDC& dc, const CToolbarItem& item, int nIndex) {
 	if (item.Rect.IsRectEmpty()) {
 		return;
 	}
 	if (item.Type == IT_Separator) {
 		int nX = (item.Rect.left + item.Rect.right) / 2;
-		dc.FillSolidRect(nX, item.Rect.top + HelpersGUI::ScaleToScreen(5), max(1, HelpersGUI::ScaleToScreen(1)), item.Rect.Height() - HelpersGUI::ScaleToScreen(10), m_colors.Border);
+		dc.FillSolidRect(nX, item.Rect.top + S(5), max(1, S(1)), item.Rect.Height() - S(10), m_colors.Border);
 		return;
 	}
 
@@ -580,7 +847,7 @@ void CWindowChrome::PaintItem(CDC& dc, const CToolbarItem& item, int nIndex) {
 		background = m_colors.Checked;
 	}
 	if (background != m_colors.Background) {
-		FillRoundRect(dc, item.Rect, background, HelpersGUI::ScaleToScreen(8));
+		FillRoundRect(dc, item.Rect, background, S(8));
 	}
 
 	dc.SetTextColor(bEnabled ? m_colors.Text : m_colors.DimText);
@@ -613,7 +880,7 @@ void CWindowChrome::PaintItem(CDC& dc, const CToolbarItem& item, int nIndex) {
 		glyphDC.DrawText(glyph, 1, &glyphRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 		glyphDC.SelectFont(hOldFont);
 		// keep the rounded corners of the hover background, only the inner part is copied
-		int nInset = HelpersGUI::ScaleToScreen(4);
+		int nInset = S(4);
 		dc.StretchBlt(textRect.right - 1 - nInset, textRect.top + nInset, -(nW - 2 * nInset), nH - 2 * nInset, glyphDC, nInset, nInset, nW - 2 * nInset, nH - 2 * nInset, SRCCOPY);
 		glyphDC.SelectBitmap(hOldBitmap);
 	}
@@ -621,7 +888,7 @@ void CWindowChrome::PaintItem(CDC& dc, const CToolbarItem& item, int nIndex) {
 
 void CWindowChrome::PaintToolbar(CDC& dc) {
 	dc.FillSolidRect(&m_toolbarRect, m_colors.Background);
-	DrawHorizontalLine(dc, m_toolbarRect.left, m_toolbarRect.right, m_toolbarRect.bottom - max(1, HelpersGUI::ScaleToScreen(1)), m_colors.Border);
+	DrawHorizontalLine(dc, m_toolbarRect.left, m_toolbarRect.right, m_toolbarRect.bottom - max(1, S(1)), m_colors.Border);
 	for (int i = 0; i < (int)m_items.size(); i++) {
 		PaintItem(dc, m_items[i], i);
 	}
@@ -669,7 +936,7 @@ void CWindowChrome::PaintStatusBar(CDC& dc) {
 	dc.FillSolidRect(&m_statusBarRect, m_colors.Background);
 	DrawHorizontalLine(dc, m_statusBarRect.left, m_statusBarRect.right, m_statusBarRect.top, m_colors.Border);
 	HFONT hOldFont = dc.SelectFont(m_hFont);
-	int nPadding = HelpersGUI::ScaleToScreen(10);
+	int nPadding = S(10);
 	CRect textRect(m_statusBarRect.left + nPadding, m_statusBarRect.top, m_statusBarRect.right - nPadding, m_statusBarRect.bottom);
 
 	// the right part shows the temporary message or the tooltip of the hovered toolbar button
@@ -689,58 +956,146 @@ void CWindowChrome::PaintStatusBar(CDC& dc) {
 
 	dc.SetTextColor(m_colors.Text);
 	CString sStatus = GetStatusText();
+	if (m_pMainDlg->IsCompareMode()) {
+		sStatus += CString(_T("     ")) + CNLS::GetString(_T("Comparing: left before, right after editing"));
+	}
 	dc.DrawText(sStatus, -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
 	dc.SelectFont(hOldFont);
 }
 
+void CWindowChrome::PaintSideButton(CDC& dc, const CRect& rect, LPCTSTR sText, bool bChecked, bool bHover, bool bEnabled) {
+	COLORREF background = bChecked ? m_colors.Checked : bHover && bEnabled ? m_colors.Hover : m_colors.Background;
+	FillRoundRect(dc, rect, background, S(6));
+	dc.SetTextColor(bEnabled ? m_colors.Text : m_colors.DimText);
+	CRect textRect = rect;
+	dc.DrawText(sText, -1, &textRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+}
+
+void CWindowChrome::PaintCheckBox(CDC& dc, const CRect& rect, bool bChecked) {
+	FillRoundRect(dc, rect, bChecked ? m_colors.Accent : m_colors.Hover, S(4));
+	if (bChecked && m_hSmallIconFont != NULL) {
+		HFONT hOldFont = dc.SelectFont(m_hSmallIconFont);
+		dc.SetTextColor(RGB(255, 255, 255));
+		wchar_t check[2] = { 0xE73E, 0 }; // check mark glyph
+		CRect checkRect = rect;
+		dc.DrawText(check, 1, &checkRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		dc.SelectFont(hOldFont);
+	}
+}
+
+void CWindowChrome::PaintCollapsedSidePanel(CDC& dc) {
+	const CRect& rect = m_sidePanelRect;
+	m_sideHits.clear();
+	m_hitOrigin = rect.TopLeft();
+	dc.FillSolidRect(&rect, m_colors.PanelBackground);
+	dc.FillSolidRect(rect.left, rect.top, max(1, S(1)), rect.Height(), m_colors.Border);
+
+	struct { wchar_t Glyph; LPCTSTR Text; ESideHitType Type; int Value; LPCTSTR Tooltip; } buttons[] = {
+		{ 0xE76B, _T("<"), SH_Expand, 0, _T("Expand the side panel") },
+		{ 0xE946, _T("i"), SH_Tab, TAB_INFO, _T("Information") },
+		{ 0xE70F, _T("E"), SH_Tab, TAB_EDIT, _T("Edit image (brightness, contrast, colors)") },
+	};
+	int nSize = rect.Width() - S(6);
+	int nY = S(6);
+	for (int i = 0; i < 3; i++) {
+		CRect buttonRect(S(3), nY, S(3) + nSize, nY + nSize);
+		AddSideHit(buttons[i].Type, buttons[i].Value, buttonRect, buttons[i].Tooltip);
+		buttonRect.OffsetRect(rect.TopLeft());
+		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		if (bHover) {
+			FillRoundRect(dc, buttonRect, m_colors.Hover, S(6));
+		}
+		dc.SetTextColor(m_colors.Text);
+		HFONT hOldFont = dc.SelectFont(m_bHasIconFont ? m_hIconFont : m_hFont);
+		wchar_t glyph[2] = { buttons[i].Glyph, 0 };
+		dc.DrawText(m_bHasIconFont ? glyph : buttons[i].Text, -1, &buttonRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		dc.SelectFont(hOldFont);
+		nY += nSize + S(4);
+	}
+}
+
 void CWindowChrome::PaintSidePanel(CDC& dc) {
 	const CRect& rect = m_sidePanelRect;
+	m_sideHits.clear();
 	dc.FillSolidRect(&rect, m_colors.PanelBackground);
-	dc.FillSolidRect(rect.left, rect.top, max(1, HelpersGUI::ScaleToScreen(1)), rect.Height(), m_colors.Border);
+	dc.FillSolidRect(rect.left, rect.top, max(1, S(1)), rect.Height(), m_colors.Border);
 
-	int nMaxScroll = max(0, m_nSideContentHeight - rect.Height());
+	// header with the tabs and the collapse button, it does not scroll
+	int nHeader = S(SIDE_HEADER_HEIGHT);
+	m_hitOrigin = rect.TopLeft();
+	HFONT hOldFont = dc.SelectFont(m_hBoldFont);
+	int nX = S(SIDE_PADDING) - S(6);
+	LPCTSTR tabs[2] = { _T("Information"), _T("Edit") };
+	for (int nTab = 0; nTab < 2; nTab++) {
+		CRect measureRect(0, 0, 0, 0);
+		LPCTSTR sTab = CNLS::GetString(tabs[nTab]);
+		dc.DrawText(sTab, -1, &measureRect, DT_CALCRECT | DT_SINGLELINE | DT_NOPREFIX);
+		CRect tabRect(nX, S(6), nX + measureRect.Width() + S(16), nHeader - S(6));
+		AddSideHit(SH_Tab, nTab, tabRect, NULL);
+		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		tabRect.OffsetRect(rect.TopLeft());
+		if (bHover) {
+			FillRoundRect(dc, tabRect, m_colors.Hover, S(6));
+		}
+		dc.SetTextColor(nTab == m_eSideTab ? m_colors.Text : m_colors.DimText);
+		dc.DrawText(sTab, -1, &tabRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		if (nTab == m_eSideTab) {
+			dc.FillSolidRect(tabRect.left + S(8), tabRect.bottom - S(2), tabRect.Width() - S(16), S(2), m_colors.Accent);
+		}
+		nX += tabRect.Width() + S(2);
+	}
+	int nButton = nHeader - S(12);
+	CRect collapseRect(rect.Width() - nButton - S(6), S(6), rect.Width() - S(6), S(6) + nButton);
+	AddSideHit(SH_Collapse, 0, collapseRect, _T("Collapse the side panel"));
+	bool bCollapseHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+	collapseRect.OffsetRect(rect.TopLeft());
+	if (bCollapseHover) {
+		FillRoundRect(dc, collapseRect, m_colors.Hover, S(6));
+	}
+	dc.SetTextColor(m_colors.Text);
+	dc.SelectFont(m_bHasIconFont ? m_hSmallIconFont : m_hFont);
+	wchar_t collapseGlyph[2] = { 0xE76C, 0 };
+	dc.DrawText(m_bHasIconFont ? collapseGlyph : _T(">"), -1, &collapseRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+	dc.SelectFont(hOldFont);
+	DrawHorizontalLine(dc, rect.left + S(1), rect.right, rect.top + nHeader - 1, m_colors.Border);
+
+	// content below the header, shifted by the scroll position
+	int nVisibleHeight = rect.Height() - nHeader;
+	int nMaxScroll = max(0, m_nSideContentHeight - nVisibleHeight);
 	m_nSideScroll = min(m_nSideScroll, nMaxScroll);
 
-	// the content is painted relative to the top, left corner of the panel, shifted by the scroll position
 	CPoint oldOrigin;
 	dc.GetViewportOrg(&oldOrigin);
-	dc.SetViewportOrg(oldOrigin.x + rect.left, oldOrigin.y + rect.top - m_nSideScroll);
-	HRGN hClip = ::CreateRectRgn(0, 0, rect.Width(), rect.Height());
-	::OffsetRgn(hClip, oldOrigin.x + rect.left, oldOrigin.y + rect.top);
+	dc.SetViewportOrg(oldOrigin.x + rect.left, oldOrigin.y + rect.top + nHeader - m_nSideScroll);
+	m_hitOrigin = CPoint(rect.left, rect.top + nHeader - m_nSideScroll);
+	HRGN hClip = ::CreateRectRgn(0, 0, rect.Width(), nVisibleHeight);
+	::OffsetRgn(hClip, oldOrigin.x + rect.left, oldOrigin.y + rect.top + nHeader);
 	::SelectClipRgn(dc, hClip);
-	m_nSideContentHeight = PaintSidePanelContent(dc, rect.Width());
+	m_nSideContentHeight = (m_eSideTab == TAB_INFO) ? PaintInfoTab(dc, rect.Width(), S(10)) : PaintEditTab(dc, rect.Width(), S(10));
 	::SelectClipRgn(dc, NULL);
 	::DeleteObject(hClip);
 	dc.SetViewportOrg(oldOrigin);
 
 	// scroll indicator
-	if (m_nSideContentHeight > rect.Height()) {
-		int nBarHeight = max(HelpersGUI::ScaleToScreen(24), rect.Height() * rect.Height() / m_nSideContentHeight);
-		int nBarTop = rect.top + (rect.Height() - nBarHeight) * m_nSideScroll / max(1, m_nSideContentHeight - rect.Height());
-		int nBarWidth = HelpersGUI::ScaleToScreen(4);
-		FillRoundRect(dc, CRect(rect.right - nBarWidth - HelpersGUI::ScaleToScreen(3), nBarTop, rect.right - HelpersGUI::ScaleToScreen(3), nBarTop + nBarHeight),
-			m_colors.Border, nBarWidth);
+	if (m_nSideContentHeight > nVisibleHeight) {
+		int nBarHeight = max(S(24), nVisibleHeight * nVisibleHeight / m_nSideContentHeight);
+		int nBarTop = rect.top + nHeader + (nVisibleHeight - nBarHeight) * m_nSideScroll / max(1, m_nSideContentHeight - nVisibleHeight);
+		int nBarWidth = S(4);
+		FillRoundRect(dc, CRect(rect.right - nBarWidth - S(3), nBarTop, rect.right - S(3), nBarTop + nBarHeight), m_colors.Border, nBarWidth);
 	}
 }
 
-int CWindowChrome::PaintSidePanelContent(CDC& dc, int nWidth) {
-	int nPad = HelpersGUI::ScaleToScreen(SIDE_PADDING);
-	int nGap = HelpersGUI::ScaleToScreen(6);
+int CWindowChrome::PaintInfoTab(CDC& dc, int nWidth, int nY) {
+	int nPad = S(SIDE_PADDING);
+	int nGap = S(6);
 	int nInnerWidth = nWidth - 2 * nPad;
-	int nY = nPad;
 	m_sLocationURL.Empty();
-	m_locationRect = CRect(0, 0, 0, 0);
 
-	HFONT hOldFont = dc.SelectFont(m_hBoldFont);
-	dc.SetTextColor(m_colors.DimText);
-	CRect headerRect(nPad, nY, nPad + nInnerWidth, nY + HelpersGUI::ScaleToScreen(20));
-	dc.DrawText(CNLS::GetString(_T("Information")), -1, &headerRect, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
-	nY = headerRect.bottom + nGap;
-
+	HFONT hOldFont = dc.SelectFont(m_hFont);
 	CJPEGImage* pImage = m_pMainDlg->GetCurrentImage();
 	if (pImage == NULL || m_pMainDlg->GetEXIFDisplayCtl() == NULL) {
-		dc.SelectFont(m_hFont);
-		CRect textRect(nPad, nY, nPad + nInnerWidth, nY + HelpersGUI::ScaleToScreen(40));
+		dc.SetTextColor(m_colors.DimText);
+		CRect textRect(nPad, nY, nPad + nInnerWidth, nY + S(40));
 		dc.DrawText(CNLS::GetString(_T("No image loaded!")), -1, &textRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
 		dc.SelectFont(hOldFont);
 		return textRect.bottom + nPad;
@@ -753,48 +1108,50 @@ int CWindowChrome::PaintSidePanelContent(CDC& dc, int nWidth) {
 	// file name (word wrapped) and index in folder
 	LPCTSTR sTitle = (pEXIF->GetTitle() != NULL && pEXIF->GetTitle()[0] != 0) ? pEXIF->GetTitle() : pEXIF->GetPrefix();
 	if (sTitle != NULL) {
+		dc.SelectFont(m_hBoldFont);
 		dc.SetTextColor(m_colors.Text);
 		CRect titleRect(nPad, nY, nPad + nInnerWidth, nY);
 		dc.DrawText(sTitle, -1, &titleRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
 		titleRect.right = nPad + nInnerWidth;
 		dc.DrawText(sTitle, -1, &titleRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
-		nY = titleRect.bottom + HelpersGUI::ScaleToScreen(2);
+		nY = titleRect.bottom + S(2);
+		dc.SelectFont(m_hFont);
 	}
-	dc.SelectFont(m_hFont);
 	if (pEXIF->GetPrefix() != NULL && pEXIF->GetPrefix()[0] != 0 && sTitle != pEXIF->GetPrefix()) {
 		dc.SetTextColor(m_colors.DimText);
-		CRect prefixRect(nPad, nY, nPad + nInnerWidth, nY + HelpersGUI::ScaleToScreen(18));
+		CRect prefixRect(nPad, nY, nPad + nInnerWidth, nY + S(18));
 		dc.DrawText(pEXIF->GetPrefix(), -1, &prefixRect, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
 		nY = prefixRect.bottom;
 	}
 	nY += nGap;
 	DrawHorizontalLine(dc, nPad, nPad + nInnerWidth, nY, m_colors.Border);
-	nY += nGap + HelpersGUI::ScaleToScreen(2);
+	nY += nGap + S(2);
 
 	// description / value lines
-	int nDescWidth = nInnerWidth * 45 / 100;
+	int nDescWidth = nInnerWidth * 42 / 100;
 	int nValueX = nPad + nDescWidth + nGap;
 	int nValueWidth = nPad + nInnerWidth - nValueX;
 	CString sLocationURL = pEXIF->GetLocationURL();
 	for (const CEXIFDisplay::TextLine& line : pEXIF->GetLines()) {
+		bool bIsLink = line.ValueIsURL && !sLocationURL.IsEmpty();
+		// the GPS location only wraps between latitude and longitude
+		CString sValue = line.ValueIsURL ? KeepTogether(line.Value, _T(" / ")) : CString(line.Value);
 		CRect descRect(nPad, nY, nPad + nDescWidth, nY);
 		dc.DrawText(line.Desc, -1, &descRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
 		descRect.right = nPad + nDescWidth;
 		CRect valueRect(nValueX, nY, nValueX + nValueWidth, nY);
-		dc.DrawText(line.Value, -1, &valueRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
+		dc.DrawText(sValue, -1, &valueRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
 		valueRect.right = nValueX + nValueWidth;
 
 		dc.SetTextColor(m_colors.DimText);
 		dc.DrawText(line.Desc, -1, &descRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
-		bool bIsLink = line.ValueIsURL && !sLocationURL.IsEmpty();
 		dc.SetTextColor(bIsLink ? m_colors.Accent : m_colors.Text);
-		dc.DrawText(line.Value, -1, &valueRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
+		dc.DrawText(sValue, -1, &valueRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
 		if (bIsLink) {
 			m_sLocationURL = sLocationURL;
-			m_locationRect = valueRect;
-			m_locationRect.OffsetRect(m_sidePanelRect.left, m_sidePanelRect.top - m_nSideScroll);
+			AddSideHit(SH_Location, 0, valueRect, _T("Show the location on the map"));
 		}
-		nY = max(descRect.bottom, valueRect.bottom) + HelpersGUI::ScaleToScreen(4);
+		nY = max(descRect.bottom, valueRect.bottom) + S(4);
 	}
 
 	// histogram
@@ -803,11 +1160,11 @@ int CWindowChrome::PaintSidePanelContent(CDC& dc, int nWidth) {
 		nY += nGap;
 		dc.SelectFont(m_hBoldFont);
 		dc.SetTextColor(m_colors.DimText);
-		CRect histHeaderRect(nPad, nY, nPad + nInnerWidth, nY + HelpersGUI::ScaleToScreen(20));
+		CRect histHeaderRect(nPad, nY, nPad + nInnerWidth, nY + S(20));
 		dc.DrawText(CNLS::GetString(_T("Histogram")), -1, &histHeaderRect, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
 		dc.SelectFont(m_hFont);
 		nY = histHeaderRect.bottom + nGap;
-		CRect histRect(nPad, nY, nPad + nInnerWidth, nY + HelpersGUI::ScaleToScreen(HISTOGRAM_HEIGHT));
+		CRect histRect(nPad, nY, nPad + nInnerWidth, nY + S(HISTOGRAM_HEIGHT));
 		PaintHistogram(dc, histRect);
 		nY = histRect.bottom + nGap;
 	}
@@ -817,7 +1174,7 @@ int CWindowChrome::PaintSidePanelContent(CDC& dc, int nWidth) {
 		nY += nGap;
 		dc.SelectFont(m_hBoldFont);
 		dc.SetTextColor(m_colors.DimText);
-		CRect commentHeaderRect(nPad, nY, nPad + nInnerWidth, nY + HelpersGUI::ScaleToScreen(20));
+		CRect commentHeaderRect(nPad, nY, nPad + nInnerWidth, nY + S(20));
 		dc.DrawText(CNLS::GetString(_T("Comment")), -1, &commentHeaderRect, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
 		dc.SelectFont(m_hFont);
 		nY = commentHeaderRect.bottom + nGap;
@@ -827,6 +1184,128 @@ int CWindowChrome::PaintSidePanelContent(CDC& dc, int nWidth) {
 		commentRect.right = nPad + nInnerWidth;
 		dc.DrawText(pEXIF->GetComment(), -1, &commentRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
 		nY = commentRect.bottom;
+	}
+
+	dc.SelectFont(hOldFont);
+	return nY + nPad;
+}
+
+int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
+	int nPad = S(SIDE_PADDING);
+	int nInnerWidth = nWidth - 2 * nPad;
+	CJPEGImage* pImage = m_pMainDlg->GetCurrentImage();
+	CImageProcessingParams* pParams = m_pMainDlg->GetImageProcessingParams();
+	bool bHasImage = pImage != NULL && pParams != NULL;
+
+	HFONT hOldFont = dc.SelectFont(m_hFont);
+	if (!bHasImage) {
+		dc.SetTextColor(m_colors.DimText);
+		CRect textRect(nPad, nY, nPad + nInnerWidth, nY + S(40));
+		dc.DrawText(CNLS::GetString(_T("No image loaded!")), -1, &textRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+		dc.SelectFont(hOldFont);
+		return textRect.bottom + nPad;
+	}
+
+	// buttons at the top: compare and reset
+	int nButtonHeight = S(SIDE_BUTTON_HEIGHT);
+	int nHalf = (nInnerWidth - S(6)) / 2;
+	struct { LPCTSTR Text; int Command; LPCTSTR Tooltip; } topButtons[] = {
+		{ _T("Compare"), IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing") },
+		{ _T("Reset"), IDM_RESET_PROCESSING, _T("Reset all values to the defaults") },
+	};
+	for (int i = 0; i < 2; i++) {
+		CRect buttonRect(nPad + i * (nHalf + S(6)), nY, nPad + i * (nHalf + S(6)) + nHalf, nY + nButtonHeight);
+		AddSideHit(SH_Button, topButtons[i].Command, buttonRect, topButtons[i].Tooltip);
+		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		bool bChecked = topButtons[i].Command == IDM_COMPARE_BEFORE_AFTER && m_pMainDlg->IsCompareMode();
+		PaintSideButton(dc, buttonRect, CNLS::GetString(topButtons[i].Text), bChecked, bHover, true);
+	}
+	nY += nButtonHeight + S(10);
+
+	int nGroup = -1;
+	LPCTSTR groupTitles[] = { _T("Tone and color"), _T("Local density correction"), _T("Automatic correction") };
+	int nTrackHeight = S(14);
+	for (int nSlider = 0; nSlider < (int)m_sliders.size(); nSlider++) {
+		const CSideSlider& slider = m_sliders[nSlider];
+		if (slider.Group != nGroup) {
+			// group header, the groups 1 and 2 have a check box to switch the correction on and off
+			nGroup = slider.Group;
+			nY += S(4);
+			int nCheck = S(14);
+			int nTextX = nPad;
+			if (nGroup > 0) {
+				CRect checkRect(nPad, nY + S(2), nPad + nCheck, nY + S(2) + nCheck);
+				PaintCheckBox(dc, checkRect, IsSliderGroupEnabled(nGroup));
+				nTextX += nCheck + S(8);
+			}
+			dc.SelectFont(m_hBoldFont);
+			dc.SetTextColor(m_colors.DimText);
+			CRect titleRect(nTextX, nY, nPad + nInnerWidth, nY + S(18));
+			dc.DrawText(CNLS::GetString(groupTitles[nGroup]), -1, &titleRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+			dc.SelectFont(m_hFont);
+			if (nGroup > 0) {
+				AddSideHit(SH_GroupCheck, nGroup, CRect(nPad, nY, nPad + nInnerWidth, nY + S(18)), _T("Switch this correction on or off"));
+			}
+			nY += S(24);
+		}
+
+		bool bEnabled = IsSliderGroupEnabled(slider.Group);
+		double dValue = pParams->*slider.Value;
+		// label and value
+		dc.SetTextColor(bEnabled ? m_colors.Text : m_colors.DimText);
+		CRect labelRect(nPad, nY, nPad + nInnerWidth, nY + S(16));
+		dc.DrawText(CNLS::GetString(slider.Name), -1, &labelRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		TCHAR buff[16];
+		_stprintf_s(buff, 16, _T("%.2f"), dValue);
+		dc.SetTextColor(fabs(dValue - slider.Default) > 0.005 ? m_colors.Accent : m_colors.DimText);
+		dc.DrawText(buff, -1, &labelRect, DT_RIGHT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		nY += S(18);
+
+		// track with the default position mark and the knob
+		CRect hitRect(nPad, nY, nPad + nInnerWidth, nY + nTrackHeight);
+		AddSideHit(SH_Slider, nSlider, hitRect, _T("Drag to change, double click to reset"));
+		int nMargin = S(7);
+		int nTrackLeft = hitRect.left + nMargin, nTrackRight = hitRect.right - nMargin;
+		int nTrackY = hitRect.top + nTrackHeight / 2;
+		dc.FillSolidRect(nTrackLeft, nTrackY - S(1), nTrackRight - nTrackLeft, S(2), m_colors.Border);
+		int nDefaultX = nTrackLeft + (int)(SliderToPosition(slider, slider.Default) * (nTrackRight - nTrackLeft) + 0.5);
+		dc.FillSolidRect(nDefaultX, nTrackY - S(4), max(1, S(1)), S(8), m_colors.DimText);
+		int nKnobX = nTrackLeft + (int)(SliderToPosition(slider, dValue) * (nTrackRight - nTrackLeft) + 0.5);
+		if (bEnabled) {
+			dc.FillSolidRect(min(nDefaultX, nKnobX), nTrackY - S(1), abs(nKnobX - nDefaultX), S(2), m_colors.Accent);
+		}
+		int nKnob = S(6);
+		CRect knobRect(nKnobX - nKnob, nTrackY - nKnob, nKnobX + nKnob, nTrackY + nKnob);
+		COLORREF knobColor = !bEnabled ? m_colors.Border : (m_nDragSlider == nSlider) ? m_colors.Text : m_colors.Accent;
+		CBrush knobBrush;
+		knobBrush.CreateSolidBrush(knobColor);
+		HBRUSH hOldBrush = dc.SelectBrush(knobBrush);
+		HPEN hOldPen = dc.SelectPen((HPEN)::GetStockObject(NULL_PEN));
+		dc.Ellipse(&knobRect);
+		dc.SelectPen(hOldPen);
+		dc.SelectBrush(hOldBrush);
+		nY += nTrackHeight + S(8);
+	}
+
+	// further actions
+	nY += S(6);
+	DrawHorizontalLine(dc, nPad, nPad + nInnerWidth, nY, m_colors.Border);
+	nY += S(10);
+	bool bCanUseParamDB = !pImage->IsClipboardImage() && !m_pMainDlg->IsKeepParams() && !m_pMainDlg->IsInMovieMode();
+	struct { LPCTSTR Text; int Command; bool Enabled; LPCTSTR Tooltip; } buttons[] = {
+		{ _T("Unsharp mask..."), IDM_UNSHARP_MASK, true, _T("Sharpen with radius, amount and threshold") },
+		{ _T("Save these values for this image"), IDM_SAVE_PARAM_DB, bCanUseParamDB, _T("JPEGView shows this image with these values the next time (parameter DB)") },
+		{ _T("Forget the values of this image"), IDM_CLEAR_PARAM_DB, bCanUseParamDB && pImage->IsInParamDB(), _T("Removes this image from the parameter DB") },
+		{ _T("Save processed image..."), IDM_SAVE, true, NULL },
+	};
+	for (int i = 0; i < 4; i++) {
+		CRect buttonRect(nPad, nY, nPad + nInnerWidth, nY + nButtonHeight);
+		if (buttons[i].Enabled) {
+			AddSideHit(SH_Button, buttons[i].Command, buttonRect, buttons[i].Tooltip);
+		}
+		bool bHover = buttons[i].Enabled && m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, buttonRect, CNLS::GetString(buttons[i].Text), false, bHover, buttons[i].Enabled);
+		nY += nButtonHeight + S(6);
 	}
 
 	dc.SelectFont(hOldFont);
@@ -863,7 +1342,7 @@ void CWindowChrome::PaintHistogram(CDC& dc, const CRect& rect) {
 	const COLORREF channelColors[3] = { RGB(235, 80, 80), RGB(80, 200, 100), RGB(90, 140, 255) };
 	for (int c = 1; c < 4; c++) {
 		CPen pen;
-		pen.CreatePen(PS_SOLID, max(1, HelpersGUI::ScaleToScreen(1)), channelColors[c - 1]);
+		pen.CreatePen(PS_SOLID, max(1, S(1)), channelColors[c - 1]);
 		HPEN hOldPen = dc.SelectPen(pen);
 		for (int x = 0; x < nW; x++) {
 			int nBin = x * 256 / nW;

@@ -22,10 +22,10 @@ public:
 	static bool SaveImage(LPCTSTR sFileName, CJPEGImage * pImage, bool bUseLosslessWEBP);
 
 	// Saves the whole image scaled to targetSize in the given format, used by the converter.
-	// Supported formats: IF_JPEG (keeps EXIF data), IF_PNG, IF_WindowsBMP, IF_TIFF, IF_GIF, IF_WEBP, IF_QOI.
+	// Supported formats: IF_JPEG (keeps EXIF data if bKeepMetadata is set), IF_PNG, IF_WindowsBMP, IF_TIFF, IF_GIF, IF_WEBP, IF_QOI.
 	// Creates no parameter DB entry.
 	static bool SaveImageAs(LPCTSTR sFileName, EImageFormat eFormat, CJPEGImage * pImage, const CImageProcessingParams& procParams,
-		EProcessingFlags eFlags, CSize targetSize, bool bUseLosslessWEBP);
+		EProcessingFlags eFlags, CSize targetSize, bool bUseLosslessWEBP, bool bKeepMetadata = true);
 
 	// Saves the image as Windows icon (PNG compressed entry), scaled to fit into 256 x 256 pixels
 	static bool SaveImageAsIcon(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams, EProcessingFlags eFlags);

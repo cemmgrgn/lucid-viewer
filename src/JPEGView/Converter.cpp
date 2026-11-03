@@ -13,21 +13,45 @@
 
 namespace Converter {
 
-	static const CPreset s_presets[] = {
-		{ _T("jpg"), _T("JPG"), OF_JPEG, 100, 0, false },
-		{ _T("png"), _T("PNG"), OF_PNG, 100, 0, false },
-		{ _T("webp"), _T("WEBP"), OF_WEBP, 100, 0, false },
-		{ _T("webp-lossless"), _T("WEBP (lossless)"), OF_WEBP_LOSSLESS, 100, 0, false },
-		{ _T("bmp"), _T("BMP"), OF_BMP, 100, 0, false },
-		{ _T("tiff"), _T("TIFF"), OF_TIFF, 100, 0, false },
-		{ _T("gif"), _T("GIF"), OF_GIF, 100, 0, false },
-		{ _T("ico"), _T("ICO (icon)"), OF_ICO, 100, 0, false },
-		{ _T("pdf"), _T("PDF"), OF_PDF, 100, 0, false },
-		{ _T("scale75"), _T("Scale to 75 %"), OF_SameAsSource, 75, 0, true },
-		{ _T("scale50"), _T("Scale to 50 %"), OF_SameAsSource, 50, 0, false },
-		{ _T("scale25"), _T("Scale to 25 %"), OF_SameAsSource, 25, 0, false },
-		{ _T("rotate-left"), _T("Rotate left"), OF_SameAsSource, 100, 270, true },
-		{ _T("rotate-right"), _T("Rotate right"), OF_SameAsSource, 100, 90, false },
+	struct CFormat {
+		LPCTSTR Id;
+		LPCTSTR MenuText;
+		EOutputFormat Format;
+	};
+
+	static const CFormat s_formats[] = {
+		{ _T("jpg"), _T("JPG"), OF_JPEG },
+		{ _T("png"), _T("PNG"), OF_PNG },
+		{ _T("webp"), _T("WEBP"), OF_WEBP },
+		{ _T("webpll"), _T("WEBP (lossless)"), OF_WEBP_LOSSLESS },
+		{ _T("bmp"), _T("BMP"), OF_BMP },
+		{ _T("tiff"), _T("TIFF"), OF_TIFF },
+		{ _T("gif"), _T("GIF"), OF_GIF },
+		{ _T("ico"), _T("ICO (icon)"), OF_ICO },
+		{ _T("pdf"), _T("PDF"), OF_PDF },
+		{ _T("same"), _T("Same format"), OF_SameAsSource },
+	};
+
+	static const COperation s_operations[] = {
+		{ _T(""), _T(""), false },
+		{ _T("scale75"), _T("Scale to 75 %"), true },
+		{ _T("scale50"), _T("Scale to 50 %"), false },
+		{ _T("scale25"), _T("Scale to 25 %"), false },
+		{ _T("fit1920"), _T("Fit long edge to 1920 px"), false },
+		{ _T("fit1280"), _T("Fit long edge to 1280 px"), false },
+		{ _T("rotl"), _T("Rotate left"), true },
+		{ _T("rotr"), _T("Rotate right"), false },
+		{ _T("nometa"), _T("Remove metadata (EXIF, GPS)"), true },
+	};
+
+	// Old preset ids (first version of the Explorer menu) and their current ids
+	static const LPCTSTR s_legacyIds[][2] = {
+		{ _T("webp-lossless"), _T("webpll") },
+		{ _T("scale75"), _T("scale75:same") },
+		{ _T("scale50"), _T("scale50:same") },
+		{ _T("scale25"), _T("scale25:same") },
+		{ _T("rotate-left"), _T("rotl:same") },
+		{ _T("rotate-right"), _T("rotr:same") },
 	};
 
 	// File endings that get the Explorer context menu, all are readable by JPEGView without extra codecs
@@ -52,6 +76,47 @@ namespace Converter {
 
 	static EProcessingFlags ConversionProcessingFlags() {
 		return (EProcessingFlags)(PFLAG_HighQualityResampling | PFLAG_NoProcessingAfterLoad);
+	}
+
+	// The formats offered in the sub menu of an operation
+	static bool IsFormatOfOperation(int nOperation, EOutputFormat eFormat) {
+		LPCTSTR sOperation = s_operations[nOperation].Id;
+		if (nOperation == 0) {
+			return eFormat != OF_SameAsSource;
+		}
+		if (_tcscmp(sOperation, _T("nometa")) == 0) {
+			return eFormat == OF_SameAsSource;
+		}
+		return eFormat == OF_SameAsSource || eFormat == OF_JPEG || eFormat == OF_PNG || eFormat == OF_WEBP;
+	}
+
+	static std::vector<CPreset> CreatePresets() {
+		std::vector<CPreset> presets;
+		for (int nOperation = 0; nOperation < sizeof(s_operations) / sizeof(COperation); nOperation++) {
+			const COperation& operation = s_operations[nOperation];
+			for (const CFormat& format : s_formats) {
+				if (!IsFormatOfOperation(nOperation, format.Format)) {
+					continue;
+				}
+				CPreset preset;
+				preset.Id = (nOperation == 0) ? CString(format.Id) : CString(operation.Id) + _T(":") + format.Id;
+				preset.MenuText = format.MenuText;
+				preset.Operation = nOperation;
+				preset.Format = format.Format;
+				preset.ScalePercent = 100;
+				preset.MaxLongEdge = 0;
+				preset.Rotation = 0;
+				preset.KeepMetadata = true;
+				CString sOperation = operation.Id;
+				if (sOperation.Left(5) == _T("scale")) preset.ScalePercent = _ttoi(sOperation.Mid(5));
+				if (sOperation.Left(3) == _T("fit")) preset.MaxLongEdge = _ttoi(sOperation.Mid(3));
+				if (sOperation == _T("rotl")) preset.Rotation = 270;
+				if (sOperation == _T("rotr")) preset.Rotation = 90;
+				if (sOperation == _T("nometa")) preset.KeepMetadata = false;
+				presets.push_back(preset);
+			}
+		}
+		return presets;
 	}
 
 	static LPCTSTR GetFileEnding(EOutputFormat eFormat) {
@@ -128,21 +193,64 @@ namespace Converter {
 		::SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 	}
 
+	// Number of presets of an operation, a sub menu is only created for operations with more than one preset
+	static int CountPresetsOfOperation(int nOperation) {
+		int nCount = 0;
+		for (const CPreset& preset : GetPresets()) {
+			if (preset.Operation == nOperation) nCount++;
+		}
+		return nCount;
+	}
+
+	// Writes the registry keys of a cascading Explorer menu entry, returns false on error
+	static bool WriteExplorerVerb(CRegKey& parentShellKey, LPCTSTR sKeyName, LPCTSTR sText, bool bSeparatorBefore, LPCTSTR sCommand, CRegKey* pVerbKey) {
+		CRegKey verbKey;
+		if (verbKey.Create(parentShellKey, sKeyName) != ERROR_SUCCESS) {
+			return false;
+		}
+		verbKey.SetStringValue(_T("MUIVerb"), sText);
+		verbKey.SetStringValue(_T("MultiSelectModel"), _T("Player"));
+		if (bSeparatorBefore) {
+			verbKey.SetDWORDValue(_T("CommandFlags"), 0x40); // ECF_SEPARATORBEFORE
+		}
+		bool bSuccess = true;
+		if (sCommand != NULL) {
+			CRegKey commandKey;
+			bSuccess = commandKey.Create(verbKey, _T("command")) == ERROR_SUCCESS && commandKey.SetStringValue(NULL, sCommand) == ERROR_SUCCESS;
+		} else {
+			verbKey.SetStringValue(_T("SubCommands"), _T(""));
+		}
+		if (pVerbKey != NULL) {
+			pVerbKey->Attach(verbKey.Detach());
+		}
+		return bSuccess;
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	// Public
 	//////////////////////////////////////////////////////////////////////////////////////////////
 
-	const CPreset* GetPresets(int& nCount) {
-		nCount = sizeof(s_presets) / sizeof(CPreset);
+	const std::vector<CPreset>& GetPresets() {
+		static std::vector<CPreset> s_presets = CreatePresets();
 		return s_presets;
 	}
 
+	const COperation* GetOperations(int& nCount) {
+		nCount = sizeof(s_operations) / sizeof(COperation);
+		return s_operations;
+	}
+
 	const CPreset* FindPreset(LPCTSTR sId) {
-		int nCount;
-		const CPreset* pPresets = GetPresets(nCount);
-		for (int i = 0; i < nCount; i++) {
-			if (_tcsicmp(pPresets[i].Id, sId) == 0) {
-				return &pPresets[i];
+		CString sSearchId = sId;
+		for (int i = 0; i < sizeof(s_legacyIds) / sizeof(s_legacyIds[0]); i++) {
+			if (sSearchId.CompareNoCase(s_legacyIds[i][0]) == 0) {
+				sSearchId = s_legacyIds[i][1];
+				break;
+			}
+		}
+		for (const CPreset& preset : GetPresets()) {
+			if (preset.Id.CompareNoCase(sSearchId) == 0) {
+				return &preset;
 			}
 		}
 		return NULL;
@@ -162,9 +270,14 @@ namespace Converter {
 		CString sEnding;
 		EOutputFormat eFormat = ResolveOutputFormat(preset.Format, sSourceFile, sEnding);
 		CSize targetSize = pImage->OrigSize();
-		if (preset.ScalePercent != 100) {
-			targetSize.cx = max(1, Helpers::RoundToInt(targetSize.cx * preset.ScalePercent / 100.0));
-			targetSize.cy = max(1, Helpers::RoundToInt(targetSize.cy * preset.ScalePercent / 100.0));
+		double dScale = preset.ScalePercent / 100.0;
+		if (preset.MaxLongEdge > 0) {
+			int nLongEdge = max(targetSize.cx, targetSize.cy);
+			dScale = min(1.0, (double)preset.MaxLongEdge / nLongEdge);
+		}
+		if (dScale != 1.0) {
+			targetSize.cx = max(1, Helpers::RoundToInt(targetSize.cx * dScale));
+			targetSize.cy = max(1, Helpers::RoundToInt(targetSize.cy * dScale));
 		}
 
 		sOutputFile = GetUniqueOutputFileName(sSourceFile, sEnding);
@@ -181,7 +294,8 @@ namespace Converter {
 			default: {
 				EImageFormat eImageFormat = (eFormat == OF_JPEG) ? IF_JPEG : (eFormat == OF_PNG) ? IF_PNG : (eFormat == OF_BMP) ? IF_WindowsBMP :
 					(eFormat == OF_TIFF) ? IF_TIFF : (eFormat == OF_GIF) ? IF_GIF : IF_WEBP;
-				bSuccess = CSaveImage::SaveImageAs(sOutputFile, eImageFormat, pImage, params, eFlags, targetSize, eFormat == OF_WEBP_LOSSLESS);
+				bSuccess = CSaveImage::SaveImageAs(sOutputFile, eImageFormat, pImage, params, eFlags, targetSize,
+					eFormat == OF_WEBP_LOSSLESS, preset.KeepMetadata);
 				break;
 			}
 		}
@@ -209,11 +323,13 @@ namespace Converter {
 
 		int nExitCode = 0;
 		const CPreset* pPreset = NULL;
+		CString sPresetId;
 		std::list<CString> files;
 		bool bRegister = false, bUnregister = false;
 		for (int i = 1; i < nArgs; i++) {
 			if (_tcsnicmp(pArgs[i], COMMAND_CONVERT, _tcslen(COMMAND_CONVERT)) == 0) {
-				pPreset = FindPreset(pArgs[i] + _tcslen(COMMAND_CONVERT));
+				sPresetId = pArgs[i] + _tcslen(COMMAND_CONVERT);
+				pPreset = FindPreset(sPresetId);
 			} else if (_tcsicmp(pArgs[i], COMMAND_REGISTER) == 0) {
 				bRegister = true;
 			} else if (_tcsicmp(pArgs[i], COMMAND_UNREGISTER) == 0) {
@@ -228,8 +344,12 @@ namespace Converter {
 			return (bRegister ? RegisterExplorerMenu() : UnregisterExplorerMenu()) ? 0 : 1;
 		}
 		if (pPreset == NULL) {
-			::MessageBox(NULL, CNLS::GetString(_T("Unknown conversion. Valid conversions are: jpg, png, webp, webp-lossless, bmp, tiff, gif, ico, pdf, scale75, scale50, scale25, rotate-left, rotate-right")),
-				_T(JPEGVIEW_TITLE), MB_OK | MB_ICONERROR);
+			CString sValidIds;
+			for (const CPreset& preset : GetPresets()) {
+				sValidIds += (sValidIds.IsEmpty() ? _T("") : _T(", ")) + preset.Id;
+			}
+			::MessageBox(NULL, CString(CNLS::GetString(_T("Unknown conversion:"))) + _T(" ") + sPresetId + _T("\n\n") +
+				CNLS::GetString(_T("Valid conversions:")) + _T("\n") + sValidIds, _T(JPEGVIEW_TITLE), MB_OK | MB_ICONERROR);
 			return 1;
 		}
 
@@ -252,55 +372,100 @@ namespace Converter {
 
 	HMENU CreatePresetMenu(int nFirstCommandId) {
 		HMENU hMenu = ::CreatePopupMenu();
-		int nCount;
-		const CPreset* pPresets = GetPresets(nCount);
-		for (int i = 0; i < nCount; i++) {
-			if (pPresets[i].SeparatorBefore) {
+		const std::vector<CPreset>& presets = GetPresets();
+		int nOperations;
+		const COperation* pOperations = GetOperations(nOperations);
+		for (int nOperation = 0; nOperation < nOperations; nOperation++) {
+			int nPresetsOfOperation = CountPresetsOfOperation(nOperation);
+			if (nPresetsOfOperation == 0) {
+				continue;
+			}
+			if (pOperations[nOperation].SeparatorBefore) {
 				::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 			}
-			::AppendMenu(hMenu, MF_STRING, nFirstCommandId + i, CNLS::GetString(pPresets[i].MenuText));
+			HMENU hTarget = hMenu;
+			if (nOperation > 0 && nPresetsOfOperation > 1) {
+				hTarget = ::CreatePopupMenu();
+				::AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)hTarget, CNLS::GetString(pOperations[nOperation].MenuText));
+			}
+			for (int i = 0; i < (int)presets.size(); i++) {
+				if (presets[i].Operation != nOperation) {
+					continue;
+				}
+				// a single preset of an operation is shown with the text of the operation
+				LPCTSTR sText = (nOperation > 0 && nPresetsOfOperation == 1) ? pOperations[nOperation].MenuText : (LPCTSTR)presets[i].MenuText;
+				::AppendMenu(hTarget, MF_STRING, nFirstCommandId + i, CNLS::GetString(sText));
+			}
 		}
 		return hMenu;
 	}
 
 	bool RegisterExplorerMenu() {
+		// remove an older menu structure first
+		UnregisterExplorerMenu();
+
 		CString sExe = GetEXEFileName();
-		int nCount;
-		const CPreset* pPresets = GetPresets(nCount);
+		const std::vector<CPreset>& presets = GetPresets();
+		int nOperations;
+		const COperation* pOperations = GetOperations(nOperations);
 		bool bSuccess = true;
 		for (LPCTSTR sEnding : s_explorerFileEndings) {
-			CString sKeyName;
-			sKeyName.Format(_T("Software\\Classes\\SystemFileAssociations\\.%s\\shell\\%s"), sEnding, EXPLORER_VERB_NAME);
-			CRegKey verbKey;
-			if (verbKey.Create(HKEY_CURRENT_USER, sKeyName) != ERROR_SUCCESS) {
+			CString sShellKeyName;
+			sShellKeyName.Format(_T("Software\\Classes\\SystemFileAssociations\\.%s\\shell"), sEnding);
+			CRegKey shellKey;
+			if (shellKey.Create(HKEY_CURRENT_USER, sShellKeyName) != ERROR_SUCCESS) {
 				bSuccess = false;
 				continue;
 			}
-			verbKey.SetStringValue(_T("MUIVerb"), CNLS::GetString(_T("Convert to")));
-			verbKey.SetStringValue(_T("Icon"), CString(_T("\"")) + sExe + _T("\",0"));
-			verbKey.SetStringValue(_T("SubCommands"), _T(""));
-			verbKey.SetStringValue(_T("MultiSelectModel"), _T("Player"));
-			for (int i = 0; i < nCount; i++) {
-				// the key names define the order in the menu
-				CString sSubKeyName;
-				sSubKeyName.Format(_T("shell\\%02d_%s"), i, pPresets[i].Id);
-				CRegKey presetKey;
-				if (presetKey.Create(verbKey, sSubKeyName) != ERROR_SUCCESS) {
-					bSuccess = false;
+			CRegKey rootVerb;
+			if (!WriteExplorerVerb(shellKey, EXPLORER_VERB_NAME, CNLS::GetString(_T("Convert to")), false, NULL, &rootVerb)) {
+				bSuccess = false;
+				continue;
+			}
+			rootVerb.SetStringValue(_T("Icon"), CString(_T("\"")) + sExe + _T("\",0"));
+			CRegKey rootShell;
+			if (rootShell.Create(rootVerb, _T("shell")) != ERROR_SUCCESS) {
+				bSuccess = false;
+				continue;
+			}
+
+			// the key names define the order in the menu
+			int nKey = 0;
+			for (int nOperation = 0; nOperation < nOperations; nOperation++) {
+				int nPresetsOfOperation = CountPresetsOfOperation(nOperation);
+				if (nPresetsOfOperation == 0) {
 					continue;
 				}
-				presetKey.SetStringValue(_T("MUIVerb"), CNLS::GetString(pPresets[i].MenuText));
-				presetKey.SetStringValue(_T("MultiSelectModel"), _T("Player"));
-				if (pPresets[i].SeparatorBefore) {
-					presetKey.SetDWORDValue(_T("CommandFlags"), 0x40); // ECF_SEPARATORBEFORE
+				CRegKey subShell;
+				CRegKey* pTargetShell = &rootShell;
+				bool bSeparatorBefore = pOperations[nOperation].SeparatorBefore;
+				if (nOperation > 0 && nPresetsOfOperation > 1) {
+					CString sKeyName;
+					sKeyName.Format(_T("%02d_%s"), nKey++, pOperations[nOperation].Id);
+					CRegKey operationVerb;
+					if (!WriteExplorerVerb(rootShell, sKeyName, CNLS::GetString(pOperations[nOperation].MenuText), bSeparatorBefore, NULL, &operationVerb) ||
+						subShell.Create(operationVerb, _T("shell")) != ERROR_SUCCESS) {
+						bSuccess = false;
+						continue;
+					}
+					pTargetShell = &subShell;
+					bSeparatorBefore = false;
 				}
-				CRegKey commandKey;
-				if (commandKey.Create(presetKey, _T("command")) == ERROR_SUCCESS) {
-					CString sCommand;
-					sCommand.Format(_T("\"%s\" %s%s \"%%1\""), (LPCTSTR)sExe, COMMAND_CONVERT, pPresets[i].Id);
-					commandKey.SetStringValue(NULL, sCommand);
-				} else {
-					bSuccess = false;
+				int nSubKey = 0;
+				for (const CPreset& preset : presets) {
+					if (preset.Operation != nOperation) {
+						continue;
+					}
+					CString sKeyName, sCommand;
+					bool bTopLevel = pTargetShell == &rootShell;
+					sKeyName.Format(_T("%02d_%s"), bTopLevel ? nKey++ : nSubKey++, (LPCTSTR)preset.Id);
+					sKeyName.Replace(_T(':'), _T('_'));
+					sCommand.Format(_T("\"%s\" %s%s \"%%1\""), (LPCTSTR)sExe, COMMAND_CONVERT, (LPCTSTR)preset.Id);
+					LPCTSTR sText = (nOperation > 0 && nPresetsOfOperation == 1) ? pOperations[nOperation].MenuText : (LPCTSTR)preset.MenuText;
+					if (!WriteExplorerVerb(*pTargetShell, sKeyName, CNLS::GetString(sText), bSeparatorBefore && bTopLevel, sCommand, NULL)) {
+						bSuccess = false;
+					}
+					bSeparatorBefore = false;
 				}
 			}
 		}

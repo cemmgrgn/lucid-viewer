@@ -67,7 +67,7 @@ CEXIFDisplayCtl::~CEXIFDisplayCtl() {
 
 bool CEXIFDisplayCtl::IsVisible() {
 	// the side panel shows the same information next to the image instead of over it
-	return CurrentImage() != NULL && m_bVisible && !m_pMainDlg->IsSidePanelShown();
+	return CurrentImage() != NULL && m_bVisible && !m_pMainDlg->IsSidePanelShown() && !m_pMainDlg->IsToolbarShown();
 }
 
 void CEXIFDisplayCtl::SetVisible(bool bVisible) {

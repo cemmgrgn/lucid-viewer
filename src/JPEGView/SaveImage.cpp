@@ -468,7 +468,7 @@ static bool WriteBufferToFile(LPCTSTR sFileName, const void* pData, size_t nSize
 }
 
 bool CSaveImage::SaveImageAs(LPCTSTR sFileName, EImageFormat eFormat, CJPEGImage * pImage, const CImageProcessingParams& procParams,
-	EProcessingFlags eFlags, CSize targetSize, bool bUseLosslessWEBP) {
+	EProcessingFlags eFlags, CSize targetSize, bool bUseLosslessWEBP, bool bKeepMetadata) {
 	pImage->EnableDimming(false);
 	char* pDIB24bpp = GetScaledDIB24bpp(pImage, procParams, eFlags, targetSize);
 	if (pDIB24bpp == NULL) {
@@ -481,7 +481,7 @@ bool CSaveImage::SaveImageAs(LPCTSTR sFileName, EImageFormat eFormat, CJPEGImage
 		int nJPEGStreamLen;
 		bool tjFreeNeeded;
 		void* pCompressedJPEG = CompressAndSave(sFileName, pImage, pDIB24bpp, targetSize.cx, targetSize.cy,
-			CSettingsProvider::This().JPEGSaveQuality(), nJPEGStreamLen, tjFreeNeeded, true, targetSize != pImage->OrigSize());
+			CSettingsProvider::This().JPEGSaveQuality(), nJPEGStreamLen, tjFreeNeeded, bKeepMetadata, targetSize != pImage->OrigSize());
 		bSuccess = pCompressedJPEG != NULL;
 		if (bSuccess) {
 			if (tjFreeNeeded) {

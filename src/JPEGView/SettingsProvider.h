@@ -135,6 +135,7 @@ public:
 	bool ShowToolbar() { return m_bShowToolbar; }
 	bool ShowStatusBar() { return m_bShowStatusBar; }
 	bool ShowSidePanel() { return m_bShowSidePanel; }
+	bool SidePanelCollapsed() { return m_bSidePanelCollapsed; }
 	int SidePanelWidth() { return m_nSidePanelWidth; }
 	bool ChromeDarkTheme() { return m_bChromeDarkTheme; }
 
@@ -164,7 +165,7 @@ public:
 	void SaveStickyWindowRect(CRect rect);
 
 	// Saves the visibility of toolbar, status bar and side panel to the user INI file
-	void SaveWindowChromeSettings(bool bShowToolbar, bool bShowStatusBar, bool bShowSidePanel);
+	void SaveWindowChromeSettings(bool bShowToolbar, bool bShowStatusBar, bool bShowSidePanel, bool bSidePanelCollapsed);
 	
 	// Update user settings with settings from INI file template
 	void UpdateUserSettings();
@@ -314,6 +315,7 @@ private:
 	bool m_bShowToolbar;
 	bool m_bShowStatusBar;
 	bool m_bShowSidePanel;
+	bool m_bSidePanelCollapsed;
 	int m_nSidePanelWidth;
 	bool m_bChromeDarkTheme;
 

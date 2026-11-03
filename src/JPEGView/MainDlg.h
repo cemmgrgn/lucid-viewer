@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <vector>
 #include "MessageDef.h"
 #include "ProcessParams.h"
 #include "Helpers.h"
@@ -181,6 +182,13 @@ public:
 	bool IsStatusBarShown();
 	bool IsSidePanelShown();
 	CWindowChrome* GetWindowChrome() { return m_pChrome; }
+	// Before/after comparison: the left part of the image is shown unedited, the split can be dragged
+	bool IsCompareMode() { return m_bCompareMode; }
+	void SetCompareMode(bool bCompare);
+	// Called when the image processing parameters were changed from outside, e.g. by the side panel sliders
+	void OnImageProcessingChanged();
+	// Sets all image processing parameters and flags back to the defaults
+	void ResetImageProcessing();
 	// Creates the popup menu for the menu bar title with the given index (File, Edit, View, Navigate, Tools, Help).
 	// The caller must destroy the returned menu.
 	HMENU CreateMenuBarMenu(int nIndex);
@@ -360,6 +368,18 @@ private:
 	bool m_bSelectZoom;  // keeps track of select-to-zoom mode when CTRL+SHIFT+LMouse
 	CWindowChrome* m_pChrome; // toolbar, status bar and side panel
 	volatile LONG m_nRunningConversions;
+	bool m_bCompareMode;
+	double m_dCompareSplit; // position of the split line relative to the client width
+	bool m_bDraggingCompareSplit;
+	std::vector<uint8> m_compareBuffer; // composed before/after DIB
+
+	// Renders the unedited image into the compare buffer, then copies the right part of the processed DIB over it
+	void PrepareCompareDIB(CSize newSize, CSize clippedSize, CPoint offsetsInImage);
+	void* ComposeCompareDIB(void* pProcessedDIB, CSize clippedSize);
+	// Client x coordinate of the compare split line
+	int GetCompareSplitX();
+	bool IsOnCompareSplit(int nX);
+	void PaintCompareSplit(CDC& dc);
 
 	// Loads the context menu and sets the check marks and enabled states. Returns the popup menu, hMenuRoot must be destroyed by the caller.
 	HMENU LoadPreparedContextMenu(HMENU& hMenuRoot);

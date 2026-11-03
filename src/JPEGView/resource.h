@@ -299,6 +299,10 @@
 #define IDM_TOGGLE_EDITPANEL	16130		// :KeyMap: open/close the image processing panel (brightness, contrast, sharpen...)
 #define IDM_CONVERT_MENU	16140		// :KeyMap: show the 'Convert to' menu for the current file
 #define IDM_EXPLORER_CONVERT_MENU	16150	// add/remove the 'Convert to' menu in the Explorer context menu
+#define IDM_COMPARE_BEFORE_AFTER	16160	// :KeyMap: toggle the before/after comparison with a movable divider
+#define IDM_RESET_PROCESSING	16170		// :KeyMap: reset brightness, contrast, colors and sharpening to the default values
+#define IDM_UNSHARP_MASK	16180		// :KeyMap: open the unsharp mask panel
+#define IDM_TOGGLE_SIDEPANEL_COLLAPSED	16190	// :KeyMap: collapse or expand the side panel
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

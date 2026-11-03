@@ -1,13 +1,14 @@
 #pragma once
 
 #include "ImageProcessingTypes.h"
+#include <vector>
 
 // Fast image format conversion, used by the Explorer context menu ('JPEGView.exe /convert:<preset> <files>')
-// and by the 'Convert to' menu inside JPEGView. Converted files are written next to the source file, existing
+// and by the 'Convert to' menus inside JPEGView. Converted files are written next to the source file, existing
 // files are never overwritten.
 namespace Converter {
 
-	// Output of a conversion preset
+	// Output format of a conversion preset
 	enum EOutputFormat {
 		OF_JPEG,
 		OF_PNG,
@@ -21,19 +22,33 @@ namespace Converter {
 		OF_SameAsSource // keeps the source format if it can be written, JPEG otherwise
 	};
 
+	// A conversion preset is an output format combined with an optional operation (scaling, rotation, metadata removal).
+	// Preset ids have the form '<format>' or '<operation>:<format>', e.g. 'png', 'scale50:jpg', 'rotl:same'.
 	struct CPreset {
-		LPCTSTR Id; // used on the command line, e.g. 'png' for /convert:png
-		LPCTSTR MenuText; // English menu text, translated with CNLS
+		CString Id;
+		CString MenuText; // English menu text of the format, translated with CNLS
+		int Operation; // index into the operations, 0 for plain conversion
 		EOutputFormat Format;
 		int ScalePercent; // 100 for original size
+		int MaxLongEdge; // 0 for no limit, otherwise the long image edge is fit into this many pixels
 		int Rotation; // additional rotation in degrees, 0, 90 or 270
-		bool SeparatorBefore; // menu separator before this entry
+		bool KeepMetadata; // copies EXIF data for JPEG output
+	};
+
+	// An operation groups presets in a sub menu, operation 0 (plain conversion) is the top level of the menu
+	struct COperation {
+		LPCTSTR Id; // prefix in the preset id
+		LPCTSTR MenuText; // English, translated with CNLS
+		bool SeparatorBefore;
 	};
 
 	// Gets all presets in menu order
-	const CPreset* GetPresets(int& nCount);
+	const std::vector<CPreset>& GetPresets();
 
-	// Finds a preset by its id, NULL if not found
+	// Gets the operations (index 0 is the plain conversion without operation)
+	const COperation* GetOperations(int& nCount);
+
+	// Finds a preset by its id (old ids like 'scale50' or 'rotate-left' are accepted too), NULL if not found
 	const CPreset* FindPreset(LPCTSTR sId);
 
 	// Converts a single file. Returns true on success, sOutputFile receives the name of the written file
@@ -46,7 +61,7 @@ namespace Converter {
 	// Runs the converter action given on the command line without showing the main window. Returns the process exit code.
 	int RunCommandLine();
 
-	// Adds a popup menu with all presets to hMenu, the command IDs start at nFirstCommandId
+	// Creates a popup menu with all presets (operations as sub menus), the command ID of a preset is nFirstCommandId + preset index
 	HMENU CreatePresetMenu(int nFirstCommandId);
 
 	// Adds the 'Convert to' submenu to the Explorer context menu of all supported image files (current user only)

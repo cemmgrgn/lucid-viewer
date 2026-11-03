@@ -526,3 +526,30 @@ Last image	Son görsel
 Help and keyboard shortcuts	Yardım ve klavye kısayolları
 Converting...	Dönüştürülüyor...
 Converted:	Dönüştürüldü:
+After	Sonra
+All values were reset to the defaults.	Tüm değerler varsayılana döndürüldü.
+Automatic correction	Otomatik düzeltme
+Before	Önce
+Clipboard image	Pano görüntüsü
+Collapse the side panel	Yan paneli daralt
+Compare	Karşılaştır
+Compare before and after editing	Düzenleme öncesi ve sonrasını karşılaştır
+Comparing: left before, right after editing	Karşılaştırma: solda önce, sağda sonra
+Drag to change, double click to reset	Değiştirmek için sürükleyin, sıfırlamak için çift tıklayın
+Edit image (brightness, contrast, colors)	Görüntüyü düzenle (parlaklık, kontrast, renkler)
+Expand the side panel	Yan paneli genişlet
+Fit long edge to 1280 px	Uzun kenarı 1280 piksele sığdır
+Fit long edge to 1920 px	Uzun kenarı 1920 piksele sığdır
+Forget the values of this image	Bu görüntünün değerlerini unut
+JPEGView shows this image with these values the next time (parameter DB)	JPEGView bu görüntüyü bir dahaki sefere bu değerlerle gösterir (parametre veritabanı)
+Remove metadata (EXIF, GPS)	Meta verileri kaldır (EXIF, GPS)
+Removes this image from the parameter DB	Bu görüntüyü parametre veritabanından kaldırır
+Reset all values to the defaults	Tüm değerleri varsayılana döndür
+Same format	Aynı biçim
+Save these values for this image	Bu değerleri bu görüntü için kaydet
+Sharpen with radius, amount and threshold	Yarıçap, miktar ve eşik ile keskinleştir
+Show the location on the map	Konumu haritada göster
+Switch this correction on or off	Bu düzeltmeyi aç veya kapat
+Tone and color	Ton ve renk
+Unknown conversion:	Bilinmeyen dönüştürme:
+Valid conversions:	Geçerli dönüştürmeler:
