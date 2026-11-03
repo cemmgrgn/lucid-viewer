@@ -30,6 +30,7 @@ class CDirectoryWatcher;
 class CUserCommand;
 class CPrintImage;
 class CHelpDlg;
+class CWindowChrome;
 
 enum EMouseEvent;
 
@@ -65,6 +66,15 @@ public:
 		MESSAGE_HANDLER(WM_PAINT, OnPaint)
 		MESSAGE_HANDLER(WM_NCHITTEST, OnNCHitTest)
 		MESSAGE_HANDLER(WM_NCLBUTTONDOWN, OnNCLButtonDown)
+		MESSAGE_HANDLER(WM_NCLBUTTONDBLCLK, OnNCLButtonDown)
+		MESSAGE_HANDLER(WM_NCLBUTTONUP, OnNCLButtonUp)
+		MESSAGE_HANDLER(WM_NCMOUSEMOVE, OnNCMouseMove)
+		MESSAGE_HANDLER(WM_NCMOUSELEAVE, OnNCMouseLeave)
+		MESSAGE_HANDLER(WM_NCCALCSIZE, OnNCCalcSize)
+		MESSAGE_HANDLER(WM_NCPAINT, OnNCPaint)
+		MESSAGE_HANDLER(WM_NCACTIVATE, OnNCActivate)
+		MESSAGE_HANDLER(WM_SETCURSOR, OnSetCursor)
+		MESSAGE_HANDLER(WM_CONVERSION_FINISHED, OnConversionFinished)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
 		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
 		MESSAGE_HANDLER(WM_LBUTTONDBLCLK, OnLButtonDblClk)
@@ -109,6 +119,14 @@ public:
 	LRESULT OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnNCLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnNCHitTest(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnNCLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnNCMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnNCMouseLeave(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnNCCalcSize(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnNCPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnNCActivate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnConversionFinished(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -159,6 +177,13 @@ public:
 	bool IsMouseOn() { return m_bMouseOn; }
 	bool IsWindowBorderless() { return m_bWindowBorderless; }
 	bool IsAlwaysOnTop() { return m_bAlwaysOnTop; }
+	bool IsToolbarShown();
+	bool IsStatusBarShown();
+	bool IsSidePanelShown();
+	CWindowChrome* GetWindowChrome() { return m_pChrome; }
+	// Creates the popup menu for the menu bar title with the given index (File, Edit, View, Navigate, Tools, Help).
+	// The caller must destroy the returned menu.
+	HMENU CreateMenuBarMenu(int nIndex);
 
 	CPoint GetMousePos() { return CPoint(m_nMouseX, m_nMouseY); }
 	double GetZoom() { return m_dZoom; }
@@ -333,6 +358,14 @@ private:
 	bool m_bWindowBorderless;
 	bool m_bAlwaysOnTop;
 	bool m_bSelectZoom;  // keeps track of select-to-zoom mode when CTRL+SHIFT+LMouse
+	CWindowChrome* m_pChrome; // toolbar, status bar and side panel
+	volatile LONG m_nRunningConversions;
+
+	// Loads the context menu and sets the check marks and enabled states. Returns the popup menu, hMenuRoot must be destroyed by the caller.
+	HMENU LoadPreparedContextMenu(HMENU& hMenuRoot);
+	// Converts the current file in a background thread with the given preset (index into Converter::GetPresets())
+	void StartConversion(int nPresetIndex);
+	void ShowConvertMenuAndExecute();
 
 	void ExploreFile();
 	bool OpenFileWithDialog(bool bFullScreen, bool bAfterStartup);

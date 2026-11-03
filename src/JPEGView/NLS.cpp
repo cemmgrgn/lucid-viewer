@@ -36,9 +36,10 @@ void CNLS::ReadStringTable(LPCTSTR sFileName) {
 		return;
 	}
 
-	const int FILE_BUFF_SIZE = 32000;
-	TCHAR* pLineBuff = new TCHAR[FILE_BUFF_SIZE];
-	memset(pLineBuff, 0, FILE_BUFF_SIZE * sizeof(TCHAR));
+	const int FILE_BUFF_SIZE = 64000;
+	// one extra character keeps the buffer zero terminated even if the file fills the whole buffer
+	TCHAR* pLineBuff = new TCHAR[FILE_BUFF_SIZE + 1];
+	memset(pLineBuff, 0, (FILE_BUFF_SIZE + 1) * sizeof(TCHAR));
 	size_t nReadBytes = fread(pLineBuff, 1, FILE_BUFF_SIZE*sizeof(TCHAR), fptr);
 
 	TCHAR* pRunning = pLineBuff;

@@ -293,6 +293,12 @@
 #define IDM_PAN_RIGHT	15202		// :KeyMap: pan right
 #define IDM_PAN_LEFT	15203		// :KeyMap: pan left
 #define IDM_CONTEXT_MENU	16000		// :KeyMap: display context menu
+#define IDM_TOGGLE_TOOLBAR	16100		// :KeyMap: toggle the toolbar with the menu on top of the window
+#define IDM_TOGGLE_STATUSBAR	16110		// :KeyMap: toggle the status bar at the bottom of the window
+#define IDM_TOGGLE_SIDEPANEL	16120		// :KeyMap: toggle the information side panel (file info, EXIF, histogram)
+#define IDM_TOGGLE_EDITPANEL	16130		// :KeyMap: open/close the image processing panel (brightness, contrast, sharpen...)
+#define IDM_CONVERT_MENU	16140		// :KeyMap: show the 'Convert to' menu for the current file
+#define IDM_EXPLORER_CONVERT_MENU	16150	// add/remove the 'Convert to' menu in the Explorer context menu
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010
@@ -318,6 +324,9 @@
 
 #define IDM_FIRST_OPENWITH_CMD  22100
 #define IDM_LAST_OPENWITH_CMD   22199
+
+#define IDM_FIRST_CONVERT_CMD  22200
+#define IDM_LAST_CONVERT_CMD   22299
 
 // in the main menu
 // these position must be changed if menu items are inserted

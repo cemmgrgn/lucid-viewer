@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ProcessParams.h"
+#include "ImageProcessingTypes.h"
 
 class CJPEGImage;
 
@@ -19,6 +20,19 @@ public:
 	// Saves processed image in current window size as displayed on screen. Creates no parameter DB entry for the saved image.
 	// The file format is derived from the file ending of the specified file name.
 	static bool SaveImage(LPCTSTR sFileName, CJPEGImage * pImage, bool bUseLosslessWEBP);
+
+	// Saves the whole image scaled to targetSize in the given format, used by the converter.
+	// Supported formats: IF_JPEG (keeps EXIF data), IF_PNG, IF_WindowsBMP, IF_TIFF, IF_GIF, IF_WEBP, IF_QOI.
+	// Creates no parameter DB entry.
+	static bool SaveImageAs(LPCTSTR sFileName, EImageFormat eFormat, CJPEGImage * pImage, const CImageProcessingParams& procParams,
+		EProcessingFlags eFlags, CSize targetSize, bool bUseLosslessWEBP);
+
+	// Saves the image as Windows icon (PNG compressed entry), scaled to fit into 256 x 256 pixels
+	static bool SaveImageAsIcon(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams, EProcessingFlags eFlags);
+
+	// Saves the image as single page PDF document with the image JPEG compressed, the page has the image size at 96 DPI
+	static bool SaveImageAsPDF(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams,
+		EProcessingFlags eFlags, CSize targetSize);
 
 private:
 	CSaveImage(void);

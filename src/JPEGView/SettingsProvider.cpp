@@ -185,6 +185,11 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bBeepSoundAlert = GetBool(_T("BeepSoundAlert"), false);  // don't make it default on... too much sound feedback is pretty annoying
 	m_bWindowBorderlessOnStartup = GetBool(_T("WindowBorderlessOnStartup"), false);
 	m_bWindowAlwaysOnTopOnStartup = GetBool(_T("WindowAlwaysOnTopOnStartup"), false);
+	m_bShowToolbar = GetBool(_T("ShowToolbar"), true);
+	m_bShowStatusBar = GetBool(_T("ShowStatusBar"), true);
+	m_bShowSidePanel = GetBool(_T("ShowSidePanel"), true);
+	m_nSidePanelWidth = GetInt(_T("SidePanelWidth"), 290, 180, 800);
+	m_bChromeDarkTheme = GetString(_T("ChromeTheme"), _T("dark")).CompareNoCase(_T("light")) != 0;
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
 	m_bSaveWithoutPrompt = GetBool(_T("OverwriteOriginalFileWithoutSaveDialog"), false);
 	m_bCropWithoutPromptLosslessJPEG = GetBool(_T("CropWithoutPromptLosslessJPEG"), false);
@@ -530,6 +535,19 @@ void CSettingsProvider::SaveStickyWindowRect(CRect rect) {
 
 		m_bUserINIExists = true;
 	}
+}
+
+void CSettingsProvider::SaveWindowChromeSettings(bool bShowToolbar, bool bShowStatusBar, bool bShowSidePanel) {
+	MakeSureUserINIExists();
+
+	m_bShowToolbar = bShowToolbar;
+	m_bShowStatusBar = bShowStatusBar;
+	m_bShowSidePanel = bShowSidePanel;
+	WriteBool(_T("ShowToolbar"), bShowToolbar);
+	WriteBool(_T("ShowStatusBar"), bShowStatusBar);
+	WriteBool(_T("ShowSidePanel"), bShowSidePanel);
+
+	m_bUserINIExists = true;
 }
 
 bool CSettingsProvider::ExistsUserINI() {

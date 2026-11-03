@@ -180,6 +180,9 @@ namespace Helpers {
 	// The window size equals the client area size plus this border size
 	CSize GetTotalBorderSize();
 
+	// Sets the size of additional non-client elements (toolbar, status bar, side panel) that is added to GetTotalBorderSize()
+	void SetAdditionalBorderSize(CSize size);
+
 	// Converts the transition effect from string (as in INI or command line parameter) to enum
 	ETransitionEffect ConvertTransitionEffectFromString(LPCTSTR str);
 

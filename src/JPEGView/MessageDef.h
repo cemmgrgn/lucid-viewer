@@ -14,4 +14,8 @@
 // Posted to main dialog for asynchronously loading the image with file name CMainDlg::m_sStartupFile
 #define WM_LOAD_FILE_ASYNCH (WM_APP + 24)
 
+// Posted to the main dialog when a conversion started from the 'Convert to' menu has finished.
+// WPARAM is 1 on success, LPARAM a heap allocated CString* with the output file name or error text, freed by the receiver.
+#define WM_CONVERSION_FINISHED (WM_APP + 25)
+
 #define KEY_MAGIC 2978465

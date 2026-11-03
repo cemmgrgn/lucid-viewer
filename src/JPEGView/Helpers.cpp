@@ -543,11 +543,17 @@ int GetWindowCaptionSize() {
 	return ::GetSystemMetrics(SM_CYCAPTION);
 }
 
+static CSize s_additionalBorderSize(0, 0);
+
+void SetAdditionalBorderSize(CSize size) {
+	s_additionalBorderSize = size;
+}
+
 CSize GetTotalBorderSize() {
 	const int SM_CXP_ADDEDBORDER = 92;  // in MSDN this is SM_CXPADDEDBORDER, but for some reason it's not always available depending on configuration
 	int nBorderWidth = (::GetSystemMetrics(SM_CXSIZEFRAME) + ::GetSystemMetrics(SM_CXP_ADDEDBORDER)) * 2;
 	int nBorderHeight = (::GetSystemMetrics(SM_CYSIZEFRAME) + ::GetSystemMetrics(SM_CXP_ADDEDBORDER)) * 2 + ::GetSystemMetrics(SM_CYCAPTION);
-	return CSize(nBorderWidth, nBorderHeight);
+	return CSize(nBorderWidth + s_additionalBorderSize.cx, nBorderHeight + s_additionalBorderSize.cy);
 }
 
 CRect GetWindowRectMatchingImageSize(HWND hWnd, CSize minSize, CSize maxSize, double& dZoom, CJPEGImage* pImage, bool bForceCenterWindow, bool bKeepAspectRatio, bool bWindowBorderless) {

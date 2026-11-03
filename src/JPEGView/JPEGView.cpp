@@ -6,6 +6,7 @@
 #include "resource.h"
 #include "MainDlg.h"
 #include "SettingsProvider.h"
+#include "Converter.h"
 
 #ifdef DEBUG
 #include <dbghelp.h>
@@ -201,6 +202,18 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 
 	hRes = _Module.Init(NULL, hInstance);
 	ATLASSERT(SUCCEEDED(hRes));
+
+	// Explorer context menu conversions run without window and without the single instance handling
+	if (Converter::IsConverterCommandLine(lpstrCmdLine)) {
+		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+		ULONG_PTR gdiplusToken;
+		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+		int nExitCode = Converter::RunCommandLine();
+		Gdiplus::GdiplusShutdown(gdiplusToken);
+		_Module.Term();
+		::CoUninitialize();
+		return nExitCode;
+	}
 
 	CString sStartupFile = ParseCommandLineForStartupFile(lpstrCmdLine);
 	int nAutostartSlideShow = (sStartupFile.GetLength() == 0) ? 0 : ParseCommandLineForAutostart(lpstrCmdLine);

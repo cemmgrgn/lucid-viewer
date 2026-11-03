@@ -105,6 +105,11 @@ void CEXIFDisplay::SetGPSLocation(LPCTSTR sLocation, LPCTSTR sURL) {
 	pLinkLocation->SetShow(true, false);
 }
 
+CString CEXIFDisplay::GetLocationURL() {
+	CURLCtrl* pLinkLocation = GetControl<CURLCtrl*>(CEXIFDisplay::ID_urlLocation);
+	return pLinkLocation->IsShown() ? CString(pLinkLocation->GetURL()) : CString();
+}
+
 void CEXIFDisplay::AddLine(LPCTSTR sDescription, LPCTSTR sValue, bool valueIsURL) {
 	m_lines.push_back(TextLine(CopyStrAlloc(sDescription), CopyStrAlloc(sValue), valueIsURL));
 }

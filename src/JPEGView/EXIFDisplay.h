@@ -43,11 +43,6 @@ public:
 	// Note: The histogram is now owned by the panel
 	void SetHistogram(const CHistogram* pHistogram) { m_pHistogram = pHistogram; }
 
-protected:
-	virtual void RepositionAll();
-
-private:
-
 	struct TextLine {
 		TextLine(LPCTSTR desc, LPCTSTR value, bool valueIsURL = false) {
 			Desc = desc;
@@ -59,6 +54,18 @@ private:
 		LPCTSTR Value;
 		bool ValueIsURL;
 	};
+
+	// Read access to the collected texts, used by the side panel to show the same information
+	LPCTSTR GetPrefix() const { return m_sPrefix; }
+	LPCTSTR GetTitle() const { return m_sTitle; }
+	LPCTSTR GetComment() const { return m_sComment; }
+	const std::list<TextLine>& GetLines() const { return m_lines; }
+	CString GetLocationURL();
+
+protected:
+	virtual void RepositionAll();
+
+private:
 
 	bool m_bShowHistogram;
 	int m_nGap;

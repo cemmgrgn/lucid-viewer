@@ -42,6 +42,12 @@
     <ClCompile Include="BasicProcessing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Converter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowChrome.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Clipboard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -294,6 +300,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicProcessing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Converter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowChrome.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Clipboard.h">

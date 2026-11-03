@@ -10,6 +10,8 @@
 #include "WEBPWrapper.h"
 #include "QOIWrapper.h"
 #include <gdiplus.h>
+#include <string>
+#include <vector>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -328,6 +330,9 @@ static bool SaveGDIPlus(LPCTSTR sFileName, EImageFormat eFileFormat, void* pData
 		case IF_TIFF:
 			sMIMEType = L"image/tiff";
 			break;
+		case IF_GIF:
+			sMIMEType = L"image/gif";
+			break;
 	}
 
 	CLSID encoderClsid;
@@ -431,4 +436,176 @@ bool CSaveImage::SaveImage(LPCTSTR sFileName, CJPEGImage * pImage, bool bUseLoss
 {
 	CImageProcessingParams paramsNotUsed;
 	return SaveImage(sFileName, pImage, paramsNotUsed, PFLAG_None, false, bUseLosslessWEBP, false);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Conversion helpers
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+// Gets the processed image scaled to targetSize as 24 bpp BGR DIB, must be freed with delete[]. NULL on error.
+static char* GetScaledDIB24bpp(CJPEGImage * pImage, const CImageProcessingParams& procParams, EProcessingFlags eFlags, CSize targetSize) {
+	void* pDIB32bpp = pImage->GetDIB(targetSize, targetSize, CPoint(0, 0), procParams, eFlags);
+	if (pDIB32bpp == NULL) {
+		return NULL;
+	}
+	uint32 nSizeBytes = Helpers::DoPadding(targetSize.cx*3, 4)*targetSize.cy;
+	char* pDIB24bpp = new char[nSizeBytes];
+	CBasicProcessing::Convert32bppTo24bppDIB(targetSize.cx, targetSize.cy, pDIB24bpp, pDIB32bpp, false);
+	return pDIB24bpp;
+}
+
+static bool WriteBufferToFile(LPCTSTR sFileName, const void* pData, size_t nSize) {
+	FILE* fptr = _tfopen(sFileName, _T("wb"));
+	if (fptr == NULL) {
+		return false;
+	}
+	bool bSuccess = fwrite(pData, 1, nSize, fptr) == nSize;
+	fclose(fptr);
+	if (!bSuccess) {
+		_tunlink(sFileName);
+	}
+	return bSuccess;
+}
+
+bool CSaveImage::SaveImageAs(LPCTSTR sFileName, EImageFormat eFormat, CJPEGImage * pImage, const CImageProcessingParams& procParams,
+	EProcessingFlags eFlags, CSize targetSize, bool bUseLosslessWEBP) {
+	pImage->EnableDimming(false);
+	char* pDIB24bpp = GetScaledDIB24bpp(pImage, procParams, eFlags, targetSize);
+	if (pDIB24bpp == NULL) {
+		pImage->EnableDimming(true);
+		return false;
+	}
+
+	bool bSuccess = false;
+	if (eFormat == IF_JPEG) {
+		int nJPEGStreamLen;
+		bool tjFreeNeeded;
+		void* pCompressedJPEG = CompressAndSave(sFileName, pImage, pDIB24bpp, targetSize.cx, targetSize.cy,
+			CSettingsProvider::This().JPEGSaveQuality(), nJPEGStreamLen, tjFreeNeeded, true, targetSize != pImage->OrigSize());
+		bSuccess = pCompressedJPEG != NULL;
+		if (bSuccess) {
+			if (tjFreeNeeded) {
+				TurboJpeg::Free((unsigned char*)pCompressedJPEG);
+			} else {
+				delete[] pCompressedJPEG;
+			}
+		}
+	} else if (eFormat == IF_WEBP) {
+		bSuccess = SaveWebP(sFileName, pDIB24bpp, targetSize.cx, targetSize.cy, bUseLosslessWEBP);
+	} else if (eFormat == IF_QOI) {
+		bSuccess = SaveQOI(sFileName, pDIB24bpp, targetSize.cx, targetSize.cy);
+	} else {
+		bSuccess = SaveGDIPlus(sFileName, eFormat, pDIB24bpp, targetSize.cx, targetSize.cy);
+	}
+
+	delete[] pDIB24bpp;
+	pImage->EnableDimming(true);
+	return bSuccess;
+}
+
+bool CSaveImage::SaveImageAsIcon(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams, EProcessingFlags eFlags) {
+	const int MAX_ICON_SIZE = 256;
+	double dZoom;
+	CSize iconSize = Helpers::GetImageRect(pImage->OrigWidth(), pImage->OrigHeight(), MAX_ICON_SIZE, MAX_ICON_SIZE, Helpers::ZM_FitToScreenNoZoom, dZoom);
+
+	pImage->EnableDimming(false);
+	char* pDIB24bpp = GetScaledDIB24bpp(pImage, procParams, eFlags, iconSize);
+	pImage->EnableDimming(true);
+	if (pDIB24bpp == NULL) {
+		return false;
+	}
+
+	// Encode as PNG into memory, icons with PNG compressed entries are supported since Windows Vista
+	bool bSuccess = false;
+	Gdiplus::Bitmap* pBitmap = new Gdiplus::Bitmap(iconSize.cx, iconSize.cy, Helpers::DoPadding(iconSize.cx*3, 4), PixelFormat24bppRGB, (BYTE*)pDIB24bpp);
+	CLSID encoderClsid;
+	IStream* pStream = NULL;
+	if (pBitmap->GetLastStatus() == Gdiplus::Ok && GetEncoderClsid(L"image/png", &encoderClsid) >= 0 &&
+		SUCCEEDED(::CreateStreamOnHGlobal(NULL, TRUE, &pStream)) && pBitmap->Save(pStream, &encoderClsid, NULL) == Gdiplus::Ok) {
+		HGLOBAL hGlobal = NULL;
+		STATSTG stat{ 0 };
+		if (SUCCEEDED(::GetHGlobalFromStream(pStream, &hGlobal)) && SUCCEEDED(pStream->Stat(&stat, STATFLAG_NONAME))) {
+			uint32 nPNGSize = (uint32)stat.cbSize.QuadPart;
+			const uint8* pPNG = (const uint8*)::GlobalLock(hGlobal);
+			// ICONDIR (6 bytes) + one ICONDIRENTRY (16 bytes) + PNG data
+			uint32 nTotalSize = 6 + 16 + nPNGSize;
+			uint8* pIcon = new uint8[nTotalSize];
+			memset(pIcon, 0, 22);
+			pIcon[2] = 1; // type: icon
+			pIcon[4] = 1; // one image
+			pIcon[6] = (uint8)(iconSize.cx >= 256 ? 0 : iconSize.cx); // 0 means 256
+			pIcon[7] = (uint8)(iconSize.cy >= 256 ? 0 : iconSize.cy);
+			pIcon[10] = 1; // color planes
+			pIcon[12] = 32; // bits per pixel
+			memcpy(&pIcon[14], &nPNGSize, 4);
+			uint32 nOffset = 22;
+			memcpy(&pIcon[18], &nOffset, 4);
+			memcpy(&pIcon[22], pPNG, nPNGSize);
+			::GlobalUnlock(hGlobal);
+			bSuccess = WriteBufferToFile(sFileName, pIcon, nTotalSize);
+			delete[] pIcon;
+		}
+	}
+	if (pStream != NULL) pStream->Release();
+	delete pBitmap;
+	delete[] pDIB24bpp;
+	return bSuccess;
+}
+
+bool CSaveImage::SaveImageAsPDF(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams,
+	EProcessingFlags eFlags, CSize targetSize) {
+	pImage->EnableDimming(false);
+	char* pDIB24bpp = GetScaledDIB24bpp(pImage, procParams, eFlags, targetSize);
+	pImage->EnableDimming(true);
+	if (pDIB24bpp == NULL) {
+		return false;
+	}
+	int nJPEGStreamLen = 0;
+	bool bOutOfMemory;
+	unsigned char* pJPEG = (unsigned char*)TurboJpeg::Compress(pDIB24bpp, targetSize.cx, targetSize.cy, nJPEGStreamLen, bOutOfMemory,
+		CSettingsProvider::This().JPEGSaveQuality());
+	delete[] pDIB24bpp;
+	if (pJPEG == NULL) {
+		return false;
+	}
+
+	// Page size in points (1/72 inch), image pixels are mapped at 96 DPI
+	double dPageWidth = targetSize.cx * 72.0 / 96.0;
+	double dPageHeight = targetSize.cy * 72.0 / 96.0;
+
+	std::string pdf;
+	std::vector<size_t> offsets;
+	char buff[512];
+	pdf += "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+	offsets.push_back(pdf.size());
+	pdf += "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+	offsets.push_back(pdf.size());
+	pdf += "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
+	offsets.push_back(pdf.size());
+	sprintf_s(buff, sizeof(buff), "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2f %.2f] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n",
+		dPageWidth, dPageHeight);
+	pdf += buff;
+	offsets.push_back(pdf.size());
+	sprintf_s(buff, sizeof(buff), "4 0 obj\n<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length %d >>\nstream\n",
+		targetSize.cx, targetSize.cy, nJPEGStreamLen);
+	pdf += buff;
+	pdf.append((const char*)pJPEG, nJPEGStreamLen);
+	pdf += "\nendstream\nendobj\n";
+	TurboJpeg::Free(pJPEG);
+	char content[128];
+	int nContentLen = sprintf_s(content, sizeof(content), "q %.2f 0 0 %.2f 0 0 cm /Im0 Do Q", dPageWidth, dPageHeight);
+	offsets.push_back(pdf.size());
+	sprintf_s(buff, sizeof(buff), "5 0 obj\n<< /Length %d >>\nstream\n%s\nendstream\nendobj\n", nContentLen, content);
+	pdf += buff;
+	size_t nXRefOffset = pdf.size();
+	sprintf_s(buff, sizeof(buff), "xref\n0 %d\n0000000000 65535 f \n", (int)offsets.size() + 1);
+	pdf += buff;
+	for (size_t offset : offsets) {
+		sprintf_s(buff, sizeof(buff), "%010zu 00000 n \n", offset);
+		pdf += buff;
+	}
+	sprintf_s(buff, sizeof(buff), "trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%zu\n%%%%EOF\n", (int)offsets.size() + 1, nXRefOffset);
+	pdf += buff;
+
+	return WriteBufferToFile(sFileName, pdf.data(), pdf.size());
 }

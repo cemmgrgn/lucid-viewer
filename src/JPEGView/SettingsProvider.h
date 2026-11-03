@@ -132,6 +132,11 @@ public:
 	bool BeepSoundAlert() { return m_bBeepSoundAlert; }
 	bool WindowBorderlessOnStartup() { return m_bWindowBorderlessOnStartup; }
 	bool WindowAlwaysOnTopOnStartup() { return m_bWindowAlwaysOnTopOnStartup; }
+	bool ShowToolbar() { return m_bShowToolbar; }
+	bool ShowStatusBar() { return m_bShowStatusBar; }
+	bool ShowSidePanel() { return m_bShowSidePanel; }
+	int SidePanelWidth() { return m_nSidePanelWidth; }
+	bool ChromeDarkTheme() { return m_bChromeDarkTheme; }
 
 	double ZoomPauseFactor() { return m_zoomPauseFactor; }  // while internally this is represented in doubles, using a whole number percent simplifies it for the user... configuring doubles is not user friendly at all
 
@@ -157,6 +162,9 @@ public:
 
 	// Saves the sticky window size to the INI file
 	void SaveStickyWindowRect(CRect rect);
+
+	// Saves the visibility of toolbar, status bar and side panel to the user INI file
+	void SaveWindowChromeSettings(bool bShowToolbar, bool bShowStatusBar, bool bShowSidePanel);
 	
 	// Update user settings with settings from INI file template
 	void UpdateUserSettings();
@@ -303,6 +311,11 @@ private:
 	int m_zoomPauseFactor;
 	bool m_bWindowBorderlessOnStartup;
 	bool m_bWindowAlwaysOnTopOnStartup;
+	bool m_bShowToolbar;
+	bool m_bShowStatusBar;
+	bool m_bShowSidePanel;
+	int m_nSidePanelWidth;
+	bool m_bChromeDarkTheme;
 
 	std::list<CUserCommand*> m_userCommands;
 	std::list<CUserCommand*> m_openWithCommands;

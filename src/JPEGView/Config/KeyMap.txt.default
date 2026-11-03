@@ -81,3 +81,9 @@ R                       IDM_ROTATE_90_LOSSLESS_CONFIRM
 T                       IDM_ROTATE_270_LOSSLESS_CONFIRM
 W                       IDM_EXPLORE
 Shift+F12               IDM_ALWAYS_ON_TOP
+
+// Toolbar, status bar, side panel and conversion
+Ctrl+T                  IDM_TOGGLE_TOOLBAR
+Ctrl+I                  IDM_TOGGLE_SIDEPANEL
+Ctrl+E                  IDM_TOGGLE_EDITPANEL
+Ctrl+D                  IDM_CONVERT_MENU

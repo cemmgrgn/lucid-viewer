@@ -53,6 +53,9 @@
 #include "DirectoryWatcher.h"
 #include "DesktopWallpaper.h"
 #include "PrintImage.h"
+#include "WindowChrome.h"
+#include "Converter.h"
+#include <process.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -283,9 +286,12 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pKeyMap = new CKeyMap(); // routine to load the keymap, it's not as simple as just loading one file anymore, but all logic handled by CKeyMap
 	m_pPrintImage = new CPrintImage(CSettingsProvider::This().PrintMargin(), CSettingsProvider::This().DefaultPrintWidth());
 	m_pHelpDlg = NULL;
+	m_pChrome = NULL;
+	m_nRunningConversions = 0;
 }
 
 CMainDlg::~CMainDlg() {
+	delete m_pChrome;
 	delete m_pDirectoryWatcher;
 	delete m_pFileList;
 	if (m_pJPEGProvider != NULL) delete m_pJPEGProvider;
@@ -314,6 +320,9 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	HelpersGUI::ScreenScaling = ::GetDeviceCaps(dc, LOGPIXELSX)/96.0f;
 
 	::SetClassLongPtr(m_hWnd, GCLP_HCURSOR, NULL);
+
+	// toolbar, status bar and side panel, must exist before the window size is calculated
+	m_pChrome = new CWindowChrome(this);
 
 	m_pDirectoryWatcher = new CDirectoryWatcher(m_hWnd);
 
@@ -422,6 +431,10 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 	if (m_nAutoStartSlideShow > 0) {
 		StartMovieMode(1.0 / m_nAutoStartSlideShow);
+	}
+
+	if (!m_bFullScreenMode) {
+		m_pChrome->UpdateFrame();
 	}
 
 	this->Invalidate(FALSE);
@@ -580,6 +593,9 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 
 	SetCursorForMoveSection();
 
+	// status bar and side panel show information about the image that may have changed
+	m_pChrome->Paint();
+
 	return 0;
 }
 
@@ -670,7 +686,8 @@ void CMainDlg::DisplayFileName(const CRect& imageProcessingArea, CDC& dc, double
 	dc.SetTextColor(CSettingsProvider::This().ColorFileName());
 	dc.SetBkColor(RGB(0, 0, 0));
 
-	if (m_bShowFileName) {
+	// the status bar shows the file name next to the image instead of over it
+	if (m_bShowFileName && !IsStatusBarShown()) {
 		HelpersGUI::SelectDefaultFileNameFont(dc);
 		CString sFileName = Helpers::GetFileInfoString(CSettingsProvider::This().FileNameFormat(), m_pCurrentImage, m_pFileList, realizedZoom);
 		HelpersGUI::DrawTextBordered(dc, sFileName, CRect(HelpersGUI::ScaleToScreen(2) + imageProcessingArea.left, 0, imageProcessingArea.right, HelpersGUI::ScaleToScreen(30)), DT_LEFT); 
@@ -810,6 +827,13 @@ LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 // based on https://www.codeproject.com/Articles/18400/How-to-move-a-dialog-which-does-not-have-a-caption
 // https://learn.microsoft.com/en-us/windows/win32/inputdev/wm-nchittest
 LRESULT CMainDlg::OnNCHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	if (m_pChrome != NULL) {
+		LRESULT nHitTest = m_pChrome->HitTest(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
+		if (nHitTest != 0) {
+			return nHitTest;
+		}
+	}
+
 	bool bAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
 	bool bLButton = ::GetAsyncKeyState(MK_LBUTTON) < 0;
 
@@ -824,9 +848,80 @@ LRESULT CMainDlg::OnNCHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	return 0;
 }
 
-LRESULT CMainDlg::OnNCLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled) {
+LRESULT CMainDlg::OnNCLButtonDown(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	if (m_pChrome != NULL && wParam == CWindowChrome::HT_CHROME) {
+		m_pChrome->OnNCLButtonDown(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
+		return 0;
+	}
 	m_dZoomAtResizeStart = m_dZoom;
 	bHandled = FALSE; // do not handle message, this would block correct processing by OS
+	return 0;
+}
+
+LRESULT CMainDlg::OnNCLButtonUp(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	if (m_pChrome != NULL && wParam == CWindowChrome::HT_CHROME) {
+		m_pChrome->OnNCLButtonUp(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
+		return 0;
+	}
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT CMainDlg::OnNCMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
+	if (m_pChrome != NULL) {
+		m_pChrome->OnNCMouseMove(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
+	}
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT CMainDlg::OnNCMouseLeave(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled) {
+	if (m_pChrome != NULL) {
+		m_pChrome->OnNCMouseLeave();
+	}
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT CMainDlg::OnNCCalcSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	if (m_pChrome == NULL) {
+		bHandled = FALSE;
+		return 0;
+	}
+	// let Windows calculate the standard frame, then reserve the space for toolbar, status bar and side panel
+	LRESULT lResult = ::DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+	RECT* pClientRect = wParam ? &(((NCCALCSIZE_PARAMS*)lParam)->rgrc[0]) : (RECT*)lParam;
+	m_pChrome->OnNCCalcSize(pClientRect);
+	return lResult;
+}
+
+LRESULT CMainDlg::OnNCPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	if (m_pChrome == NULL || !m_pChrome->IsEnabled()) {
+		bHandled = FALSE;
+		return 0;
+	}
+	::DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+	m_pChrome->Paint();
+	return 0;
+}
+
+LRESULT CMainDlg::OnNCActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) {
+	if (m_pChrome == NULL || !m_pChrome->IsEnabled()) {
+		bHandled = FALSE;
+		return 0;
+	}
+	LRESULT lResult = ::DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+	m_pChrome->Paint();
+	return lResult;
+}
+
+LRESULT CMainDlg::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
+	// the window class has no cursor, set it for the toolbar and side panel
+	if (LOWORD(lParam) == CWindowChrome::HT_CHROME) {
+		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+		return TRUE;
+	}
+	bHandled = FALSE;
 	return 0;
 }
 
@@ -932,9 +1027,12 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	return 0;
 }
 
-LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
+LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/) {
 	bool bCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
 	int nDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+	if (m_pChrome->OnMouseWheel(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)), nDelta)) {
+		return 0; // side panel scrolled
+	}
 	if (!bCtrl && CSettingsProvider::This().NavigateWithMouseWheel() && !m_pPanelMgr->IsModalPanelShown()) {
 		if (nDelta < 0) {
 			GotoImage(POS_Next);
@@ -1110,7 +1208,7 @@ LRESULT CMainDlg::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL&
 		m_pZoomNavigatorCtl->InvalidateZoomNavigatorRect();
 		CRect imageProcArea = m_pImageProcPanelCtl->PanelRect();
 		this->InvalidateRect(GetZoomTextRect(imageProcArea), FALSE);
-	} else {
+	} else if (!m_pChrome->OnTimer((int)wParam)) {
 		if (!m_pCropCtl->OnTimer((int)wParam)) {
 			m_pPanelMgr->OnTimer((int)wParam);
 		}
@@ -1132,8 +1230,32 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		return 1;
 	}
 
+	HMENU hMenu = NULL;
+	HMENU hMenuTrackPopup = LoadPreparedContextMenu(hMenu);
+	if (hMenuTrackPopup == NULL) return 1;
+
+	// 'Convert to' submenu after 'Save processed image...'
+	if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && !m_bMovieMode) {
+		for (int i = 0; i < ::GetMenuItemCount(hMenuTrackPopup); i++) {
+			if (::GetMenuItemID(hMenuTrackPopup, i) == IDM_SAVE) {
+				::InsertMenu(hMenuTrackPopup, i + 1, MF_BYPOSITION | MF_POPUP | MF_STRING,
+					(UINT_PTR)Converter::CreatePresetMenu(IDM_FIRST_CONVERT_CMD), CNLS::GetString(_T("Convert to")));
+				break;
+			}
+		}
+	}
+
+	int nMenuCmd = TrackPopupMenu(CPoint(nX, nY), hMenuTrackPopup);
+	ExecuteCommand(nMenuCmd);
+
+	::DestroyMenu(hMenu);
+	return 1;
+}
+
+HMENU CMainDlg::LoadPreparedContextMenu(HMENU& hMenuRoot) {
 	HMENU hMenu = ::LoadMenu(_Module.m_hInst, _T("PopupMenu"));
-	if (hMenu == NULL) return 1;
+	hMenuRoot = hMenu;
+	if (hMenu == NULL) return NULL;
 
 	HMENU hMenuTrackPopup = ::GetSubMenu(hMenu, 0);
 	HelpersGUI::TranslateMenuStrings(hMenuTrackPopup, m_pKeyMap);
@@ -1262,11 +1384,21 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		::DeleteMenu(hMenuTrackPopup, 0, MF_BYPOSITION);
 	}
 
-	int nMenuCmd = TrackPopupMenu(CPoint(nX, nY), hMenuTrackPopup);
-	ExecuteCommand(nMenuCmd);
+	// Toolbar, status bar and side panel after 'Show navigation panel', so the toolbar can be switched on again from here.
+	// Inserted last as the code above uses fixed menu positions.
+	for (int i = 0; i < ::GetMenuItemCount(hMenuTrackPopup); i++) {
+		if (::GetMenuItemID(hMenuTrackPopup, i) == IDM_SHOW_NAVPANEL) {
+			::InsertMenu(hMenuTrackPopup, i + 1, MF_BYPOSITION | MF_STRING | (m_pChrome->GetShowSidePanel() ? MF_CHECKED : 0),
+				IDM_TOGGLE_SIDEPANEL, CNLS::GetString(_T("Information panel")));
+			::InsertMenu(hMenuTrackPopup, i + 1, MF_BYPOSITION | MF_STRING | (m_pChrome->GetShowStatusBar() ? MF_CHECKED : 0),
+				IDM_TOGGLE_STATUSBAR, CNLS::GetString(_T("Status bar")));
+			::InsertMenu(hMenuTrackPopup, i + 1, MF_BYPOSITION | MF_STRING | (m_pChrome->GetShowToolbar() ? MF_CHECKED : 0),
+				IDM_TOGGLE_TOOLBAR, CNLS::GetString(_T("Toolbar")));
+			break;
+		}
+	}
 
-	::DestroyMenu(hMenu);
-	return 1;
+	return hMenuTrackPopup;
 }
 
 // Make the text edit control for renaming image colored black/white
@@ -1747,6 +1879,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_FULL_SCREEN_MODE:
 			m_bFullScreenMode = !m_bFullScreenMode;
+			m_pChrome->SyncBorderSize();
 			m_dZoomAtResizeStart = 1.0;
 			if (!m_bFullScreenMode) {
 				CRect windowRect;
@@ -1795,6 +1928,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				// only available when full screen mode is not active
 
 				m_bWindowBorderless = !m_bWindowBorderless;
+				m_pChrome->SyncBorderSize();
 				SetCurrentWindowStyle();
 
 				// get the size of the border to shift the window pos downwards
@@ -1834,6 +1968,8 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 					}
 
 					StartLowQTimer(ZOOM_TIMEOUT);  // trigger a redraw as if zoom changed (might not be necessary)
+				} else {
+					m_pChrome->UpdateFrame(); // shows or hides toolbar, status bar and side panel
 				}
 			}
 
@@ -2102,6 +2238,36 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				SetDesktopWallpaper::SetProcessedImageAsWallpaper(*m_pCurrentImage);
 			}
 			break;
+		case IDM_TOGGLE_TOOLBAR:
+			m_pChrome->SetShowToolbar(!m_pChrome->GetShowToolbar());
+			Invalidate(FALSE);
+			break;
+		case IDM_TOGGLE_STATUSBAR:
+			m_pChrome->SetShowStatusBar(!m_pChrome->GetShowStatusBar());
+			Invalidate(FALSE);
+			break;
+		case IDM_TOGGLE_SIDEPANEL:
+			m_pChrome->SetShowSidePanel(!m_pChrome->GetShowSidePanel());
+			Invalidate(FALSE);
+			break;
+		case IDM_TOGGLE_EDITPANEL:
+			m_pImageProcPanelCtl->SetPinned(!m_pImageProcPanelCtl->IsPinned());
+			m_pChrome->Paint();
+			break;
+		case IDM_CONVERT_MENU:
+			ShowConvertMenuAndExecute();
+			break;
+		case IDM_EXPLORER_CONVERT_MENU:
+			{
+				bool bRegistered = Converter::IsExplorerMenuRegistered();
+				bool bSuccess = bRegistered ? Converter::UnregisterExplorerMenu() : Converter::RegisterExplorerMenu();
+				m_pChrome->ShowMessage(CNLS::GetString(!bSuccess ? _T("The Explorer context menu could not be changed.") :
+					bRegistered ? _T("'Convert to' was removed from the Explorer context menu.") : _T("'Convert to' was added to the Explorer context menu.")));
+			}
+			break;
+	}
+	if (nCommand >= IDM_FIRST_CONVERT_CMD && nCommand <= IDM_LAST_CONVERT_CMD) {
+		StartConversion(nCommand - IDM_FIRST_CONVERT_CMD);
 	}
 	if (nCommand >= IDM_FIRST_USER_CMD && nCommand <= IDM_LAST_USER_CMD) {
 		ExecuteUserCommand(HelpersGUI::FindUserCommand(nCommand - IDM_FIRST_USER_CMD));
@@ -3266,10 +3432,256 @@ bool CMainDlg::PrepareForModalPanel() {
 
 int CMainDlg::TrackPopupMenu(CPoint pos, HMENU hMenu) {
 	m_bInTrackPopupMenu = true;
-	int nMenuCmd = ::TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD, 
+	int nMenuCmd = ::TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
 		pos.x, pos.y, 0, this->m_hWnd, NULL);
 	m_bInTrackPopupMenu = false;
 	return nMenuCmd;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Menu bar, toolbar and conversion
+///////////////////////////////////////////////////////////////////////////////////
+
+bool CMainDlg::IsToolbarShown() { return m_pChrome != NULL && m_pChrome->IsToolbarShown(); }
+bool CMainDlg::IsStatusBarShown() { return m_pChrome != NULL && m_pChrome->IsStatusBarShown(); }
+bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSidePanelShown(); }
+
+// Entries of the menu bar menus: a command is copied from the context menu, MENUBAR_SUBMENU(cmd) copies the
+// sub menu of the context menu containing the command, negative values are entries that are not in the context menu
+#define MENUBAR_SUBMENU(cmd) ((cmd) | 0x40000000)
+enum {
+	MB_SEPARATOR = -1, MB_CONVERT = -2, MB_TOOLBAR = -3, MB_STATUSBAR = -4, MB_SIDEPANEL = -5,
+	MB_EDITPANEL = -6, MB_EXPLORER_MENU = -7, MB_FIRST_IMAGE = -8, MB_LAST_IMAGE = -9, MB_HELP = -10
+};
+
+static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MB_CONVERT, IDM_RELOAD, MB_SEPARATOR,
+	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MB_SEPARATOR, IDM_EXIT };
+static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MB_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
+	MB_EDITPANEL, MB_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MB_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
+static const int s_menuBarView[] = { MB_TOOLBAR, MB_STATUSBAR, MB_SIDEPANEL, MB_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
+	MB_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
+static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MB_FIRST_IMAGE, MB_LAST_IMAGE, MB_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
+	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
+static const int s_menuBarTools[] = { MB_EXPLORER_MENU, MB_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
+static const int s_menuBarHelp[] = { MB_HELP, IDM_ABOUT };
+
+// Position of the (non popup) item with the given command, -1 if not found
+static int FindMenuCommandPos(HMENU hMenu, UINT nCommand) {
+	for (int i = 0; i < ::GetMenuItemCount(hMenu); i++) {
+		if (::GetSubMenu(hMenu, i) == NULL && ::GetMenuItemID(hMenu, i) == nCommand) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+// Position of the popup item whose sub menu directly contains the given command, -1 if not found
+static int FindSubMenuPos(HMENU hMenu, UINT nCommand) {
+	for (int i = 0; i < ::GetMenuItemCount(hMenu); i++) {
+		HMENU hSubMenu = ::GetSubMenu(hMenu, i);
+		if (hSubMenu != NULL && FindMenuCommandPos(hSubMenu, nCommand) >= 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+// Appends a deep copy of the item at position nPos of hSource to hTarget
+static void AppendMenuItemCopy(HMENU hSource, int nPos, HMENU hTarget) {
+	TCHAR buffer[256];
+	MENUITEMINFO info{ 0 };
+	info.cbSize = sizeof(info);
+	info.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_STRING;
+	info.dwTypeData = buffer;
+	info.cch = 255;
+	if (!::GetMenuItemInfo(hSource, nPos, TRUE, &info)) {
+		return;
+	}
+	if (info.hSubMenu != NULL) {
+		HMENU hSubMenuCopy = ::CreatePopupMenu();
+		for (int i = 0; i < ::GetMenuItemCount(info.hSubMenu); i++) {
+			AppendMenuItemCopy(info.hSubMenu, i, hSubMenuCopy);
+		}
+		info.hSubMenu = hSubMenuCopy;
+	}
+	info.dwTypeData = buffer;
+	::InsertMenuItem(hTarget, ::GetMenuItemCount(hTarget), TRUE, &info);
+}
+
+static void AppendMenuString(HMENU hMenu, UINT nCommand, LPCTSTR sEnglishText, bool bChecked, bool bEnabled) {
+	::AppendMenu(hMenu, MF_STRING | (bChecked ? MF_CHECKED : 0) | (bEnabled ? 0 : MF_GRAYED), nCommand, CNLS::GetString(sEnglishText));
+}
+
+// Removes separators at the start, at the end and following each other
+static void RemoveSurplusSeparators(HMENU hMenu) {
+	bool bLastWasSeparator = true;
+	for (int i = 0; i < ::GetMenuItemCount(hMenu); i++) {
+		bool bIsSeparator = (::GetMenuState(hMenu, i, MF_BYPOSITION) & MF_SEPARATOR) != 0;
+		if (bIsSeparator && bLastWasSeparator) {
+			::DeleteMenu(hMenu, i, MF_BYPOSITION);
+			i--;
+		} else {
+			bLastWasSeparator = bIsSeparator;
+		}
+	}
+	int nCount = ::GetMenuItemCount(hMenu);
+	if (nCount > 0 && (::GetMenuState(hMenu, nCount - 1, MF_BYPOSITION) & MF_SEPARATOR) != 0) {
+		::DeleteMenu(hMenu, nCount - 1, MF_BYPOSITION);
+	}
+}
+
+HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
+	const int* pEntries;
+	int nEntries;
+	switch (nIndex) {
+		case 0: pEntries = s_menuBarFile; nEntries = sizeof(s_menuBarFile) / sizeof(int); break;
+		case 1: pEntries = s_menuBarEdit; nEntries = sizeof(s_menuBarEdit) / sizeof(int); break;
+		case 2: pEntries = s_menuBarView; nEntries = sizeof(s_menuBarView) / sizeof(int); break;
+		case 3: pEntries = s_menuBarNavigate; nEntries = sizeof(s_menuBarNavigate) / sizeof(int); break;
+		case 4: pEntries = s_menuBarTools; nEntries = sizeof(s_menuBarTools) / sizeof(int); break;
+		case 5: pEntries = s_menuBarHelp; nEntries = sizeof(s_menuBarHelp) / sizeof(int); break;
+		default: return NULL;
+	}
+
+	// The context menu has the texts, shortcuts, check marks and enabled states already set up
+	HMENU hContextMenuRoot = NULL;
+	HMENU hContextMenu = LoadPreparedContextMenu(hContextMenuRoot);
+	if (hContextMenu == NULL) {
+		return NULL;
+	}
+
+	bool bHasFileImage = m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && !m_bMovieMode;
+	HMENU hMenu = ::CreatePopupMenu();
+	for (int i = 0; i < nEntries; i++) {
+		int nEntry = pEntries[i];
+		switch (nEntry) {
+			case MB_SEPARATOR:
+				::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+				break;
+			case MB_CONVERT:
+				::AppendMenu(hMenu, MF_POPUP | MF_STRING | (bHasFileImage ? 0 : MF_GRAYED),
+					(UINT_PTR)Converter::CreatePresetMenu(IDM_FIRST_CONVERT_CMD), CNLS::GetString(_T("Convert to")));
+				break;
+			case MB_TOOLBAR:
+				AppendMenuString(hMenu, IDM_TOGGLE_TOOLBAR, _T("Toolbar"), m_pChrome->GetShowToolbar(), true);
+				break;
+			case MB_STATUSBAR:
+				AppendMenuString(hMenu, IDM_TOGGLE_STATUSBAR, _T("Status bar"), m_pChrome->GetShowStatusBar(), true);
+				break;
+			case MB_SIDEPANEL:
+				AppendMenuString(hMenu, IDM_TOGGLE_SIDEPANEL, _T("Information panel"), m_pChrome->GetShowSidePanel(), true);
+				break;
+			case MB_EDITPANEL:
+				AppendMenuString(hMenu, IDM_TOGGLE_EDITPANEL, _T("Image processing panel"), m_pImageProcPanelCtl->IsPinned(), m_pCurrentImage != NULL);
+				break;
+			case MB_EXPLORER_MENU:
+				AppendMenuString(hMenu, IDM_EXPLORER_CONVERT_MENU, _T("'Convert to' in the Explorer context menu"), Converter::IsExplorerMenuRegistered(), true);
+				break;
+			case MB_FIRST_IMAGE:
+				AppendMenuString(hMenu, IDM_FIRST, _T("First image"), false, m_pCurrentImage != NULL);
+				break;
+			case MB_LAST_IMAGE:
+				AppendMenuString(hMenu, IDM_LAST, _T("Last image"), false, m_pCurrentImage != NULL);
+				break;
+			case MB_HELP:
+				::AppendMenu(hMenu, MF_STRING, IDM_HELP, CString(CNLS::GetString(_T("Help and keyboard shortcuts"))) + _T("\tF1"));
+				break;
+			default:
+				if (nEntry & 0x40000000) {
+					int nPos = FindSubMenuPos(hContextMenu, nEntry & ~0x40000000);
+					if (nPos >= 0) AppendMenuItemCopy(hContextMenu, nPos, hMenu);
+				} else {
+					int nPos = FindMenuCommandPos(hContextMenu, nEntry);
+					if (nPos >= 0) AppendMenuItemCopy(hContextMenu, nPos, hMenu);
+				}
+				break;
+		}
+	}
+	::DestroyMenu(hContextMenuRoot);
+	RemoveSurplusSeparators(hMenu);
+	return hMenu;
+}
+
+void CMainDlg::ShowConvertMenuAndExecute() {
+	if (m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage() || m_bMovieMode) {
+		return;
+	}
+	MouseOn();
+	int nCommand = m_pChrome->TrackConvertMenu();
+	if (nCommand != 0) {
+		ExecuteCommand(nCommand);
+	}
+}
+
+namespace {
+	struct CConversionJob {
+		HWND TargetWindow;
+		CString SourceFile;
+		int PresetIndex;
+		volatile LONG* RunningConversions;
+	};
+
+	unsigned __stdcall ConversionThread(void* pArgument) {
+		CConversionJob* pJob = (CConversionJob*)pArgument;
+		::CoInitialize(NULL);
+		int nCount;
+		const Converter::CPreset* pPresets = Converter::GetPresets(nCount);
+		CString sOutputFile, sError;
+		bool bSuccess = Converter::ConvertFile(pJob->SourceFile, pPresets[pJob->PresetIndex], sOutputFile, sError);
+		CString* pResult = new CString(bSuccess ? sOutputFile : (pJob->SourceFile + _T("\n") + sError));
+		::InterlockedDecrement(pJob->RunningConversions);
+		if (!::PostMessage(pJob->TargetWindow, WM_CONVERSION_FINISHED, bSuccess ? 1 : 0, (LPARAM)pResult)) {
+			delete pResult;
+		}
+		::CoUninitialize();
+		delete pJob;
+		return 0;
+	}
+}
+
+void CMainDlg::StartConversion(int nPresetIndex) {
+	int nCount;
+	Converter::GetPresets(nCount);
+	if (nPresetIndex < 0 || nPresetIndex >= nCount || m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage()) {
+		return;
+	}
+	LPCTSTR sCurrentFile = CurrentFileName(false);
+	if (sCurrentFile == NULL) {
+		return;
+	}
+	CConversionJob* pJob = new CConversionJob();
+	pJob->TargetWindow = m_hWnd;
+	pJob->SourceFile = sCurrentFile;
+	pJob->PresetIndex = nPresetIndex;
+	pJob->RunningConversions = &m_nRunningConversions;
+	::InterlockedIncrement(&m_nRunningConversions);
+	m_pChrome->ShowMessage(CString(CNLS::GetString(_T("Converting..."))) + _T(" ") + CurrentFileName(true));
+	HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, &ConversionThread, pJob, 0, NULL);
+	if (hThread == NULL) {
+		::InterlockedDecrement(&m_nRunningConversions);
+		delete pJob;
+		return;
+	}
+	::CloseHandle(hThread);
+}
+
+LRESULT CMainDlg::OnConversionFinished(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/) {
+	CString* pResult = (CString*)lParam;
+	if (pResult == NULL) {
+		return 0;
+	}
+	if (wParam == 1) {
+		LPCTSTR sFileTitle = _tcsrchr(*pResult, _T('\\'));
+		m_pChrome->ShowMessage(CString(CNLS::GetString(_T("Converted:"))) + _T(" ") + ((sFileTitle != NULL) ? sFileTitle + 1 : (LPCTSTR)*pResult));
+		if (!IsStatusBarShown()) {
+			::MessageBeep(MB_OK);
+		}
+	} else {
+		::MessageBox(m_hWnd, CString(CNLS::GetString(_T("The following files could not be converted:"))) + _T("\n\n") + *pResult,
+			_T(JPEGVIEW_TITLE), MB_OK | MB_ICONWARNING);
+	}
+	delete pResult;
+	return 0;
 }
 
 int CMainDlg::GetLoadErrorAfterOpenFile() {

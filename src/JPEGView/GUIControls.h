@@ -221,6 +221,7 @@ class CURLCtrl : public CTextCtrl {
 public:
 	CURLCtrl(CPanel* pPanel, LPCTSTR sText, LPCTSTR sURL, bool outlineText, void* pContext = NULL);
 	void SetURL(LPCTSTR sURL);
+	LPCTSTR GetURL() { return m_sURL; }
 public:
 	virtual bool OnMouseLButton(EMouseEvent eMouseEvent, int nX, int nY);
 	virtual bool OnMouseMove(int nX, int nY);

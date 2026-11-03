@@ -487,3 +487,42 @@ Zoom to Selection	Seçime yakınlaştır
 //! * Total (Strings + Menu) = 429
 //! * Done = 427
 //! * Missing = 2 (0%)
+
+// Cem fork: converter, toolbar, status bar and side panel
+WEBP (lossless)	WEBP (kayıpsız)
+ICO (icon)	ICO (simge)
+Scale to 75 %	%75 boyuta küçült
+Scale to 50 %	%50 boyuta küçült
+Scale to 25 %	%25 boyuta küçült
+Rotate left	Sola döndür
+Rotate right	Sağa döndür
+The image could not be loaded because there is not enough memory.	Yeterli bellek olmadığı için görsel yüklenemedi.
+The image could not be read.	Görsel okunamadı.
+The following files could not be converted:	Şu dosyalar dönüştürülemedi:
+Convert to	Dönüştür
+Unknown conversion. Valid conversions are: jpg, png, webp, webp-lossless, bmp, tiff, gif, ico, pdf, scale75, scale50, scale25, rotate-left, rotate-right	Bilinmeyen dönüştürme. Geçerli dönüştürmeler: jpg, png, webp, webp-lossless, bmp, tiff, gif, ico, pdf, scale75, scale50, scale25, rotate-left, rotate-right
+File	Dosya
+View	Görünüm
+Navigate	Gezinme
+Tools	Araçlar
+Help	Yardım
+Zoom in	Yakınlaştır
+Zoom out	Uzaklaştır
+100 %	%100
+Image processing panel	Düzenleme paneli
+Move to recycle bin	Geri Dönüşüm Kutusu'na taşı
+Information panel	Bilgi paneli
+Information	Bilgi
+Histogram	Histogram
+Comment	Açıklama
+The Explorer context menu could not be changed.	Explorer sağ tık menüsü değiştirilemedi.
+'Convert to' was removed from the Explorer context menu.	'Dönüştür' Explorer sağ tık menüsünden kaldırıldı.
+'Convert to' was added to the Explorer context menu.	'Dönüştür' Explorer sağ tık menüsüne eklendi.
+Toolbar	Araç çubuğu
+Status bar	Durum çubuğu
+'Convert to' in the Explorer context menu	Explorer sağ tık menüsünde 'Dönüştür'
+First image	İlk görsel
+Last image	Son görsel
+Help and keyboard shortcuts	Yardım ve klavye kısayolları
+Converting...	Dönüştürülüyor...
+Converted:	Dönüştürüldü:

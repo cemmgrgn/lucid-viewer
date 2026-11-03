@@ -24,13 +24,17 @@ public:
 	virtual bool OnMouseMove(int nX, int nY);
 	virtual void OnPrePaintMainDlg(HDC hPaintDC);
 
+	// Collects the file and EXIF information of the current image, also used by the side panel.
+	// Only call when there is a current image.
+	void FillEXIFDataDisplay();
+	CEXIFDisplay* GetEXIFDisplay() { return m_pEXIFDisplay; }
+
 private:
 	bool m_bVisible;
 	CEXIFDisplay* m_pEXIFDisplay;
 	CPanel* m_pImageProcPanel;
 	int m_nFileNameHeight;
 
-	void FillEXIFDataDisplay();
 	static void OnShowHistogram(void* pContext, int nParameter, CButtonCtrl & sender);
 	static void OnClose(void* pContext, int nParameter, CButtonCtrl & sender);
 };

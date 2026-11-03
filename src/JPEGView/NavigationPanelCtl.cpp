@@ -76,7 +76,8 @@ void CNavigationPanelCtl::AdjustMaximalWidth(int nMaxWidth) {
 
 bool CNavigationPanelCtl::IsVisible() {
 	bool bMouseInNavPanel = m_bMouseInNavPanel && !m_pMainDlg->GetImageProcPanelCtl()->IsVisible();
-	return m_bEnabled && !(m_fCurrentBlendingFactorNavPanel <= 0.0f && !bMouseInNavPanel) &&
+	// the toolbar offers the same buttons, so the navigation panel is not painted over the image
+	return m_bEnabled && !m_pMainDlg->IsToolbarShown() && !(m_fCurrentBlendingFactorNavPanel <= 0.0f && !bMouseInNavPanel) &&
 		!m_pMainDlg->IsInMovieMode() && !m_pMainDlg->IsDoCropping() && (m_pMainDlg->IsMouseOn() || bMouseInNavPanel);
 }
 
@@ -95,6 +96,9 @@ void CNavigationPanelCtl::SetActive(bool bActive) {
 }
 
 bool CNavigationPanelCtl::OnMouseLButton(EMouseEvent eMouseEvent, int nX, int nY) {
+	if (m_pMainDlg->IsToolbarShown()) {
+		return false;
+	}
 	bool bHandled = CPanelController::OnMouseLButton(eMouseEvent, nX, nY);
 	if (eMouseEvent == MouseEvent_BtnDown) {
 		return CheckMouseInNavPanel(nX, nY) || bHandled;
@@ -103,7 +107,7 @@ bool CNavigationPanelCtl::OnMouseLButton(EMouseEvent eMouseEvent, int nX, int nY
 }
 
 bool CNavigationPanelCtl::OnMouseMove(int nX, int nY) {
-	if (!m_bEnabled) {
+	if (!m_bEnabled || m_pMainDlg->IsToolbarShown()) {
 		return false;
 	}
 

@@ -23,6 +23,7 @@ CImageProcPanelCtl::CImageProcPanelCtl(CMainDlg* pMainDlg, CImageProcessingParam
 : CPanelController(pMainDlg, false) {
 	m_bEnabled = CSettingsProvider::This().ShowBottomPanel();
 	m_bVisible = false;
+	m_bPinned = false;
 	m_nOldMouseY = 0;
 	m_pPanel = m_pImageProcPanel = new CImageProcessingPanel(pMainDlg->GetHWND(), this, pParams, pEnableLDC, pEnableContrastCorr);
 	m_pImageProcPanel->GetBtnUnsharpMask()->SetButtonPressedHandler(&OnUnsharpMask, this);
@@ -103,12 +104,28 @@ bool CImageProcPanelCtl::OnTimer(int nTimerId) {
 	return false;
 }
 
+void CImageProcPanelCtl::SetPinned(bool bPinned) {
+	m_bPinned = bPinned;
+	SetVisible(bPinned && CanMakeVisible());
+	InvalidateMainDlg();
+}
+
 bool CImageProcPanelCtl::OnMouseMove(int nX, int nY) {
 	if (!m_bEnabled) {
 		return false;
 	}
 	if (!CanMakeVisible()) {
 		SetVisible(false);
+		return false;
+	}
+
+	if (m_bPinned) {
+		SetVisible(true);
+		m_nOldMouseY = nY;
+		return m_pImageProcPanel->OnMouseMove(nX, nY);
+	}
+	if (m_pMainDlg->IsToolbarShown()) {
+		// with the toolbar the panel is opened by its toolbar button only, it shall not pop up over the image
 		return false;
 	}
 

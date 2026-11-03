@@ -13,7 +13,8 @@ public:
 	CImageProcPanelCtl(CMainDlg* pMainDlg, CImageProcessingParams* pParams, bool* pEnableLDC, bool* pEnableContrastCorr);
 	virtual ~CImageProcPanelCtl();
 
-	virtual float DimFactor() { return 0.5f; }
+	// a pinned panel stays open and dims the image more to keep the controls readable
+	virtual float DimFactor() { return m_bPinned ? 0.85f : 0.5f; }
 
 	virtual bool IsVisible() { return m_bVisible && m_bEnabled && !m_pMainDlg->IsInSlideShowWithTransition() ; }
 	virtual bool IsActive() { return m_bEnabled; }
@@ -33,9 +34,14 @@ public:
 
 	CRect GetUnsharpMaskButtonRect();
 
+	// A pinned panel is opened and closed by command (toolbar button) instead of moving the mouse to the bottom
+	void SetPinned(bool bPinned);
+	bool IsPinned() { return m_bPinned; }
+
 private:
 	bool m_bEnabled;
 	bool m_bVisible;
+	bool m_bPinned;
 	int m_nOldMouseY;
 	CImageProcessingPanel* m_pImageProcPanel;
 
