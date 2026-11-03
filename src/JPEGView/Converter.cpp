@@ -10,6 +10,8 @@
 #include "NLS.h"
 #include <shlobj.h>
 #include <shellapi.h>
+#include <commctrl.h>
+#include <process.h>
 
 namespace Converter {
 
@@ -324,6 +326,247 @@ namespace Converter {
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////
+	// Batch conversion: Explorer starts one process per selected file. The first process of a conversion
+	// collects the files of the others (WM_COPYDATA to a message window), converts all of them one after
+	// the other and shows the progress. The other processes end immediately.
+	//////////////////////////////////////////////////////////////////////////////////////////////
+
+	static const LPCTSTR COLLECTOR_CLASS = _T("JPEGViewConvertCollector");
+	static const LPCTSTR PROGRESS_CLASS_NAME = _T("JPEGViewConvertProgress");
+	static const ULONG_PTR COPYDATA_FILE = 0x4A56434E;
+	static const UINT_PTR COLLECT_TIMER = 1;
+	static const int COLLECT_IDLE_TIME = 500; // ms without new files until the conversion starts
+	static const UINT WM_BATCH_PROGRESS = WM_APP + 1;
+	static const UINT WM_BATCH_DONE = WM_APP + 2;
+	static const int ID_CANCEL_BUTTON = 100;
+
+	struct CBatch {
+		CRITICAL_SECTION Lock;
+		std::vector<CString> Files;
+		const CPreset* Preset;
+		size_t Done;
+		volatile bool Cancel;
+		bool Collecting;
+		CString Errors;
+		HWND ProgressWnd, TextWnd, BarWnd;
+	};
+	static CBatch* s_pBatch = NULL;
+
+	static LRESULT CALLBACK CollectorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
+		if (nMsg == WM_COPYDATA && s_pBatch != NULL) {
+			COPYDATASTRUCT* pData = (COPYDATASTRUCT*)lParam;
+			if (pData->dwData == COPYDATA_FILE && pData->cbData >= sizeof(TCHAR)) {
+				::EnterCriticalSection(&s_pBatch->Lock);
+				s_pBatch->Files.push_back(CString((LPCTSTR)pData->lpData, pData->cbData / sizeof(TCHAR) - 1));
+				::LeaveCriticalSection(&s_pBatch->Lock);
+				if (s_pBatch->Collecting) {
+					::SetTimer(hWnd, COLLECT_TIMER, COLLECT_IDLE_TIME, NULL);
+				} else if (s_pBatch->ProgressWnd != NULL) {
+					::PostMessage(s_pBatch->ProgressWnd, WM_BATCH_PROGRESS, 0, 0);
+				}
+				return TRUE;
+			}
+		}
+		if (nMsg == WM_TIMER && wParam == COLLECT_TIMER) {
+			::KillTimer(hWnd, COLLECT_TIMER);
+			s_pBatch->Collecting = false;
+			::PostQuitMessage(0);
+			return 0;
+		}
+		return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+	}
+
+	static void UpdateProgress() {
+		::EnterCriticalSection(&s_pBatch->Lock);
+		size_t nTotal = s_pBatch->Files.size();
+		size_t nDone = s_pBatch->Done;
+		CString sCurrent = (nDone < nTotal) ? s_pBatch->Files[nDone] : CString();
+		::LeaveCriticalSection(&s_pBatch->Lock);
+		int nSlash = sCurrent.ReverseFind(_T('\\'));
+		CString sText;
+		sText.Format(_T("%s %d / %d\n%s"), CNLS::GetString(_T("Converting")), (int)min(nDone + 1, nTotal), (int)nTotal, (LPCTSTR)sCurrent.Mid(nSlash + 1));
+		::SetWindowText(s_pBatch->TextWnd, sText);
+		::SendMessage(s_pBatch->BarWnd, PBM_SETRANGE32, 0, (LPARAM)nTotal);
+		::SendMessage(s_pBatch->BarWnd, PBM_SETPOS, (WPARAM)nDone, 0);
+	}
+
+	static LRESULT CALLBACK ProgressWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
+		switch (nMsg) {
+			case WM_BATCH_PROGRESS:
+				UpdateProgress();
+				return 0;
+			case WM_BATCH_DONE:
+				::PostQuitMessage(0);
+				return 0;
+			case WM_COMMAND:
+				if (LOWORD(wParam) == ID_CANCEL_BUTTON) {
+					s_pBatch->Cancel = true;
+					::EnableWindow((HWND)lParam, FALSE);
+				}
+				return 0;
+			case WM_CLOSE:
+				s_pBatch->Cancel = true;
+				return 0;
+		}
+		return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+	}
+
+	static unsigned __stdcall BatchThread(void*) {
+		for (;;) {
+			::EnterCriticalSection(&s_pBatch->Lock);
+			bool bFinished = s_pBatch->Done >= s_pBatch->Files.size() || s_pBatch->Cancel;
+			CString sFile = bFinished ? CString() : s_pBatch->Files[s_pBatch->Done];
+			::LeaveCriticalSection(&s_pBatch->Lock);
+			if (bFinished) {
+				break;
+			}
+			if (s_pBatch->ProgressWnd != NULL) {
+				::PostMessage(s_pBatch->ProgressWnd, WM_BATCH_PROGRESS, 0, 0);
+			}
+			CString sOutputFile, sError;
+			if (!ConvertFile(sFile, *s_pBatch->Preset, sOutputFile, sError)) {
+				s_pBatch->Errors += sFile + _T("\n    ") + sError + _T("\n");
+			}
+			::EnterCriticalSection(&s_pBatch->Lock);
+			s_pBatch->Done++;
+			::LeaveCriticalSection(&s_pBatch->Lock);
+		}
+		if (s_pBatch->ProgressWnd != NULL) {
+			::PostMessage(s_pBatch->ProgressWnd, WM_BATCH_DONE, 0, 0);
+		}
+		return 0;
+	}
+
+	static void CreateProgressWindow() {
+		HINSTANCE hInstance = ::GetModuleHandle(NULL);
+		INITCOMMONCONTROLSEX initControls = { sizeof(INITCOMMONCONTROLSEX), ICC_PROGRESS_CLASS };
+		::InitCommonControlsEx(&initControls);
+		WNDCLASS wndClass{ 0 };
+		wndClass.lpfnWndProc = ProgressWndProc;
+		wndClass.hInstance = hInstance;
+		wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+		wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+		wndClass.hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(IDR_MAINFRAME));
+		wndClass.lpszClassName = PROGRESS_CLASS_NAME;
+		::RegisterClass(&wndClass);
+
+		HDC hDC = ::GetDC(NULL);
+		double dScale = ::GetDeviceCaps(hDC, LOGPIXELSX) / 96.0;
+		::ReleaseDC(NULL, hDC);
+		int nW = (int)(420 * dScale), nH = (int)(150 * dScale), nPad = (int)(12 * dScale);
+		RECT workArea;
+		::SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
+		HWND hWnd = ::CreateWindowEx(WS_EX_TOPMOST, PROGRESS_CLASS_NAME, CNLS::GetString(_T("Convert to")),
+			WS_POPUP | WS_CAPTION | WS_SYSMENU, (workArea.left + workArea.right - nW) / 2, (workArea.top + workArea.bottom - nH) / 2,
+			nW, nH, NULL, NULL, hInstance, NULL);
+		RECT client;
+		::GetClientRect(hWnd, &client);
+		NONCLIENTMETRICS metrics{ 0 };
+		metrics.cbSize = sizeof(metrics);
+		::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0);
+		HFONT hFont = ::CreateFontIndirect(&metrics.lfMessageFont);
+		int nButtonW = (int)(90 * dScale), nButtonH = (int)(26 * dScale), nBarH = (int)(16 * dScale);
+		s_pBatch->TextWnd = ::CreateWindow(_T("STATIC"), _T(""), WS_CHILD | WS_VISIBLE | SS_LEFT | SS_ENDELLIPSIS, nPad, nPad,
+			client.right - 2 * nPad, (int)(36 * dScale), hWnd, NULL, hInstance, NULL);
+		s_pBatch->BarWnd = ::CreateWindow(PROGRESS_CLASS, _T(""), WS_CHILD | WS_VISIBLE, nPad, nPad + (int)(42 * dScale),
+			client.right - 2 * nPad, nBarH, hWnd, NULL, hInstance, NULL);
+		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(_T("Cancel")), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+			client.right - nPad - nButtonW, client.bottom - nPad - nButtonH, nButtonW, nButtonH, hWnd, (HMENU)(INT_PTR)ID_CANCEL_BUTTON, hInstance, NULL);
+		::SendMessage(s_pBatch->TextWnd, WM_SETFONT, (WPARAM)hFont, FALSE);
+		::SendMessage(hButton, WM_SETFONT, (WPARAM)hFont, FALSE);
+		s_pBatch->ProgressWnd = hWnd;
+		UpdateProgress();
+		::ShowWindow(hWnd, SW_SHOWNORMAL);
+	}
+
+	// Converts the files, collecting the files of the other processes started for the same conversion. Returns the exit code.
+	static int RunBatch(const CPreset& preset, const std::list<CString>& files) {
+		CString sBatchName = CString(_T("JPEGViewConvert_")) + preset.Id;
+		sBatchName.Replace(_T(':'), _T('_'));
+		HANDLE hMutex = ::CreateMutex(NULL, TRUE, sBatchName);
+		bool bLeader = ::GetLastError() != ERROR_ALREADY_EXISTS;
+		if (!bLeader) {
+			// hand the files over to the first process, it may still be starting up
+			for (int nTry = 0; nTry < 100 && !bLeader; nTry++) {
+				HWND hCollector = ::FindWindowEx(HWND_MESSAGE, NULL, COLLECTOR_CLASS, sBatchName);
+				if (hCollector != NULL) {
+					bool bSent = true;
+					for (const CString& sFile : files) {
+						COPYDATASTRUCT data = { COPYDATA_FILE, (DWORD)((sFile.GetLength() + 1) * sizeof(TCHAR)), (void*)(LPCTSTR)sFile };
+						DWORD_PTR nResult = 0;
+						bSent &= ::SendMessageTimeout(hCollector, WM_COPYDATA, 0, (LPARAM)&data, SMTO_ABORTIFHUNG, 5000, &nResult) != 0 && nResult == TRUE;
+					}
+					if (bSent) {
+						::CloseHandle(hMutex);
+						return 0;
+					}
+				}
+				DWORD nWait = ::WaitForSingleObject(hMutex, 30);
+				bLeader = nWait == WAIT_OBJECT_0 || nWait == WAIT_ABANDONED; // the first process has ended, convert here
+			}
+		}
+
+		CBatch batch;
+		::InitializeCriticalSection(&batch.Lock);
+		batch.Files.assign(files.begin(), files.end());
+		batch.Preset = &preset;
+		batch.Done = 0;
+		batch.Cancel = false;
+		batch.Collecting = true;
+		batch.ProgressWnd = batch.TextWnd = batch.BarWnd = NULL;
+		s_pBatch = &batch;
+
+		HINSTANCE hInstance = ::GetModuleHandle(NULL);
+		WNDCLASS collectorClass{ 0 };
+		collectorClass.lpfnWndProc = CollectorWndProc;
+		collectorClass.hInstance = hInstance;
+		collectorClass.lpszClassName = COLLECTOR_CLASS;
+		::RegisterClass(&collectorClass);
+		HWND hCollector = ::CreateWindow(COLLECTOR_CLASS, sBatchName, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
+		MSG msg;
+		if (hCollector != NULL) {
+			::SetTimer(hCollector, COLLECT_TIMER, COLLECT_IDLE_TIME, NULL);
+			while (::GetMessage(&msg, NULL, 0, 0) > 0) {
+				::DispatchMessage(&msg);
+			}
+		}
+		batch.Collecting = false;
+
+		CProcessingThreadPool::This().CreateThreadPoolThreads();
+		if (batch.Files.size() > 1) {
+			CreateProgressWindow();
+		}
+		HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, BatchThread, NULL, 0, NULL);
+		if (batch.ProgressWnd != NULL) {
+			while (::GetMessage(&msg, NULL, 0, 0) > 0) {
+				if (!::IsDialogMessage(batch.ProgressWnd, &msg)) {
+					::TranslateMessage(&msg);
+					::DispatchMessage(&msg);
+				}
+			}
+		}
+		::WaitForSingleObject(hThread, INFINITE);
+		::CloseHandle(hThread);
+		if (batch.ProgressWnd != NULL) {
+			::DestroyWindow(batch.ProgressWnd);
+		}
+		if (hCollector != NULL) {
+			::DestroyWindow(hCollector);
+		}
+		::ReleaseMutex(hMutex);
+		::CloseHandle(hMutex);
+		s_pBatch = NULL;
+		::DeleteCriticalSection(&batch.Lock);
+
+		if (!batch.Errors.IsEmpty()) {
+			::MessageBox(NULL, CString(CNLS::GetString(_T("The following files could not be converted:"))) + _T("\n\n") + batch.Errors,
+				_T(JPEGVIEW_TITLE), MB_OK | MB_ICONWARNING);
+			return 1;
+		}
+		return 0;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////
 	// Public
 	//////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -424,7 +667,6 @@ namespace Converter {
 			return 1;
 		}
 
-		int nExitCode = 0;
 		const CPreset* pPreset = NULL;
 		CString sPresetId;
 		std::list<CString> files;
@@ -460,21 +702,10 @@ namespace Converter {
 			return 1;
 		}
 
-		CProcessingThreadPool::This().CreateThreadPoolThreads();
-
-		CString sErrors;
-		for (const CString& sFile : files) {
-			CString sOutputFile, sError;
-			if (!ConvertFile(sFile, *pPreset, sOutputFile, sError)) {
-				sErrors += sFile + _T("\n    ") + sError + _T("\n");
-				nExitCode = 1;
-			}
+		if (files.empty()) {
+			return 0;
 		}
-		if (!sErrors.IsEmpty()) {
-			::MessageBox(NULL, CString(CNLS::GetString(_T("The following files could not be converted:"))) + _T("\n\n") + sErrors,
-				_T(JPEGVIEW_TITLE), MB_OK | MB_ICONWARNING);
-		}
-		return nExitCode;
+		return RunBatch(*pPreset, files);
 	}
 
 	HMENU CreatePresetMenu(int nFirstCommandId) {

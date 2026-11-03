@@ -560,3 +560,6 @@ Move the current image to the recycle bin?	Görüntü geri dönüşüm kutusuna 
 Enter or Del: delete, Esc: cancel	Enter veya Del: sil, Esc: vazgeç
 The HEIF/AVIF encoder of Windows is not available (HEIF and HEVC video extensions, AVIF needs Windows 11).	Windows HEIF/AVIF kodlayıcısı kullanılamıyor (HEIF ve HEVC video uzantıları gerekli, AVIF için Windows 11).
 More	Daha fazla
+Resize image...	Görüntüyü yeniden boyutlandır...
+Change the size in pixels or percent, save afterwards	Boyutu piksel veya yüzde olarak değiştir, sonra kaydet
+Converting	Dönüştürülüyor
