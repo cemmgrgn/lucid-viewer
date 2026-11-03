@@ -303,6 +303,7 @@
 #define IDM_RESET_PROCESSING	16170		// :KeyMap: reset brightness, contrast, colors and sharpening to the default values
 #define IDM_UNSHARP_MASK	16180		// :KeyMap: open the unsharp mask panel
 #define IDM_TOGGLE_SIDEPANEL_COLLAPSED	16190	// :KeyMap: collapse or expand the side panel
+#define IDM_SETTINGS	16200			// :KeyMap: show the settings window
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

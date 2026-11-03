@@ -168,6 +168,9 @@ public:
 
 	// Saves the visibility of toolbar, status bar and side panel to the user INI file
 	void SaveWindowChromeSettings(bool bShowToolbar, bool bShowStatusBar, bool bShowSidePanel, bool bSidePanelCollapsed);
+	// Settings of the settings window. The theme and the language are only written, they are used after a restart.
+	void SaveGeneralSettings(bool bDarkTheme, int nSidePanelWidth, LPCTSTR sLanguage, int nJPEGSaveQuality,
+		LPCTSTR sConvertCustomPresets, LPCTSTR sConvertOutputFolder);
 	
 	// Update user settings with settings from INI file template
 	void UpdateUserSettings();

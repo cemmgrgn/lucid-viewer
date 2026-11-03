@@ -570,9 +570,17 @@ namespace Converter {
 	// Public
 	//////////////////////////////////////////////////////////////////////////////////////////////
 
-	const std::vector<CPreset>& GetPresets() {
+	static std::vector<CPreset>& PresetStorage() {
 		static std::vector<CPreset> s_presets = CreatePresets();
 		return s_presets;
+	}
+
+	const std::vector<CPreset>& GetPresets() {
+		return PresetStorage();
+	}
+
+	void ReloadPresets() {
+		PresetStorage() = CreatePresets();
 	}
 
 	const COperation* GetOperations(int& nCount) {

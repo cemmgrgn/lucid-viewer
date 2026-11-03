@@ -555,6 +555,24 @@ void CSettingsProvider::SaveWindowChromeSettings(bool bShowToolbar, bool bShowSt
 	m_bUserINIExists = true;
 }
 
+void CSettingsProvider::SaveGeneralSettings(bool bDarkTheme, int nSidePanelWidth, LPCTSTR sLanguage, int nJPEGSaveQuality,
+	LPCTSTR sConvertCustomPresets, LPCTSTR sConvertOutputFolder) {
+	MakeSureUserINIExists();
+
+	WriteString(_T("ChromeTheme"), bDarkTheme ? _T("dark") : _T("light"));
+	m_nSidePanelWidth = nSidePanelWidth;
+	WriteInt(_T("SidePanelWidth"), nSidePanelWidth);
+	WriteString(_T("Language"), sLanguage);
+	m_nJPEGSaveQuality = nJPEGSaveQuality;
+	WriteInt(_T("JPEGSaveQuality"), nJPEGSaveQuality);
+	m_sConvertCustomPresets = sConvertCustomPresets;
+	WriteString(_T("ConvertCustomPresets"), sConvertCustomPresets);
+	m_sConvertOutputFolder = sConvertOutputFolder;
+	WriteString(_T("ConvertOutputFolder"), sConvertOutputFolder);
+
+	m_bUserINIExists = true;
+}
+
 bool CSettingsProvider::ExistsUserINI() {
 	LPCTSTR sINIFileName = GetUserINIFileName();
 	return ::GetFileAttributes(sINIFileName) != INVALID_FILE_ATTRIBUTES;

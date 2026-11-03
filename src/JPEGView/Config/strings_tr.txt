@@ -563,3 +563,19 @@ More	Daha fazla
 Resize image...	Görüntüyü yeniden boyutlandır...
 Change the size in pixels or percent, save afterwards	Boyutu piksel veya yüzde olarak değiştir, sonra kaydet
 Converting	Dönüştürülüyor
+Settings	Ayarlar
+Settings...	Ayarlar...
+Window	Pencere
+Menu bar and toolbar	Menü çubuğu ve araç çubuğu
+Dark theme	Koyu tema
+Side panel width (pixels):	Yan panel genişliği (piksel):
+General	Genel
+Language:	Dil:
+Automatic	Otomatik
+JPEG quality (0 - 100):	JPEG kalitesi (0 - 100):
+Additional conversions:	Ek dönüştürmeler:
+Example: fit2560:webp;scale30:jpg;rot180:png	Örnek: fit2560:webp;scale30:jpg;rot180:png
+Output folder:	Çıktı klasörü:
+Empty: next to the source file. A name: sub folder.	Boş: kaynak dosyanın yanına. Bir ad: alt klasör.
+Edit INI file...	INI dosyasını düzenle...
+The theme and the language are changed when JPEGView is started the next time.	Tema ve dil, JPEGView bir sonraki açılışında değişir.

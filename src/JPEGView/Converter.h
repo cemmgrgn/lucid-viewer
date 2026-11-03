@@ -46,6 +46,8 @@ namespace Converter {
 
 	// Gets all presets in menu order
 	const std::vector<CPreset>& GetPresets();
+	// Creates the presets again, after the user defined conversions of the INI file were changed
+	void ReloadPresets();
 
 	// Gets the operations (index 0 is the plain conversion without operation)
 	const COperation* GetOperations(int& nCount);
