@@ -1,6 +1,6 @@
 #pragma once
 
-#include <hash_map>
+#include "HashMapCompat.h"
 
 #define VK_LBUTTONDBLCLK 7
 

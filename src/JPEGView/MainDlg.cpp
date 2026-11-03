@@ -3450,20 +3450,20 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 // sub menu of the context menu containing the command, negative values are entries that are not in the context menu
 #define MENUBAR_SUBMENU(cmd) ((cmd) | 0x40000000)
 enum {
-	MB_SEPARATOR = -1, MB_CONVERT = -2, MB_TOOLBAR = -3, MB_STATUSBAR = -4, MB_SIDEPANEL = -5,
-	MB_EDITPANEL = -6, MB_EXPLORER_MENU = -7, MB_FIRST_IMAGE = -8, MB_LAST_IMAGE = -9, MB_HELP = -10
+	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
+	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10
 };
 
-static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MB_CONVERT, IDM_RELOAD, MB_SEPARATOR,
-	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MB_SEPARATOR, IDM_EXIT };
-static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MB_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
-	MB_EDITPANEL, MB_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MB_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
-static const int s_menuBarView[] = { MB_TOOLBAR, MB_STATUSBAR, MB_SIDEPANEL, MB_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
-	MB_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
-static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MB_FIRST_IMAGE, MB_LAST_IMAGE, MB_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
+static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_CONVERT, IDM_RELOAD, MBAR_SEPARATOR,
+	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
+static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
+	MBAR_EDITPANEL, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
+static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_SIDEPANEL, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
+	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
+static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
 	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
-static const int s_menuBarTools[] = { MB_EXPLORER_MENU, MB_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
-static const int s_menuBarHelp[] = { MB_HELP, IDM_ABOUT };
+static const int s_menuBarTools[] = { MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
+static const int s_menuBarHelp[] = { MBAR_HELP, IDM_ABOUT };
 
 // Position of the (non popup) item with the given command, -1 if not found
 static int FindMenuCommandPos(HMENU hMenu, UINT nCommand) {
@@ -3555,35 +3555,35 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 	for (int i = 0; i < nEntries; i++) {
 		int nEntry = pEntries[i];
 		switch (nEntry) {
-			case MB_SEPARATOR:
+			case MBAR_SEPARATOR:
 				::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 				break;
-			case MB_CONVERT:
+			case MBAR_CONVERT:
 				::AppendMenu(hMenu, MF_POPUP | MF_STRING | (bHasFileImage ? 0 : MF_GRAYED),
 					(UINT_PTR)Converter::CreatePresetMenu(IDM_FIRST_CONVERT_CMD), CNLS::GetString(_T("Convert to")));
 				break;
-			case MB_TOOLBAR:
+			case MBAR_TOOLBAR:
 				AppendMenuString(hMenu, IDM_TOGGLE_TOOLBAR, _T("Toolbar"), m_pChrome->GetShowToolbar(), true);
 				break;
-			case MB_STATUSBAR:
+			case MBAR_STATUSBAR:
 				AppendMenuString(hMenu, IDM_TOGGLE_STATUSBAR, _T("Status bar"), m_pChrome->GetShowStatusBar(), true);
 				break;
-			case MB_SIDEPANEL:
+			case MBAR_SIDEPANEL:
 				AppendMenuString(hMenu, IDM_TOGGLE_SIDEPANEL, _T("Information panel"), m_pChrome->GetShowSidePanel(), true);
 				break;
-			case MB_EDITPANEL:
+			case MBAR_EDITPANEL:
 				AppendMenuString(hMenu, IDM_TOGGLE_EDITPANEL, _T("Image processing panel"), m_pImageProcPanelCtl->IsPinned(), m_pCurrentImage != NULL);
 				break;
-			case MB_EXPLORER_MENU:
+			case MBAR_EXPLORER_MENU:
 				AppendMenuString(hMenu, IDM_EXPLORER_CONVERT_MENU, _T("'Convert to' in the Explorer context menu"), Converter::IsExplorerMenuRegistered(), true);
 				break;
-			case MB_FIRST_IMAGE:
+			case MBAR_FIRST_IMAGE:
 				AppendMenuString(hMenu, IDM_FIRST, _T("First image"), false, m_pCurrentImage != NULL);
 				break;
-			case MB_LAST_IMAGE:
+			case MBAR_LAST_IMAGE:
 				AppendMenuString(hMenu, IDM_LAST, _T("Last image"), false, m_pCurrentImage != NULL);
 				break;
-			case MB_HELP:
+			case MBAR_HELP:
 				::AppendMenu(hMenu, MF_STRING, IDM_HELP, CString(CNLS::GetString(_T("Help and keyboard shortcuts"))) + _T("\tF1"));
 				break;
 			default:

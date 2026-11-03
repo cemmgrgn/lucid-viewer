@@ -1,7 +1,7 @@
 #pragma once
 
 #include "HashCompareLPCTSTR.h"
-#include <hash_map>
+#include "HashMapCompat.h"
 
 using namespace stdext;
 

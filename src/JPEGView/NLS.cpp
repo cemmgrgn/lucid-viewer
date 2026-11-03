@@ -90,7 +90,7 @@ LPCTSTR CNLS::GetString(LPCTSTR sString) {
 	if (!sm_bTableRead) {
 		return sString; // no translation available, use English
 	}
-	hash_map<LPCTSTR, LPCTSTR, CHashCompareLPCTSTR>::const_iterator iter;
+	stdext::hash_map<LPCTSTR, LPCTSTR, CHashCompareLPCTSTR>::const_iterator iter;
 	iter = sm_texts.find(sString);
 	if (iter == sm_texts.end()) {
 		return sString; // not found

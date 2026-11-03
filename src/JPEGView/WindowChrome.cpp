@@ -263,6 +263,9 @@ CSize CWindowChrome::GetExtraSize() {
 
 void CWindowChrome::SyncBorderSize() {
 	Helpers::SetAdditionalBorderSize(IsEnabled() ? GetExtraSize() : CSize(0, 0));
+	// the mouse leaves the toolbar without notification when the window mode changes
+	m_nHoverItem = m_nPressedItem = -1;
+	m_bTrackingMouse = false;
 }
 
 void CWindowChrome::UpdateFrame() {

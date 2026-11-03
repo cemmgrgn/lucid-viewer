@@ -5,7 +5,7 @@
 #include "UserCommand.h"
 #include "ProcessParams.h"
 #include "HashCompareLPCTSTR.h"
-#include <hash_map>
+#include "HashMapCompat.h"
 
 
 typedef stdext::hash_map<LPCTSTR, LPCTSTR, CHashCompareLPCTSTR> IniHashMap;

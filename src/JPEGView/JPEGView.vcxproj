@@ -397,6 +397,7 @@
     <ClInclude Include="BasicProcessing.h" />
     <ClInclude Include="Clipboard.h" />
     <ClInclude Include="Converter.h" />
+    <ClInclude Include="HashMapCompat.h" />
     <ClInclude Include="WindowChrome.h" />
     <ClInclude Include="dcraw_mod.h" />
     <ClInclude Include="DesktopWallpaper.h" />
