@@ -85,4 +85,11 @@ namespace HelpersGUI {
 	// Changes a menu's text, if success returns true, else false
 	bool SetMenuTextById(HMENU hMenu, int nMenuId, CString sText);
 
+	// Shows the Windows file open or save dialog (common item dialog, as in Explorer).
+	// sFilter has the CFileDialog format with '|' separators: "JPEG (*.jpg)|*.jpg|PNG (*.png)|*.png|".
+	// nFilterIndex is one based (in and out), sInitialFile can be a file or a folder or empty.
+	// Returns false if the dialog was cancelled.
+	bool ShowFileDialog(HWND hWnd, bool bSave, LPCTSTR sFilter, LPCTSTR sDefaultExtension, LPCTSTR sInitialFile,
+		LPCTSTR sTitle, int& nFilterIndex, CString& sFileName);
+
 }

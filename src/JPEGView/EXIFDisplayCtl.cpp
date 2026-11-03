@@ -49,7 +49,8 @@ static CString CreateGPSURL(GPSCoordinate* latitude, GPSCoordinate* longitude) {
 }
 
 CEXIFDisplayCtl::CEXIFDisplayCtl(CMainDlg* pMainDlg, CPanel* pImageProcPanel) : CPanelController(pMainDlg, false) {
-	m_bVisible = CSettingsProvider::This().ShowFileInfo();
+	// with the toolbar the side panel shows the information, the overlay is shown in full screen mode only after pressing F2
+	m_bVisible = CSettingsProvider::This().ShowFileInfo() && !CSettingsProvider::This().ShowToolbar();
 	m_nFileNameHeight = 0;
 	m_pImageProcPanel = pImageProcPanel;
 	m_pPanel = m_pEXIFDisplay = new CEXIFDisplay(pMainDlg->m_hWnd, this);

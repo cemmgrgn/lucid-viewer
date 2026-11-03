@@ -1,4 +1,6 @@
 #include "StdAfx.h"
+#include <shobjidl.h>
+#include <vector>
 #include "resource.h"
 #include "HelpersGUI.h"
 #include "NLS.h"
@@ -502,5 +504,82 @@ namespace HelpersGUI {
 		itemInfo.dwTypeData = (LPTSTR)(LPCTSTR)sText;
 		itemInfo.cch = sText.GetLength();
 		return ::SetMenuItemInfo(hMenu, nMenuId, FALSE, &itemInfo);
+	}
+	bool ShowFileDialog(HWND hWnd, bool bSave, LPCTSTR sFilter, LPCTSTR sDefaultExtension, LPCTSTR sInitialFile,
+		LPCTSTR sTitle, int& nFilterIndex, CString& sFileName) {
+		// pairs of name and pattern
+		std::vector<CString> filterParts;
+		CString sFilterString = sFilter;
+		int nStart = 0;
+		while (nStart < sFilterString.GetLength()) {
+			int nEnd = sFilterString.Find(_T('|'), nStart);
+			if (nEnd < 0) nEnd = sFilterString.GetLength();
+			filterParts.push_back(sFilterString.Mid(nStart, nEnd - nStart));
+			nStart = nEnd + 1;
+		}
+		std::vector<COMDLG_FILTERSPEC> fileTypes;
+		for (size_t i = 0; i + 1 < filterParts.size(); i += 2) {
+			COMDLG_FILTERSPEC spec = { (LPCWSTR)filterParts[i], (LPCWSTR)filterParts[i + 1] };
+			fileTypes.push_back(spec);
+		}
+
+		HRESULT hrInit = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		bool bResult = false;
+		IFileDialog* pDialog = NULL;
+		if (SUCCEEDED(::CoCreateInstance(bSave ? CLSID_FileSaveDialog : CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDialog)))) {
+			DWORD nOptions = 0;
+			pDialog->GetOptions(&nOptions);
+			nOptions |= FOS_FORCEFILESYSTEM | (bSave ? (FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN) : (FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST));
+			pDialog->SetOptions(nOptions);
+			if (!fileTypes.empty()) {
+				pDialog->SetFileTypes((UINT)fileTypes.size(), &fileTypes[0]);
+				pDialog->SetFileTypeIndex(max(1, min(nFilterIndex, (int)fileTypes.size())));
+			}
+			if (sDefaultExtension != NULL && sDefaultExtension[0] != 0) {
+				pDialog->SetDefaultExtension(sDefaultExtension[0] == _T('.') ? sDefaultExtension + 1 : sDefaultExtension);
+			}
+			if (sTitle != NULL) {
+				pDialog->SetTitle(sTitle);
+			}
+			// start in the folder of the initial file, with its name proposed when saving
+			if (sInitialFile != NULL && sInitialFile[0] != 0) {
+				CString sInitial = sInitialFile;
+				DWORD nAttributes = ::GetFileAttributes(sInitial);
+				bool bIsFolder = nAttributes != INVALID_FILE_ATTRIBUTES && (nAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+				int nSlash = sInitial.ReverseFind(_T('\\'));
+				CString sFolder = bIsFolder ? sInitial : (nSlash > 0 ? sInitial.Left(nSlash) : CString());
+				IShellItem* pFolder = NULL;
+				typedef HRESULT (WINAPI *SHCreateItemFromParsingNameFn)(PCWSTR, IBindCtx*, REFIID, void**);
+				SHCreateItemFromParsingNameFn createItem = (SHCreateItemFromParsingNameFn)::GetProcAddress(::GetModuleHandle(_T("shell32.dll")), "SHCreateItemFromParsingName");
+				if (!sFolder.IsEmpty() && createItem != NULL && SUCCEEDED(createItem(sFolder, NULL, IID_IShellItem, (void**)&pFolder))) {
+					pDialog->SetFolder(pFolder);
+					pFolder->Release();
+				}
+				if (!bIsFolder) {
+					pDialog->SetFileName(nSlash >= 0 ? sInitial.Mid(nSlash + 1) : sInitial);
+				}
+			}
+			if (SUCCEEDED(pDialog->Show(hWnd))) {
+				IShellItem* pItem = NULL;
+				if (SUCCEEDED(pDialog->GetResult(&pItem))) {
+					LPWSTR sPath = NULL;
+					if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &sPath))) {
+						sFileName = sPath;
+						::CoTaskMemFree(sPath);
+						UINT nIndex = 1;
+						if (SUCCEEDED(pDialog->GetFileTypeIndex(&nIndex))) {
+							nFilterIndex = (int)nIndex;
+						}
+						bResult = true;
+					}
+					pItem->Release();
+				}
+			}
+			pDialog->Release();
+		}
+		if (SUCCEEDED(hrInit)) {
+			::CoUninitialize();
+		}
+		return bResult;
 	}
 }

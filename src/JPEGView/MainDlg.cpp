@@ -551,9 +551,6 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			pDIBData = m_pTiltCorrectionPanelCtl->GetDIBForPreview(newSize, clippedSize, offsetsInImage, 
 				*m_pImageProcParams, CreateProcessingFlags(false, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, false, m_bLandscapeMode));
 		} else {
-			if (m_bCompareMode) {
-				PrepareCompareDIB(newSize, clippedSize, offsetsInImage);
-			}
 			pDIBData = m_pCurrentImage->GetDIB(newSize, clippedSize, offsetsInImage,
 				*m_pImageProcParams,
 				CreateProcessingFlags(m_bHQResampling && !m_bTemporaryLowQ && !m_bZoomMode, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, false, m_bLandscapeMode));
@@ -1636,6 +1633,16 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			}
 			break;
 		case IDM_SHOW_FILEINFO:
+			if (m_pChrome->IsEnabled()) {
+				// in window mode the information is on the side panel, the overlay over the image is only used in full screen mode
+				if (m_pChrome->IsSidePanelExpanded() && !m_pChrome->IsEditTabShown()) {
+					m_pChrome->SetShowSidePanel(false);
+				} else {
+					m_pChrome->ShowSideTab(CWindowChrome::TAB_INFO);
+				}
+				Invalidate(FALSE);
+				break;
+			}
 			m_pEXIFDisplayCtl->SetActive(!m_pEXIFDisplayCtl->IsActive());
 			m_pNavPanelCtl->GetNavPanel()->GetBtnShowInfo()->SetActive(m_pEXIFDisplayCtl->IsActive());
 			break;
@@ -2392,10 +2399,16 @@ bool CMainDlg::OpenFileWithDialog(bool bFullScreen, bool bAfterStartup) {
 	StopMovieMode();
 	StopAnimation();
 	MouseOn();
-	CFileOpenDialog dlgOpen(this->m_hWnd, m_pFileList->Current(), CFileList::GetSupportedFileEndings(), bFullScreen);
-	if (IDOK == dlgOpen.DoModal(this->m_hWnd)) {
+	LPCTSTR sFileEndings = CFileList::GetSupportedFileEndings();
+	CString sFilter = CString(CNLS::GetString(_T("Images"))) + _T(" (") + sFileEndings + _T(")|") + sFileEndings + _T("|") +
+		CNLS::GetString(_T("All Files")) + _T("|*.*|");
+	CString sFileName;
+	int nFilterIndex = 1;
+	LPCTSTR sCurrent = m_pFileList->Current();
+	if (HelpersGUI::ShowFileDialog(this->m_hWnd, false, sFilter, _T("jpg"), (sCurrent != NULL) ? sCurrent : m_pFileList->CurrentDirectory(),
+		NULL, nFilterIndex, sFileName)) {
 		m_isBeforeFileSelected = false;
-		OpenFile(dlgOpen.m_szFileName, bAfterStartup);
+		OpenFile(sFileName, bAfterStartup);
 		return true;
 	}
 	m_isBeforeFileSelected = false;
@@ -2454,30 +2467,28 @@ bool CMainDlg::SaveImage(bool bFullSize) {
 		sExtension = CSettingsProvider::This().DefaultSaveFormat();
 	}
 	// NOTE: this list is used in the "Edit with" registry entry in JPEGView.Setup, update that when this updates
-	CFileDialog fileDlg(FALSE, sExtension, sCurrentFile, 
-			OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY | OFN_NOREADONLYRETURN | OFN_OVERWRITEPROMPT,
-			Helpers::CReplacePipe(CString(_T("JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|BMP (*.bmp)|*.bmp|PNG (*.png)|*.png|TIFF (*.tiff;*.tif)|*.tiff;*.tif|WEBP (*.webp)|*.webp|WEBP lossless (*.webp)|*.webp|QOI (*.qoi)|*.qoi|")) +
-			CNLS::GetString(_T("All Files")) + _T("|*.*|")), m_hWnd);
+	CString sFilter = CString(_T("JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|BMP (*.bmp)|*.bmp|PNG (*.png)|*.png|TIFF (*.tiff;*.tif)|*.tiff;*.tif|WEBP (*.webp)|*.webp|WEBP lossless (*.webp)|*.webp|QOI (*.qoi)|*.qoi|")) +
+		CNLS::GetString(_T("All Files")) + _T("|*.*|");
+	int nFilterIndex = 1;
 	if (sExtension.CompareNoCase(_T("bmp")) == 0) {
-		fileDlg.m_ofn.nFilterIndex = 2;
+		nFilterIndex = 2;
 	} else if (sExtension.CompareNoCase(_T("png")) == 0) {
-		fileDlg.m_ofn.nFilterIndex = 3;
+		nFilterIndex = 3;
 	} else if (sExtension.CompareNoCase(_T("tiff")) == 0 || sExtension.CompareNoCase(_T("tif")) == 0) {
-		fileDlg.m_ofn.nFilterIndex = 4;
+		nFilterIndex = 4;
 	} else if (sExtension.CompareNoCase(_T("webp")) == 0) {
-		fileDlg.m_ofn.nFilterIndex = m_bUseLosslessWEBP ? 6 : 5;
+		nFilterIndex = m_bUseLosslessWEBP ? 6 : 5;
 	} else if (sExtension.CompareNoCase(_T("qoi")) == 0) {
-		fileDlg.m_ofn.nFilterIndex = 7;
+		nFilterIndex = 7;
 	}
-	if (!bFullSize) {
-		fileDlg.m_ofn.lpstrTitle = CNLS::GetString(_T("Save as (in screen size/resolution)"));
-	}
-	if (IDOK == fileDlg.DoModal(m_hWnd)) {
-		m_sSaveDirectory = fileDlg.m_szFileName;
-		m_bUseLosslessWEBP = fileDlg.m_ofn.nFilterIndex == 6;
+	CString sFileName;
+	if (HelpersGUI::ShowFileDialog(m_hWnd, true, sFilter, sExtension, sCurrentFile + _T(".") + sExtension,
+		bFullSize ? NULL : CNLS::GetString(_T("Save as (in screen size/resolution)")), nFilterIndex, sFileName)) {
+		m_sSaveDirectory = sFileName;
+		m_bUseLosslessWEBP = nFilterIndex == 6;
 		m_sSaveExtension = m_sSaveDirectory.Right(m_sSaveDirectory.GetLength() - m_sSaveDirectory.ReverseFind(_T('.')) - 1);
 		m_sSaveDirectory = m_sSaveDirectory.Left(m_sSaveDirectory.ReverseFind(_T('\\')) + 1);
-		return SaveImageNoPrompt(fileDlg.m_szFileName, bFullSize);
+		return SaveImageNoPrompt(sFileName, bFullSize);
 	}
 	return false;
 }
@@ -4088,33 +4099,22 @@ void CMainDlg::SetCompareMode(bool bCompare) {
 	m_pChrome->Paint();
 }
 
-void CMainDlg::PrepareCompareDIB(CSize newSize, CSize clippedSize, CPoint offsetsInImage) {
-	// the image as shown before editing: default parameters and flags
-	EProcessingFlags eFlags = SetProcessingFlag(GetDefaultProcessingFlags(m_bLandscapeMode), PFLAG_HighQualityResampling,
-		m_bHQResampling && !m_bTemporaryLowQ && !m_bZoomMode);
-	CImageProcessingParams beforeParams = _SetLandscapeModeParams(m_bLandscapeMode, GetDefaultProcessingParams());
-	void* pBefore = m_pCurrentImage->GetDIB(newSize, clippedSize, offsetsInImage, beforeParams, eFlags);
-	size_t nBytes = (size_t)clippedSize.cx * clippedSize.cy * 4;
-	m_compareBuffer.resize(nBytes);
-	if (pBefore != NULL && nBytes > 0) {
-		memcpy(&m_compareBuffer[0], pBefore, nBytes);
-	}
-}
-
 void* CMainDlg::ComposeCompareDIB(void* pProcessedDIB, CSize clippedSize) {
+	// The unedited image is the resampled DIB before the color, contrast and LDC corrections of the same GetDIB() call.
+	// A second GetDIB() call with other parameters is not used, it would invalidate the cached DIBs of the image.
+	void* pBeforeDIB = m_pCurrentImage->DIBPixels();
 	size_t nBytes = (size_t)clippedSize.cx * clippedSize.cy * 4;
-	if (m_compareBuffer.size() != nBytes || nBytes == 0) {
+	if (pBeforeDIB == NULL || nBytes == 0 || m_pCurrentImage->DIBWidth() != clippedSize.cx || m_pCurrentImage->DIBHeight() != clippedSize.cy) {
 		return pProcessedDIB;
 	}
-	// right of the split the processed image, the DIB is centered in the client area
+	m_compareBuffer.resize(nBytes);
+	// left of the split the unedited image, right of it the processed one, the DIB is centered in the client area
 	int nDIBLeft = (m_clientRect.Width() - clippedSize.cx) / 2 + m_DIBOffsets.x;
 	int nSplit = max(0, min(clippedSize.cx, GetCompareSplitX() - nDIBLeft));
-	int nRightBytes = (clippedSize.cx - nSplit) * 4;
-	if (nRightBytes > 0) {
-		for (int y = 0; y < clippedSize.cy; y++) {
-			size_t nOffset = ((size_t)y * clippedSize.cx + nSplit) * 4;
-			memcpy(&m_compareBuffer[nOffset], (uint8*)pProcessedDIB + nOffset, nRightBytes);
-		}
+	for (int y = 0; y < clippedSize.cy; y++) {
+		size_t nRow = (size_t)y * clippedSize.cx * 4;
+		memcpy(&m_compareBuffer[nRow], (uint8*)pBeforeDIB + nRow, nSplit * 4);
+		memcpy(&m_compareBuffer[nRow + nSplit * 4], (uint8*)pProcessedDIB + nRow + nSplit * 4, (clippedSize.cx - nSplit) * 4);
 	}
 	return &m_compareBuffer[0];
 }

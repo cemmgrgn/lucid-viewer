@@ -19,7 +19,8 @@
 #include <math.h>
 
 // Sizes in pixels at 96 DPI
-static const int TOOLBAR_HEIGHT = 36;
+static const int MENUBAR_HEIGHT = 28; // first row: menu titles
+static const int TOOLBAR_HEIGHT = 36; // second row: buttons
 static const int STATUSBAR_HEIGHT = 24;
 static const int ITEM_MARGIN = 4; // vertical margin of toolbar items
 static const int BUTTON_WIDTH = 34;
@@ -618,7 +619,7 @@ int CWindowChrome::TrackOverflowMenu(const CRect& rectButton) {
 	return nCommand;
 }
 
-int CWindowChrome::ToolbarHeight() { return S(TOOLBAR_HEIGHT); }
+int CWindowChrome::ToolbarHeight() { return S(MENUBAR_HEIGHT) + S(TOOLBAR_HEIGHT); }
 int CWindowChrome::StatusBarHeight() { return S(STATUSBAR_HEIGHT); }
 int CWindowChrome::SidePanelWidth() { return m_bSideCollapsed ? S(SIDE_COLLAPSED_WIDTH) : S(CSettingsProvider::This().SidePanelWidth()); }
 
@@ -677,16 +678,35 @@ void CWindowChrome::UpdateLayout() {
 	// toolbar items from left to right, items not fitting are hidden
 	HDC hDC = ::GetDC(NULL);
 	HFONT hOldFont = (HFONT)::SelectObject(hDC, m_hFont);
-	int nTop = m_toolbarRect.top + S(ITEM_MARGIN);
+	// the menu titles are in the first row, the buttons in the second row below
+	int nMenuTop = m_toolbarRect.top + S(2);
+	int nMenuBottom = m_toolbarRect.top + S(MENUBAR_HEIGHT) - S(2);
+	int nTop = m_toolbarRect.top + S(MENUBAR_HEIGHT) + S(ITEM_MARGIN);
 	int nBottom = m_toolbarRect.bottom - S(ITEM_MARGIN);
 	int nLast = (int)m_items.size() - 1; // the overflow button
 	// first without the overflow button, if not all items fit the overflow button gets the space at the right
 	for (int nPass = 0; nPass < 2; nPass++) {
 		int nRight = m_toolbarRect.right - S(4) - (nPass == 1 ? S(BUTTON_WIDTH) : 0);
 		bool bAllFit = true;
+		int nMenuX = m_toolbarRect.left + S(6);
 		int nX = m_toolbarRect.left + S(6);
+		bool bRowStart = true;
 		for (int i = 0; i < nLast; i++) {
 			CToolbarItem& item = m_items[i];
+			if (item.Type == IT_Menu) {
+				SIZE textSize;
+				::GetTextExtentPoint32(hDC, item.Text, item.Text.GetLength(), &textSize);
+				int nMenuWidth = (int)textSize.cx + 2 * S(MENU_TITLE_PADDING);
+				item.Rect = (m_toolbarRect.IsRectEmpty() || nMenuX + nMenuWidth > m_toolbarRect.right - S(4)) ? CRect(0, 0, 0, 0) :
+					CRect(nMenuX, nMenuTop, nMenuX + nMenuWidth, nMenuBottom);
+				nMenuX += nMenuWidth;
+				continue;
+			}
+			if (item.Type == IT_Separator && bRowStart) {
+				item.Rect = CRect(0, 0, 0, 0); // no separator at the start of the button row
+				continue;
+			}
+			bRowStart = false;
 			int nWidth;
 			if (item.Type == IT_Separator) {
 				nWidth = S(SEPARATOR_WIDTH);
@@ -953,6 +973,7 @@ void CWindowChrome::PaintItem(CDC& dc, const CToolbarItem& item, int nIndex) {
 
 void CWindowChrome::PaintToolbar(CDC& dc) {
 	dc.FillSolidRect(&m_toolbarRect, m_colors.Background);
+	DrawHorizontalLine(dc, m_toolbarRect.left, m_toolbarRect.right, m_toolbarRect.top + S(MENUBAR_HEIGHT) - max(1, S(1)) / 2, m_colors.Hover);
 	DrawHorizontalLine(dc, m_toolbarRect.left, m_toolbarRect.right, m_toolbarRect.bottom - max(1, S(1)), m_colors.Border);
 	for (int i = 0; i < (int)m_items.size(); i++) {
 		PaintItem(dc, m_items[i], i);

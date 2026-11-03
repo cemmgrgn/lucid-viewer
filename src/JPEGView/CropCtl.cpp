@@ -585,19 +585,16 @@ void CCropCtl::CropLossless() {
 
 	CString sCurrentFile = m_pMainDlg->CurrentFileName(false);
 
-	CFileDialog fileDlg(FALSE, _T(".jpg"), sCurrentFile, 
-			OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY | OFN_NOREADONLYRETURN | OFN_OVERWRITEPROMPT,
-			Helpers::CReplacePipe(CString(_T("JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|")) +
-			CNLS::GetString(_T("All Files")) + _T("|*.*|")), m_pMainDlg->GetHWND());
-
 	CString sDimension;
 	sDimension.Format(_T(" (%d x %d)"), cropRect.Width(), cropRect.Height());
 	CString sTitle = CNLS::GetString(_T("Save cropped image")) + sDimension;
-	fileDlg.m_ofn.lpstrTitle = sTitle;
+	CString sFilter = CString(_T("JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|")) + CNLS::GetString(_T("All Files")) + _T("|*.*|");
+	CString sSelectedFile;
+	int nFilterIndex = 1;
 
-	if (IDOK == fileDlg.DoModal(m_pMainDlg->GetHWND())) {
+	if (HelpersGUI::ShowFileDialog(m_pMainDlg->GetHWND(), true, sFilter, _T("jpg"), sCurrentFile, sTitle, nFilterIndex, sSelectedFile)) {
 		LPCTSTR sInputFileName = m_pMainDlg->CurrentFileName(false);
-		LPCTSTR sCropFileName = fileDlg.m_szFileName;
+		LPCTSTR sCropFileName = sSelectedFile;
 		CJPEGLosslessTransform::EResult eResult = CJPEGLosslessTransform::PerformCrop(sInputFileName, sCropFileName, cropRect);
 		if (eResult != CJPEGLosslessTransform::Success) {
 			::MessageBox(m_pMainDlg->GetHWND(), CString(CNLS::GetString(_T("Performing the lossless transformation failed!"))) + 

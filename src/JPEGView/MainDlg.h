@@ -375,8 +375,7 @@ private:
 	bool m_bDraggingCompareSplit;
 	std::vector<uint8> m_compareBuffer; // composed before/after DIB
 
-	// Renders the unedited image into the compare buffer, then copies the right part of the processed DIB over it
-	void PrepareCompareDIB(CSize newSize, CSize clippedSize, CPoint offsetsInImage);
+	// Composes the unedited image (left of the split) and the processed DIB (right of it) into the compare buffer
 	void* ComposeCompareDIB(void* pProcessedDIB, CSize clippedSize);
 	// Client x coordinate of the compare split line
 	int GetCompareSplitX();
