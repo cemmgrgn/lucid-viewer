@@ -206,16 +206,25 @@ static double EncodeSample(CExportDlg* pDlg, bool (CExportDlg::*writeFile)(LPCTS
 void CExportDlg::UpdateEstimate() {
 	CSize targetSize = GetTargetSize();
 	double dTargetPixels = (double)targetSize.cx * targetSize.cy;
-	// Smaller copies need more bytes per pixel. Two copies (1024 and 2048 pixels long edge) give the trend,
-	// it is extrapolated to the target size: bytes ~ pixels ^ k
+	int nTargetLongEdge = max(targetSize.cx, targetSize.cy);
 	double dPixels1, dPixels2;
-	double dBytes2 = EncodeSample(this, &CExportDlg::WriteFile, m_sEstimateFile, targetSize, ESTIMATE_LONG_EDGE, dPixels2);
-	double dBytes = dBytes2;
-	if (dBytes2 > 0 && dPixels2 < dTargetPixels) {
-		double dBytes1 = EncodeSample(this, &CExportDlg::WriteFile, m_sEstimateFile, targetSize, ESTIMATE_LONG_EDGE / 2, dPixels1);
-		double dExponent = (dBytes1 > 0 && dPixels1 < dPixels2) ? log(dBytes2 / dBytes1) / log(dPixels2 / dPixels1) : 1.0;
-		dExponent = max(0.3, min(1.0, dExponent));
-		dBytes = dBytes2 * pow(dTargetPixels / dPixels2, dExponent);
+	double dBytes = 0;
+	bool bExact = dTargetPixels <= 16.8e6;
+	if (bExact) {
+		// up to 16 megapixels the image is written in full size, the size is exact
+		// (two smaller copies take about the same time and WEBP sizes were up to 20 % too high)
+		dBytes = EncodeSample(this, &CExportDlg::WriteFile, m_sEstimateFile, targetSize, nTargetLongEdge, dPixels2);
+	} else {
+		// Smaller copies need more bytes per pixel. Copies with a half and a quarter of the pixels give the trend,
+		// it is extrapolated to the target size: bytes ~ pixels ^ k
+		double dBytes2 = EncodeSample(this, &CExportDlg::WriteFile, m_sEstimateFile, targetSize, (int)(nTargetLongEdge * 0.7071), dPixels2);
+		double dBytes1 = EncodeSample(this, &CExportDlg::WriteFile, m_sEstimateFile, targetSize, nTargetLongEdge / 2, dPixels1);
+		dBytes = dBytes2;
+		if (dBytes1 > 0 && dBytes2 > 0 && dPixels1 < dPixels2) {
+			double dExponent = log(dBytes2 / dBytes1) / log(dPixels2 / dPixels1);
+			dExponent = max(0.5, min(1.1, dExponent));
+			dBytes = dBytes2 * pow(dTargetPixels / dPixels2, dExponent);
+		}
 	}
 	CString sText;
 	if (dBytes > 0) {
@@ -225,7 +234,8 @@ void CExportDlg::UpdateEstimate() {
 		} else {
 			sSize.Format(_T("%.0f KB"), max(1.0, dBytes / 1024));
 		}
-		sText.Format(_T("%s ~%s  (%d \x00D7 %d)"), CNLS::GetString(_T("Estimated size:")), (LPCTSTR)sSize, targetSize.cx, targetSize.cy);
+		sText.Format(_T("%s %s%s  (%d \x00D7 %d)"), CNLS::GetString(bExact ? _T("File size:") : _T("Estimated size:")), bExact ? _T("") : _T("~"),
+			(LPCTSTR)sSize, targetSize.cx, targetSize.cy);
 	} else {
 		sText = CNLS::GetString(_T("This format can not be written."));
 	}

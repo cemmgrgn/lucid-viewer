@@ -1,4 +1,4 @@
-﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
+//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
 //! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
@@ -824,3 +824,4 @@ The settings were applied.	Ayarlar uygulandı.
 In JPEG files Windows stores title and subject in the same field, both change.	Windows JPEG dosyalarında başlık ve konuyu aynı alana yazar, ikisi birlikte değişir.
 Line width	Çizgi kalınlığı
 Color copied:	Renk kopyalandı:
+File size:	Dosya boyutu:
