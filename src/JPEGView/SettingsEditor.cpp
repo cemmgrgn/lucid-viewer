@@ -14,6 +14,7 @@
 #include <shlobj.h>
 #include <vector>
 #include <set>
+#include "DarkUI.h"
 
 namespace SettingsEditor {
 
@@ -290,6 +291,7 @@ struct CEditor {
 	std::vector<int> Shown; // indices into Settings of the controls on the page
 	std::vector<HWND> ShownControls;
 	std::set<HWND> Descriptions;
+	std::set<HWND> Lines;
 	int Scroll, PageHeight;
 	bool Done, Saved, Updating, KeyMapChanged;
 	int S(int n) { return ::MulDiv(n, Dpi, 96); }
@@ -307,9 +309,12 @@ static void SetControlValue(CEditor& editor, int nSetting, HWND hControl) {
 	CSetting& setting = editor.Settings[nSetting];
 	editor.Updating = true;
 	switch (setting.Kind) {
-		case KIND_BOOL:
-			::SendMessage(hControl, BM_SETCHECK, setting.Value.CompareNoCase(_T("true")) == 0 ? BST_CHECKED : BST_UNCHECKED, 0);
+		case KIND_BOOL: {
+			bool bOn = setting.Value.CompareNoCase(_T("true")) == 0;
+			::SendMessage(hControl, BM_SETCHECK, bOn ? BST_CHECKED : BST_UNCHECKED, 0);
+			::SetWindowText(hControl, CNLS::GetString(bOn ? _T("On") : _T("Off")));
 			break;
+		}
 		case KIND_CHOICE:
 		case KIND_LANGUAGE: {
 			int nCount = (int)::SendMessage(hControl, CB_GETCOUNT, 0, 0);
@@ -320,6 +325,8 @@ static void SetControlValue(CEditor& editor, int nSetting, HWND hControl) {
 			}
 			::SendMessage(hControl, CB_SETCURSEL, nSelect, 0);
 			if (nSelect < 0) ::SetWindowText(hControl, setting.Value);
+			// the text of the edit field is not shown selected
+			::SendMessage(hControl, CB_SETEDITSEL, 0, MAKELPARAM(-1, 0));
 			break;
 		}
 		case KIND_COLOR:
@@ -331,6 +338,8 @@ static void SetControlValue(CEditor& editor, int nSetting, HWND hControl) {
 }
 
 static void LayoutPage(CEditor& editor) {
+	// nothing is drawn while the page is built, else the rows appear one by one
+	::SendMessage(editor.Page, WM_SETREDRAW, FALSE, 0);
 	// removes the old controls
 	HWND hChild = ::GetWindow(editor.Page, GW_CHILD);
 	while (hChild != NULL) {
@@ -339,6 +348,7 @@ static void LayoutPage(CEditor& editor) {
 		hChild = hNext;
 	}
 	editor.Descriptions.clear();
+	editor.Lines.clear();
 	editor.ShownControls.clear();
 	editor.Shown.clear();
 	editor.Scroll = 0;
@@ -461,9 +471,9 @@ static void LayoutPage(CEditor& editor) {
 		::SendMessage(hReset, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 		nY += max(nLabelHeight + descriptionRect.Height(), editor.S(26)) + editor.S(10);
 		// thin line between the settings
-		HWND hLine = ::CreateWindow(_T("STATIC"), _T(""), WS_CHILD | WS_VISIBLE | SS_ETCHEDHORZ, nPad, nY, pageRect.Width() - 2 * nPad, 1,
+		HWND hLine = ::CreateWindow(_T("STATIC"), _T(""), WS_CHILD | WS_VISIBLE, nPad, nY, pageRect.Width() - 2 * nPad, 1,
 			editor.Page, NULL, hInstance, NULL);
-		(void)hLine;
+		editor.Lines.insert(hLine);
 		nY += editor.S(10);
 	}
 	::ReleaseDC(editor.Page, hDC);
@@ -475,7 +485,14 @@ static void LayoutPage(CEditor& editor) {
 	editor.PageHeight = nY;
 	SCROLLINFO info = { sizeof(SCROLLINFO), SIF_RANGE | SIF_PAGE | SIF_POS, 0, max(0, nY - 1), (UINT)pageRect.Height(), 0 };
 	::SetScrollInfo(editor.Page, SB_VERT, &info, TRUE);
-	::InvalidateRect(editor.Page, NULL, TRUE);
+	DarkUI::ApplyToWindow(editor.Page);
+	// the theme change selects the text of the combo boxes again, it is not shown selected
+	for (HWND hControl : editor.ShownControls) {
+		HWND hEdit = ::FindWindowEx(hControl, NULL, _T("Edit"), NULL);
+		if (hEdit != NULL) ::SendMessage(hEdit, EM_SETSEL, (WPARAM)-1, 0);
+	}
+	::SendMessage(editor.Page, WM_SETREDRAW, TRUE, 0);
+	::RedrawWindow(editor.Page, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 }
 
 static void ScrollPage(CEditor& editor, int nNewScroll) {
@@ -495,9 +512,12 @@ static void OnControlChanged(CEditor& editor, int nIndex, int nCode) {
 	CSetting& setting = editor.Settings[editor.Shown[nIndex]];
 	HWND hControl = editor.ShownControls[nIndex];
 	switch (setting.Kind) {
-		case KIND_BOOL:
-			setting.Value = ::SendMessage(hControl, BM_GETCHECK, 0, 0) == BST_CHECKED ? _T("true") : _T("false");
+		case KIND_BOOL: {
+			bool bOn = ::SendMessage(hControl, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			setting.Value = bOn ? _T("true") : _T("false");
+			::SetWindowText(hControl, CNLS::GetString(bOn ? _T("On") : _T("Off")));
 			break;
+		}
 		case KIND_CHOICE:
 		case KIND_LANGUAGE:
 			if (nCode == CBN_SELCHANGE) {
@@ -542,15 +562,24 @@ static LRESULT CALLBACK PageWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM 
 		case WM_MOUSEWHEEL:
 			ScrollPage(*pEditor, pEditor->Scroll - GET_WHEEL_DELTA_WPARAM(wParam) * pEditor->S(90) / WHEEL_DELTA);
 			return 0;
-		case WM_CTLCOLORSTATIC: {
-			HDC hDC = (HDC)wParam;
-			::SetBkColor(hDC, ::GetSysColor(COLOR_WINDOW));
-			bool bDescription = pEditor->Descriptions.count((HWND)lParam) > 0;
-			::SetTextColor(hDC, bDescription ? RGB(100, 100, 100) : ::GetSysColor(COLOR_WINDOWTEXT));
-			return (LRESULT)::GetSysColorBrush(COLOR_WINDOW);
-		}
+		case WM_CTLCOLORSTATIC:
+			if (pEditor->Lines.count((HWND)lParam) > 0) return (LRESULT)DarkUI::Brush(DarkUI::Colors().Border);
+			return (LRESULT)DarkUI::CtlColor(nMsg, wParam, lParam, DarkUI::Colors().Surface, pEditor->Descriptions.count((HWND)lParam) > 0);
 		case WM_CTLCOLORBTN:
-			return (LRESULT)::GetSysColorBrush(COLOR_WINDOW);
+		case WM_CTLCOLOREDIT:
+		case WM_CTLCOLORLISTBOX:
+			return (LRESULT)DarkUI::CtlColor(nMsg, wParam, lParam, DarkUI::Colors().Surface);
+		case WM_ERASEBKGND: {
+			RECT rect;
+			::GetClientRect(hWnd, &rect);
+			::FillRect((HDC)wParam, &rect, DarkUI::Brush(DarkUI::Colors().Surface));
+			return 1;
+		}
+		case WM_NOTIFY: {
+			LRESULT result = 0;
+			if (DarkUI::CustomDrawButton(lParam, result)) return result;
+			break;
+		}
 		case WM_COMMAND: {
 			int nId = LOWORD(wParam), nCode = HIWORD(wParam);
 			if (nId >= ID_FIRST_RESET && nId < ID_FIRST_RESET + (int)pEditor->Shown.size()) {
@@ -662,29 +691,55 @@ static LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 			break;
 		case WM_MEASUREITEM: {
 			MEASUREITEMSTRUCT* pMeasure = (MEASUREITEMSTRUCT*)lParam;
-			pMeasure->itemHeight = pEditor->S(30);
+			pMeasure->itemHeight = pEditor->S(34);
 			return TRUE;
+		}
+		case WM_CTLCOLORLISTBOX:
+			if ((HWND)lParam == pEditor->Categories) {
+				::SetTextColor((HDC)wParam, DarkUI::Colors().Text);
+				::SetBkColor((HDC)wParam, DarkUI::Colors().Window);
+				return (LRESULT)DarkUI::Brush(DarkUI::Colors().Window);
+			}
+			return (LRESULT)DarkUI::CtlColor(nMsg, wParam, lParam, DarkUI::Colors().Window);
+		case WM_CTLCOLORSTATIC:
+		case WM_CTLCOLOREDIT:
+		case WM_CTLCOLORBTN:
+			return (LRESULT)DarkUI::CtlColor(nMsg, wParam, lParam, DarkUI::Colors().Window);
+		case WM_ERASEBKGND: {
+			RECT rect;
+			::GetClientRect(hWnd, &rect);
+			::FillRect((HDC)wParam, &rect, DarkUI::Brush(DarkUI::Colors().Window));
+			return 1;
+		}
+		case WM_NOTIFY: {
+			LRESULT result = 0;
+			if (DarkUI::CustomDrawButton(lParam, result)) return result;
+			break;
 		}
 		case WM_DRAWITEM: {
 			DRAWITEMSTRUCT* pDraw = (DRAWITEMSTRUCT*)lParam;
 			if (pDraw->CtlID != ID_CATEGORIES || pDraw->itemID == (UINT)-1) break;
 			bool bSelected = (pDraw->itemState & ODS_SELECTED) != 0;
-			HBRUSH hBrush = ::CreateSolidBrush(bSelected ? RGB(225, 237, 250) : ::GetSysColor(COLOR_WINDOW));
-			::FillRect(pDraw->hDC, &pDraw->rcItem, hBrush);
-			::DeleteObject(hBrush);
+			const DarkUI::CPalette& colors = DarkUI::Colors();
+			::FillRect(pDraw->hDC, &pDraw->rcItem, DarkUI::Brush(colors.Window));
 			if (bSelected) {
-				RECT accent = { pDraw->rcItem.left, pDraw->rcItem.top + pEditor->S(5), pDraw->rcItem.left + pEditor->S(3), pDraw->rcItem.bottom - pEditor->S(5) };
-				HBRUSH hAccent = ::CreateSolidBrush(RGB(0, 103, 192));
-				::FillRect(pDraw->hDC, &accent, hAccent);
-				::DeleteObject(hAccent);
+				// rounded selection with an accent mark, like the navigation of the Windows settings
+				RECT selection = { pDraw->rcItem.left + pEditor->S(2), pDraw->rcItem.top + pEditor->S(2), pDraw->rcItem.right - pEditor->S(4), pDraw->rcItem.bottom - pEditor->S(2) };
+				HGDIOBJ hOldBrush = ::SelectObject(pDraw->hDC, DarkUI::Brush(colors.Selection));
+				HGDIOBJ hOldPen = ::SelectObject(pDraw->hDC, ::GetStockObject(NULL_PEN));
+				::RoundRect(pDraw->hDC, selection.left, selection.top, selection.right + 1, selection.bottom + 1, pEditor->S(8), pEditor->S(8));
+				::SelectObject(pDraw->hDC, DarkUI::Brush(colors.Accent));
+				::RoundRect(pDraw->hDC, selection.left, pDraw->rcItem.top + pEditor->S(9), selection.left + pEditor->S(4), pDraw->rcItem.bottom - pEditor->S(8), pEditor->S(3), pEditor->S(3));
+				::SelectObject(pDraw->hDC, hOldBrush);
+				::SelectObject(pDraw->hDC, hOldPen);
 			}
 			TCHAR sText[256] = { 0 };
 			::SendMessage(pDraw->hwndItem, LB_GETTEXT, pDraw->itemID, (LPARAM)sText);
 			RECT textRect = pDraw->rcItem;
-			textRect.left += pEditor->S(12);
+			textRect.left += pEditor->S(16);
 			HGDIOBJ hOld = ::SelectObject(pDraw->hDC, bSelected ? pEditor->BoldFont : pEditor->Font);
 			::SetBkMode(pDraw->hDC, TRANSPARENT);
-			::SetTextColor(pDraw->hDC, ::GetSysColor(COLOR_WINDOWTEXT));
+			::SetTextColor(pDraw->hDC, colors.Text);
 			::DrawText(pDraw->hDC, sText, -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
 			::SelectObject(pDraw->hDC, hOld);
 			return TRUE;
@@ -718,6 +773,12 @@ static void AddLanguages(CSetting& setting) {
 	}
 }
 
+static int s_nSnapshotCategory = 0;
+
+void SetSnapshotCategory(int nCategory) {
+	s_nSnapshotCategory = nCategory;
+}
+
 bool Show(HWND hParent, CResult& result) {
 	CSettingsProvider& sp = CSettingsProvider::This();
 	CEditor editor;
@@ -742,7 +803,7 @@ bool Show(HWND hParent, CResult& result) {
 	wndClass.lpfnWndProc = EditorWndProc;
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+	wndClass.hbrBackground = NULL; // WM_ERASEBKGND, light or dark
 	wndClass.hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(128));
 	wndClass.lpszClassName = _T("JPEGViewSettingsEditor");
 	::RegisterClass(&wndClass);
@@ -750,7 +811,7 @@ bool Show(HWND hParent, CResult& result) {
 	pageClass.lpfnWndProc = PageWndProc;
 	pageClass.hInstance = hInstance;
 	pageClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	pageClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	pageClass.hbrBackground = NULL;
 	pageClass.lpszClassName = _T("JPEGViewSettingsPage");
 	::RegisterClass(&pageClass);
 
@@ -773,8 +834,8 @@ bool Show(HWND hParent, CResult& result) {
 	editor.TitleFont = ::CreateFontIndirect(&titleFont);
 
 	int nWidth = editor.S(1080), nHeight = editor.S(720);
-	RECT parentRect;
-	::GetWindowRect(hParent, &parentRect);
+	RECT parentRect = { 0, 0, 0, 0 };
+	if (hParent != NULL) ::GetWindowRect(hParent, &parentRect);
 	HMONITOR hMonitor = ::MonitorFromWindow(hParent, MONITOR_DEFAULTTONEAREST);
 	MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
 	::GetMonitorInfo(hMonitor, &monitorInfo);
@@ -794,14 +855,14 @@ bool Show(HWND hParent, CResult& result) {
 	editor.Search = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
 		nPad, nPad, nListWidth, editor.S(26), editor.Window, (HMENU)(INT_PTR)ID_SEARCH, hInstance, NULL);
 	::SendMessage(editor.Search, EM_SETCUEBANNER, TRUE, (LPARAM)CNLS::GetString(_T("Search in all settings")));
-	editor.Categories = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("LISTBOX"), _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS,
+	editor.Categories = ::CreateWindowEx(0, _T("LISTBOX"), _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS,
 		nPad, nPad + editor.S(32), nListWidth, client.Height() - 3 * nPad - nButtonHeight - editor.S(32), editor.Window, (HMENU)(INT_PTR)ID_CATEGORIES, hInstance, NULL);
 	editor.CategoryNames.insert(editor.CategoryNames.begin(), CString(COMMON_CATEGORY));
 	for (const CString& sCategory : editor.CategoryNames) {
 		::SendMessage(editor.Categories, LB_ADDSTRING, 0, (LPARAM)CNLS::GetString(sCategory));
 	}
 
-	editor.Page = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("JPEGViewSettingsPage"), _T(""), WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | WS_CLIPCHILDREN,
+	editor.Page = ::CreateWindowEx(0, _T("JPEGViewSettingsPage"), _T(""), WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | WS_CLIPCHILDREN,
 		2 * nPad + nListWidth, nPad, client.Width() - 3 * nPad - nListWidth, client.Height() - 3 * nPad - nButtonHeight, editor.Window, NULL, hInstance, NULL);
 
 	struct { int Id; LPCTSTR Text; bool Left; } buttons[] = {
@@ -829,12 +890,19 @@ bool Show(HWND hParent, CResult& result) {
 	}
 	::SendMessage(editor.Search, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	::SendMessage(editor.Categories, WM_SETFONT, (WPARAM)editor.Font, FALSE);
-	::SendMessage(editor.Categories, LB_SETCURSEL, 0, 0);
+	::SendMessage(editor.Categories, LB_SETCURSEL, DarkUI::IsSnapshotMode() ? s_nSnapshotCategory : 0, 0);
+	DarkUI::SetBackground(editor.Window, DarkUI::Colors().Window);
+	DarkUI::SetBackground(editor.Page, DarkUI::Colors().Surface);
+	DarkUI::ApplyToWindow(editor.Window);
 	LayoutPage(editor);
 
-	::EnableWindow(hParent, FALSE);
-	::ShowWindow(editor.Window, SW_SHOWNORMAL);
-	::SetFocus(editor.Categories);
+	if (hParent != NULL) ::EnableWindow(hParent, FALSE);
+	if (DarkUI::IsSnapshotMode()) {
+		DarkUI::ShowSnapshot(editor.Window, ID_CANCEL);
+	} else {
+		::ShowWindow(editor.Window, SW_SHOWNORMAL);
+		::SetFocus(editor.Categories);
+	}
 	MSG msg;
 	while (!editor.Done && ::GetMessage(&msg, NULL, 0, 0) > 0) {
 		if (msg.message == WM_MOUSEWHEEL) {
@@ -856,9 +924,9 @@ bool Show(HWND hParent, CResult& result) {
 			::DispatchMessage(&msg);
 		}
 	}
-	::EnableWindow(hParent, TRUE);
+	if (hParent != NULL) ::EnableWindow(hParent, TRUE);
 	::DestroyWindow(editor.Window);
-	::SetActiveWindow(hParent);
+	if (hParent != NULL) ::SetActiveWindow(hParent);
 	::DeleteObject(editor.Font);
 	::DeleteObject(editor.BoldFont);
 	::DeleteObject(editor.SmallFont);
@@ -1120,6 +1188,20 @@ static int GetSelectedCommand(CShortcutEditor& editor) {
 }
 
 // Waits for a key combination, returns its name as used in the key map file (e.g. "Ctrl+Shift+K"), empty if cancelled
+static LRESULT CALLBACK CaptureWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
+	switch (nMsg) {
+		case WM_CTLCOLORSTATIC:
+			return (LRESULT)DarkUI::CtlColor(nMsg, wParam, lParam, DarkUI::Colors().Window);
+		case WM_ERASEBKGND: {
+			RECT rect;
+			::GetClientRect(hWnd, &rect);
+			::FillRect((HDC)wParam, &rect, DarkUI::Brush(DarkUI::Colors().Window));
+			return 1;
+		}
+	}
+	return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+}
+
 static CString CaptureShortcut(HWND hParent, const CString& sCommandLabel, int nDpi) {
 	HINSTANCE hInstance = ::GetModuleHandle(NULL);
 	auto S = [nDpi](int n) { return ::MulDiv(n, nDpi, 96); };
@@ -1127,10 +1209,10 @@ static CString CaptureShortcut(HWND hParent, const CString& sCommandLabel, int n
 	::GetWindowRect(hParent, &parentRect);
 	int nWidth = S(420), nHeight = S(150);
 	WNDCLASS wndClass = { 0 };
-	wndClass.lpfnWndProc = ::DefWindowProc;
+	wndClass.lpfnWndProc = CaptureWndProc;
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+	wndClass.hbrBackground = NULL;
 	wndClass.lpszClassName = _T("JPEGViewShortcutCapture");
 	::RegisterClass(&wndClass);
 	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewShortcutCapture"), CNLS::GetString(_T("New keyboard shortcut")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
@@ -1143,6 +1225,7 @@ static CString CaptureShortcut(HWND hParent, const CString& sCommandLabel, int n
 	CString sText = sCommandLabel + _T("\n\n") + CNLS::GetString(_T("Press the new key combination. Click here to cancel."));
 	HWND hText = ::CreateWindow(_T("STATIC"), sText, WS_CHILD | WS_VISIBLE | SS_CENTER | SS_NOTIFY, S(12), S(16), nWidth - S(30), nHeight - S(60), hWnd, (HMENU)1, hInstance, NULL);
 	::SendMessage(hText, WM_SETFONT, (WPARAM)hFont, FALSE);
+	DarkUI::ApplyToWindow(hWnd);
 	::EnableWindow(hParent, FALSE);
 	::ShowWindow(hWnd, SW_SHOWNORMAL);
 	::SetForegroundWindow(hWnd);
@@ -1196,8 +1279,59 @@ static LRESULT CALLBACK ShortcutWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPA
 	CShortcutEditor* pEditor = s_pShortcuts;
 	if (pEditor == NULL) return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
 	switch (nMsg) {
+		case WM_CTLCOLORSTATIC:
+		case WM_CTLCOLOREDIT:
+		case WM_CTLCOLORBTN:
+		case WM_CTLCOLORLISTBOX:
+			return (LRESULT)DarkUI::CtlColor(nMsg, wParam, lParam, DarkUI::Colors().Window);
+		case WM_ERASEBKGND: {
+			RECT rect;
+			::GetClientRect(hWnd, &rect);
+			::FillRect((HDC)wParam, &rect, DarkUI::Brush(DarkUI::Colors().Window));
+			return 1;
+		}
 		case WM_NOTIFY: {
 			NMHDR* pHeader = (NMHDR*)lParam;
+			LRESULT result = 0;
+			if (DarkUI::CustomDrawButton(lParam, result)) return result;
+			if (pHeader->idFrom == ID_SC_LIST && pHeader->code == NM_CUSTOMDRAW && DarkUI::IsDark()) {
+				// the theme draws the group headers dark blue, not readable on the dark background
+				NMLVCUSTOMDRAW* pDraw = (NMLVCUSTOMDRAW*)lParam;
+				if (pDraw->nmcd.dwDrawStage == CDDS_PREPAINT && pDraw->dwItemType == LVCDI_GROUP) {
+					int nGroup = (int)pDraw->nmcd.dwItemSpec;
+					wchar_t sHeader[128] = { 0 };
+					LVGROUP group = { sizeof(LVGROUP) };
+					group.mask = LVGF_HEADER | LVGF_STATE;
+					group.stateMask = LVGS_COLLAPSED;
+					group.pszHeader = sHeader;
+					group.cchHeader = 128;
+					ListView_GetGroupInfo(pHeader->hwndFrom, nGroup, &group);
+					RECT rect;
+					if (!ListView_GetGroupRect(pHeader->hwndFrom, nGroup, LVGGR_HEADER, &rect)) rect = pDraw->rcText;
+					const DarkUI::CPalette& colors = DarkUI::Colors();
+					HDC hDC = pDraw->nmcd.hdc;
+					::FillRect(hDC, &rect, DarkUI::Brush(colors.Surface));
+					HGDIOBJ hOldFont = ::SelectObject(hDC, pEditor->Font);
+					::SetBkMode(hDC, TRANSPARENT);
+					::SetTextColor(hDC, colors.Accent);
+					RECT textRect = rect;
+					textRect.left += pEditor->S(8);
+					RECT measure = textRect;
+					::DrawText(hDC, sHeader, -1, &measure, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_CALCRECT);
+					::DrawText(hDC, sHeader, -1, &textRect, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+					// line to the right of the header and the collapse mark
+					int nLineY = (rect.top + rect.bottom) / 2;
+					RECT line = { measure.right + pEditor->S(10), nLineY, rect.right - pEditor->S(28), nLineY + 1 };
+					if (line.right > line.left) ::FillRect(hDC, &line, DarkUI::Brush(colors.Border));
+					RECT markRect = { rect.right - pEditor->S(24), rect.top, rect.right - pEditor->S(6), rect.bottom };
+					::SetTextColor(hDC, colors.SubText);
+					::DrawText(hDC, (group.state & LVGS_COLLAPSED) ? L"\x203A" : L"\x2304", -1, &markRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_NOPREFIX);
+					::SelectObject(hDC, hOldFont);
+					return CDRF_SKIPDEFAULT;
+				}
+				if (pDraw->nmcd.dwDrawStage == CDDS_PREPAINT) return CDRF_NOTIFYITEMDRAW;
+				return CDRF_DODEFAULT;
+			}
 			if (pHeader->idFrom == ID_SC_LIST && pHeader->code == NM_DBLCLK) {
 				::SendMessage(hWnd, WM_COMMAND, ID_SC_ADD, 0);
 			}
@@ -1369,7 +1503,7 @@ bool EditShortcuts(HWND hParent) {
 	wndClass.lpfnWndProc = ShortcutWndProc;
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+	wndClass.hbrBackground = NULL;
 	wndClass.lpszClassName = _T("JPEGViewShortcutEditor");
 	::RegisterClass(&wndClass);
 	HDC hDC = ::GetDC(NULL);
@@ -1381,8 +1515,8 @@ bool EditShortcuts(HWND hParent) {
 	editor.Font = ::CreateFontIndirect(&metrics.lfMessageFont);
 
 	int nWidth = editor.S(900), nHeight = editor.S(680);
-	RECT parentRect;
-	::GetWindowRect(hParent, &parentRect);
+	RECT parentRect = { 0, 0, nWidth, nHeight };
+	if (hParent != NULL) ::GetWindowRect(hParent, &parentRect);
 	editor.Window = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewShortcutEditor"), CNLS::GetString(_T("Keyboard shortcuts")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
 		max(0, (int)(parentRect.left + parentRect.right - nWidth) / 2), max(0, (int)(parentRect.top + parentRect.bottom - nHeight) / 2), nWidth, nHeight, hParent, NULL, hInstance, NULL);
 	if (editor.Window == NULL) {
@@ -1399,7 +1533,7 @@ bool EditShortcuts(HWND hParent) {
 		nPad + editor.S(316), nPad + editor.S(3), editor.S(300), editor.S(22), editor.Window, (HMENU)(INT_PTR)ID_SC_ONLY_KEYS, hInstance, NULL);
 	::SendMessage(editor.OnlyKeys, BM_SETCHECK, BST_CHECKED, 0);
 	::SendMessage(editor.OnlyKeys, WM_SETFONT, (WPARAM)editor.Font, FALSE);
-	editor.List = ::CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+	editor.List = ::CreateWindowEx(0, WC_LISTVIEW, _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
 		nPad, nPad + editor.S(34), client.Width() - 2 * nPad, client.Height() - 3 * nPad - nButtonHeight - editor.S(34), editor.Window, (HMENU)(INT_PTR)ID_SC_LIST, hInstance, NULL);
 	ListView_SetExtendedListViewStyle(editor.List, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 	ListView_EnableGroupView(editor.List, TRUE);
@@ -1443,10 +1577,16 @@ bool EditShortcuts(HWND hParent) {
 	::SendMessage(editor.Search, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	::SendMessage(editor.List, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	FillShortcutList(editor);
+	DarkUI::SetBackground(editor.Window, DarkUI::Colors().Window);
+	DarkUI::ApplyToWindow(editor.Window);
 
-	::EnableWindow(hParent, FALSE);
-	::ShowWindow(editor.Window, SW_SHOWNORMAL);
-	::SetFocus(editor.Search);
+	if (hParent != NULL) ::EnableWindow(hParent, FALSE);
+	if (DarkUI::IsSnapshotMode()) {
+		DarkUI::ShowSnapshot(editor.Window, ID_SC_CANCEL);
+	} else {
+		::ShowWindow(editor.Window, SW_SHOWNORMAL);
+		::SetFocus(editor.Search);
+	}
 	MSG msg;
 	while (!editor.Done && ::GetMessage(&msg, NULL, 0, 0) > 0) {
 		if (!::IsDialogMessage(editor.Window, &msg)) {
@@ -1454,9 +1594,9 @@ bool EditShortcuts(HWND hParent) {
 			::DispatchMessage(&msg);
 		}
 	}
-	::EnableWindow(hParent, TRUE);
+	if (hParent != NULL) ::EnableWindow(hParent, TRUE);
 	::DestroyWindow(editor.Window);
-	::SetActiveWindow(hParent);
+	if (hParent != NULL) ::SetActiveWindow(hParent);
 	::DeleteObject(editor.Font);
 	s_pShortcuts = NULL;
 	return editor.Saved;

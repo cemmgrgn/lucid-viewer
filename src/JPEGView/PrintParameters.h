@@ -23,6 +23,9 @@ public:
 	double OffsetX, OffsetY;  // in 1/10 mm
 	HorizontalAlignment AlignmentX;
 	VerticalAlignment AlignmentY;
+	int Copies;
+	bool Grayscale;     // printed in black and white
+	bool PrintFileName; // the file name below the image
 
 	// Uses default parameters
 	CPrintParameters(double defaultMarginCm, double defaultPrintWidthCm) {
@@ -37,5 +40,8 @@ public:
 		OffsetX = OffsetY = 0;
 		AlignmentX = HA_Center;
 		AlignmentY = VA_Top;
+		Copies = 1;
+		Grayscale = false;
+		PrintFileName = false;
 	}
 };

@@ -8,6 +8,7 @@
 #include "SettingsProvider.h"
 #include "Converter.h"
 #include "ScreenCapture.h"
+#include "UITest.h"
 
 #ifdef DEBUG
 #include <dbghelp.h>
@@ -222,6 +223,18 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 		ULONG_PTR gdiplusToken;
 		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 		int nExitCode = ScreenCapture::RunCommandLine(lpstrCmdLine);
+		Gdiplus::GdiplusShutdown(gdiplusToken);
+		_Module.Term();
+		::CoUninitialize();
+		return nExitCode;
+	}
+
+	// pictures of the windows for testing, without the screen
+	if (UITest::IsCommandLine(lpstrCmdLine)) {
+		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+		ULONG_PTR gdiplusToken;
+		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+		int nExitCode = UITest::Run(::GetCommandLine());
 		Gdiplus::GdiplusShutdown(gdiplusToken);
 		_Module.Term();
 		::CoUninitialize();

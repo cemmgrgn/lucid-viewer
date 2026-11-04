@@ -134,6 +134,14 @@
 #define IDC_PD_BOTTOM_TITLE             2035
 #define IDC_PD_ED_BOTTOM                2036
 #define IDC_PD_CM3                      2037
+#define IDC_PD_COPIES_TITLE             2038
+#define IDC_PD_ED_COPIES                2039
+#define IDC_PD_SPIN_COPIES              2040
+#define IDC_PD_COLOR_TITLE              2041
+#define IDC_PD_CB_COLOR                 2042
+#define IDC_PD_PRESET_TITLE             2043
+#define IDC_PD_CB_PRESET                2044
+#define IDC_PD_CHK_FILENAME             2045
 
 // this is not used anywhere in code, but defined in KeyMap as an "invalid command", so make sure the defined number doesn't match anything!
 #define IDM_DONOTHING		1			// :KeyMap: do nothing (can be used to disable a standard command for a mouse button)

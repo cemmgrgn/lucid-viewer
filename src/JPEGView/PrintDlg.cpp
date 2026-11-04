@@ -6,6 +6,24 @@
 #include "JPEGImage.h"
 #include "PrintParameters.h"
 #include "SettingsProvider.h"
+#include "DarkUI.h"
+#include <shlwapi.h>
+#include <vector>
+#pragma comment(lib, "shlwapi.lib")
+
+// Photo sizes in cm (short side, long side), 0 is the custom size
+static const struct { double Short, Long; LPCTSTR Inches; } s_photoSizes[] = {
+	{ 0, 0, NULL }, { 9, 13, _T("3.5 \x00D7 5") }, { 10, 15, _T("4 \x00D7 6") }, { 13, 18, _T("5 \x00D7 7") }, { 15, 20, _T("6 \x00D7 8") },
+	{ 15, 21, NULL }, { 20, 25, _T("8 \x00D7 10") }, { 20, 30, _T("8 \x00D7 12") }, { 21, 29.7, NULL }, { 30, 40, NULL },
+};
+
+// Black and white copy of a 32 bpp DIB
+static void ToGrayscale(std::vector<BYTE>& pixels) {
+	for (size_t i = 0; i + 3 < pixels.size(); i += 4) {
+		BYTE nGray = (BYTE)((pixels[i] * 29 + pixels[i + 1] * 150 + pixels[i + 2] * 77) >> 8);
+		pixels[i] = pixels[i + 1] = pixels[i + 2] = nGray;
+	}
+}
 
 // Converts points to 1/10 millimeters
 static double PointsToMm10(int value, int dpi) {
@@ -105,6 +123,14 @@ LRESULT CPrintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_rbAlign20.Attach(GetDlgItem(IDC_PD_RB_20));
 	m_rbAlign21.Attach(GetDlgItem(IDC_PD_RB_21));
 	m_rbAlign22.Attach(GetDlgItem(IDC_PD_RB_22));
+	m_lblCopies.Attach(GetDlgItem(IDC_PD_COPIES_TITLE));
+	m_edtCopies.Attach(GetDlgItem(IDC_PD_ED_COPIES));
+	m_spinCopies.Attach(GetDlgItem(IDC_PD_SPIN_COPIES));
+	m_lblColor.Attach(GetDlgItem(IDC_PD_COLOR_TITLE));
+	m_cbColor.Attach(GetDlgItem(IDC_PD_CB_COLOR));
+	m_lblPreset.Attach(GetDlgItem(IDC_PD_PRESET_TITLE));
+	m_cbPreset.Attach(GetDlgItem(IDC_PD_CB_PRESET));
+	m_chkFileName.Attach(GetDlgItem(IDC_PD_CHK_FILENAME));
 
 	m_btnPrint.SetWindowText(CNLS::GetString(_T("Print")));
 	m_btnCancel.SetWindowText(CNLS::GetString(_T("Cancel")));
@@ -128,6 +154,31 @@ LRESULT CPrintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_lblBottom.SetWindowText(CNLS::GetString(_T("Bottom")));
 	m_lblCM2.SetWindowText(m_useInches ? CNLS::GetString(_T("in")) : CNLS::GetString(_T("cm")));
 	m_lblCM3.SetWindowText(m_useInches ? CNLS::GetString(_T("in")) : CNLS::GetString(_T("cm")));
+	m_lblCopies.SetWindowText(CNLS::GetString(_T("Copies:")));
+	m_lblColor.SetWindowText(CNLS::GetString(_T("Color:")));
+	m_lblPreset.SetWindowText(CNLS::GetString(_T("Photo size:")));
+	m_chkFileName.SetWindowText(CNLS::GetString(_T("Print the file name below the image")));
+	m_rbScalingModeJPEGView.SetWindowText(_T("JPEGView"));
+	m_spinCopies.SetRange32(1, 99);
+	m_spinCopies.SetPos32(max(1, min(99, m_pPrintParameters->Copies)));
+	m_cbColor.AddString(CNLS::GetString(_T("Color")));
+	m_cbColor.AddString(CNLS::GetString(_T("Black and white")));
+	m_cbColor.SetCurSel(m_pPrintParameters->Grayscale ? 1 : 0);
+	for (int i = 0; i < sizeof(s_photoSizes) / sizeof(s_photoSizes[0]); i++) {
+		CString sName;
+		if (i == 0) {
+			sName = CNLS::GetString(_T("Custom size"));
+		} else {
+			sName.Format(_T("%g \x00D7 %g cm"), s_photoSizes[i].Short, s_photoSizes[i].Long);
+			if (s_photoSizes[i].Short == 21 && s_photoSizes[i].Long == 29.7) sName += _T("  (A4)");
+			else if (s_photoSizes[i].Inches != NULL) sName += CString(_T("  (")) + s_photoSizes[i].Inches + _T(" in)");
+		}
+		m_cbPreset.AddString(sName);
+	}
+	m_cbPreset.SetCurSel(0);
+	m_chkFileName.SetCheck(m_pPrintParameters->PrintFileName ? BST_CHECKED : BST_UNCHECKED);
+	DarkUI::SetBackground(m_hWnd, DarkUI::Colors().Window);
+	DarkUI::ApplyToWindow(m_hWnd);
 
 	m_edtWidth.SetLimitText(6);
 	m_edtHeight.SetLimitText(6);
@@ -239,8 +290,16 @@ LRESULT CPrintDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, 
 
 	CPoint offset = CPoint(max(0, printableRect.left - imageRect.left), max(0, printableRect.top - imageRect.top));
 	void* pDIBData = m_pImage->GetThumbnailDIB(imageSize, clippedImageSize, offset, m_procParams, m_eProcessingFlags);
+	std::vector<BYTE> grayPixels;
+	if (pDIBData != NULL && m_cbColor.GetCurSel() == 1 && clippedImageSize.cx > 0 && clippedImageSize.cy > 0) {
+		grayPixels.assign((BYTE*)pDIBData, (BYTE*)pDIBData + (size_t)clippedImageSize.cx * clippedImageSize.cy * 4);
+		ToGrayscale(grayPixels);
+		pDIBData = &grayPixels[0];
+	}
 
-	dc.SelectStockPen(BLACK_PEN);
+	CPen paperPen;
+	paperPen.CreatePen(PS_SOLID, 1, DarkUI::IsDark() ? RGB(90, 90, 90) : RGB(160, 160, 160));
+	dc.SelectPen(paperPen);
 
 	dc.FillSolidRect(fittedPaper, RGB(255, 255, 255));
 	dc.Rectangle(fittedPaper);
@@ -260,6 +319,20 @@ LRESULT CPrintDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, 
 		dc.IntersectClipRect(printableRect);
 		dc.SetDIBitsToDevice(xDest, yDest, xSize, ySize, 0, 0, 0, ySize, pDIBData, &bmInfo, DIB_RGB_COLORS);
 	}
+	if (m_chkFileName.GetCheck() == BST_CHECKED && !m_sFileName.IsEmpty()) {
+		// 3.5 mm high text below the image, as printed
+		int nTextHeight = max(6, (int)(3.5 * m_dPixelsPerMm + 0.5));
+		CFont font;
+		font.CreateFont(-nTextHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, _T("Segoe UI"));
+		HFONT hOldFont = dc.SelectFont(font);
+		CRect textRect(clippedRect.left, 0, clippedRect.right, 0);
+		textRect.top = min(clippedRect.bottom + nTextHeight / 2, printableRect.bottom - nTextHeight * 3 / 2);
+		textRect.bottom = textRect.top + nTextHeight * 3 / 2;
+		dc.SetBkMode(TRANSPARENT);
+		dc.SetTextColor(RGB(40, 40, 40));
+		dc.DrawText(::PathFindFileName(m_sFileName), -1, textRect, DT_CENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+		dc.SelectFont(hOldFont);
+	}
 
 	CPen dottedPen;
 	dottedPen.CreatePen(PS_DOT, 1, RGB(190, 190, 190));
@@ -269,6 +342,40 @@ LRESULT CPrintDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, 
 	dc.Rectangle(printableRect);
 
 	dc.SelectStockPen(BLACK_PEN);
+	return 0;
+}
+
+LRESULT CPrintDlg::OnCtlColor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/) {
+	return (LRESULT)DarkUI::CtlColor(uMsg, wParam, lParam, DarkUI::Colors().Window);
+}
+
+LRESULT CPrintDlg::OnCustomDraw(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled) {
+	LRESULT result = 0;
+	if (DarkUI::CustomDrawButton((LPARAM)pnmh, result)) return result;
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT CPrintDlg::OnPresetChanged(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
+	int nPreset = m_cbPreset.GetCurSel();
+	if (nPreset <= 0 || nPreset >= sizeof(s_photoSizes) / sizeof(s_photoSizes[0])) return 0;
+	// the long side of the photo along the long side of the image, the image fits into the photo size
+	double dBoxWidth = m_dAspectRatioImage >= 1 ? s_photoSizes[nPreset].Long : s_photoSizes[nPreset].Short;
+	double dBoxHeight = m_dAspectRatioImage >= 1 ? s_photoSizes[nPreset].Short : s_photoSizes[nPreset].Long;
+	double dWidth = min(dBoxWidth, dBoxHeight * m_dAspectRatioImage);
+	m_rbFitToPaper.SetCheck(FALSE);
+	m_rbFillWithCrop.SetCheck(FALSE);
+	m_rbSize.SetCheck(TRUE);
+	SetNumber(m_edtWidth, dWidth);
+	m_offset = CPoint(0, 0);
+	m_limitOffsetOnNextPaint = true;
+	InvalidateRect(GetPaperPaintBoundingBox());
+	Validate();
+	return 0;
+}
+
+LRESULT CPrintDlg::OnPreviewOptionChanged(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
+	InvalidateRect(GetPaperPaintBoundingBox());
 	return 0;
 }
 
@@ -372,6 +479,7 @@ LRESULT CPrintDlg::OnChangePrinter(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCt
 }
 
 LRESULT CPrintDlg::OnSetFocusToUserSize(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
+	if (::GetFocus() == m_edtWidth.m_hWnd || ::GetFocus() == m_edtHeight.m_hWnd) m_cbPreset.SetCurSel(0);
 	m_rbFitToPaper.SetCheck(FALSE);
 	m_rbFillWithCrop.SetCheck(FALSE);
 	m_rbSize.SetCheck(TRUE);
@@ -514,6 +622,9 @@ LRESULT CPrintDlg::OnPrint(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOO
 	m_pPrintParameters->FitToPaper = m_rbFitToPaper.GetCheck() != 0;
 	m_pPrintParameters->FillWithCrop = m_rbFillWithCrop.GetCheck() != 0;
 	m_pPrintParameters->ScaleByPrinterDriver = m_rbScalingModePrinterDriver.GetCheck() != 0;
+	m_pPrintParameters->Copies = max(1, min(99, (int)m_spinCopies.GetPos32()));
+	m_pPrintParameters->Grayscale = m_cbColor.GetCurSel() == 1;
+	m_pPrintParameters->PrintFileName = m_chkFileName.GetCheck() == BST_CHECKED;
 	m_pPrintParameters->OffsetX = 10 * m_offset.x / m_dPixelsPerMm;
 	m_pPrintParameters->OffsetY = 10 * m_offset.y / m_dPixelsPerMm;
 

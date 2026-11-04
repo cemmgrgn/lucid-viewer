@@ -6,6 +6,9 @@
 #include "Helpers.h"
 #include "PrintDlg.h"
 #include "PrintParameters.h"
+#include <shlwapi.h>
+#include <vector>
+#pragma comment(lib, "shlwapi.lib")
 
 // Converts 1/10 mm to inch
 static double Mm10ToInch(double value) {
@@ -40,6 +43,7 @@ bool CPrintImage::Print(HWND hWnd, CJPEGImage * pImage, const CImageProcessingPa
 
 	CPrintDlg printDlg(m_pPrintParameters, m_pPrinterSelectionDlg, m_pPrinterSelectionDlg->GetDevMode(), m_pPrinterSelectionDlg->GetDeviceName(),
 		m_pPrinterSelectionDlg->GetPortName(), pImage, procParams, eFlags);
+	printDlg.SetFileName(fileName);
 	bool bPrinted = false;
 	if (printDlg.DoModal(hWnd) == IDOK) {
 		bPrinted = DoPrint(printDlg.GetPrinterDC(), m_pPrintParameters, pImage, procParams, eFlags, fileName);
@@ -83,7 +87,7 @@ bool CPrintImage::DoPrint(HDC hPrinterDC, CPrintParameters* pPrintParameters, CJ
 		// clip against physical borders
 		paperArea = CRect(max(0, paperArea.left), max(0, paperArea.top), min(pixelsX, paperArea.right), min(pixelsY, paperArea.bottom));
 
-		if (::StartPage(hPrinterDC) >= 0) {
+		{
 			CRect printableRect = paperArea;
 			CSize paperSize(physicalWidth, physicalHeight);
 			CSize imageSize;
@@ -115,7 +119,19 @@ bool CPrintImage::DoPrint(HDC hPrinterDC, CPrintParameters* pPrintParameters, CJ
 			void* pDIBData = pImage->GetDIB(fullTargetSize, dibSize, offset, procParams, eFlags);
 			pImage->EnableDimming(true);
 
-			if (pDIBData != NULL) {
+			std::vector<BYTE> grayPixels;
+			if (pDIBData != NULL && pPrintParameters->Grayscale) {
+				grayPixels.assign((BYTE*)pDIBData, (BYTE*)pDIBData + (size_t)dibSize.cx * dibSize.cy * 4);
+				for (size_t i = 0; i + 3 < grayPixels.size(); i += 4) {
+					BYTE nGray = (BYTE)((grayPixels[i] * 29 + grayPixels[i + 1] * 150 + grayPixels[i + 2] * 77) >> 8);
+					grayPixels[i] = grayPixels[i + 1] = grayPixels[i + 2] = nGray;
+				}
+				pDIBData = &grayPixels[0];
+			}
+
+			for (int nCopy = 0; pDIBData != NULL && nCopy < max(1, pPrintParameters->Copies); nCopy++) {
+				if (::StartPage(hPrinterDC) < 0) break;
+				int nSaved = ::SaveDC(hPrinterDC);
 				BITMAPINFO bmInfo{ 0 };
 				bmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 				bmInfo.bmiHeader.biWidth = dibSize.cx;
@@ -131,10 +147,24 @@ bool CPrintImage::DoPrint(HDC hPrinterDC, CPrintParameters* pPrintParameters, CJ
 					::SetDIBitsToDevice(hPrinterDC, clippedRect.left, clippedRect.top, clippedRect.Width(), clippedRect.Height(), 0, 0, 0,
 						clippedRect.Height(), pDIBData, &bmInfo, DIB_RGB_COLORS);
 				}
+				if (pPrintParameters->PrintFileName && fileName != NULL) {
+					// 3.5 mm high, below the image or at the bottom of the printable area
+					int nTextHeight = Helpers::RoundToInt(dpiY * 3.5 / 25.4);
+					HFONT hFont = ::CreateFont(-nTextHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0, ANTIALIASED_QUALITY, 0, _T("Segoe UI"));
+					HGDIOBJ hOldFont = ::SelectObject(hPrinterDC, hFont);
+					RECT textRect = { clippedRect.left, 0, clippedRect.right, 0 };
+					textRect.top = min((int)clippedRect.bottom + nTextHeight / 2, (int)printableRect.bottom - nTextHeight * 3 / 2);
+					textRect.bottom = textRect.top + nTextHeight * 3 / 2;
+					::SetBkMode(hPrinterDC, TRANSPARENT);
+					::SetTextColor(hPrinterDC, RGB(40, 40, 40));
+					::DrawText(hPrinterDC, ::PathFindFileName(fileName), -1, &textRect, DT_CENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+					::SelectObject(hPrinterDC, hOldFont);
+					::DeleteObject(hFont);
+				}
+				::RestoreDC(hPrinterDC, nSaved);
+				::EndPage(hPrinterDC);
 				bSuccess = true;
 			}
-
-			::EndPage(hPrinterDC);
 		}
 
 		::EndDoc(hPrinterDC);

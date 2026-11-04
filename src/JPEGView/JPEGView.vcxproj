@@ -313,6 +313,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ClCompile Include="Metadata.cpp" />
+    <ClCompile Include="DarkUI.cpp" />
+    <ClCompile Include="UITest.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="SettingsEditor.cpp" />
     <ClCompile Include="Share.cpp">
@@ -422,6 +424,8 @@
     <ClInclude Include="Annotations.h" />
     <ClInclude Include="Ocr.h" />
     <ClInclude Include="Metadata.h" />
+    <ClInclude Include="DarkUI.h" />
+    <ClInclude Include="UITest.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="SettingsEditor.h" />
     <ClInclude Include="Share.h" />

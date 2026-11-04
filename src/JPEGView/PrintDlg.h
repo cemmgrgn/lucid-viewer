@@ -20,6 +20,15 @@ public:
 		MESSAGE_HANDLER(WM_MOUSEMOVE, OnMouseMove)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
 		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
+		MESSAGE_HANDLER(WM_CTLCOLORDLG, OnCtlColor)
+		MESSAGE_HANDLER(WM_CTLCOLORSTATIC, OnCtlColor)
+		MESSAGE_HANDLER(WM_CTLCOLOREDIT, OnCtlColor)
+		MESSAGE_HANDLER(WM_CTLCOLORLISTBOX, OnCtlColor)
+		MESSAGE_HANDLER(WM_CTLCOLORBTN, OnCtlColor)
+		NOTIFY_CODE_HANDLER(NM_CUSTOMDRAW, OnCustomDraw)
+		COMMAND_HANDLER(IDC_PD_CB_PRESET, CBN_SELCHANGE, OnPresetChanged)
+		COMMAND_HANDLER(IDC_PD_CB_COLOR, CBN_SELCHANGE, OnPreviewOptionChanged)
+		COMMAND_ID_HANDLER(IDC_PD_CHK_FILENAME, OnPreviewOptionChanged)
 		COMMAND_ID_HANDLER(IDOK, OnPrint)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 		COMMAND_ID_HANDLER(IDC_PD_BTN_CHANGE_PRINTER, OnChangePrinter)
@@ -53,6 +62,10 @@ public:
 	LRESULT OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnCtlColor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
+	LRESULT OnCustomDraw(int /*idCtrl*/, LPNMHDR pnmh, BOOL& bHandled);
+	LRESULT OnPresetChanged(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+	LRESULT OnPreviewOptionChanged(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 
 	LRESULT OnPrint(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
@@ -76,6 +89,9 @@ public:
 
 	// Returns the printer device context to be used for printing
 	HDC GetPrinterDC() { return m_hPrinterDC; }
+
+	// File name printed below the image (option)
+	void SetFileName(LPCTSTR sFileName) { m_sFileName = sFileName; }
 
 	static CRect Align(const CSize& size, const CRect& rect, CPrintParameters::HorizontalAlignment horizontalAlignment, CPrintParameters::VerticalAlignment verticalAlignment);
 
@@ -138,6 +154,15 @@ private:
 	CButton m_rbAlign20;
 	CButton m_rbAlign21;
 	CButton m_rbAlign22;
+	CStatic m_lblCopies;
+	CEdit m_edtCopies;
+	CUpDownCtrl m_spinCopies;
+	CStatic m_lblColor;
+	CComboBox m_cbColor;
+	CStatic m_lblPreset;
+	CComboBox m_cbPreset;
+	CButton m_chkFileName;
+	CString m_sFileName;
 
 	CPrintParameters* m_pPrintParameters;
 	CPrintDialogEx* m_pPrintDlg;

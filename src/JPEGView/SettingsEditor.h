@@ -18,6 +18,9 @@ namespace SettingsEditor {
 	// Window with all commands and their keyboard shortcuts, they can be changed. Returns true if the key map was saved.
 	bool EditShortcuts(HWND hParent);
 
+	// UI test: category shown first in the settings window
+	void SetSnapshotCategory(int nCategory);
+
 	// Starts JPEGView again with the file and closes the window hParent
 	void Restart(HWND hParent, LPCTSTR sCurrentFile);
 }

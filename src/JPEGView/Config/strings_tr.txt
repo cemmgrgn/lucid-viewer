@@ -892,3 +892,9 @@ Camera direction reference	Kamera yönü referansı
 Speed	Hız
 Speed unit	Hız birimi
 Coordinates	Koordinatlar
+Copies:	Kopya:
+Color:	Renk:
+Black and white	Siyah beyaz
+Photo size:	Fotoğraf boyutu:
+Custom size	Özel boyut
+Print the file name below the image	Dosya adını resmin altına yazdır
