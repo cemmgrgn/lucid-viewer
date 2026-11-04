@@ -320,6 +320,8 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pChrome = NULL;
 	m_pAnnotations = new CAnnotations();
 	m_nRating = -1;
+	m_bCropTool = false;
+	m_nCropModeCommand = IDM_CROPMODE_FREE;
 	m_nRunningConversions = 0;
 	m_bCompareMode = false;
 	m_dCompareSplit = 0.5;
@@ -852,7 +854,7 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 				m_bZoomMode = true;
 				m_dStartZoom = m_dZoom;
 				m_nCapturedX = m_nMouseX; m_nCapturedY = m_nMouseY;
-			} else if ((bCtrl || bHandleByCropping || (!bDraggingRequired && m_bDefaultSelectionMode)) && !bTransformPanelShown) {
+			} else if ((bCtrl || bHandleByCropping || m_bCropTool || (!bDraggingRequired && m_bDefaultSelectionMode)) && !bTransformPanelShown) {
 				// always go into selection/crop when in the right state and CTRL held down, otherwise it depends on the DefaultSelectionMode setting
 				m_bSelectZoom = bShift;  // if shift, go into select-to-zoom mode (no crop popup)
 				m_pCropCtl->StartCropping(pointClicked.x, pointClicked.y);
@@ -1116,7 +1118,7 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	if (!m_bPanMouseCursorSet && !bMouseCursorSet) {
 		if (!m_pPanelMgr->MouseCursorCaptured()) {
 			bool bOnSplit = m_bCompareMode && !m_bDragging && !m_pCropCtl->IsCropping() && IsOnCompareSplit(m_nMouseX);
-			::SetCursor(::LoadCursor(NULL, IsDrawMode() ? IDC_CROSS : bOnSplit ? IDC_SIZEWE : IDC_ARROW));
+			::SetCursor(::LoadCursor(NULL, (IsDrawMode() || (m_bCropTool && m_pCurrentImage != NULL)) ? IDC_CROSS : bOnSplit ? IDC_SIZEWE : IDC_ARROW));
 		}
 	}
 
@@ -1559,6 +1561,9 @@ bool CMainDlg::CloseHelpDlg() {
 }
 
 void CMainDlg::ExecuteCommand(int nCommand) {
+	if (nCommand >= IDM_CROPMODE_FREE && nCommand <= IDM_CROPMODE_USER) {
+		m_nCropModeCommand = nCommand;
+	}
 	CSettingsProvider& sp = CSettingsProvider::This();
 	InvalidateHelpDlg();
 	switch (nCommand) {
@@ -2385,6 +2390,13 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
+			break;
+		case IDM_TOGGLE_CROP_TOOL:
+			m_bCropTool = !m_bCropTool;
+			if (m_bCropTool) {
+				m_pChrome->ShowMessage(CNLS::GetString(_T("Drag on the image to select the area to crop.")));
+			}
+			m_pChrome->Paint();
 			break;
 		case IDM_OCR_COPY_TEXT:
 			if (m_pCurrentImage != NULL && m_pCurrentImage->OriginalPixels() != NULL) {

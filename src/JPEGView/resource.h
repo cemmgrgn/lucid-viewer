@@ -311,6 +311,7 @@
 #define IDM_SIGNATURE_SAVE	16250		// :KeyMap: save the pen strokes as signature
 #define IDM_SIGNATURE_INSERT	16260	// :KeyMap: insert the saved signature
 #define IDM_OCR_COPY_TEXT	16270		// :KeyMap: copy the text in the image to the clipboard (text recognition)
+#define IDM_TOGGLE_CROP_TOOL	16280	// :KeyMap: crop tool on/off, the left mouse button selects the crop rectangle while on
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

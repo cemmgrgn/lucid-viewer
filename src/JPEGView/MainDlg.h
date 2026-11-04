@@ -186,6 +186,10 @@ public:
 	// Before/after comparison: the left part of the image is shown unedited, the split can be dragged
 	bool IsCompareMode() { return m_bCompareMode; }
 	CAnnotations* GetAnnotations() { return m_pAnnotations; }
+	// Crop tool of the side panel: the left mouse button selects the crop rectangle without holding Ctrl
+	bool IsCropTool() { return m_bCropTool; }
+	// The IDM_CROPMODE_xxx command of the current crop aspect ratio
+	int GetCropModeCommand() { return m_nCropModeCommand; }
 	// Star rating of the current file as shown by Explorer (0: none, 1-5 stars, -1: not available)
 	int GetRating();
 	// Writes the star rating (0-5) into the current file
@@ -383,6 +387,8 @@ private:
 	bool m_bCompareMode;
 	CAnnotations* m_pAnnotations; // drawings over the current image
 	CString m_sRatingFile; // file of the cached rating
+	bool m_bCropTool;
+	int m_nCropModeCommand;
 	int m_nRating;
 	void PaintAnnotations(CDC& dc);
 	double m_dCompareSplit; // position of the split line relative to the client width

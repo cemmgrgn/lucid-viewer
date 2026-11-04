@@ -613,3 +613,14 @@ Rating removed	Puan kaldırıldı
 Rating: %d stars	Puan: %d yıldız
 The rating could not be saved in this file format.	Bu dosya biçiminde puan kaydedilemiyor.
 Rating (keys 1 to 5, 0 removes it)	Puan (1-5 tuşları, 0 kaldırır)
+Crop and straighten	Kırp ve düzleştir
+Crop tool	Kırpma aracı
+While on, dragging on the image selects the crop area (otherwise Ctrl + drag)	Açıkken görüntüde sürüklemek kırpılacak alanı seçer (kapalıyken Ctrl + sürükle)
+Drag on the image to select the area to crop.	Kırpılacak alanı seçmek için görüntüde sürükleyin.
+Free	Serbest
+Image	Görüntü
+Aspect ratio of the crop area	Kırpma alanının en-boy oranı
+Straighten...	Düzleştir...
+Perspective...	Perspektif...
+Rotate by any angle to straighten the horizon	Ufku düzeltmek için istenen açıyla döndür
+Correct converging lines of buildings	Binalardaki birleşen çizgileri düzelt

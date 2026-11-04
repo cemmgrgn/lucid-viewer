@@ -1413,6 +1413,45 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 		nY += nTrackHeight + S(8);
 	}
 
+	// crop and straighten
+	nY += S(4);
+	dc.SelectFont(m_hBoldFont);
+	dc.SetTextColor(m_colors.DimText);
+	CRect cropTitleRect(nPad, nY, nPad + nInnerWidth, nY + S(18));
+	dc.DrawText(CNLS::GetString(_T("Crop and straighten")), -1, &cropTitleRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+	dc.SelectFont(m_hFont);
+	nY += S(24);
+	{
+		CRect toolRect(nPad, nY, nPad + nInnerWidth, nY + nButtonHeight);
+		AddSideHit(SH_Button, IDM_TOGGLE_CROP_TOOL, toolRect, _T("While on, dragging on the image selects the crop area (otherwise Ctrl + drag)"));
+		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, toolRect, CNLS::GetString(_T("Crop tool")), m_pMainDlg->IsCropTool(), bHover, true);
+		nY += nButtonHeight + S(6);
+		struct { LPCTSTR Text; int Command; } ratios[] = {
+			{ _T("Free"), IDM_CROPMODE_FREE }, { _T("1:1"), IDM_CROPMODE_1_1 }, { _T("4:3"), IDM_CROPMODE_4_3 },
+			{ _T("3:2"), IDM_CROPMODE_3_2 }, { _T("16:9"), IDM_CROPMODE_16_9 }, { _T("Image"), IDM_CROPMODE_IMAGE },
+		};
+		int nRatioWidth = (nInnerWidth - 2 * S(6)) / 3;
+		for (int i = 0; i < 6; i++) {
+			int nX = nPad + (i % 3) * (nRatioWidth + S(6));
+			CRect ratioRect(nX, nY, nX + nRatioWidth, nY + nButtonHeight);
+			AddSideHit(SH_Button, ratios[i].Command, ratioRect, _T("Aspect ratio of the crop area"));
+			bool bRatioHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+			PaintSideButton(dc, ratioRect, CNLS::GetString(ratios[i].Text), m_pMainDlg->GetCropModeCommand() == ratios[i].Command, bRatioHover, true);
+			if (i % 3 == 2) nY += nButtonHeight + S(6);
+		}
+		int nHalfWidth = (nInnerWidth - S(6)) / 2;
+		CRect rotateRect(nPad, nY, nPad + nHalfWidth, nY + nButtonHeight);
+		AddSideHit(SH_Button, IDM_ROTATE, rotateRect, _T("Rotate by any angle to straighten the horizon"));
+		bool bRotateHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, rotateRect, CNLS::GetString(_T("Straighten...")), false, bRotateHover, true);
+		CRect perspectiveRect(nPad + nHalfWidth + S(6), nY, nPad + nInnerWidth, nY + nButtonHeight);
+		AddSideHit(SH_Button, IDM_PERSPECTIVE, perspectiveRect, _T("Correct converging lines of buildings"));
+		bool bPerspectiveHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, perspectiveRect, CNLS::GetString(_T("Perspective...")), false, bPerspectiveHover, true);
+		nY += nButtonHeight + S(10);
+	}
+
 	// further actions
 	nY += S(6);
 	DrawHorizontalLine(dc, nPad, nPad + nInnerWidth, nY, m_colors.Border);
