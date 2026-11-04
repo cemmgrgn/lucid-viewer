@@ -330,6 +330,10 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pStartScreen = NULL;
 	m_bStartScreen = false;
 	m_bRecordRecent = false;
+	m_bZoomAnimation = m_bZoomFrame = m_bZoomAnimToMouse = m_bZoomAnimAdjust = false;
+	m_dZoomFrom = m_dZoomTo = 1.0;
+	m_nZoomAnimStart = 0;
+	m_pZoomAnimImage = NULL;
 	m_pAnnotations->SetTool(CAnnotations::TOOL_NONE); // the draw tab can be open at the start, clicks must not draw then
 	m_nRating = -1;
 	m_bCropTool = false;
@@ -860,6 +864,10 @@ LRESULT CMainDlg::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL&
 LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
 	if (IsStartScreenActive()) {
 		CStartScreen::CResult result = m_pStartScreen->OnClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		if (m_pStartScreen->IsDragging()) {
+			this->SetCapture();
+			this->Invalidate(FALSE);
+		}
 		HandleStartScreenAction(result.Action, result.File);
 		return 0;
 	}
@@ -950,6 +958,10 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
 	m_bDragOutPending = false;
 	if (IsStartScreenActive() && !m_pChrome->IsDragging()) {
+		if (m_pStartScreen->IsDragging()) {
+			m_pStartScreen->OnMouseUp();
+			::ReleaseCapture();
+		}
 		return 0;
 	}
 	if (m_pChrome->IsDragging()) {
@@ -1267,7 +1279,8 @@ LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	if (IsStartScreenActive()) {
 		POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 		ScreenToClient(&point);
-		if (m_pStartScreen->OnMouseWheel(point.x, point.y, nDelta)) this->Invalidate(FALSE);
+		bool bShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+		if (m_pStartScreen->OnMouseWheel(point.x, point.y, bShift ? -nDelta : nDelta, bShift)) this->Invalidate(FALSE);
 		return 0;
 	}
 	if (!bCtrl && CSettingsProvider::This().NavigateWithMouseWheel() && !m_pPanelMgr->IsModalPanelShown()) {
@@ -1277,7 +1290,7 @@ LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 			GotoImage(POS_Previous);
 		}
 	} else if (m_dZoom > 0 && !m_pUnsharpMaskPanelCtl->IsVisible()) {
-		PerformZoom(CSettingsProvider::This().MouseWheelZoomSpeed() * double(nDelta) / WHEEL_DELTA, true, m_bMouseOn, true);
+		AnimateZoom(CSettingsProvider::This().MouseWheelZoomSpeed() * double(nDelta) / WHEEL_DELTA, true, m_bMouseOn, true);
 	}
 	return 0;
 }
@@ -1396,6 +1409,16 @@ LRESULT CMainDlg::OnActiveDirectoryFilelistChanged(UINT /*uMsg*/, WPARAM /*wPara
 	if (CSettingsProvider::This().ReloadWhenDisplayedImageChanged() && m_pFileList != NULL && m_pFileList->CurrentFileExists()) {
 		m_pFileList->Reload(NULL, false);
 		Invalidate(FALSE);
+	}
+	return 0;
+}
+
+LRESULT CMainDlg::OnMouseHWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/) {
+	// tilt wheel and horizontal touchpad scrolling: the rows of the start screen
+	if (IsStartScreenActive()) {
+		POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+		ScreenToClient(&point);
+		if (m_pStartScreen->OnMouseWheel(point.x, point.y, GET_WHEEL_DELTA_WPARAM(wParam), true)) this->Invalidate(FALSE);
 	}
 	return 0;
 }
@@ -2418,23 +2441,23 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			AdjustWindowToImage(false);
 			break;
 		case IDM_ZOOM_400:
-			PerformZoom(4.0, false, m_bMouseOn, true);
+			AnimateZoom(4.0, false, m_bMouseOn, true);
 			break;
 		case IDM_ZOOM_200:
-			PerformZoom(2.0, false, m_bMouseOn, true);
+			AnimateZoom(2.0, false, m_bMouseOn, true);
 			break;
 		case IDM_ZOOM_100:
 			ResetZoomTo100Percents(m_bMouseOn);
 			break;
 		case IDM_ZOOM_50:
-			PerformZoom(0.5, false, m_bMouseOn, true);
+			AnimateZoom(0.5, false, m_bMouseOn, true);
 			break;
 		case IDM_ZOOM_25:
-			PerformZoom(0.25, false, m_bMouseOn, true);
+			AnimateZoom(0.25, false, m_bMouseOn, true);
 			break;
 		case IDM_ZOOM_INC:
 		case IDM_ZOOM_DEC:
-			PerformZoom((nCommand == IDM_ZOOM_INC) ? 1 : -1, true, m_bMouseOn, true);
+			AnimateZoom((nCommand == IDM_ZOOM_INC) ? 1 : -1, true, m_bMouseOn, true);
 			break;
 		case IDM_ZOOM_MODE:
 			m_bZoomModeOnLeftMouse = !m_bZoomModeOnLeftMouse;
@@ -3626,13 +3649,13 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	m_dZoom = max(dZoomMin, min(Helpers::ZoomMax, m_dZoom));
 
 	// always try to snap to 100%... aka if within 1% of 100%, snap exactly to it
-	if (abs(m_dZoom - 1.0) < 0.01) {
+	if (!m_bZoomFrame && abs(m_dZoom - 1.0) < 0.01) {
 		m_dZoom = 1.0;
 	}
 
 	// only pause on some percent if enabled
 	double pauseAtZoom = CSettingsProvider::This().ZoomPauseFactor();
-	if (pauseAtZoom != 0) {
+	if (pauseAtZoom != 0 && !m_bZoomFrame) {
 		// snap to zoom factor... aka if within 1% of the set zoom factor, snap exactly to it
 		// skip it if the zoom factor is 100% since it's already checked above - save one expensive calculation of abs()
 		if (pauseAtZoom != 1 && abs(m_dZoom - pauseAtZoom) < 0.01) {
@@ -3710,6 +3733,79 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	}
 
 	return true;
+}
+
+static CMainDlg* s_pZoomAnimationDlg = NULL;
+static UINT_PTR s_nZoomAnimationTimer = 0;
+static const DWORD ZOOM_ANIMATION_MS = 160;
+
+bool CMainDlg::AnimateZoom(double dValue, bool bExponent, bool bZoomToMouse, bool bAdjustWindowToImage) {
+	// the zoom mode (Ctrl + drag) and slide shows zoom at once
+	if (!CSettingsProvider::This().SmoothAnimations() || m_pCurrentImage == NULL || m_bZoomMode || m_bMovieMode) {
+		StopZoomAnimation();
+		return PerformZoom(dValue, bExponent, bZoomToMouse, bAdjustWindowToImage);
+	}
+	double dShownZoom = m_dZoom;
+	CPoint shownOffsets = m_offsets;
+	bool bWasRunning = m_bZoomAnimation && m_pZoomAnimImage == m_pCurrentImage;
+	if (bWasRunning) m_dZoom = m_dZoomTo; // fast wheel turns add up
+	bool bChanged = PerformZoom(dValue, bExponent, false, false);
+	double dTarget = m_dZoom;
+	m_dZoom = dShownZoom;
+	m_offsets = shownOffsets;
+	if (!bChanged || fabs(dTarget - dShownZoom) < 1e-9) {
+		return bChanged;
+	}
+	m_dZoomFrom = dShownZoom;
+	m_dZoomTo = dTarget;
+	m_bZoomAnimToMouse = bZoomToMouse;
+	m_bZoomAnimAdjust = bAdjustWindowToImage; // a window following the image size grows with the frames
+	m_nZoomAnimStart = ::GetTickCount();
+	m_pZoomAnimImage = m_pCurrentImage;
+	if (!m_bZoomAnimation) {
+		m_bZoomAnimation = true;
+		s_pZoomAnimationDlg = this;
+		s_nZoomAnimationTimer = ::SetTimer(NULL, 0, 10, ZoomAnimationTimer);
+	}
+	ZoomAnimationStep();
+	return true;
+}
+
+void CMainDlg::ZoomAnimationStep() {
+	if (!m_bZoomAnimation) return;
+	if (m_pCurrentImage == NULL || m_pCurrentImage != m_pZoomAnimImage || m_dZoomFrom <= 0 || m_dZoomTo <= 0) {
+		StopZoomAnimation();
+		return;
+	}
+	double t = min(1.0, (double)(::GetTickCount() - m_nZoomAnimStart) / ZOOM_ANIMATION_MS);
+	double dEase = 1.0 - pow(1.0 - t, 3.0);
+	// the zoom changes by the same factor in each part of the time
+	double dZoom = t >= 1.0 ? m_dZoomTo : m_dZoomFrom * pow(m_dZoomTo / m_dZoomFrom, dEase);
+	m_bZoomFrame = true;
+	PerformZoom(dZoom, false, m_bZoomAnimToMouse, m_bZoomAnimAdjust);
+	m_bZoomFrame = false;
+	if (t >= 1.0) {
+		m_dZoom = m_dZoomTo;
+		StopZoomAnimation();
+		this->Invalidate(FALSE);
+	}
+}
+
+void CMainDlg::StopZoomAnimation() {
+	if (!m_bZoomAnimation) return;
+	m_bZoomAnimation = false;
+	if (s_pZoomAnimationDlg == this) {
+		::KillTimer(NULL, s_nZoomAnimationTimer);
+		s_pZoomAnimationDlg = NULL;
+	}
+}
+
+void CALLBACK CMainDlg::ZoomAnimationTimer(HWND, UINT, UINT_PTR, DWORD) {
+	if (s_pZoomAnimationDlg != NULL) {
+		s_pZoomAnimationDlg->ZoomAnimationStep();
+	} else {
+		::KillTimer(NULL, s_nZoomAnimationTimer);
+	}
 }
 
 bool CMainDlg::PerformPan(int dx, int dy, bool bAbsolute) {
@@ -3986,6 +4082,7 @@ void CMainDlg::ExchangeProcessingParams() {
 }
 
 void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow) {
+	StopZoomAnimation();
 	m_bStartScreen = false;
 	if (m_bRecordRecent && m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList != NULL && m_pFileList->Current() != NULL) {
 		CStartScreen::AddRecent(m_pFileList->Current());

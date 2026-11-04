@@ -151,6 +151,7 @@ public:
 	bool ShowStartScreen() { return m_bShowStartScreen; }
 	bool ScreenshotHistory() { return m_bScreenshotHistory; }
 	int MinDisplaySize() { return m_nMinDisplaySize; }
+	bool SmoothAnimations() { return m_bSmoothAnimations; }
 	void SaveShowFilmstrip(bool bShow);
 	int SidePanelTab() { return m_nSidePanelTab; }
 	void SaveSidePanelTab(int nTab);
@@ -348,6 +349,7 @@ private:
 	bool m_bShowStartScreen;
 	bool m_bScreenshotHistory;
 	int m_nMinDisplaySize;
+	bool m_bSmoothAnimations;
 	int m_nSidePanelTab;
 
 	std::list<CUserCommand*> m_userCommands;

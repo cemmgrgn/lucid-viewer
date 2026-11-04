@@ -260,16 +260,75 @@ void CStartScreen::LoadThumbnails() {
 ///////////////////////////////////////////////////////////////////////////////////
 
 CStartScreen::CStartScreen(HWND hWnd) : m_hWnd(hWnd), m_eHoverKind(HIT_NONE), m_nHoverIndex(-1), m_nScroll(0),
-	m_nContentHeight(0), m_nKeyRow(ROW_RECENT), m_clientRect(0, 0, 0, 0), m_sPinShortcut(_T("Ctrl+B")) {
-	for (int i = 0; i < ROW_COUNT; i++) m_nRowScroll[i] = m_nRowWidth[i] = m_nRowVisible[i] = m_nRowStep[i] = 0;
+	m_nContentHeight(0), m_nKeyRow(ROW_RECENT), m_clientRect(0, 0, 0, 0), m_sPinShortcut(_T("Ctrl+B")),
+	m_nScrollTarget(0), m_nDrag(-1), m_nDragStartMouse(0), m_nDragStartScroll(0) {
+	for (int i = 0; i < ROW_COUNT; i++) m_nRowScroll[i] = m_nRowWidth[i] = m_nRowVisible[i] = m_nRowStep[i] = m_nRowTarget[i] = 0;
 	HDC hDC = ::GetDC(NULL);
 	m_nDpi = ::GetDeviceCaps(hDC, LOGPIXELSX);
 	::ReleaseDC(NULL, hDC);
 	m_pThumbnails = std::make_shared<CThumbnails>();
 }
 
+static CStartScreen* s_pAnimating = NULL;
+static UINT_PTR s_nAnimationTimer = 0;
+
 CStartScreen::~CStartScreen() {
 	m_pThumbnails->Cancel = true;
+	if (s_pAnimating == this) {
+		::KillTimer(NULL, s_nAnimationTimer);
+		s_pAnimating = NULL;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Smooth scrolling
+///////////////////////////////////////////////////////////////////////////////////
+
+void CStartScreen::SetScrollTarget(int nTarget) {
+	m_nScrollTarget = max(0, min(nTarget, m_nContentHeight - m_clientRect.Height()));
+	StartAnimation();
+}
+
+void CStartScreen::SetRowTarget(int nRow, int nTarget) {
+	m_nRowTarget[nRow] = max(0, min(nTarget, m_nRowWidth[nRow] - m_nRowVisible[nRow]));
+	StartAnimation();
+}
+
+void CStartScreen::StartAnimation() {
+	if (!CSettingsProvider::This().SmoothAnimations()) {
+		m_nScroll = m_nScrollTarget;
+		for (int i = 0; i < ROW_COUNT; i++) m_nRowScroll[i] = m_nRowTarget[i];
+		::InvalidateRect(m_hWnd, NULL, FALSE);
+		return;
+	}
+	if (s_pAnimating == this) return;
+	if (s_pAnimating != NULL) ::KillTimer(NULL, s_nAnimationTimer);
+	s_pAnimating = this;
+	s_nAnimationTimer = ::SetTimer(NULL, 0, 10, AnimationTimer);
+	AnimationStep();
+}
+
+// Moves the shown positions a part of the way to the targets, returns false when all are there
+bool CStartScreen::AnimationStep() {
+	auto Step = [](int& nCurrent, int nTarget) {
+		int nDiff = nTarget - nCurrent;
+		if (nDiff == 0) return false;
+		int nMove = (int)(nDiff * 0.22);
+		if (nMove == 0) nMove = nDiff > 0 ? 1 : -1;
+		nCurrent += abs(nDiff) <= 2 ? nDiff : nMove;
+		return true;
+	};
+	bool bMoving = Step(m_nScroll, m_nScrollTarget);
+	for (int i = 0; i < ROW_COUNT; i++) bMoving = Step(m_nRowScroll[i], m_nRowTarget[i]) || bMoving;
+	if (bMoving) ::InvalidateRect(m_hWnd, NULL, FALSE);
+	return bMoving;
+}
+
+void CALLBACK CStartScreen::AnimationTimer(HWND, UINT, UINT_PTR, DWORD) {
+	if (s_pAnimating == NULL || !s_pAnimating->AnimationStep()) {
+		::KillTimer(NULL, s_nAnimationTimer);
+		s_pAnimating = NULL;
+	}
 }
 
 void CStartScreen::Reload() {
@@ -304,8 +363,8 @@ void CStartScreen::Reload() {
 	for (const CString& sPath : s_bTestLists ? s_testPinned : ReadLines(_T("StartPinned.txt"))) {
 		if (::GetFileAttributes(sPath) != INVALID_FILE_ATTRIBUTES) m_pinned.push_back(sPath);
 	}
-	m_nScroll = 0;
-	for (int i = 0; i < ROW_COUNT; i++) m_nRowScroll[i] = 0;
+	m_nScroll = m_nScrollTarget = 0;
+	for (int i = 0; i < ROW_COUNT; i++) m_nRowScroll[i] = m_nRowTarget[i] = 0;
 	LoadThumbnails();
 }
 
@@ -503,6 +562,8 @@ void CStartScreen::Paint(HDC hDC, const CRect& clientRect) {
 			m_nRowVisible[nRow] = (int)fWidth;
 			m_nRowStep[nRow] = (int)(fCardWidth + fGap);
 			m_nRowScroll[nRow] = max(0, min(m_nRowScroll[nRow], m_nRowWidth[nRow] - m_nRowVisible[nRow]));
+			m_nRowTarget[nRow] = max(0, min(m_nRowTarget[nRow], m_nRowWidth[nRow] - m_nRowVisible[nRow]));
+			m_rowTrack[nRow] = m_rowThumb[nRow] = CRect(0, 0, 0, 0);
 			int nScrollX = m_nRowScroll[nRow];
 			AddHit(RectF(x0, y, fWidth, fRowHeight), HIT_ROW, nRow);
 			GraphicsState state = g.Save();
@@ -541,8 +602,15 @@ void CStartScreen::Paint(HDC hDC, const CRect& clientRect) {
 				// position of the row and the buttons for scrolling at the cut sides
 				float fTrack = fWidth, fThumb = max((float)S(40), fTrack * m_nRowVisible[nRow] / m_nRowWidth[nRow]);
 				float fPos = (fTrack - fThumb) * nScrollX / max(1, m_nRowWidth[nRow] - m_nRowVisible[nRow]);
-				FillRound(g, RectF(x0, y + fRowHeight + S(8), fTrack, (REAL)S(3)), (REAL)S(1), colors.Control);
-				FillRound(g, RectF(x0 + fPos, y + fRowHeight + S(8), fThumb, (REAL)S(3)), (REAL)S(1), colors.SubText);
+				bool bBarActive = IsHover(HIT_ROW_BAR, nRow) || m_nDrag == 1 + nRow;
+				float fBarHeight = (REAL)S(bBarActive ? 6 : 3), fBarY = y + fRowHeight + S(8) - (bBarActive ? S(1) : 0);
+				FillRound(g, RectF(x0, fBarY, fTrack, fBarHeight), fBarHeight / 2, colors.Control);
+				FillRound(g, RectF(x0 + fPos, fBarY, fThumb, fBarHeight), fBarHeight / 2, bBarActive ? colors.Text : colors.SubText);
+				// the track can be clicked and the thumb dragged, a larger area than drawn
+				RectF trackHit(x0, y + fRowHeight, fTrack, (REAL)S(20));
+				AddHit(trackHit, HIT_ROW_BAR, nRow);
+				m_rowTrack[nRow] = m_hits.back().Rect;
+				m_rowThumb[nRow] = CRect((int)(x0 + fPos) + clientRect.left, m_rowTrack[nRow].top, (int)(x0 + fPos + fThumb) + clientRect.left, m_rowTrack[nRow].bottom);
 				float fButton = (REAL)S(40), fButtonY = y + (fThumbHeight - fButton) / 2;
 				for (int nSide = 0; nSide < 2; nSide++) {
 					bool bVisible = nSide == 0 ? nScrollX > 0 : nScrollX < m_nRowWidth[nRow] - m_nRowVisible[nRow];
@@ -668,11 +736,19 @@ void CStartScreen::Paint(HDC hDC, const CRect& clientRect) {
 		y += S(40) + nPad;
 		m_nContentHeight = (int)(y + m_nScroll);
 
-		// scroll position
+		// scroll bar of the page: the track can be clicked and the thumb dragged
+		m_vTrack = m_vThumb = CRect(0, 0, 0, 0);
+		m_nScrollTarget = max(0, min(m_nScrollTarget, m_nContentHeight - nH));
 		if (m_nContentHeight > nH) {
 			float fThumb = max((float)S(40), (float)nH * nH / m_nContentHeight);
 			float fPos = (nH - fThumb) * m_nScroll / max(1, m_nContentHeight - nH);
-			FillRound(g, RectF((REAL)(nW - S(8)), fPos + S(2), (REAL)S(4), fThumb - S(4)), (REAL)S(2), colors.Border);
+			bool bActive = IsHover(HIT_VBAR, 0) || m_nDrag == 0;
+			float fBarWidth = (REAL)S(bActive ? 8 : 4);
+			if (bActive) FillRound(g, RectF((REAL)(nW - S(12)), (REAL)S(2), (REAL)S(10), (REAL)(nH - S(4))), (REAL)S(5), colors.Control, 160);
+			FillRound(g, RectF((REAL)(nW - S(4)) - fBarWidth, fPos + S(2), fBarWidth, fThumb - S(4)), fBarWidth / 2, bActive ? colors.SubText : colors.Border);
+			AddHit(RectF((REAL)(nW - S(16)), 0, (REAL)S(16), (REAL)nH), HIT_VBAR, 0);
+			m_vTrack = m_hits.back().Rect;
+			m_vThumb = CRect(m_vTrack.left, (int)fPos + clientRect.top, m_vTrack.right, (int)(fPos + fThumb) + clientRect.top);
 		}
 	}
 	::BitBlt(hDC, clientRect.left, clientRect.top, nW, nH, hMemDC, 0, 0, SRCCOPY);
@@ -699,31 +775,42 @@ bool CStartScreen::IsOverItem(int nX, int nY) {
 
 bool CStartScreen::ScrollRow(int nRow, int nPixels) {
 	if (nRow < 0 || nRow >= ROW_COUNT || m_nRowWidth[nRow] <= m_nRowVisible[nRow]) return false;
-	int nOld = m_nRowScroll[nRow];
-	m_nRowScroll[nRow] = max(0, min(m_nRowScroll[nRow] + nPixels, m_nRowWidth[nRow] - m_nRowVisible[nRow]));
-	return nOld != m_nRowScroll[nRow];
+	int nOld = m_nRowTarget[nRow];
+	SetRowTarget(nRow, m_nRowTarget[nRow] + nPixels);
+	return nOld != m_nRowTarget[nRow];
 }
 
 bool CStartScreen::OnKey(int nVirtualKey) {
 	int nPage = max(S(40), m_clientRect.Height() - S(80));
-	int nOld = m_nScroll;
 	int nMaxScroll = max(0, m_nContentHeight - m_clientRect.Height());
 	switch (nVirtualKey) {
-		case VK_LEFT: return ScrollRow(m_nKeyRow, -max(1, m_nRowStep[m_nKeyRow]));
-		case VK_RIGHT: return ScrollRow(m_nKeyRow, max(1, m_nRowStep[m_nKeyRow]));
-		case VK_UP: m_nScroll -= S(100); break;
-		case VK_DOWN: m_nScroll += S(100); break;
-		case VK_PRIOR: m_nScroll -= nPage; break;
-		case VK_NEXT: m_nScroll += nPage; break;
-		case VK_HOME: m_nScroll = 0; break;
-		case VK_END: m_nScroll = nMaxScroll; break;
-		default: return false;
+		case VK_LEFT: ScrollRow(m_nKeyRow, -max(1, m_nRowStep[m_nKeyRow])); return true;
+		case VK_RIGHT: ScrollRow(m_nKeyRow, max(1, m_nRowStep[m_nKeyRow])); return true;
+		case VK_UP: SetScrollTarget(m_nScrollTarget - S(120)); return true;
+		case VK_DOWN: SetScrollTarget(m_nScrollTarget + S(120)); return true;
+		case VK_PRIOR: SetScrollTarget(m_nScrollTarget - nPage); return true;
+		case VK_NEXT: SetScrollTarget(m_nScrollTarget + nPage); return true;
+		case VK_HOME: SetScrollTarget(0); return true;
+		case VK_END: SetScrollTarget(nMaxScroll); return true;
 	}
-	m_nScroll = max(0, min(m_nScroll, nMaxScroll));
-	return true; // also when not moved, the key is used by the start screen
+	return false;
 }
 
 bool CStartScreen::OnMouseMove(int nX, int nY) {
+	if (m_nDrag >= 0) {
+		// the thumb follows the mouse
+		if (m_nDrag == 0) {
+			int nTrack = max(1, m_vTrack.Height() - m_vThumb.Height());
+			int nRange = m_nContentHeight - m_clientRect.Height();
+			m_nScroll = m_nScrollTarget = max(0, min(nRange, m_nDragStartScroll + (int)((__int64)(nY - m_nDragStartMouse) * nRange / nTrack)));
+		} else {
+			int nRow = m_nDrag - 1;
+			int nTrack = max(1, m_rowTrack[nRow].Width() - m_rowThumb[nRow].Width());
+			int nRange = m_nRowWidth[nRow] - m_nRowVisible[nRow];
+			m_nRowScroll[nRow] = m_nRowTarget[nRow] = max(0, min(nRange, m_nDragStartScroll + (int)((__int64)(nX - m_nDragStartMouse) * nRange / nTrack)));
+		}
+		return true;
+	}
 	for (const CHit& hit : m_hits) {
 		if (hit.Kind == HIT_ROW && hit.Rect.PtInRect(CPoint(nX, nY))) m_nKeyRow = hit.Index;
 	}
@@ -741,15 +828,26 @@ void CStartScreen::OnMouseLeave() {
 	m_nHoverIndex = -1;
 }
 
-bool CStartScreen::OnMouseWheel(int nX, int nY, int nDelta) {
-	for (const CHit& hit : m_hits) {
-		if (hit.Kind == HIT_ROW && hit.Rect.PtInRect(CPoint(nX, nY)) && m_nRowWidth[hit.Index] > m_nRowVisible[hit.Index]) {
-			return ScrollRow(hit.Index, -nDelta * S(248) / WHEEL_DELTA);
+bool CStartScreen::OnMouseWheel(int nX, int nY, int nDelta, bool bHorizontal) {
+	if (bHorizontal) {
+		// tilt wheel, touchpad or Shift: the row under the mouse (else the last one used)
+		int nRow = m_nKeyRow;
+		for (const CHit& hit : m_hits) {
+			if (hit.Kind == HIT_ROW && hit.Rect.PtInRect(CPoint(nX, nY))) nRow = hit.Index;
 		}
+		return ScrollRow(nRow, nDelta * S(248) / WHEEL_DELTA);
 	}
-	int nOld = m_nScroll;
-	m_nScroll = max(0, min(m_nScroll - nDelta * S(100) / WHEEL_DELTA, m_nContentHeight - m_clientRect.Height()));
-	return nOld != m_nScroll;
+	// the vertical wheel always scrolls the page, also over a row
+	int nOld = m_nScrollTarget;
+	SetScrollTarget(m_nScrollTarget - nDelta * S(120) / WHEEL_DELTA);
+	return nOld != m_nScrollTarget;
+}
+
+void CStartScreen::OnMouseUp() {
+	if (m_nDrag >= 0) {
+		m_nDrag = -1;
+		::InvalidateRect(m_hWnd, NULL, FALSE);
+	}
 }
 
 void CStartScreen::AddPinnedWithDialog() {
@@ -788,7 +886,7 @@ void CStartScreen::AddPinnedWithDialog() {
 	pDialog->Release();
 	int nScroll = m_nScroll;
 	Reload();
-	m_nScroll = nScroll;
+	m_nScroll = m_nScrollTarget = nScroll;
 }
 
 CStartScreen::CResult CStartScreen::OnClick(int nX, int nY) {
@@ -819,6 +917,33 @@ CStartScreen::CResult CStartScreen::OnClick(int nX, int nY) {
 		case HIT_SHOT_FOLDER:
 			::ShellExecute(m_hWnd, _T("open"), ScreenCapture::GetScreenshotFolder(), NULL, NULL, SW_SHOWNORMAL);
 			break;
+		case HIT_VBAR:
+			if (m_vThumb.PtInRect(CPoint(nX, nY))) {
+				m_nDrag = 0;
+				m_nDragStartMouse = nY;
+				m_nDragStartScroll = m_nScroll;
+			} else {
+				// the thumb jumps to the clicked place
+				int nTrack = max(1, m_vTrack.Height() - m_vThumb.Height());
+				int nRange = m_nContentHeight - m_clientRect.Height();
+				SetScrollTarget((int)((__int64)(nY - m_vTrack.top - m_vThumb.Height() / 2) * nRange / nTrack));
+			}
+			::InvalidateRect(m_hWnd, NULL, FALSE);
+			break;
+		case HIT_ROW_BAR: {
+			int nRow = hit.Index;
+			if (m_rowThumb[nRow].PtInRect(CPoint(nX, m_rowThumb[nRow].top + 1)) && nX >= m_rowThumb[nRow].left && nX < m_rowThumb[nRow].right) {
+				m_nDrag = 1 + nRow;
+				m_nDragStartMouse = nX;
+				m_nDragStartScroll = m_nRowScroll[nRow];
+			} else {
+				int nTrack = max(1, m_rowTrack[nRow].Width() - m_rowThumb[nRow].Width());
+				int nRange = m_nRowWidth[nRow] - m_nRowVisible[nRow];
+				SetRowTarget(nRow, (int)((__int64)(nX - m_rowTrack[nRow].left - m_rowThumb[nRow].Width() / 2) * nRange / nTrack));
+			}
+			::InvalidateRect(m_hWnd, NULL, FALSE);
+			break;
+		}
 		case HIT_ROW_PREV:
 		case HIT_ROW_NEXT: {
 			// one page less one card, the cut card is shown whole

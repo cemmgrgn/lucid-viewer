@@ -157,6 +157,11 @@ private:
 	int m_nFilmstripVisible, m_nFilmstripCount;
 	CRect m_filmstripPrevRect, m_filmstripNextRect; // buttons for scrolling, empty if not shown
 	void ScrollFilmstrip(int nCells);
+	// smooth scrolling: the shown position (first thumbnail, with fraction) moves to the target
+	double m_dFilmstripPos;
+	int m_nFilmstripTarget, m_nFilmstripLastCount;
+	bool FilmstripAnimationStep();
+	static void CALLBACK FilmstripAnimationTimer(HWND, UINT, UINT_PTR, DWORD);
 	class CThumbnailCache* m_pThumbnails;
 	CRect GetFilmstripRect(); // upper part of the status bar rectangle, empty if not shown
 	void PaintFilmstrip(CDC& dc, const CRect& rect);

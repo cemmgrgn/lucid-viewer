@@ -271,6 +271,8 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_hitOrigin = CPoint(0, 0);
 	m_bHoverFileDrag = false;
 	m_nFilmstripFirst = m_nFilmstripScrolledAt = -1;
+	m_dFilmstripPos = -1;
+	m_nFilmstripTarget = m_nFilmstripLastCount = 0;
 	m_nFilmstripVisible = m_nFilmstripCount = 0;
 	m_bShowFilmstrip = sp.ShowFilmstrip();
 	m_pThumbnails = new CThumbnailCache(pMainDlg->GetHWND());
@@ -371,7 +373,14 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	Helpers::SetAdditionalBorderSize(IsEnabled() ? GetExtraSize() : CSize(0, 0));
 }
 
+static CWindowChrome* s_pFilmstripChrome = NULL;
+static UINT_PTR s_nFilmstripTimer = 0;
+
 CWindowChrome::~CWindowChrome() {
+	if (s_pFilmstripChrome == this) {
+		::KillTimer(NULL, s_nFilmstripTimer);
+		s_pFilmstripChrome = NULL;
+	}
 	delete m_pThumbnails;
 	if (m_hTooltip != NULL) {
 		::DestroyWindow(m_hTooltip);
@@ -1282,16 +1291,31 @@ void CWindowChrome::PaintFilmstrip(CDC& dc, const CRect& rect) {
 	m_nFilmstripCount = nCount;
 	// the current image in the middle, until the user scrolls (wheel, buttons); a new image follows again
 	if (m_nFilmstripFirst >= 0 && m_nFilmstripScrolledAt != nCurrent) m_nFilmstripFirst = -1;
-	int nFirst = m_nFilmstripFirst >= 0 ? m_nFilmstripFirst : nCurrent - nVisible / 2;
-	nFirst = max(0, min(nFirst, nCount - nVisible));
-	int nLast = min(nCount - 1, nFirst + nVisible - 1);
-	int nX = rect.left + (rect.Width() - (nLast - nFirst + 1) * (nCell + nGap) + nGap) / 2;
+	int nTarget = m_nFilmstripFirst >= 0 ? m_nFilmstripFirst : nCurrent - nVisible / 2;
+	nTarget = max(0, min(nTarget, max(0, nCount - nVisible)));
+	m_nFilmstripTarget = nTarget;
+	// another folder or no animation: at once, else the strip glides to the new position
+	if (m_dFilmstripPos < 0 || m_nFilmstripLastCount != nCount || !CSettingsProvider::This().SmoothAnimations()) m_dFilmstripPos = nTarget;
+	m_nFilmstripLastCount = nCount;
+	if (fabs(m_dFilmstripPos - nTarget) > 0.001 && s_pFilmstripChrome != this) {
+		s_pFilmstripChrome = this;
+		s_nFilmstripTimer = ::SetTimer(NULL, 0, 10, FilmstripAnimationTimer);
+	}
+	int nStep = nCell + nGap;
+	int nFirst = max(0, (int)floor(m_dFilmstripPos));
+	int nShift = (int)((m_dFilmstripPos - nFirst) * nStep + 0.5);
+	int nLast = min(nCount - 1, nFirst + nVisible - (nShift > 0 ? 0 : 1));
+	int nAreaWidth = min(nCount, nVisible) * nStep - nGap;
+	int nAreaLeft = rect.left + (rect.Width() - nAreaWidth) / 2;
+	int nX = nAreaLeft - nShift;
+	int nSavedDC = dc.SaveDC();
+	dc.IntersectClipRect(nAreaLeft - S(3), rect.top + 1, nAreaLeft + nAreaWidth + S(3), rect.bottom);
 	if (nVisible < nCount) {
 		int nButtonY = rect.top + (rect.Height() - nButton) / 2;
 		HFONT hOldFont = dc.SelectFont(m_bHasIconFont ? m_hSmallIconFont : m_hFont);
 		dc.SetBkMode(TRANSPARENT);
 		for (int nSide = 0; nSide < 2; nSide++) {
-			bool bEnabled = nSide == 0 ? nFirst > 0 : nLast < nCount - 1;
+			bool bEnabled = nSide == 0 ? nTarget > 0 : nTarget < nCount - nVisible;
 			CRect buttonRect = nSide == 0 ? CRect(rect.left + S(2), nButtonY, rect.left + S(2) + nButton, nButtonY + nButton)
 				: CRect(rect.right - S(2) - nButton, nButtonY, rect.right - S(2), nButtonY + nButton);
 			(nSide == 0 ? m_filmstripPrevRect : m_filmstripNextRect) = bEnabled ? buttonRect : CRect(0, 0, 0, 0);
@@ -1336,9 +1360,29 @@ void CWindowChrome::PaintFilmstrip(CDC& dc, const CRect& rect) {
 		}
 		nIndex++;
 	}
+	dc.RestoreDC(nSavedDC);
 	if (!missing.empty()) {
 		// the current image first, then the others
 		m_pThumbnails->Request(missing);
+	}
+}
+
+bool CWindowChrome::FilmstripAnimationStep() {
+	double dDiff = m_nFilmstripTarget - m_dFilmstripPos;
+	if (fabs(dDiff) < 0.01) {
+		m_dFilmstripPos = m_nFilmstripTarget;
+		Paint();
+		return false;
+	}
+	m_dFilmstripPos += dDiff * 0.25;
+	Paint();
+	return true;
+}
+
+void CALLBACK CWindowChrome::FilmstripAnimationTimer(HWND, UINT, UINT_PTR, DWORD) {
+	if (s_pFilmstripChrome == NULL || !s_pFilmstripChrome->FilmstripAnimationStep()) {
+		::KillTimer(NULL, s_nFilmstripTimer);
+		s_pFilmstripChrome = NULL;
 	}
 }
 

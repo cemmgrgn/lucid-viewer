@@ -35,15 +35,18 @@ public:
 	void OnMouseLeave();
 	CResult OnClick(int nX, int nY);
 	CResult OnContextMenu(HWND hWnd, int nX, int nY, POINT screenPoint);
-	// Returns true if scrolled (repaint)
-	bool OnMouseWheel(int nX, int nY, int nDelta);
+	// The wheel scrolls the page, horizontal (tilt, Shift) the row under the mouse. Returns true if scrolled (repaint)
+	bool OnMouseWheel(int nX, int nY, int nDelta, bool bHorizontal);
+	// Dragging a scroll bar, started by OnClick: the window captures the mouse until OnMouseUp
+	bool IsDragging() const { return m_nDrag >= 0; }
+	void OnMouseUp();
 	// Arrow keys scroll the rows, up/down and page keys the page. Returns true if the key was used (repaint)
 	bool OnKey(int nVirtualKey);
 	bool IsOverItem(int nX, int nY);
 
 private:
 	enum EHitKind { HIT_NONE, HIT_BUTTON, HIT_CLEAR_RECENT, HIT_RECENT, HIT_ADD_PINNED, HIT_PINNED, HIT_UNPIN, HIT_ROW,
-		HIT_SHOT, HIT_SHOT_FOLDER, HIT_ROW_PREV, HIT_ROW_NEXT };
+		HIT_SHOT, HIT_SHOT_FOLDER, HIT_ROW_PREV, HIT_ROW_NEXT, HIT_VBAR, HIT_ROW_BAR };
 	enum { ROW_RECENT = 0, ROW_SHOTS = 1, ROW_COUNT = 2 };
 	struct CHit {
 		CRect Rect;
@@ -63,6 +66,16 @@ private:
 	int m_nScroll, m_nContentHeight;
 	int m_nRowScroll[ROW_COUNT], m_nRowWidth[ROW_COUNT], m_nRowVisible[ROW_COUNT], m_nRowStep[ROW_COUNT];
 	int m_nKeyRow; // row scrolled with the arrow keys: the one under the mouse, else the first
+	// smooth scrolling: the shown positions move to the targets
+	int m_nScrollTarget, m_nRowTarget[ROW_COUNT];
+	// scroll bars: tracks and thumbs in window coordinates, dragging (-1: none, 0: page, 1 + row)
+	CRect m_vTrack, m_vThumb, m_rowTrack[ROW_COUNT], m_rowThumb[ROW_COUNT];
+	int m_nDrag, m_nDragStartMouse, m_nDragStartScroll;
+	void SetScrollTarget(int nTarget);
+	void SetRowTarget(int nRow, int nTarget);
+	void StartAnimation();
+	bool AnimationStep();
+	static void CALLBACK AnimationTimer(HWND, UINT, UINT_PTR, DWORD);
 	CRect m_clientRect;
 	std::shared_ptr<CThumbnails> m_pThumbnails;
 

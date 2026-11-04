@@ -94,6 +94,7 @@ public:
 		MESSAGE_HANDLER(WM_SYSKEYDOWN, OnSysKeyDown)
 		MESSAGE_HANDLER(WM_GETDLGCODE, OnGetDlgCode)
 		MESSAGE_HANDLER(WM_TIMER, OnTimer)
+		MESSAGE_HANDLER(WM_MOUSEHWHEEL, OnMouseHWheel)
 		MESSAGE_HANDLER(WM_CONTEXTMENU, OnContextMenu)
 		MESSAGE_HANDLER(WM_CTLCOLOREDIT, OnCtlColorEdit)
 		MESSAGE_HANDLER(WM_IMAGE_LOAD_COMPLETED, OnImageLoadCompleted)
@@ -144,6 +145,7 @@ public:
 	LRESULT OnSysKeyDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnGetDlgCode(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnTimer(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnMouseHWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnCtlColorEdit(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnImageLoadCompleted(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
@@ -452,6 +454,15 @@ private:
 	bool m_bStartScreen;  // shown over the open image
 	bool m_bRecordRecent; // the next loaded image is added to the last opened ones
 	bool IsStartScreenActive();
+	// Smooth zoom: the target is found like PerformZoom does, the shown zoom moves to it in a few frames
+	bool AnimateZoom(double dValue, bool bExponent, bool bZoomToMouse, bool bAdjustWindowToImage);
+	void ZoomAnimationStep();
+	void StopZoomAnimation();
+	static void CALLBACK ZoomAnimationTimer(HWND, UINT, UINT_PTR, DWORD);
+	bool m_bZoomAnimation, m_bZoomFrame, m_bZoomAnimToMouse, m_bZoomAnimAdjust;
+	double m_dZoomFrom, m_dZoomTo;
+	DWORD m_nZoomAnimStart;
+	CJPEGImage* m_pZoomAnimImage;
 	void HandleStartScreenAction(int nAction, const CString& sFile);
 	void OpenFolderWithDialog();
 	void ExecuteCommandInternal(int nCommand);

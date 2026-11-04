@@ -181,6 +181,9 @@ ShowStartScreen=true
 ; zoom mode does not enlarge images. 0 shows them in their original size.
 MinDisplaySize=600
 
+; Smooth zooming with the mouse wheel and the zoom keys, smooth scrolling of the start screen and the thumbnail strip
+SmoothAnimations=true
+
 ; Width of the information side panel in pixels (at 96 DPI), 180 to 800
 SidePanelWidth=290
 
