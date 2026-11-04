@@ -313,6 +313,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
+    <ClCompile Include="Metadata.cpp" />
     <ClCompile Include="Share.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -420,6 +421,7 @@
     <ClInclude Include="ExportDlg.h" />
     <ClInclude Include="Annotations.h" />
     <ClInclude Include="Ocr.h" />
+    <ClInclude Include="Metadata.h" />
     <ClInclude Include="Share.h" />
     <ClInclude Include="BackgroundRemoval.h" />
     <ClInclude Include="dcraw_mod.h" />

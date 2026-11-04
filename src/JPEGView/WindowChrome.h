@@ -45,6 +45,8 @@ public:
 	void SetSidePanelCollapsed(bool bCollapsed);
 	// Shows the side panel expanded with the given tab
 	void ShowSideTab(ESideTab eTab);
+	// Info tab with all metadata of the file instead of the summary
+	void ShowMetadata() { m_bInfoMetadata = true; ShowSideTab(TAB_INFO); }
 
 	// Size of the non-client area added by the chrome, cx: side panel, cy: toolbar plus status bar
 	CSize GetExtraSize();
@@ -107,7 +109,7 @@ private:
 	};
 
 	// Clickable element of the side panel, rectangles in window coordinates
-	enum ESideHitType { SH_Collapse, SH_Expand, SH_Tab, SH_Location, SH_Slider, SH_GroupCheck, SH_Button, SH_Tool, SH_Color, SH_Width, SH_Rating };
+	enum ESideHitType { SH_Collapse, SH_Expand, SH_Tab, SH_Location, SH_Slider, SH_GroupCheck, SH_Button, SH_Tool, SH_Color, SH_Width, SH_Rating, SH_InfoView, SH_Meta };
 	struct CSideHit {
 		ESideHitType Type;
 		int Value; // tab, slider index, group or command
@@ -122,6 +124,7 @@ private:
 	CMainDlg* m_pMainDlg;
 	bool m_bShowToolbar, m_bShowStatusBar, m_bShowSidePanel, m_bSideCollapsed;
 	ESideTab m_eSideTab;
+	bool m_bInfoMetadata; // the info tab shows all metadata instead of the summary
 	std::vector<CToolbarItem> m_items;
 	std::vector<CSideSlider> m_sliders;
 	std::vector<CSideHit> m_sideHits; // rebuilt on each paint of the side panel
@@ -182,6 +185,7 @@ private:
 	void PaintCollapsedSidePanel(CDC& dc);
 	int PaintInfoTab(CDC& dc, int nWidth, int nY); // returns the content height
 	int PaintEditTab(CDC& dc, int nWidth, int nY); // returns the content height
+	int PaintMetadata(CDC& dc, int nWidth, int nY); // part of the info tab, returns the content height
 	int PaintDrawTab(CDC& dc, int nWidth, int nY); // returns the content height
 	void PaintHistogram(CDC& dc, const CRect& rect);
 	void PaintItem(CDC& dc, const CToolbarItem& item, int nIndex);

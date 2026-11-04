@@ -321,6 +321,10 @@
 #define IDM_REMOVE_BACKGROUND	16350	// :KeyMap: make the background transparent (U2-Net model, downloaded on first use)
 #define IDM_AUTO_ENHANCE	16360		// :KeyMap: automatic color, contrast and local density correction on/off
 #define IDM_SHOW_SHORTCUTS	16370		// :KeyMap: show the keyboard shortcuts of the new functions
+#define IDM_SHOW_METADATA	16380		// :KeyMap: show all metadata of the file in the side panel, editable values can be changed
+#define IDM_METADATA_COPY	16390		// :KeyMap: copy all metadata of the file as text
+#define IDM_METADATA_REMOVE_LOCATION	16400	// :KeyMap: remove the GPS location from the file
+#define IDM_METADATA_REMOVE_ALL	16410	// :KeyMap: remove all editable metadata from the file
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

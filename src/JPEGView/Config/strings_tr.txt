@@ -673,3 +673,35 @@ Keyboard shortcuts	Klavye kısayolları
 Move to recycle bin without the question	Sormadan geri dönüşüm kutusuna taşı
 drag	sürükle
 Select the area to crop	Kırpılacak alanı seç
+Summary	Özet
+Metadata	Meta veri
+Metadata...	Meta veriler...
+All metadata of the file, editable values can be changed	Dosyanın tüm meta verileri, düzenlenebilenler değiştirilebilir
+Description	Açıklama
+Camera	Kamera
+Location	Konum
+Other	Diğer
+(empty)	(boş)
+(binary data)	(ikili veri)
+Click to change the value	Değiştirmek için tıklayın
+Read only, click to copy the value	Salt okunur, kopyalamak için tıklayın
+Copy all metadata	Tüm meta verileri kopyala
+Remove location	Konumu kaldır
+Remove all editable metadata	Düzenlenebilir tüm meta verileri kaldır
+Copies the metadata as text to the clipboard	Meta verileri metin olarak panoya kopyalar
+Removes the GPS location from the file	GPS konumunu dosyadan kaldırır
+The orientation is kept	Yönlendirme korunur
+Changes are written into the file at once, the image itself is not changed.	Değişiklikler hemen dosyaya yazılır, görüntünün kendisi değişmez.
+Windows can not read metadata from this file.	Windows bu dosyadan meta veri okuyamıyor.
+The metadata was copied to the clipboard.	Meta veriler panoya kopyalandı.
+The value was copied to the clipboard.	Değer panoya kopyalandı.
+The metadata was saved in the file.	Meta veri dosyaya kaydedildi.
+Remove the GPS location from the file?	GPS konumu dosyadan kaldırılsın mı?
+Remove all editable metadata (description, camera, location and others) from the file? The orientation is kept.	Düzenlenebilir tüm meta veriler (açıklama, kamera, konum ve diğerleri) dosyadan kaldırılsın mı? Yönlendirme korunur.
+%d metadata values were removed.	%d meta veri değeri kaldırıldı.
+An empty value removes it from the file.	Boş bırakılan değer dosyadan kaldırılır.
+Format: year-month-day hour:minute:second, for example 2024-05-31 14:30:00	Biçim: yıl-ay-gün saat:dakika:saniye, örneğin 2024-05-31 14:30:00
+Separate several values with a semicolon (;)	Birden çok değeri noktalı virgülle (;) ayırın
+Remove	Kaldır
+The value is not valid.	Değer geçerli değil.
+The value could not be written to the file.	Değer dosyaya yazılamadı.

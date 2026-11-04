@@ -8,6 +8,7 @@
 #include "ProcessParams.h"
 #include "Helpers.h"
 #include "CropCtl.h"
+#include "Metadata.h"
 
 class CFileList;
 class CJPEGProvider;
@@ -194,6 +195,10 @@ public:
 	int GetRating();
 	// Writes the star rating (0-5) into the current file
 	void SetRating(int nStars);
+	// All metadata of the current file (cached), empty if not available
+	const std::vector<Metadata::CEntry>& GetMetadata();
+	// Shows the edit window for the metadata entry with the given index and writes the value into the file
+	void EditMetadata(int nIndex);
 	// True if the drawing tools are shown and a tool is selected, the mouse draws on the image then
 	bool IsDrawMode();
 	// Draws the drawings into the original pixels of the image
@@ -401,6 +406,10 @@ private:
 	// Asks before drawings or removed colors that are not saved get lost, returns true to continue
 	bool ConfirmDiscardEdits();
 	CString m_sRatingFile; // file of the cached rating
+	CString m_sMetadataFile; // file of the cached metadata
+	std::vector<Metadata::CEntry> m_metadata;
+	LPCTSTR GetMetadataFileName(); // current file if metadata can be read from it, else NULL
+	void AfterMetadataChanged();
 	bool m_bCropTool;
 	bool m_bDragOutPending; // left button pressed on an image fitting the window, moving drags the file out
 	CPoint m_dragOutStart;

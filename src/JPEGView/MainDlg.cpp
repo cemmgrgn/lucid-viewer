@@ -62,6 +62,7 @@
 #include "ExportDlg.h"
 #include "DuplicatesDlg.h"
 #include "BackgroundRemoval.h"
+#include "Metadata.h"
 #include <propsys.h>
 #include <propkey.h>
 #include <gdiplus.h>
@@ -2424,6 +2425,48 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_SHOW_METADATA:
+			if (m_pChrome->IsEnabled()) {
+				m_pChrome->ShowMetadata();
+			}
+			break;
+		case IDM_METADATA_COPY:
+			{
+				CString sText = Metadata::ToText(GetMetadata());
+				if (!sText.IsEmpty() && ::OpenClipboard(m_hWnd)) {
+					::EmptyClipboard();
+					size_t nBytes = (sText.GetLength() + 1) * sizeof(TCHAR);
+					HGLOBAL hText = ::GlobalAlloc(GMEM_MOVEABLE, nBytes);
+					if (hText != NULL) {
+						memcpy(::GlobalLock(hText), (LPCTSTR)sText, nBytes);
+						::GlobalUnlock(hText);
+						::SetClipboardData(CF_UNICODETEXT, hText);
+					}
+					::CloseClipboard();
+					m_pChrome->ShowMessage(CNLS::GetString(_T("The metadata was copied to the clipboard.")));
+				}
+			}
+			break;
+		case IDM_METADATA_REMOVE_LOCATION:
+		case IDM_METADATA_REMOVE_ALL:
+			if (GetMetadataFileName() != NULL) {
+				bool bLocationOnly = nCommand == IDM_METADATA_REMOVE_LOCATION;
+				if (IDYES == ::MessageBox(m_hWnd, CNLS::GetString(bLocationOnly ? _T("Remove the GPS location from the file?") :
+					_T("Remove all editable metadata (description, camera, location and others) from the file? The orientation is kept.")),
+					CNLS::GetString(_T("Confirm")), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2)) {
+					CString sFile = GetMetadataFileName(), sError;
+					int nRemoved = Metadata::Remove(sFile, GetMetadata(), bLocationOnly, sError);
+					if (nRemoved < 0) {
+						m_pChrome->ShowMessage(sError);
+					} else {
+						CString sMessage;
+						sMessage.Format(CNLS::GetString(_T("%d metadata values were removed.")), nRemoved);
+						m_pChrome->ShowMessage(sMessage);
+					}
+					AfterMetadataChanged();
+				}
+			}
+			break;
 		case IDM_SHOW_SHORTCUTS:
 			{
 				// the shortcuts are read from the key map, changed shortcuts are shown correctly
@@ -2433,7 +2476,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 					{ IDM_TOGGLE_TOOLBAR, _T("Toolbar") }, { IDM_TOGGLE_SIDEPANEL, _T("Information panel") }, { IDM_SHOW_FILEINFO, _T("Information") },
 					{ IDM_TOGGLE_EDITPANEL, _T("Edit image (brightness, contrast, colors)") }, { IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing") },
 					{ IDM_TOGGLE_DRAWPANEL, _T("Draw and write on the image") }, { IDM_ANNOTATION_UNDO, _T("Undo") },
-					{ IDM_OCR_COPY_TEXT, _T("Copy text from image") }, { IDM_CHANGESIZE, _T("Resize image...") },
+					{ IDM_OCR_COPY_TEXT, _T("Copy text from image") }, { IDM_CHANGESIZE, _T("Resize image...") }, { IDM_SHOW_METADATA, _T("Metadata...") },
 					{ IDM_MOVE_TO_RECYCLE_BIN_CONFIRM, _T("Move to recycle bin") }, { IDM_EXIT, _T("Exit") },
 				};
 				CString sText;
@@ -3551,6 +3594,7 @@ void CMainDlg::ExchangeProcessingParams() {
 
 void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow) {
 	m_pAnnotations->Clear(); // drawings belong to the image they were made on
+	m_sMetadataFile.Empty(); // the file could have been changed
 	ClearTransparency(false);
 	UpdateWindowTitle();
 	InvalidateHelpDlg();
@@ -3849,10 +3893,10 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25
 };
 
-static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, IDM_RELOAD, MBAR_SEPARATOR,
+static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
@@ -4003,6 +4047,9 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_EXPORT:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_EXPORT, _T("Export..."), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_METADATA:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_SHOW_METADATA, _T("Metadata..."), false, bHasFileImage);
 				break;
 			case MBAR_SHARE:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SHARE, _T("Share..."), false, bHasFileImage);
@@ -4580,6 +4627,7 @@ void CMainDlg::SetRating(int nStars) {
 	if (bSuccess) {
 		m_sRatingFile = sFile;
 		m_nRating = nStars;
+		m_sMetadataFile.Empty();
 		CString sMessage;
 		if (nStars == 0) {
 			sMessage = CNLS::GetString(_T("Rating removed"));
@@ -4708,4 +4756,52 @@ bool CMainDlg::ConfirmDiscardEdits() {
 	m_pAnnotations->Clear();
 	m_bTransparencySaved = true;
 	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Metadata of the file (Windows property system), shown on the info tab
+///////////////////////////////////////////////////////////////////////////////////
+
+LPCTSTR CMainDlg::GetMetadataFileName() {
+	return (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList != NULL) ? m_pFileList->Current() : NULL;
+}
+
+const std::vector<Metadata::CEntry>& CMainDlg::GetMetadata() {
+	LPCTSTR sFile = GetMetadataFileName();
+	if (sFile == NULL) {
+		m_metadata.clear();
+		m_sMetadataFile.Empty();
+	} else if (m_sMetadataFile.CompareNoCase(sFile) != 0) {
+		m_sMetadataFile = sFile;
+		HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+		Metadata::Read(sFile, m_metadata);
+		::SetCursor(hOldCursor);
+	}
+	return m_metadata;
+}
+
+void CMainDlg::EditMetadata(int nIndex) {
+	const std::vector<Metadata::CEntry>& entries = GetMetadata();
+	LPCTSTR sFile = GetMetadataFileName();
+	if (sFile == NULL || nIndex < 0 || nIndex >= (int)entries.size()) {
+		return;
+	}
+	Metadata::CEntry entry = entries[nIndex]; // copy, the list is read again after writing
+	CString sFileName = sFile, sError;
+	if (Metadata::Edit(m_hWnd, sFileName, entry, sError)) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The metadata was saved in the file.")));
+		AfterMetadataChanged();
+	} else if (!sError.IsEmpty()) {
+		::MessageBox(m_hWnd, sError, entry.Name, MB_OK | MB_ICONWARNING);
+	}
+}
+
+void CMainDlg::AfterMetadataChanged() {
+	m_sMetadataFile.Empty();
+	m_sRatingFile.Empty();
+	// the summary shows what was read when loading, reload if no drawings or removed colors get lost
+	if (m_pAnnotations->IsEmpty() && !HasTransparency()) {
+		ReloadImage(true);
+	}
+	m_pChrome->Paint();
 }

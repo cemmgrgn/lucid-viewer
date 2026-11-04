@@ -262,6 +262,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_bShowSidePanel = sp.ShowSidePanel();
 	m_bSideCollapsed = sp.SidePanelCollapsed();
 	m_eSideTab = (ESideTab)sp.SidePanelTab(); // the tab shown last time
+	m_bInfoMetadata = false;
 	m_nHoverItem = m_nPressedItem = m_nHoverSide = -1;
 	m_bTrackingMouse = false;
 	m_nSideScroll = 0;
@@ -1014,6 +1015,38 @@ void CWindowChrome::ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bD
 			m_pMainDlg->ExecuteCommand(hit.Value);
 			Paint();
 			break;
+		case SH_InfoView:
+			m_bInfoMetadata = hit.Value == 1;
+			m_nSideScroll = 0;
+			HideTooltip();
+			Paint();
+			break;
+		case SH_Meta:
+			{
+				const std::vector<Metadata::CEntry>& entries = m_pMainDlg->GetMetadata();
+				if (hit.Value < 0 || hit.Value >= (int)entries.size()) {
+					break;
+				}
+				HideTooltip();
+				if (entries[hit.Value].Writable) {
+					m_pMainDlg->EditMetadata(hit.Value);
+				} else if (::OpenClipboard(m_pMainDlg->GetHWND())) {
+					// read only values are copied
+					const CString& sValue = entries[hit.Value].Value;
+					::EmptyClipboard();
+					size_t nBytes = (sValue.GetLength() + 1) * sizeof(TCHAR);
+					HGLOBAL hText = ::GlobalAlloc(GMEM_MOVEABLE, nBytes);
+					if (hText != NULL) {
+						memcpy(::GlobalLock(hText), (LPCTSTR)sValue, nBytes);
+						::GlobalUnlock(hText);
+						::SetClipboardData(CF_UNICODETEXT, hText);
+					}
+					::CloseClipboard();
+					ShowMessage(CNLS::GetString(_T("The value was copied to the clipboard.")));
+				}
+				Paint();
+			}
+			break;
 		case SH_Rating:
 			// clicking the current rating removes it
 			m_pMainDlg->SetRating(m_pMainDlg->GetRating() == hit.Value ? 0 : hit.Value);
@@ -1409,6 +1442,25 @@ int CWindowChrome::PaintInfoTab(CDC& dc, int nWidth, int nY) {
 		return textRect.bottom + nPad;
 	}
 
+	// summary or all metadata of the file
+	{
+		int nButtonHeight = S(SIDE_BUTTON_HEIGHT);
+		int nHalf = (nInnerWidth - S(6)) / 2;
+		LPCTSTR views[2] = { _T("Summary"), _T("Metadata") };
+		for (int i = 0; i < 2; i++) {
+			CRect buttonRect(nPad + i * (nHalf + S(6)), nY, nPad + i * (nHalf + S(6)) + nHalf, nY + nButtonHeight);
+			AddSideHit(SH_InfoView, i, buttonRect, i == 1 ? _T("All metadata of the file, editable values can be changed") : NULL);
+			bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+			PaintSideButton(dc, buttonRect, CNLS::GetString(views[i]), (i == 1) == m_bInfoMetadata, bHover, true);
+		}
+		nY += nButtonHeight + S(10);
+	}
+	if (m_bInfoMetadata) {
+		int nHeight = PaintMetadata(dc, nWidth, nY);
+		dc.SelectFont(hOldFont);
+		return nHeight;
+	}
+
 	CEXIFDisplayCtl* pEXIFCtl = m_pMainDlg->GetEXIFDisplayCtl();
 	pEXIFCtl->FillEXIFDataDisplay();
 	CEXIFDisplay* pEXIF = pEXIFCtl->GetEXIFDisplay();
@@ -1515,6 +1567,98 @@ int CWindowChrome::PaintInfoTab(CDC& dc, int nWidth, int nY) {
 
 	dc.SelectFont(hOldFont);
 	return nY + nPad;
+}
+
+int CWindowChrome::PaintMetadata(CDC& dc, int nWidth, int nY) {
+	int nPad = S(SIDE_PADDING);
+	int nGap = S(6);
+	int nInnerWidth = nWidth - 2 * nPad;
+	const std::vector<Metadata::CEntry>& entries = m_pMainDlg->GetMetadata();
+	dc.SelectFont(m_hFont);
+	if (entries.empty()) {
+		dc.SetTextColor(m_colors.DimText);
+		CRect textRect(nPad, nY, nPad + nInnerWidth, nY + S(60));
+		dc.DrawText(CNLS::GetString(_T("Windows can not read metadata from this file.")), -1, &textRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+		return textRect.bottom + nPad;
+	}
+
+	int nIcon = S(16);
+	int nDescWidth = nInnerWidth * 40 / 100;
+	int nValueX = nPad + nDescWidth + nGap;
+	int nValueWidth = nPad + nInnerWidth - nValueX - nIcon - S(4);
+	bool bHasLocation = false, bHasWritable = false;
+	int nGroup = -1;
+	for (int i = 0; i < (int)entries.size(); i++) {
+		const Metadata::CEntry& entry = entries[i];
+		if (entry.Writable && entry.Present) {
+			bHasWritable = true;
+			bHasLocation = bHasLocation || entry.Group == Metadata::GROUP_LOCATION;
+		}
+		if (entry.Group != nGroup) {
+			nGroup = entry.Group;
+			nY += (i > 0) ? S(10) : 0;
+			dc.SelectFont(m_hBoldFont);
+			dc.SetTextColor(m_colors.DimText);
+			CRect headerRect(nPad, nY, nPad + nInnerWidth, nY + S(20));
+			dc.DrawText(CNLS::GetString(Metadata::GetGroupName(entry.Group)), -1, &headerRect, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
+			dc.SelectFont(m_hFont);
+			nY = headerRect.bottom + S(2);
+			DrawHorizontalLine(dc, nPad, nPad + nInnerWidth, nY, m_colors.Border);
+			nY += S(3);
+		}
+		LPCTSTR sValue = entry.Present ? (LPCTSTR)entry.Value : CNLS::GetString(_T("(empty)"));
+		CRect descRect(nPad + S(4), nY + S(3), nPad + nDescWidth, nY + S(3));
+		dc.DrawText(entry.Name, -1, &descRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
+		descRect.right = nPad + nDescWidth;
+		CRect valueRect(nValueX, nY + S(3), nValueX + nValueWidth, nY + S(3));
+		dc.DrawText(sValue, -1, &valueRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
+		valueRect.right = nValueX + nValueWidth;
+		CRect rowRect(nPad, nY, nPad + nInnerWidth, max(descRect.bottom, valueRect.bottom) + S(3));
+		AddSideHit(SH_Meta, i, rowRect, entry.Writable ? _T("Click to change the value") : _T("Read only, click to copy the value"));
+		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		if (bHover) {
+			FillRoundRect(dc, rowRect, m_colors.Hover, S(4));
+		}
+		dc.SetTextColor(m_colors.DimText);
+		dc.DrawText(entry.Name, -1, &descRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
+		dc.SetTextColor(entry.Present ? m_colors.Text : m_colors.DimText);
+		dc.DrawText(sValue, -1, &valueRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
+		if (entry.Writable) {
+			// pencil for editable values
+			CRect iconRect(rowRect.right - nIcon - S(2), rowRect.top + S(3), rowRect.right - S(2), rowRect.top + S(3) + nIcon);
+			HFONT hPrevFont = dc.SelectFont(m_bHasIconFont ? m_hSmallIconFont : m_hFont);
+			dc.SetTextColor(bHover ? m_colors.Accent : m_colors.DimText);
+			wchar_t pencil[2] = { (wchar_t)(m_bHasIconFont ? 0xE70F : 0x270E), 0 };
+			dc.DrawText(pencil, 1, &iconRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+			dc.SelectFont(hPrevFont);
+		}
+		nY = rowRect.bottom + S(1);
+	}
+
+	// actions
+	nY += S(14);
+	int nButtonHeight = S(SIDE_BUTTON_HEIGHT);
+	struct { LPCTSTR Text; int Command; bool Enabled; LPCTSTR Tooltip; } buttons[] = {
+		{ _T("Copy all metadata"), IDM_METADATA_COPY, true, _T("Copies the metadata as text to the clipboard") },
+		{ _T("Remove location"), IDM_METADATA_REMOVE_LOCATION, bHasLocation, _T("Removes the GPS location from the file") },
+		{ _T("Remove all editable metadata"), IDM_METADATA_REMOVE_ALL, bHasWritable, _T("The orientation is kept") },
+	};
+	for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
+		CRect buttonRect(nPad, nY, nPad + nInnerWidth, nY + nButtonHeight);
+		if (buttons[i].Enabled) {
+			AddSideHit(SH_Button, buttons[i].Command, buttonRect, buttons[i].Tooltip);
+		}
+		bool bHover = buttons[i].Enabled && m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, buttonRect, CNLS::GetString(buttons[i].Text), false, bHover, buttons[i].Enabled);
+		nY += nButtonHeight + S(6);
+	}
+	dc.SetTextColor(m_colors.DimText);
+	CRect noteRect(nPad, nY + S(4), nPad + nInnerWidth, nY + S(4));
+	LPCTSTR sNote = CNLS::GetString(_T("Changes are written into the file at once, the image itself is not changed."));
+	dc.DrawText(sNote, -1, &noteRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+	noteRect.right = nPad + nInnerWidth;
+	dc.DrawText(sNote, -1, &noteRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+	return noteRect.bottom + nPad;
 }
 
 int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {

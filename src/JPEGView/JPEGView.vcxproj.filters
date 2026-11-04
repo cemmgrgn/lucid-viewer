@@ -63,6 +63,9 @@
     <ClCompile Include="Ocr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Metadata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Share.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -342,6 +345,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Ocr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Metadata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Share.h">
