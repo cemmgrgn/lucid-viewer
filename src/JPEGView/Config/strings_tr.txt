@@ -627,3 +627,14 @@ Correct converging lines of buildings	Binalardaki birleşen çizgileri düzelt
 Share...	Paylaş...
 The share window of Windows is not available.	Windows paylaşım penceresi kullanılamıyor.
 Drag the file name to copy the file to other applications	Dosyayı başka uygulamalara kopyalamak için dosya adını sürükleyin
+Export	Dışa aktar
+Export...	Dışa aktar...
+Format:	Biçim:
+Quality:	Kalite:
+Long edge (pixels):	Uzun kenar (piksel):
+Original:	Orijinal:
+Keep metadata (EXIF, GPS)	Meta verileri koru (EXIF, GPS)
+Estimated size: calculating...	Tahmini boyut: hesaplanıyor...
+Estimated size:	Tahmini boyut:
+This format can not be written.	Bu biçim yazılamıyor.
+The image was exported.	Görüntü dışa aktarıldı.

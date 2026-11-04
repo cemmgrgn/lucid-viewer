@@ -59,6 +59,7 @@
 #include "Annotations.h"
 #include "Ocr.h"
 #include "Share.h"
+#include "ExportDlg.h"
 #include <propsys.h>
 #include <propkey.h>
 #include <gdiplus.h>
@@ -2409,6 +2410,17 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_EXPORT:
+			if (m_pCurrentImage != NULL) {
+				MouseOn();
+				CExportDlg dlgExport(this);
+				if (dlgExport.DoModal()) {
+					m_pFileList->Reload();
+					m_pChrome->ShowMessage(CNLS::GetString(_T("The image was exported.")));
+				}
+				Invalidate(FALSE);
+			}
+			break;
 		case IDM_SHARE:
 			if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList->Current() != NULL) {
 				if (!Share::ShareFile(m_hWnd, m_pFileList->Current())) {
@@ -3707,10 +3719,10 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19
 };
 
-static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_CONVERT, MBAR_SHARE, IDM_RELOAD, MBAR_SEPARATOR,
+static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
@@ -3842,6 +3854,9 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_RESET:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_RESET_PROCESSING, _T("Reset all values to the defaults"), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_EXPORT:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_EXPORT, _T("Export..."), false, m_pCurrentImage != NULL);
 				break;
 			case MBAR_SHARE:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SHARE, _T("Share..."), false, bHasFileImage);

@@ -39,6 +39,11 @@ public:
 	static bool SaveImageAsHEIF(LPCTSTR sFileName, CJPEGImage * pImage, const CImageProcessingParams& procParams,
 		EProcessingFlags eFlags, CSize targetSize, bool bAV1);
 
+	// Quality (1-100) used instead of the JPEGSaveQuality and WEBPSaveQuality settings, -1 to use the settings again
+	static void SetQualityOverride(int nQuality) { sm_nQualityOverride = nQuality; }
+	static int GetQualityOverride() { return sm_nQualityOverride; }
+
 private:
+	static int sm_nQualityOverride;
 	CSaveImage(void);
 };

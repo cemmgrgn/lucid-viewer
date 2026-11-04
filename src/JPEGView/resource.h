@@ -313,6 +313,7 @@
 #define IDM_OCR_COPY_TEXT	16270		// :KeyMap: copy the text in the image to the clipboard (text recognition)
 #define IDM_TOGGLE_CROP_TOOL	16280	// :KeyMap: crop tool on/off, the left mouse button selects the crop rectangle while on
 #define IDM_SHARE	16290				// :KeyMap: share the current file with the Windows share window
+#define IDM_EXPORT	16300				// :KeyMap: export window with format, quality, size and size estimate
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

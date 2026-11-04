@@ -21,6 +21,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 // Removes an existing comment segment (if any) and returns the new JPEG stream, NULL if no comment was found in stream
+int CSaveImage::sm_nQualityOverride = -1;
+
+// The quality setting or the quality set by the export window
+static int GetQuality(int nSetting) {
+	return CSaveImage::GetQualityOverride() >= 0 ? CSaveImage::GetQualityOverride() : nSetting;
+}
+
 static uint8* RemoveExistingCommentSegment(void* pJPEGStream, int& nStreamLength) {
 	uint8* pCommentSeg = (uint8*)Helpers::FindJPEGMarker(pJPEGStream, nStreamLength, 0xFE);
 	if (pCommentSeg != NULL) {
@@ -242,7 +249,7 @@ static bool SaveWebP(LPCTSTR sFileName, void* pData, int nWidth, int nHeight, bo
 	try {
 		uint8* pOutput;
 		size_t nSize;
-		int nQuality = CSettingsProvider::This().WEBPSaveQuality();
+		int nQuality = GetQuality(CSettingsProvider::This().WEBPSaveQuality());
 		pOutput = (uint8*)WebpReaderWriter::Compress((uint8*)pData, nWidth, nHeight, nSize, nQuality, bUseLosslessWEBP);
 		bSuccess = fwrite(pOutput, 1, nSize, fptr) == nSize;
 		fclose(fptr);
@@ -391,7 +398,7 @@ bool CSaveImage::SaveImage(LPCTSTR sFileName, CJPEGImage * pImage, const CImageP
 		int nJPEGStreamLen;
 		bool tjFreeNeeded;
 		void* pCompressedJPEG = CompressAndSave(sFileName, pImage, pDIB24bpp, imageSize.cx, imageSize.cy, 
-			CSettingsProvider::This().JPEGSaveQuality(), nJPEGStreamLen, tjFreeNeeded, true, !bFullSize);
+			GetQuality(CSettingsProvider::This().JPEGSaveQuality()), nJPEGStreamLen, tjFreeNeeded, true, !bFullSize);
 		bSuccess = pCompressedJPEG != NULL;
 		if (bSuccess) {
 			nPixelHash = Helpers::CalculateJPEGFileHash(pCompressedJPEG, nJPEGStreamLen);
@@ -484,7 +491,7 @@ bool CSaveImage::SaveImageAs(LPCTSTR sFileName, EImageFormat eFormat, CJPEGImage
 		int nJPEGStreamLen;
 		bool tjFreeNeeded;
 		void* pCompressedJPEG = CompressAndSave(sFileName, pImage, pDIB24bpp, targetSize.cx, targetSize.cy,
-			CSettingsProvider::This().JPEGSaveQuality(), nJPEGStreamLen, tjFreeNeeded, bKeepMetadata, targetSize != pImage->OrigSize());
+			GetQuality(CSettingsProvider::This().JPEGSaveQuality()), nJPEGStreamLen, tjFreeNeeded, bKeepMetadata, targetSize != pImage->OrigSize());
 		bSuccess = pCompressedJPEG != NULL;
 		if (bSuccess) {
 			if (tjFreeNeeded) {
@@ -585,7 +592,7 @@ bool CSaveImage::SaveImageAsHEIF(LPCTSTR sFileName, CJPEGImage * pImage, const C
 		::VariantInit(&value);
 		option.pstrName = (LPOLESTR)L"ImageQuality";
 		value.vt = VT_R4;
-		value.fltVal = max(0.0f, min(1.0f, CSettingsProvider::This().JPEGSaveQuality() / 100.0f));
+		value.fltVal = max(0.0f, min(1.0f, GetQuality(CSettingsProvider::This().JPEGSaveQuality()) / 100.0f));
 		pOptions->Write(1, &option, &value);
 		option.pstrName = (LPOLESTR)L"HeifCompressionMethod";
 		value.vt = VT_UI1;
@@ -628,7 +635,7 @@ bool CSaveImage::SaveImageAsPDF(LPCTSTR sFileName, CJPEGImage * pImage, const CI
 	int nJPEGStreamLen = 0;
 	bool bOutOfMemory;
 	unsigned char* pJPEG = (unsigned char*)TurboJpeg::Compress(pDIB24bpp, targetSize.cx, targetSize.cy, nJPEGStreamLen, bOutOfMemory,
-		CSettingsProvider::This().JPEGSaveQuality());
+		GetQuality(CSettingsProvider::This().JPEGSaveQuality()));
 	delete[] pDIB24bpp;
 	if (pJPEG == NULL) {
 		return false;
