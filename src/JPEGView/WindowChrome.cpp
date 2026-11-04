@@ -261,7 +261,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_bShowStatusBar = sp.ShowStatusBar();
 	m_bShowSidePanel = sp.ShowSidePanel();
 	m_bSideCollapsed = sp.SidePanelCollapsed();
-	m_eSideTab = TAB_INFO;
+	m_eSideTab = (ESideTab)sp.SidePanelTab(); // the tab shown last time
 	m_nHoverItem = m_nPressedItem = m_nHoverSide = -1;
 	m_bTrackingMouse = false;
 	m_nSideScroll = 0;
@@ -422,6 +422,7 @@ void CWindowChrome::SetSidePanelCollapsed(bool bCollapsed) {
 
 void CWindowChrome::ShowSideTab(ESideTab eTab) {
 	m_eSideTab = eTab;
+	CSettingsProvider::This().SaveSidePanelTab(eTab);
 	m_nSideScroll = 0;
 	if (!m_bShowSidePanel || m_bSideCollapsed) {
 		m_bShowSidePanel = true;

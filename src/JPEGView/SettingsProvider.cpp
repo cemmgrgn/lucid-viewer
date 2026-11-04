@@ -194,6 +194,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_sConvertCustomPresets = GetString(_T("ConvertCustomPresets"), _T(""));
 	m_sConvertOutputFolder = GetString(_T("ConvertOutputFolder"), _T(""));
 	m_bShowFilmstrip = GetBool(_T("ShowFilmstrip"), true);
+	m_nSidePanelTab = GetInt(_T("SidePanelTab"), 0, 0, 2);
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
 	m_bSaveWithoutPrompt = GetBool(_T("OverwriteOriginalFileWithoutSaveDialog"), false);
 	m_bCropWithoutPromptLosslessJPEG = GetBool(_T("CropWithoutPromptLosslessJPEG"), false);
@@ -571,6 +572,14 @@ void CSettingsProvider::SaveGeneralSettings(bool bDarkTheme, int nSidePanelWidth
 	m_sConvertOutputFolder = sConvertOutputFolder;
 	WriteString(_T("ConvertOutputFolder"), sConvertOutputFolder);
 
+	m_bUserINIExists = true;
+}
+
+void CSettingsProvider::SaveSidePanelTab(int nTab) {
+	if (nTab == m_nSidePanelTab) return;
+	MakeSureUserINIExists();
+	m_nSidePanelTab = nTab;
+	WriteInt(_T("SidePanelTab"), nTab);
 	m_bUserINIExists = true;
 }
 

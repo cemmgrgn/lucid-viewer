@@ -142,6 +142,8 @@ public:
 	LPCTSTR ConvertOutputFolder() { return m_sConvertOutputFolder; }
 	bool ShowFilmstrip() { return m_bShowFilmstrip; }
 	void SaveShowFilmstrip(bool bShow);
+	int SidePanelTab() { return m_nSidePanelTab; }
+	void SaveSidePanelTab(int nTab);
 
 	double ZoomPauseFactor() { return m_zoomPauseFactor; }  // while internally this is represented in doubles, using a whole number percent simplifies it for the user... configuring doubles is not user friendly at all
 
@@ -328,6 +330,7 @@ private:
 	CString m_sConvertCustomPresets;
 	CString m_sConvertOutputFolder;
 	bool m_bShowFilmstrip;
+	int m_nSidePanelTab;
 
 	std::list<CUserCommand*> m_userCommands;
 	std::list<CUserCommand*> m_openWithCommands;
