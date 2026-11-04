@@ -60,6 +60,7 @@
 #include "Ocr.h"
 #include "Share.h"
 #include "ExportDlg.h"
+#include "DuplicatesDlg.h"
 #include <propsys.h>
 #include <propkey.h>
 #include <gdiplus.h>
@@ -2415,6 +2416,13 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_FIND_SIMILAR:
+			if (m_pFileList != NULL && m_pFileList->Size() > 1) {
+				MouseOn();
+				CDuplicatesDlg dlgSimilar(this);
+				dlgSimilar.DoModal();
+			}
+			break;
 		case IDM_TOGGLE_FILMSTRIP:
 			m_pChrome->SetShowFilmstrip(!m_pChrome->GetShowFilmstrip());
 			Invalidate(FALSE);
@@ -3753,7 +3761,7 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, IDM_RELOAD, MBAR_SEPARATOR,
@@ -3764,7 +3772,7 @@ static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRI
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
 static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
 	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
-static const int s_menuBarTools[] = { MBAR_CONVERT, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
+static const int s_menuBarTools[] = { MBAR_CONVERT, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
 static const int s_menuBarHelp[] = { MBAR_HELP, IDM_ABOUT };
 
 // Position of the (non popup) item with the given command, -1 if not found
@@ -3888,6 +3896,9 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_RESET:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_RESET_PROCESSING, _T("Reset all values to the defaults"), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_SIMILAR:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_FIND_SIMILAR, _T("Find similar photos..."), false, m_pFileList != NULL && m_pFileList->Size() > 1);
 				break;
 			case MBAR_FILMSTRIP:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_TOGGLE_FILMSTRIP, _T("Thumbnail strip"), m_pChrome->GetShowFilmstrip(), m_pChrome->GetShowStatusBar());

@@ -51,6 +51,9 @@
     <ClCompile Include="SettingsDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DuplicatesDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ExportDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -324,6 +327,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SettingsDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DuplicatesDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ExportDlg.h">
