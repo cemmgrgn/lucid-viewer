@@ -152,6 +152,11 @@ private:
 	bool m_bHoverFileDrag; // mouse over the file name of the status bar, it can be dragged to other applications
 	bool m_bShowFilmstrip; // thumbnails of the folder in the upper part of the status bar
 	std::vector<std::pair<CRect, CString>> m_filmstripCells; // window coordinates and file of the painted thumbnails
+	int m_nFilmstripFirst;      // first shown thumbnail when scrolled by the user, -1: the current image in the middle
+	int m_nFilmstripScrolledAt; // index of the current image when the user scrolled
+	int m_nFilmstripVisible, m_nFilmstripCount;
+	CRect m_filmstripPrevRect, m_filmstripNextRect; // buttons for scrolling, empty if not shown
+	void ScrollFilmstrip(int nCells);
 	class CThumbnailCache* m_pThumbnails;
 	CRect GetFilmstripRect(); // upper part of the status bar rectangle, empty if not shown
 	void PaintFilmstrip(CDC& dc, const CRect& rect);

@@ -177,6 +177,10 @@ EscapeClosesWindow=false
 ; If false, the file open dialog is shown when JPEGView is started without an image.
 ShowStartScreen=true
 
+; Small images are shown zoomed in so that their larger side has at least this size (pixels at 96 DPI) when the
+; zoom mode does not enlarge images. 0 shows them in their original size.
+MinDisplaySize=600
+
 ; Width of the information side panel in pixels (at 96 DPI), 180 to 800
 SidePanelWidth=290
 
@@ -206,6 +210,10 @@ ScreenshotFolder=
 ; Settings > Accessibility > Keyboard.
 ScreenshotHotkey=PrintScreen
 ScreenshotTextHotkey=Shift+PrintScreen
+
+; Screenshot history: if true, every screenshot is kept in the screenshot folder (also the ones only copied to the
+; clipboard) and the start screen of the viewer shows them in a row.
+ScreenshotHistory=false
 
 ; Language of the text recognition (OCR), e.g. tr or en-US. The language must be installed in Windows.
 ; Empty: the language of a non English keyboard layout, else the Windows display language.

@@ -270,6 +270,8 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_nDragSlider = -1;
 	m_hitOrigin = CPoint(0, 0);
 	m_bHoverFileDrag = false;
+	m_nFilmstripFirst = m_nFilmstripScrolledAt = -1;
+	m_nFilmstripVisible = m_nFilmstripCount = 0;
 	m_bShowFilmstrip = sp.ShowFilmstrip();
 	m_pThumbnails = new CThumbnailCache(pMainDlg->GetHWND());
 
@@ -619,6 +621,10 @@ void CWindowChrome::OnNCLButtonDown(CPoint ptScreen, bool bDoubleClick) {
 		return;
 	}
 	if (GetFilmstripRect().PtInRect(pt)) {
+		if (m_filmstripPrevRect.PtInRect(pt) || m_filmstripNextRect.PtInRect(pt)) {
+			ScrollFilmstrip((m_filmstripPrevRect.PtInRect(pt) ? -1 : 1) * max(1, m_nFilmstripVisible - 1));
+			return;
+		}
 		for (const auto& cell : m_filmstripCells) {
 			if (cell.first.PtInRect(pt)) {
 				CString sFile = cell.second; // the cells are rebuilt when the new image is painted
@@ -656,7 +662,24 @@ void CWindowChrome::OnNCLButtonUp(CPoint ptScreen) {
 	}
 }
 
+void CWindowChrome::ScrollFilmstrip(int nCells) {
+	CFileList* pFileList = m_pMainDlg->GetFileList();
+	if (pFileList == NULL || m_nFilmstripCount <= m_nFilmstripVisible) return;
+	int nCurrent = pFileList->CurrentIndex();
+	int nFirst = m_nFilmstripFirst >= 0 && m_nFilmstripScrolledAt == nCurrent ? m_nFilmstripFirst : nCurrent - m_nFilmstripVisible / 2;
+	nFirst = max(0, min(nFirst, m_nFilmstripCount - m_nFilmstripVisible));
+	m_nFilmstripFirst = max(0, min(nFirst + nCells, m_nFilmstripCount - m_nFilmstripVisible));
+	m_nFilmstripScrolledAt = nCurrent;
+	Paint();
+}
+
 bool CWindowChrome::OnMouseWheel(CPoint ptScreen, int nDelta) {
+	UpdateLayout();
+	if (m_bShowFilmstrip && GetFilmstripRect().PtInRect(ScreenToWindow(ptScreen))) {
+		// the wheel scrolls the thumbnails, the image stays
+		ScrollFilmstrip(nDelta > 0 ? -3 : 3);
+		return true;
+	}
 	if (!IsSidePanelExpanded()) {
 		return false;
 	}
@@ -1239,6 +1262,7 @@ void CWindowChrome::PaintFilmstrip(CDC& dc, const CRect& rect) {
 	m_filmstripCells.clear();
 	dc.FillSolidRect(&rect, m_colors.PanelBackground);
 	DrawHorizontalLine(dc, rect.left, rect.right, rect.top, m_colors.Border);
+	m_filmstripPrevRect = m_filmstripNextRect = CRect(0, 0, 0, 0);
 	CFileList* pFileList = m_pMainDlg->GetFileList();
 	if (pFileList == NULL || pFileList->Size() == 0 || pFileList->IsSlideShowList()) {
 		return;
@@ -1248,11 +1272,35 @@ void CWindowChrome::PaintFilmstrip(CDC& dc, const CRect& rect) {
 	int nCell = rect.Height() - S(8);
 	int nGap = S(4);
 	int nCount = (int)files.size();
+	int nButton = S(32);
 	int nVisible = max(1, (rect.Width() - nGap) / (nCell + nGap));
-	// the current image in the middle
-	int nFirst = max(0, min(nCurrent - nVisible / 2, nCount - nVisible));
+	if (nVisible < nCount) {
+		// buttons for scrolling at both sides
+		nVisible = max(1, (rect.Width() - 2 * nButton - nGap) / (nCell + nGap));
+	}
+	m_nFilmstripVisible = nVisible;
+	m_nFilmstripCount = nCount;
+	// the current image in the middle, until the user scrolls (wheel, buttons); a new image follows again
+	if (m_nFilmstripFirst >= 0 && m_nFilmstripScrolledAt != nCurrent) m_nFilmstripFirst = -1;
+	int nFirst = m_nFilmstripFirst >= 0 ? m_nFilmstripFirst : nCurrent - nVisible / 2;
+	nFirst = max(0, min(nFirst, nCount - nVisible));
 	int nLast = min(nCount - 1, nFirst + nVisible - 1);
 	int nX = rect.left + (rect.Width() - (nLast - nFirst + 1) * (nCell + nGap) + nGap) / 2;
+	if (nVisible < nCount) {
+		int nButtonY = rect.top + (rect.Height() - nButton) / 2;
+		HFONT hOldFont = dc.SelectFont(m_bHasIconFont ? m_hSmallIconFont : m_hFont);
+		dc.SetBkMode(TRANSPARENT);
+		for (int nSide = 0; nSide < 2; nSide++) {
+			bool bEnabled = nSide == 0 ? nFirst > 0 : nLast < nCount - 1;
+			CRect buttonRect = nSide == 0 ? CRect(rect.left + S(2), nButtonY, rect.left + S(2) + nButton, nButtonY + nButton)
+				: CRect(rect.right - S(2) - nButton, nButtonY, rect.right - S(2), nButtonY + nButton);
+			(nSide == 0 ? m_filmstripPrevRect : m_filmstripNextRect) = bEnabled ? buttonRect : CRect(0, 0, 0, 0);
+			dc.SetTextColor(bEnabled ? m_colors.Text : m_colors.Border);
+			LPCTSTR sGlyph = m_bHasIconFont ? (nSide == 0 ? _T("\xE76B") : _T("\xE76C")) : (nSide == 0 ? _T("<") : _T(">"));
+			dc.DrawText(sGlyph, -1, &buttonRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+		}
+		dc.SelectFont(hOldFont);
+	}
 	std::vector<CString> missing;
 	int nIndex = 0;
 	for (const CFileDesc& file : files) {

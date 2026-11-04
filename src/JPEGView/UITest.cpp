@@ -101,7 +101,7 @@ static int ShowGallery(int nPage) {
 		} while (::FindNextFile(hFind, &findData));
 		::FindClose(hFind);
 	}
-	std::vector<CString> recent, pinned;
+	std::vector<CString> recent, pinned, screenshots;
 	if (nPage != 1) {
 		FILETIME now;
 		::GetSystemTimeAsFileTime(&now);
@@ -112,8 +112,9 @@ static int ShowGallery(int nPage) {
 			recent.push_back(sLine);
 		}
 		for (size_t i = 0; i < files.size(); i++) pinned.push_back(files[files.size() - 1 - i]);
+		for (size_t i = 3; i < files.size() && i < 12; i++) screenshots.push_back(files[i]);
 	}
-	CStartScreen::SetTestLists(recent, pinned);
+	CStartScreen::SetTestLists(recent, pinned, screenshots);
 
 	HINSTANCE hInstance = ::GetModuleHandle(NULL);
 	WNDCLASS wndClass = { 0 };

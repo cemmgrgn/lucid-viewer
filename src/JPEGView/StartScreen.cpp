@@ -3,6 +3,7 @@
 #include "SettingsProvider.h"
 #include "NLS.h"
 #include "DarkUI.h"
+#include "ScreenCapture.h"
 #include <gdiplus.h>
 #include <shobjidl.h>
 #include <shlobj.h>
@@ -38,7 +39,7 @@ static HRESULT CreateShellItem(LPCWSTR sPath, REFIID riid, void** ppv) {
 
 static const int MAX_RECENT = 40;
 static bool s_bTestLists = false;
-static std::vector<CString> s_testRecent, s_testPinned;
+static std::vector<CString> s_testRecent, s_testPinned, s_testShots;
 
 static CString ListFileName(LPCTSTR sName) {
 	CString sINI = CSettingsProvider::This().GetUserINIFileName();
@@ -108,10 +109,36 @@ void CStartScreen::SetPinned(LPCTSTR sFile, bool bPinned) {
 	WriteLines(_T("StartPinned.txt"), lines);
 }
 
-void CStartScreen::SetTestLists(const std::vector<CString>& recent, const std::vector<CString>& pinned) {
+void CStartScreen::SetTestLists(const std::vector<CString>& recent, const std::vector<CString>& pinned, const std::vector<CString>& screenshots) {
 	s_bTestLists = true;
 	s_testRecent = recent;
 	s_testPinned = pinned;
+	s_testShots = screenshots;
+}
+
+// The newest images of the screenshot folder, with the time they were written
+static void ReadScreenshots(std::vector<CString>& files, std::vector<__int64>& times) {
+	struct CFile { CString Path; __int64 Time; };
+	std::vector<CFile> found;
+	CString sFolder = ScreenCapture::GetScreenshotFolder();
+	WIN32_FIND_DATA findData;
+	HANDLE hFind = ::FindFirstFile(sFolder + _T("\\*"), &findData);
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+			LPCTSTR sExtension = ::PathFindExtension(findData.cFileName);
+			if (_tcsicmp(sExtension, _T(".png")) != 0 && _tcsicmp(sExtension, _T(".jpg")) != 0 && _tcsicmp(sExtension, _T(".jpeg")) != 0 &&
+				_tcsicmp(sExtension, _T(".webp")) != 0 && _tcsicmp(sExtension, _T(".bmp")) != 0) continue;
+			CFile file = { sFolder + _T("\\") + findData.cFileName, ((__int64)findData.ftLastWriteTime.dwHighDateTime << 32) | findData.ftLastWriteTime.dwLowDateTime };
+			found.push_back(file);
+		} while (::FindNextFile(hFind, &findData));
+		::FindClose(hFind);
+	}
+	std::sort(found.begin(), found.end(), [](const CFile& a, const CFile& b) { return a.Time > b.Time; });
+	for (size_t i = 0; i < found.size() && i < 40; i++) {
+		files.push_back(found[i].Path);
+		times.push_back(found[i].Time);
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +211,7 @@ void CStartScreen::LoadThumbnails() {
 	std::shared_ptr<std::vector<CString>> pPaths = std::make_shared<std::vector<CString>>();
 	{
 		std::lock_guard<std::mutex> lock(m_pThumbnails->Lock);
-		for (const std::vector<CString>* pList : { &m_recent, &m_pinned }) {
+		for (const std::vector<CString>* pList : { &m_recent, &m_shots, &m_pinned }) {
 			for (const CString& sPath : *pList) {
 				if (m_pThumbnails->Images.count(sPath) == 0 && m_pThumbnails->Loading.count(sPath) == 0) {
 					m_pThumbnails->Loading.insert(sPath);
@@ -232,8 +259,9 @@ void CStartScreen::LoadThumbnails() {
 // Start screen
 ///////////////////////////////////////////////////////////////////////////////////
 
-CStartScreen::CStartScreen(HWND hWnd) : m_hWnd(hWnd), m_eHoverKind(HIT_NONE), m_nHoverIndex(-1), m_nScroll(0), m_nRecentScroll(0),
-	m_nContentHeight(0), m_nRecentRowWidth(0), m_nRecentVisibleWidth(0), m_clientRect(0, 0, 0, 0), m_sPinShortcut(_T("Ctrl+B")) {
+CStartScreen::CStartScreen(HWND hWnd) : m_hWnd(hWnd), m_eHoverKind(HIT_NONE), m_nHoverIndex(-1), m_nScroll(0),
+	m_nContentHeight(0), m_nKeyRow(ROW_RECENT), m_clientRect(0, 0, 0, 0), m_sPinShortcut(_T("Ctrl+B")) {
+	for (int i = 0; i < ROW_COUNT; i++) m_nRowScroll[i] = m_nRowWidth[i] = m_nRowVisible[i] = m_nRowStep[i] = 0;
 	HDC hDC = ::GetDC(NULL);
 	m_nDpi = ::GetDeviceCaps(hDC, LOGPIXELSX);
 	::ReleaseDC(NULL, hDC);
@@ -248,6 +276,18 @@ void CStartScreen::Reload() {
 	m_recent.clear();
 	m_recentTimes.clear();
 	m_pinned.clear();
+	m_shots.clear();
+	m_shotTimes.clear();
+	if (s_bTestLists) {
+		FILETIME now;
+		::GetSystemTimeAsFileTime(&now);
+		for (size_t i = 0; i < s_testShots.size(); i++) {
+			m_shots.push_back(s_testShots[i]);
+			m_shotTimes.push_back((((__int64)now.dwHighDateTime << 32) | now.dwLowDateTime) - (__int64)i * 1800 * 10000000LL);
+		}
+	} else if (CSettingsProvider::This().ScreenshotHistory()) {
+		ReadScreenshots(m_shots, m_shotTimes);
+	}
 	std::vector<CString> recent;
 	if (s_bTestLists) {
 		recent = s_testRecent;
@@ -265,7 +305,7 @@ void CStartScreen::Reload() {
 		if (::GetFileAttributes(sPath) != INVALID_FILE_ATTRIBUTES) m_pinned.push_back(sPath);
 	}
 	m_nScroll = 0;
-	m_nRecentScroll = 0;
+	for (int i = 0; i < ROW_COUNT; i++) m_nRowScroll[i] = 0;
 	LoadThumbnails();
 }
 
@@ -455,65 +495,82 @@ void CStartScreen::Paint(HDC hDC, const CRect& clientRect) {
 		}
 		y += (bButtonsBelow ? S(80) + S(40) : S(72)) + S(36);
 
-		// ---- last opened photos in a row, scrolled with the mouse wheel
-		if (!m_recent.empty()) {
-			PaintText(g, CNLS::GetString(_T("Recently opened")), sectionFont, colors.Text, RectF(x0, y, fWidth, (REAL)S(26)));
-			CString sClear = CNLS::GetString(_T("Clear list"));
-			float fClearWidth = TextWidth(g, sClear, hintFont) + S(4);
-			RectF clearRect(x0 + fWidth - fClearWidth, y + S(4), fClearWidth, (REAL)S(20));
-			PaintText(g, sClear, hintFont, IsHover(HIT_CLEAR_RECENT, 0) ? colors.Text : colors.Accent, clearRect, StringAlignmentFar);
-			AddHit(clearRect, HIT_CLEAR_RECENT, 0);
-			y += S(38);
+		// ---- rows of photos (the last opened ones, the screenshots), scrolled with the wheel, the arrow buttons and keys
+		auto PaintRow = [&](int nRow, const std::vector<CString>& files, const std::vector<__int64>& times, EHitKind eCardKind, bool bFolderMeta) {
 			float fCardWidth = (REAL)S(232), fThumbHeight = (REAL)S(156), fGap = (REAL)S(16);
 			float fRowHeight = fThumbHeight + S(8) + S(20) + S(18);
-			m_nRecentRowWidth = (int)(m_recent.size() * (fCardWidth + fGap) - fGap);
-			m_nRecentVisibleWidth = (int)fWidth;
-			m_nRecentScroll = max(0, min(m_nRecentScroll, m_nRecentRowWidth - m_nRecentVisibleWidth));
-			RectF rowRect(x0, y, fWidth, fRowHeight);
-			AddHit(rowRect, HIT_RECENT_ROW, 0);
+			m_nRowWidth[nRow] = (int)(files.size() * (fCardWidth + fGap) - fGap);
+			m_nRowVisible[nRow] = (int)fWidth;
+			m_nRowStep[nRow] = (int)(fCardWidth + fGap);
+			m_nRowScroll[nRow] = max(0, min(m_nRowScroll[nRow], m_nRowWidth[nRow] - m_nRowVisible[nRow]));
+			int nScrollX = m_nRowScroll[nRow];
+			AddHit(RectF(x0, y, fWidth, fRowHeight), HIT_ROW, nRow);
 			GraphicsState state = g.Save();
 			g.SetClip(RectF(x0 - S(2), y - S(2), fWidth + S(4), fRowHeight + S(4)), CombineModeIntersect);
-			for (int i = 0; i < (int)m_recent.size(); i++) {
-				float fX = x0 + i * (fCardWidth + fGap) - m_nRecentScroll;
+			for (int i = 0; i < (int)files.size(); i++) {
+				float fX = x0 + i * (fCardWidth + fGap) - nScrollX;
 				if (fX + fCardWidth < x0 || fX > x0 + fWidth) continue;
 				RectF thumbRect(fX, y, fCardWidth, fThumbHeight);
 				std::shared_ptr<Bitmap> pBitmap;
 				{
 					std::lock_guard<std::mutex> lock(m_pThumbnails->Lock);
-					auto it = m_pThumbnails->Images.find(m_recent[i]);
+					auto it = m_pThumbnails->Images.find(files[i]);
 					if (it != m_pThumbnails->Images.end()) pBitmap = it->second;
 				}
+				FillRound(g, thumbRect, (REAL)S(8), colors.Control);
 				if (pBitmap) {
-					FillRound(g, thumbRect, (REAL)S(8), colors.Control);
 					DrawCover(g, pBitmap.get(), thumbRect, (REAL)S(8));
 				} else {
-					FillRound(g, thumbRect, (REAL)S(8), colors.Control);
 					PaintText(g, L"\xE91B", addIconFont, colors.SubText, thumbRect, StringAlignmentCenter, StringAlignmentCenter);
 				}
-				bool bHover = IsHover(HIT_RECENT, i);
-				if (bHover) {
+				if (IsHover(eCardKind, i)) {
 					DrawRound(g, RectF(thumbRect.X + 1, thumbRect.Y + 1, thumbRect.Width - 2, thumbRect.Height - 2), (REAL)S(8), colors.Accent, (REAL)S(2));
 				} else {
 					DrawRound(g, thumbRect, (REAL)S(8), colors.Border, 1.0f);
 				}
-				CString sName = ::PathFindFileName(m_recent[i]);
-				PaintText(g, sName, textFont, colors.Text, RectF(fX + S(2), y + fThumbHeight + S(8), fCardWidth - S(4), (REAL)S(20)));
-				CString sMeta = FormatOpenTime(m_recentTimes[i]);
-				CString sFolder = FolderName(m_recent[i]);
+				PaintText(g, ::PathFindFileName(files[i]), textFont, colors.Text, RectF(fX + S(2), y + fThumbHeight + S(8), fCardWidth - S(4), (REAL)S(20)));
+				CString sMeta = FormatOpenTime(times[i]);
+				CString sFolder = bFolderMeta ? FolderName(files[i]) : CString();
 				if (!sFolder.IsEmpty()) sMeta += (sMeta.IsEmpty() ? _T("") : _T(" \x00B7 ")) + sFolder;
 				PaintText(g, sMeta, smallFont, colors.SubText, RectF(fX + S(2), y + fThumbHeight + S(28), fCardWidth - S(4), (REAL)S(18)));
 				RectF cardRect(max(fX, x0), y, min(fX + fCardWidth, x0 + fWidth) - max(fX, x0), fRowHeight);
-				AddHit(cardRect, HIT_RECENT, i);
+				AddHit(cardRect, eCardKind, i);
 			}
 			g.Restore(state);
-			// the row can be scrolled: small marks at the cut side
-			if (m_nRecentRowWidth > m_nRecentVisibleWidth) {
-				float fTrack = fWidth, fThumb = max((float)S(40), fTrack * m_nRecentVisibleWidth / m_nRecentRowWidth);
-				float fPos = (fTrack - fThumb) * m_nRecentScroll / max(1, m_nRecentRowWidth - m_nRecentVisibleWidth);
+			if (m_nRowWidth[nRow] > m_nRowVisible[nRow]) {
+				// position of the row and the buttons for scrolling at the cut sides
+				float fTrack = fWidth, fThumb = max((float)S(40), fTrack * m_nRowVisible[nRow] / m_nRowWidth[nRow]);
+				float fPos = (fTrack - fThumb) * nScrollX / max(1, m_nRowWidth[nRow] - m_nRowVisible[nRow]);
 				FillRound(g, RectF(x0, y + fRowHeight + S(8), fTrack, (REAL)S(3)), (REAL)S(1), colors.Control);
 				FillRound(g, RectF(x0 + fPos, y + fRowHeight + S(8), fThumb, (REAL)S(3)), (REAL)S(1), colors.SubText);
+				float fButton = (REAL)S(40), fButtonY = y + (fThumbHeight - fButton) / 2;
+				for (int nSide = 0; nSide < 2; nSide++) {
+					bool bVisible = nSide == 0 ? nScrollX > 0 : nScrollX < m_nRowWidth[nRow] - m_nRowVisible[nRow];
+					if (!bVisible) continue;
+					EHitKind eKind = nSide == 0 ? HIT_ROW_PREV : HIT_ROW_NEXT;
+					RectF buttonRect(nSide == 0 ? x0 + S(8) : x0 + fWidth - S(8) - fButton, fButtonY, fButton, fButton);
+					SolidBrush shadow(Color(IsHover(eKind, nRow) ? 235 : 190, GetRValue(colors.Window), GetGValue(colors.Window), GetBValue(colors.Window)));
+					g.FillEllipse(&shadow, buttonRect);
+					Pen ring(ToColor(colors.Border), 1.0f);
+					g.DrawEllipse(&ring, buttonRect);
+					PaintText(g, nSide == 0 ? L"\xE76B" : L"\xE76C", iconFont, colors.Text, buttonRect, StringAlignmentCenter, StringAlignmentCenter);
+					AddHit(buttonRect, eKind, nRow);
+				}
 			}
 			y += fRowHeight + S(40);
+		};
+		auto PaintRowTitle = [&](LPCTSTR sTitle, LPCTSTR sLink, EHitKind eLinkKind) {
+			PaintText(g, CNLS::GetString(sTitle), sectionFont, colors.Text, RectF(x0, y, fWidth, (REAL)S(26)));
+			CString sLinkText = CNLS::GetString(sLink);
+			float fLinkWidth = TextWidth(g, sLinkText, hintFont) + S(4);
+			RectF linkRect(x0 + fWidth - fLinkWidth, y + S(4), fLinkWidth, (REAL)S(20));
+			PaintText(g, sLinkText, hintFont, IsHover(eLinkKind, 0) ? colors.Text : colors.Accent, linkRect, StringAlignmentFar);
+			AddHit(linkRect, eLinkKind, 0);
+			y += S(38);
+		};
+		if (!m_recent.empty()) {
+			PaintRowTitle(_T("Recently opened"), _T("Clear list"), HIT_CLEAR_RECENT);
+			PaintRow(ROW_RECENT, m_recent, m_recentTimes, HIT_RECENT, true);
 		} else {
 			// first start: the photos can be dropped here
 			RectF dropRect(x0, y, fWidth, (REAL)S(200));
@@ -524,6 +581,10 @@ void CStartScreen::Paint(HDC hDC, const CRect& clientRect) {
 			PaintText(g, CNLS::GetString(_T("JPEG, PNG, WebP, HEIC, AVIF, JPEG XL, RAW and more")), textFont, colors.SubText,
 				RectF(x0, y + S(130), fWidth, (REAL)S(22)), StringAlignmentCenter);
 			y += S(200) + S(40);
+		}
+		if (!m_shots.empty()) {
+			PaintRowTitle(_T("Screenshots"), _T("Open folder"), HIT_SHOT_FOLDER);
+			PaintRow(ROW_SHOTS, m_shots, m_shotTimes, HIT_SHOT, false);
 		}
 
 		// ---- the photos the user pinned
@@ -627,7 +688,7 @@ void CStartScreen::Paint(HDC hDC, const CRect& clientRect) {
 const CStartScreen::CHit* CStartScreen::HitTest(int nX, int nY) const {
 	// the later ones are on top (unpin button over the tile)
 	for (int i = (int)m_hits.size() - 1; i >= 0; i--) {
-		if (m_hits[i].Kind != HIT_RECENT_ROW && m_hits[i].Rect.PtInRect(CPoint(nX, nY))) return &m_hits[i];
+		if (m_hits[i].Kind != HIT_ROW && m_hits[i].Rect.PtInRect(CPoint(nX, nY))) return &m_hits[i];
 	}
 	return NULL;
 }
@@ -636,7 +697,36 @@ bool CStartScreen::IsOverItem(int nX, int nY) {
 	return HitTest(nX, nY) != NULL;
 }
 
+bool CStartScreen::ScrollRow(int nRow, int nPixels) {
+	if (nRow < 0 || nRow >= ROW_COUNT || m_nRowWidth[nRow] <= m_nRowVisible[nRow]) return false;
+	int nOld = m_nRowScroll[nRow];
+	m_nRowScroll[nRow] = max(0, min(m_nRowScroll[nRow] + nPixels, m_nRowWidth[nRow] - m_nRowVisible[nRow]));
+	return nOld != m_nRowScroll[nRow];
+}
+
+bool CStartScreen::OnKey(int nVirtualKey) {
+	int nPage = max(S(40), m_clientRect.Height() - S(80));
+	int nOld = m_nScroll;
+	int nMaxScroll = max(0, m_nContentHeight - m_clientRect.Height());
+	switch (nVirtualKey) {
+		case VK_LEFT: return ScrollRow(m_nKeyRow, -max(1, m_nRowStep[m_nKeyRow]));
+		case VK_RIGHT: return ScrollRow(m_nKeyRow, max(1, m_nRowStep[m_nKeyRow]));
+		case VK_UP: m_nScroll -= S(100); break;
+		case VK_DOWN: m_nScroll += S(100); break;
+		case VK_PRIOR: m_nScroll -= nPage; break;
+		case VK_NEXT: m_nScroll += nPage; break;
+		case VK_HOME: m_nScroll = 0; break;
+		case VK_END: m_nScroll = nMaxScroll; break;
+		default: return false;
+	}
+	m_nScroll = max(0, min(m_nScroll, nMaxScroll));
+	return true; // also when not moved, the key is used by the start screen
+}
+
 bool CStartScreen::OnMouseMove(int nX, int nY) {
+	for (const CHit& hit : m_hits) {
+		if (hit.Kind == HIT_ROW && hit.Rect.PtInRect(CPoint(nX, nY))) m_nKeyRow = hit.Index;
+	}
 	const CHit* pHit = HitTest(nX, nY);
 	EHitKind eKind = pHit != NULL ? pHit->Kind : HIT_NONE;
 	int nIndex = pHit != NULL ? pHit->Index : -1;
@@ -653,10 +743,8 @@ void CStartScreen::OnMouseLeave() {
 
 bool CStartScreen::OnMouseWheel(int nX, int nY, int nDelta) {
 	for (const CHit& hit : m_hits) {
-		if (hit.Kind == HIT_RECENT_ROW && hit.Rect.PtInRect(CPoint(nX, nY)) && m_nRecentRowWidth > m_nRecentVisibleWidth) {
-			int nOld = m_nRecentScroll;
-			m_nRecentScroll = max(0, min(m_nRecentScroll - nDelta * S(248) / WHEEL_DELTA, m_nRecentRowWidth - m_nRecentVisibleWidth));
-			return nOld != m_nRecentScroll;
+		if (hit.Kind == HIT_ROW && hit.Rect.PtInRect(CPoint(nX, nY)) && m_nRowWidth[hit.Index] > m_nRowVisible[hit.Index]) {
+			return ScrollRow(hit.Index, -nDelta * S(248) / WHEEL_DELTA);
 		}
 	}
 	int nOld = m_nScroll;
@@ -724,6 +812,22 @@ CStartScreen::CResult CStartScreen::OnClick(int nX, int nY) {
 			result.Action = ACTION_OPEN_FILE;
 			result.File = m_recent[hit.Index];
 			break;
+		case HIT_SHOT:
+			result.Action = ACTION_OPEN_FILE;
+			result.File = m_shots[hit.Index];
+			break;
+		case HIT_SHOT_FOLDER:
+			::ShellExecute(m_hWnd, _T("open"), ScreenCapture::GetScreenshotFolder(), NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case HIT_ROW_PREV:
+		case HIT_ROW_NEXT: {
+			// one page less one card, the cut card is shown whole
+			int nRow = hit.Index;
+			int nPage = max(m_nRowStep[nRow], m_nRowVisible[nRow] - m_nRowStep[nRow]);
+			ScrollRow(nRow, hit.Kind == HIT_ROW_PREV ? -nPage : nPage);
+			::InvalidateRect(m_hWnd, NULL, FALSE);
+			break;
+		}
 		case HIT_PINNED:
 			result.Action = ACTION_OPEN_FILE;
 			result.File = m_pinned[hit.Index];
@@ -745,10 +849,10 @@ CStartScreen::CResult CStartScreen::OnClick(int nX, int nY) {
 CStartScreen::CResult CStartScreen::OnContextMenu(HWND hWnd, int nX, int nY, POINT screenPoint) {
 	CResult result = { ACTION_NONE, CString() };
 	const CHit* pHit = HitTest(nX, nY);
-	if (pHit == NULL || (pHit->Kind != HIT_RECENT && pHit->Kind != HIT_PINNED && pHit->Kind != HIT_UNPIN)) return result;
+	if (pHit == NULL || (pHit->Kind != HIT_RECENT && pHit->Kind != HIT_PINNED && pHit->Kind != HIT_UNPIN && pHit->Kind != HIT_SHOT)) return result;
 	bool bRecent = pHit->Kind == HIT_RECENT;
 	int nIndex = pHit->Index;
-	CString sFile = bRecent ? m_recent[nIndex] : m_pinned[nIndex];
+	CString sFile = bRecent ? m_recent[nIndex] : (pHit->Kind == HIT_SHOT ? m_shots[nIndex] : m_pinned[nIndex]);
 	bool bPinned = IsPinned(sFile);
 	enum { CMD_OPEN = 1, CMD_FOLDER, CMD_PIN, CMD_REMOVE };
 	HMENU hMenu = ::CreatePopupMenu();

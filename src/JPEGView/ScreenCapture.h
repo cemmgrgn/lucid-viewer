@@ -15,4 +15,7 @@ namespace ScreenCapture {
 	// Starts the screenshot tool in a new process (from the viewer)
 	void Start(EMode eMode);
 	void StartTray();
+
+	// Folder of the saved screenshots (setting ScreenshotFolder, else Pictures\Screenshots)
+	CString GetScreenshotFolder();
 }

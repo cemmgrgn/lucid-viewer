@@ -79,11 +79,28 @@ CString SystemTimeToString(const SYSTEMTIME &time) {
 	return CString(sBufferDay) + _T(" ") + sBufferDate + _T(" ") + sBufferTime;
 }
 
+// Larger side of small images in screen pixels (setting MinDisplaySize at 96 DPI), 0: no minimum
+static int MinDisplaySize() {
+	static int nDpi = 0;
+	if (nDpi == 0) {
+		HDC hDC = ::GetDC(NULL);
+		nDpi = ::GetDeviceCaps(hDC, LOGPIXELSX);
+		::ReleaseDC(NULL, hDC);
+	}
+	return ::MulDiv(CSettingsProvider::This().MinDisplaySize(), nDpi, 96);
+}
+
 CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight, EAutoZoomMode eAutoZoomMode, double & dZoom) {
 	CSize newSize = GetImageRect(nWidth, nHeight, nScreenWidth, nScreenHeight,
 		eAutoZoomMode == ZM_FitToScreen || eAutoZoomMode == ZM_FillScreen,
 		eAutoZoomMode == ZM_FillScreenNoZoom || eAutoZoomMode == ZM_FillScreen,
 		eAutoZoomMode == ZM_FillScreenNoZoom, dZoom);
+	// small images are zoomed in to the minimum display size, not larger than the screen
+	int nMinSize = MinDisplaySize();
+	if (nMinSize > 0 && dZoom == 1.0 && max(nWidth, nHeight) < nMinSize && nWidth > 0 && nHeight > 0 && nScreenWidth > 0 && nScreenHeight > 0) {
+		double dFit = min((double)nScreenWidth / nWidth, (double)nScreenHeight / nHeight);
+		dZoom = max(1.0, min((double)nMinSize / max(nWidth, nHeight), dFit));
+	}
 	return CSize((int)(nWidth*dZoom + 0.5), (int)(nHeight*dZoom + 0.5));
 }
 
@@ -583,6 +600,11 @@ CRect GetWindowRectMatchingImageSize(HWND hWnd, CSize minSize, CSize maxSize, do
 	} else if (dZoom > 0) {
 		nOrigWidth = (int)(nOrigWidth * dZoom + 0.5);
 		nOrigHeight = (int)(nOrigHeight * dZoom + 0.5);
+	} else if (pImage != NULL && MinDisplaySize() > 0 && max(nOrigWidth, nOrigHeight) < MinDisplaySize()) {
+		// the window of a small image is made for the zoomed image (see GetImageRect)
+		double dScale = (double)MinDisplaySize() / max(nOrigWidth, nOrigHeight);
+		nOrigWidth = (int)(nOrigWidth * dScale + 0.5);
+		nOrigHeight = (int)(nOrigHeight * dScale + 0.5);
 	}
 
 	CSize borderSize;

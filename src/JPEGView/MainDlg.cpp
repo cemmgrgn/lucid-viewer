@@ -1289,6 +1289,10 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOO
 	if (m_pPanelMgr->OnKeyDown((unsigned int)wParam, bShift, bAlt, bCtrl)) {
 		return 1; // a panel has handled the key
 	}
+	if (!bCtrl && !bAlt && IsStartScreenActive() && m_pStartScreen->OnKey((int)wParam)) {
+		this->Invalidate(FALSE);
+		return 0; // arrow and page keys scroll the start screen
+	}
 	bool bHandled = false;
 	if (IsDrawMode() && m_pAnnotations->GetTool() == CAnnotations::TOOL_SELECT && m_pAnnotations->HasSelection() &&
 		(wParam == VK_DELETE || wParam == VK_ESCAPE)) {

@@ -923,3 +923,4 @@ Unpin from start screen	Başlangıçtan kaldır
 Start screen	Başlangıç ekranı
 Pinned to the start screen	Başlangıca sabitlendi
 Removed from the start screen	Başlangıçtan kaldırıldı
+Screenshots	Ekran görüntüleri

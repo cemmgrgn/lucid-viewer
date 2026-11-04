@@ -63,7 +63,7 @@ static CString GetExeName() {
 	return sExe;
 }
 
-static CString GetScreenshotFolder() {
+CString GetScreenshotFolder() {
 	CString sFolder = CSettingsProvider::This().ScreenshotFolder();
 	if (sFolder.IsEmpty()) {
 		// Pictures\Screenshots (FOLDERID_Screenshots, Windows 8 and later), else Pictures
@@ -1744,6 +1744,10 @@ void COverlay::Copy() {
 	int nWidth, nHeight;
 	GetCrop(pixels, nWidth, nHeight);
 	if (nWidth > 0 && nHeight > 0 && CopyPixelsToClipboard(m_hWnd, pixels, nWidth, nHeight)) {
+		// screenshot history: also the copied ones are kept in the folder (shown on the start screen of the viewer)
+		if (CSettingsProvider::This().ScreenshotHistory()) {
+			SavePixels(GetScreenshotFolder() + _T("\\") + GetNewScreenshotName(_T("png")), pixels, nWidth, nHeight);
+		}
 		Close(RESULT_NONE);
 		ShowToast(CNLS::GetString(_T("The screenshot was copied to the clipboard.")), false);
 	}
