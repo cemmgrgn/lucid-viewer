@@ -1620,7 +1620,7 @@ int CWindowChrome::PaintInfoTab(CDC& dc, int nWidth, int nY) {
 		nY = prefixRect.bottom;
 	}
 	// star rating, the stars can be clicked
-	int nRating = m_pMainDlg->GetRating();
+	int nRating = m_pMainDlg->GetRatingNoWait();
 	if (nRating >= 0) {
 		nY += S(4);
 		int nStar = S(20);

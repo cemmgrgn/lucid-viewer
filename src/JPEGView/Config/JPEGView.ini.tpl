@@ -177,6 +177,10 @@ EscapeClosesWindow=false
 ; If false, the file open dialog is shown when JPEGView is started without an image.
 ShowStartScreen=true
 
+; Remember the recently opened photos and show them on the start screen. If false, nothing is written to
+; StartRecent.txt and the recent row stays empty.
+RememberRecentFiles=true
+
 ; Small images are shown zoomed in so that their larger side has at least this size (pixels at 96 DPI) when the
 ; zoom mode does not enlarge images. 0 shows them in their original size.
 MinDisplaySize=600

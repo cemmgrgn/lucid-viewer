@@ -206,6 +206,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bEscapeClosesWindow = GetBool(_T("EscapeClosesWindow"), false);
 	m_bShowStartScreen = GetBool(_T("ShowStartScreen"), true);
 	m_bScreenshotHistory = GetBool(_T("ScreenshotHistory"), false);
+	m_bRememberRecentFiles = GetBool(_T("RememberRecentFiles"), true);
 	m_nMinDisplaySize = GetInt(_T("MinDisplaySize"), 600, 0, 4000);
 	m_bSmoothAnimations = GetBool(_T("SmoothAnimations"), true);
 	m_nSidePanelTab = GetInt(_T("SidePanelTab"), 0, 0, 2);

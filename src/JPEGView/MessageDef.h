@@ -18,4 +18,8 @@
 // WPARAM is 1 on success, LPARAM a heap allocated CString* with the output file name or error text, freed by the receiver.
 #define WM_CONVERSION_FINISHED (WM_APP + 25)
 
+// Posted to the main dialog when the star rating was read in the background.
+// LPARAM is a heap allocated CMainDlg::CRatingResult*, freed by the receiver.
+#define WM_RATING_READ (WM_APP + 26)
+
 #define KEY_MAGIC 2978465

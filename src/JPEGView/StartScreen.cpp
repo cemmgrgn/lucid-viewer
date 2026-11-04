@@ -81,7 +81,7 @@ static CString RecentPath(const CString& sLine, __int64* pTime = NULL) {
 }
 
 void CStartScreen::AddRecent(LPCTSTR sFile) {
-	if (s_bTestLists || sFile == NULL || sFile[0] == 0) return;
+	if (s_bTestLists || sFile == NULL || sFile[0] == 0 || !CSettingsProvider::This().RememberRecentFiles()) return;
 	std::vector<CString> lines = ReadLines(_T("StartRecent.txt"));
 	lines.erase(std::remove_if(lines.begin(), lines.end(), [&](const CString& sLine) { return RecentPath(sLine).CompareNoCase(sFile) == 0; }), lines.end());
 	FILETIME now;
@@ -350,7 +350,7 @@ void CStartScreen::Reload() {
 	std::vector<CString> recent;
 	if (s_bTestLists) {
 		recent = s_testRecent;
-	} else {
+	} else if (CSettingsProvider::This().RememberRecentFiles()) {
 		recent = ReadLines(_T("StartRecent.txt"));
 	}
 	for (const CString& sLine : recent) {

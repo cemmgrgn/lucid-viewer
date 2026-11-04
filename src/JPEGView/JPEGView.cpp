@@ -6,6 +6,7 @@
 #include "resource.h"
 #include "MainDlg.h"
 #include "SettingsProvider.h"
+#include "StartupTrace.h"
 #include "Converter.h"
 #include "ScreenCapture.h"
 #include "UITest.h"
@@ -183,6 +184,7 @@ static LONG WINAPI CrashHandler(EXCEPTION_POINTERS * pExceptionInfo)
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lpstrCmdLine, int /*nCmdShow*/)
 {
 	HRESULT hRes = ::CoInitialize(NULL);
+	StartupTrace::Mark("WinMain, COM");
 
 #ifdef DEBUG
 	::InitializeCriticalSection(&s_lock);
@@ -276,7 +278,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 		ULONG_PTR gdiplusToken;
 		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+		StartupTrace::Mark("GDI+ started");
 		CMainDlg dlgMain(bForceFullScreen);
+		StartupTrace::Mark("CMainDlg constructed");
 
 		dlgMain.SetStartupInfo(sStartupFile, nAutostartSlideShow, eSorting, eTransitionEffect, nTransitionTime, bAutoExit, nDisplayMonitor);
 

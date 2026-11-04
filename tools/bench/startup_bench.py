@@ -51,8 +51,29 @@ def is_magenta(color):
 
 
 def window_shows_marker(hwnd):
-    """Render the window into memory (works when it is covered by other windows)
-    and look at the pixel in its middle."""
+    """Look for the marker in the window's own surface (with DWM every window has one, so this works
+    when the window is covered). Falls back to PrintWindow for windows that do not draw with GDI."""
+    r = wt.RECT()
+    user32.GetWindowRect(hwnd, ctypes.byref(r))
+    w, h = r.right - r.left, r.bottom - r.top
+    if w < 200 or h < 200:
+        return False
+    dc = user32.GetWindowDC(hwnd)
+    try:
+        for gy in range(1, 16):
+            for gx in range(1, 16):
+                if is_magenta(gdi32.GetPixel(dc, w * gx // 16, h * gy // 16)):
+                    return True
+    finally:
+        user32.ReleaseDC(hwnd, dc)
+    return USE_PRINTWINDOW and window_shows_marker_printwindow(hwnd)
+
+
+USE_PRINTWINDOW = False
+
+
+def window_shows_marker_printwindow(hwnd):
+    """Render the window into memory (works when it is covered by other windows)."""
     r = wt.RECT()
     user32.GetWindowRect(hwnd, ctypes.byref(r))
     w, h = r.right - r.left, r.bottom - r.top
@@ -64,7 +85,13 @@ def window_shows_marker(hwnd):
     old = gdi32.SelectObject(mem, bmp)
     try:
         user32.PrintWindow(hwnd, mem, 2)  # PW_RENDERFULLCONTENT
-        return is_magenta(gdi32.GetPixel(mem, w // 2, h // 2))
+        # The image is not always in the middle (side panels, toolbars), so look at a grid of points.
+        # The marker covers a fifth of the image in each direction, a 16x16 grid always hits it.
+        for gy in range(1, 16):
+            for gx in range(1, 16):
+                if is_magenta(gdi32.GetPixel(mem, w * gx // 16, h * gy // 16)):
+                    return True
+        return False
     finally:
         gdi32.SelectObject(mem, old)
         gdi32.DeleteObject(bmp)
@@ -143,7 +170,11 @@ def main():
     p.add_argument("--runs", type=int, default=10)
     p.add_argument("--timeout", type=float, default=20)
     p.add_argument("--out", default="bench_results.jsonl")
+    p.add_argument("--printwindow", action="store_true",
+                   help="also render the window with PrintWindow (slower, for apps that do not draw with GDI, e.g. Windows Photos)")
     a = p.parse_args(argv)
+    global USE_PRINTWINDOW
+    USE_PRINTWINDOW = a.printwindow
     if a.make_image:
         make_image(a.make_image)
         return

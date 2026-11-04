@@ -63,6 +63,7 @@
 #include "BackgroundRemoval.h"
 #include "Metadata.h"
 #include "StartScreen.h"
+#include "StartupTrace.h"
 #include "ScreenCapture.h"
 #include "SettingsEditor.h"
 #include <propsys.h>
@@ -216,12 +217,14 @@ static EProcessingFlags _SetLandscapeModeFlags(EProcessingFlags eFlags) {
 CMainDlg::CMainDlg(bool bForceFullScreen) {
 	CSettingsProvider& sp = CSettingsProvider::This();
 
+	StartupTrace::Mark("settings read");
 	CResizeFilterCache::This(); // Access before multiple threads are created
 
 	// Read the string table for the requested language if one is present
 	CNLS::ReadStringTable(CNLS::GetStringTableFileName(sp.Language()));
 	Ocr::SetPreferredLanguage(sp.OcrLanguage());
 
+	StartupTrace::Mark("strings read");
 	m_bLandscapeMode = sp.LandscapeMode();
 	m_pImageProcParams = new CImageProcessingParams(GetDefaultProcessingParams());
 	InitFromProcessingFlags(GetDefaultProcessingFlags(m_bLandscapeMode), m_bHQResampling, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, m_bLandscapeMode);
@@ -323,6 +326,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pNavPanelCtl = NULL;
 	m_pCropCtl = new CCropCtl(this);
 	m_pKeyMap = new CKeyMap(); // routine to load the keymap, it's not as simple as just loading one file anymore, but all logic handled by CKeyMap
+	StartupTrace::Mark("keymap read");
 	m_pPrintImage = new CPrintImage(CSettingsProvider::This().PrintMargin(), CSettingsProvider::This().DefaultPrintWidth());
 	m_pHelpDlg = NULL;
 	m_pChrome = NULL;
@@ -336,6 +340,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pZoomAnimImage = NULL;
 	m_pAnnotations->SetTool(CAnnotations::TOOL_NONE); // the draw tab can be open at the start, clicks must not draw then
 	m_nRating = -1;
+	m_nRatingGeneration = 0;
 	m_bCropTool = false;
 	m_bDragOutPending = false;
 	m_bTransparencySaved = false;
@@ -375,6 +380,8 @@ void CMainDlg::SetStartupInfo(LPCTSTR sStartupFile, int nAutostartSlideShow, Hel
 }
 
 LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {	
+	StartupTrace::Mark("OnInitDialog");
+	StartupTrace::HookMessages();
 	UpdateWindowTitle();
 
 	// set the scaling of the screen (DPI) compared to 96 DPI (design value)
@@ -386,6 +393,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	// toolbar, status bar and side panel, must exist before the window size is calculated
 	m_pChrome = new CWindowChrome(this);
 
+	StartupTrace::Mark("chrome created");
 	m_pDirectoryWatcher = new CDirectoryWatcher(m_hWnd);
 
 	// determine the monitor rectangle and client rectangle
@@ -432,6 +440,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	// Create zoom navigator
 	m_pZoomNavigatorCtl = new CZoomNavigatorCtl(this, m_pImageProcPanelCtl->GetPanel(), m_pNavPanelCtl->GetPanel());
 
+	StartupTrace::Mark("panels created");
 	// set icons (for toolbar)
 	HICON hIcon = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MAINFRAME), 
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR | LR_SHARED);
@@ -450,6 +459,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 		0, m_eForcedSorting != Helpers::FS_Undefined);
 	m_pFileList->SetNavigationMode(sp.Navigation());
 
+	StartupTrace::Mark("file list read");
 	// create thread pool for processing requests on multiple CPU cores
 	CProcessingThreadPool::This().CreateThreadPoolThreads();
 
@@ -457,6 +467,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	m_pJPEGProvider = new CJPEGProvider(m_hWnd, NUM_THREADS, READ_AHEAD_BUFFERS);	
 	m_pCurrentImage = m_pJPEGProvider->RequestImage(m_pFileList, CJPEGProvider::FORWARD,
 		m_pFileList->Current(), 0, CreateProcessParams(!m_bFullScreenMode), m_bOutOfMemoryLastImage, m_bExceptionErrorLastImage);
+	StartupTrace::Mark("image requested");
 	if (m_pCurrentImage != NULL && m_pCurrentImage->IsAnimation()) {
 		StartAnimation();
 	}
@@ -464,6 +475,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	CheckIfApplyAutoFitWndToImage(true);
 	AfterNewImageLoaded(true, true, false); // synchronize to per image parameters
 
+	StartupTrace::Mark("AfterNewImageLoaded");
 	if (!m_bFullScreenMode) {
 		// Window mode, set correct window size
 		SetCurrentWindowStyle();
@@ -488,12 +500,16 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 		ToggleAlwaysOnTop();
 	}
 
+	StartupTrace::Mark("window sized");
 	m_bLockPaint = false;
 	m_isBeforeFileSelected = m_sStartupFile.IsEmpty();
 	if (CSettingsProvider::This().ShowStartScreen() && m_pChrome->IsEnabled()) {
 		m_pStartScreen = new CStartScreen(m_hWnd);
 		m_pStartScreen->SetPinShortcut(m_pKeyMap->GetKeyStringForCommand(IDM_PIN_TO_START));
-		m_pStartScreen->Reload();
+		// opened with an image: the lists are read when the start screen is shown (Alt+Home), not at startup
+		if (m_sStartupFile.IsEmpty()) {
+			m_pStartScreen->Reload();
+		}
 		// without an image the window is small, the gallery gets a large window (it adapts to the image when one is opened)
 		if (m_sStartupFile.IsEmpty() && !m_bFullScreenMode && !IsZoomed()) {
 			MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
@@ -508,6 +524,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 		}
 	}
 
+	StartupTrace::Mark("start screen");
 	if (m_nAutoStartSlideShow > 0) {
 		StartMovieMode(1.0 / m_nAutoStartSlideShow);
 	}
@@ -516,9 +533,17 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 		m_pChrome->UpdateFrame();
 	}
 
+	// A large photo is shown first with the fast resampling, the high quality version follows right after it.
+	// The high quality downsampling of a 24 MP photo takes ~90 ms, the user sees the photo that much earlier.
+	if (m_pCurrentImage != NULL && m_bHQResampling && !m_pCurrentImage->IsAnimation() &&
+		(__int64)m_pCurrentImage->OrigWidth() * m_pCurrentImage->OrigHeight() > 4 * (__int64)m_clientRect.Width() * m_clientRect.Height()) {
+		StartLowQTimer(1);
+	}
+
 	this->Invalidate(FALSE);
 
 	this->DragAcceptFiles();
+	StartupTrace::Mark("OnInitDialog end");
 
 	return TRUE;
 }
@@ -526,6 +551,8 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	static bool s_bFirst = true;
+	static int s_nTracedPaints = 0;
+	if (s_nTracedPaints < 3) StartupTrace::Mark("OnPaint begin");
 
 	if (m_bLockPaint) {
 		return 0;
@@ -688,6 +715,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	SetCursorForMoveSection();
 
 	// status bar and side panel show information about the image that may have changed
+	if (s_nTracedPaints < 3) { s_nTracedPaints++; StartupTrace::Mark(m_pCurrentImage != NULL ? "OnPaint end (image)" : "OnPaint end (no image)"); }
 	m_pChrome->Paint();
 
 	return 0;
@@ -5130,6 +5158,23 @@ void CMainDlg::ApplyAnnotations() {
 // Rating values of the Windows property for 1 to 5 stars
 static const UINT RATING_VALUES[6] = { 0, 1, 25, 50, 75, 99 };
 
+// Reads the Explorer star rating of a file, -1 if the file has no property store
+static int ReadRatingFromFile(LPCTSTR sFile) {
+	int nRating = -1;
+	IPropertyStore* pStore = NULL;
+	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFile, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
+		PROPVARIANT value;
+		::PropVariantInit(&value);
+		if (SUCCEEDED(pStore->GetValue(PKEY_Rating, &value))) {
+			UINT nValue = (value.vt == VT_UI4) ? value.ulVal : 0;
+			nRating = (nValue == 0) ? 0 : (nValue < 13) ? 1 : (nValue < 38) ? 2 : (nValue < 63) ? 3 : (nValue < 88) ? 4 : 5;
+		}
+		::PropVariantClear(&value);
+		pStore->Release();
+	}
+	return nRating;
+}
+
 int CMainDlg::GetRating() {
 	LPCTSTR sFile = (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) ? m_pFileList->Current() : NULL;
 	if (sFile == NULL) {
@@ -5138,20 +5183,71 @@ int CMainDlg::GetRating() {
 	if (m_sRatingFile.CompareNoCase(sFile) == 0) {
 		return m_nRating;
 	}
+	m_nRatingGeneration++; // a background read still running is outdated now
+	m_sRatingPendingFile.Empty();
 	m_sRatingFile = sFile;
-	m_nRating = -1;
-	IPropertyStore* pStore = NULL;
-	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFile, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
-		PROPVARIANT value;
-		::PropVariantInit(&value);
-		if (SUCCEEDED(pStore->GetValue(PKEY_Rating, &value))) {
-			UINT nValue = (value.vt == VT_UI4) ? value.ulVal : 0;
-			m_nRating = (nValue == 0) ? 0 : (nValue < 13) ? 1 : (nValue < 38) ? 2 : (nValue < 63) ? 3 : (nValue < 88) ? 4 : 5;
-		}
-		::PropVariantClear(&value);
-		pStore->Release();
-	}
+	m_nRating = ReadRatingFromFile(sFile);
 	return m_nRating;
+}
+
+struct CRatingThreadParams {
+	HWND hWnd;
+	CMainDlg::CRatingResult* pResult;
+};
+
+static DWORD WINAPI RatingThread(LPVOID pParam) {
+	CRatingThreadParams* pParams = (CRatingThreadParams*)pParam;
+	HRESULT hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	pParams->pResult->Rating = ReadRatingFromFile(pParams->pResult->File);
+	if (SUCCEEDED(hr)) ::CoUninitialize();
+	if (!::PostMessage(pParams->hWnd, WM_RATING_READ, 0, (LPARAM)pParams->pResult)) {
+		delete pParams->pResult;
+	}
+	delete pParams;
+	return 0;
+}
+
+int CMainDlg::GetRatingNoWait() {
+	LPCTSTR sFile = (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) ? m_pFileList->Current() : NULL;
+	if (sFile == NULL) {
+		return -1;
+	}
+	if (m_sRatingFile.CompareNoCase(sFile) == 0) {
+		return m_nRating;
+	}
+	if (m_sRatingPendingFile.CompareNoCase(sFile) != 0) {
+		m_nRatingGeneration++;
+		m_sRatingPendingFile = sFile;
+		CRatingThreadParams* pParams = new CRatingThreadParams;
+		pParams->hWnd = m_hWnd;
+		pParams->pResult = new CRatingResult;
+		pParams->pResult->File = sFile;
+		pParams->pResult->Rating = -1;
+		pParams->pResult->Generation = m_nRatingGeneration;
+		HANDLE hThread = ::CreateThread(NULL, 0, RatingThread, pParams, 0, NULL);
+		if (hThread == NULL) {
+			delete pParams->pResult;
+			delete pParams;
+			m_sRatingPendingFile.Empty();
+			return GetRating();
+		}
+		::CloseHandle(hThread);
+	}
+	return 0; // empty stars until the rating is known, so the panel layout does not jump
+}
+
+LRESULT CMainDlg::OnRatingRead(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
+	CRatingResult* pResult = (CRatingResult*)lParam;
+	if (pResult != NULL) {
+		if (pResult->Generation == m_nRatingGeneration && m_sRatingPendingFile.CompareNoCase(pResult->File) == 0) {
+			m_sRatingPendingFile.Empty();
+			m_sRatingFile = pResult->File;
+			m_nRating = pResult->Rating;
+			if (m_pChrome != NULL) m_pChrome->Paint();
+		}
+		delete pResult;
+	}
+	return 0;
 }
 
 void CMainDlg::SetRating(int nStars) {
@@ -5367,6 +5463,8 @@ void CMainDlg::EditMetadata(int nIndex) {
 void CMainDlg::AfterMetadataChanged() {
 	m_sMetadataFile.Empty();
 	m_sRatingFile.Empty();
+	m_sRatingPendingFile.Empty();
+	m_nRatingGeneration++;
 	// the summary shows what was read when loading, reload if no drawings or removed colors get lost
 	if (m_pAnnotations->IsEmpty() && !HasTransparency()) {
 		ReloadImage(true);

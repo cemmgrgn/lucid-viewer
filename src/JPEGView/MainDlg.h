@@ -79,6 +79,7 @@ public:
 		MESSAGE_HANDLER(WM_NCACTIVATE, OnNCActivate)
 		MESSAGE_HANDLER(WM_SETCURSOR, OnSetCursor)
 		MESSAGE_HANDLER(WM_CONVERSION_FINISHED, OnConversionFinished)
+		MESSAGE_HANDLER(WM_RATING_READ, OnRatingRead)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
 		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
 		MESSAGE_HANDLER(WM_LBUTTONDBLCLK, OnLButtonDblClk)
@@ -132,6 +133,7 @@ public:
 	LRESULT OnNCActivate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnConversionFinished(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnRatingRead(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -196,6 +198,10 @@ public:
 	int GetCropModeCommand() { return m_nCropModeCommand; }
 	// Star rating of the current file as shown by Explorer (0: none, 1-5 stars, -1: not available)
 	int GetRating();
+	// Same, but does not wait: when the rating is not known yet it is read in the background
+	// (the first use of the Windows property system takes ~60 ms), 0 is returned and the panel is repainted later
+	int GetRatingNoWait();
+	struct CRatingResult { CString File; int Rating; int Generation; };
 	// Writes the star rating (0-5) into the current file
 	void SetRating(int nStars);
 	// Undo (Ctrl+Z) and redo (Ctrl+Y) of all operations: editing values, drawings, crop, rotation, resize, perspective,
@@ -418,6 +424,8 @@ private:
 	// Asks before drawings or removed colors that are not saved get lost, returns true to continue
 	bool ConfirmDiscardEdits();
 	CString m_sRatingFile; // file of the cached rating
+	CString m_sRatingPendingFile; // file whose rating is being read in the background
+	int m_nRatingGeneration; // changes when the cached rating becomes invalid, late background results are ignored
 	// undo and redo
 	struct CEditState {
 		CImageProcessingParams Params;

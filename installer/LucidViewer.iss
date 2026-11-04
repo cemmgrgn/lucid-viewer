@@ -35,6 +35,13 @@
 #endif
 
 #define ProgId         "LucidViewer.Image"
+; Settings file next to the program (defaults for all users) and its section
+#ifndef IniName
+  #define IniName      "JPEGView.ini"
+#endif
+#ifndef IniSection
+  #define IniSection   "JPEGView"
+#endif
 
 ; AI models downloaded during setup
 #define BgModelUrl     "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx"
@@ -107,8 +114,42 @@ en.TaskConvertMenu=Add "Convert to" to the Explorer &right-click menu for images
 tr.TaskConvertMenu=Görüntülerin Explorer &sağ tık menüsüne "Dönüştür" ekle
 en.TaskFileAssoc=Register Lucid Viewer as a photo viewer (shown in Open with and Default apps)
 tr.TaskFileAssoc=Lucid Viewer'ı fotoğraf görüntüleyici olarak kaydet (Birlikte aç ve Varsayılan uygulamalar'da görünür)
-en.TaskAutostart=Start the screenshot tool (PrtScn) with Windows
-tr.TaskAutostart=Ekran görüntüsü aracını (PrtScn) Windows ile başlat
+en.PrefTitle=Preferences
+tr.PrefTitle=Tercihler
+en.PrefDesc=Choose how Lucid Viewer should work.
+tr.PrefDesc=Lucid Viewer'ın nasıl çalışacağını seçin.
+en.PrefSub=You can change all of these later in Tools > Settings.
+tr.PrefSub=Bunların hepsini daha sonra Araçlar > Ayarlar'dan değiştirebilirsiniz.
+en.PrefStartScreen=Show the start screen with recent and pinned photos when no image is open
+tr.PrefStartScreen=Görüntü açık değilken son açılan ve sabitlenen fotoğrafları gösteren giriş ekranını göster
+en.PrefRecent=Remember recently opened photos
+tr.PrefRecent=Son açılan fotoğrafları hatırla
+en.PrefScreenshot=Screenshot tool on the Print Screen key (starts with Windows, in the notification area)
+tr.PrefScreenshot=Print Screen tuşunda ekran görüntüsü aracı (Windows ile başlar, bildirim alanında)
+en.PrefShotHistory=Keep every screenshot, also the copied ones, and show them on the start screen
+tr.PrefShotHistory=Kopyalananlar dahil her ekran görüntüsünü sakla ve giriş ekranında göster
+en.PrefWheel=Mouse wheel goes to the next / previous image (Ctrl+wheel zooms)
+tr.PrefWheel=Fare tekerleği sonraki / önceki görüntüye geçsin (Ctrl+tekerlek yakınlaştırır)
+en.PrefSingle=Open images in the window that is already open
+tr.PrefSingle=Görüntüleri zaten açık olan pencerede aç
+en.PrefEsc=Esc key closes the window
+tr.PrefEsc=Esc tuşu pencereyi kapatsın
+en.ThemeTitle=Appearance
+tr.ThemeTitle=Görünüm
+en.ThemeDesc=Choose the colors and the layout of the window.
+tr.ThemeDesc=Pencerenin renklerini ve düzenini seçin.
+en.ThemeSub=Colors of the toolbar, side panel and menus:
+tr.ThemeSub=Araç çubuğu, yan panel ve menülerin renkleri:
+en.ThemeDark=Dark
+tr.ThemeDark=Koyu
+en.ThemeLight=Light
+tr.ThemeLight=Açık
+en.LayoutSub=Window layout:
+tr.LayoutSub=Pencere düzeni:
+en.LayoutFull=Toolbar, status bar and side panel (recommended)
+tr.LayoutFull=Araç çubuğu, durum çubuğu ve yan panel (önerilen)
+en.LayoutMinimal=Minimal: only the photo, everything on the right-click menu and the keyboard
+tr.LayoutMinimal=Sade: yalnızca fotoğraf, her şey sağ tık menüsünde ve klavyede
 en.RunDefaultApps=Open Windows settings to make Lucid Viewer the default photo viewer
 tr.RunDefaultApps=Lucid Viewer'ı varsayılan fotoğraf görüntüleyici yapmak için Windows ayarlarını aç
 en.DownloadFailed=The model could not be downloaded:%n%1%n%nSetup will continue. Lucid Viewer can download the model later, the first time you use the feature.
@@ -133,7 +174,6 @@ Name: "desktopicon";   Description: "{cm:TaskDesktop}";      GroupDescription: "
 Name: "startmenuicon"; Description: "{cm:TaskStartMenu}";    GroupDescription: "{cm:GroupShortcuts}"
 Name: "convertmenu";   Description: "{cm:TaskConvertMenu}";  GroupDescription: "{cm:GroupExplorer}"
 Name: "fileassoc";     Description: "{cm:TaskFileAssoc}";    GroupDescription: "{cm:GroupExplorer}"
-Name: "autostart";     Description: "{cm:TaskAutostart}";    GroupDescription: "{cm:GroupExplorer}"; Flags: unchecked
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,*.lib,*.exp,*.ilk,*.iobj,*.ipdb,*.log"; Flags: ignoreversion; Components: main
@@ -147,7 +187,7 @@ Name: "{autodesktop}\{#AppName}";  Filename: "{app}\{#AppExe}"; Tasks: desktopic
 
 [Registry]
 ; Uninstall must not leave the tray tool in the Run key
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#AutostartValue}"; ValueData: """{app}\{#AppExe}"" /tray"; Tasks: autostart; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#AutostartValue}"; ValueData: """{app}\{#AppExe}"" /tray"; Check: PrefOn(2); Flags: uninsdeletevalue
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "{#AutostartValue}"; Flags: uninsdeletevalue dontcreatekey
 
 ; ProgID used for all image types
@@ -186,6 +226,113 @@ Filename: "{app}\{#AppExe}"; Parameters: "/unregisterconvertmenu"; Flags: runhid
 [Code]
 var
   DownloadPage: TDownloadWizardPage;
+  PrefPage: TInputOptionWizardPage;
+  ThemePage: TInputOptionWizardPage;
+
+const
+  PREF_STARTSCREEN = 0;
+  PREF_RECENT = 1;
+  PREF_SCREENSHOT = 2;
+  PREF_SHOTHISTORY = 3;
+  PREF_WHEEL = 4;
+  PREF_SINGLE = 5;
+  PREF_ESC = 6;
+  PREF_COUNT = 7;
+
+function UserIni: String;
+begin
+  Result := ExpandConstant('{userappdata}\{#AppDataName}\{#IniName}');
+end;
+
+// Default of a check box: the choice of the last setup, else the user's current setting, else Default
+function PrefDefault(Index: Integer; const IniKey, TrueValue: String; Default: Boolean): Boolean;
+var
+  S: String;
+begin
+  S := GetPreviousData('Pref' + IntToStr(Index), '');
+  if S <> '' then
+    Result := S = '1'
+  else if (IniKey <> '') and FileExists(UserIni) and (GetIniString('{#IniSection}', IniKey, '', UserIni) <> '') then
+    Result := CompareText(GetIniString('{#IniSection}', IniKey, '', UserIni), TrueValue) = 0
+  else
+    Result := Default;
+end;
+
+function WindowsUsesLightTheme: Boolean;
+var
+  V: Cardinal;
+begin
+  Result := RegQueryDWordValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Themes\Personalize', 'AppsUseLightTheme', V) and (V = 1);
+end;
+
+function PrefOn(Index: Integer): Boolean;
+begin
+  if PrefPage = nil then
+    Result := False
+  else
+    Result := PrefPage.Values[Index];
+end;
+
+procedure RegisterPreviousData(PreviousDataKey: Integer);
+var
+  I: Integer;
+begin
+  for I := 0 to PREF_COUNT - 1 do
+    if PrefPage.Values[I] then
+      SetPreviousData(PreviousDataKey, 'Pref' + IntToStr(I), '1')
+    else
+      SetPreviousData(PreviousDataKey, 'Pref' + IntToStr(I), '0');
+  if ThemePage.CheckListBox.Checked[2] then
+    SetPreviousData(PreviousDataKey, 'Theme', 'light')
+  else
+    SetPreviousData(PreviousDataKey, 'Theme', 'dark');
+  if ThemePage.CheckListBox.Checked[5] then
+    SetPreviousData(PreviousDataKey, 'Layout', 'minimal')
+  else
+    SetPreviousData(PreviousDataKey, 'Layout', 'full');
+end;
+
+procedure SetIni(const Key, Value: String);
+begin
+  SetIniString('{#IniSection}', Key, Value, ExpandConstant('{app}\{#IniName}'));
+end;
+
+function BoolStr(B: Boolean): String;
+begin
+  if B then Result := 'true' else Result := 'false';
+end;
+
+// Writes the choices into the settings file next to the program. They are the defaults for every user,
+// the user's own settings file (Tools > Settings) still wins.
+procedure WritePreferences;
+begin
+  SetIni('ShowStartScreen', BoolStr(PrefOn(PREF_STARTSCREEN)));
+  SetIni('RememberRecentFiles', BoolStr(PrefOn(PREF_RECENT)));
+  if PrefOn(PREF_SCREENSHOT) then
+  begin
+    SetIni('ScreenshotHotkey', 'PrintScreen');
+    SetIni('ScreenshotTextHotkey', 'Shift+PrintScreen');
+  end else begin
+    SetIni('ScreenshotHotkey', '');
+    SetIni('ScreenshotTextHotkey', '');
+  end;
+  SetIni('ScreenshotHistory', BoolStr(PrefOn(PREF_SCREENSHOT) and PrefOn(PREF_SHOTHISTORY)));
+  SetIni('NavigateWithMouseWheel', BoolStr(PrefOn(PREF_WHEEL)));
+  SetIni('SingleInstance', BoolStr(PrefOn(PREF_SINGLE)));
+  SetIni('EscapeClosesWindow', BoolStr(PrefOn(PREF_ESC)));
+  if ThemePage.CheckListBox.Checked[2] then
+    SetIni('ChromeTheme', 'light')
+  else
+    SetIni('ChromeTheme', 'dark');
+  SetIni('ShowToolbar', BoolStr(not ThemePage.CheckListBox.Checked[5]));
+  SetIni('ShowSidePanel', BoolStr(not ThemePage.CheckListBox.Checked[5]));
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    WritePreferences;
+end;
 
 function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
 begin
@@ -193,7 +340,45 @@ begin
 end;
 
 procedure InitializeWizard;
+var
+  Light, Minimal: Boolean;
+  Theme: String;
 begin
+  PrefPage := CreateInputOptionPage(wpSelectTasks, CustomMessage('PrefTitle'), CustomMessage('PrefDesc'), CustomMessage('PrefSub'), False, False);
+  PrefPage.Add(CustomMessage('PrefStartScreen'));
+  PrefPage.Add(CustomMessage('PrefRecent'));
+  PrefPage.Add(CustomMessage('PrefScreenshot'));
+  PrefPage.AddEx(CustomMessage('PrefShotHistory'), 1, False);
+  PrefPage.Add(CustomMessage('PrefWheel'));
+  PrefPage.Add(CustomMessage('PrefSingle'));
+  PrefPage.Add(CustomMessage('PrefEsc'));
+  PrefPage.Values[PREF_STARTSCREEN] := PrefDefault(PREF_STARTSCREEN, 'ShowStartScreen', 'true', True);
+  PrefPage.Values[PREF_RECENT] := PrefDefault(PREF_RECENT, 'RememberRecentFiles', 'true', True);
+  PrefPage.Values[PREF_SCREENSHOT] := PrefDefault(PREF_SCREENSHOT, '', '', False);
+  PrefPage.Values[PREF_SHOTHISTORY] := PrefDefault(PREF_SHOTHISTORY, 'ScreenshotHistory', 'true', False);
+  PrefPage.Values[PREF_WHEEL] := PrefDefault(PREF_WHEEL, 'NavigateWithMouseWheel', 'true', False);
+  PrefPage.Values[PREF_SINGLE] := PrefDefault(PREF_SINGLE, 'SingleInstance', 'true', False);
+  PrefPage.Values[PREF_ESC] := PrefDefault(PREF_ESC, 'EscapeClosesWindow', 'true', False);
+
+  // Theme: last setup's choice, else the user's setting, else follow the Windows app theme
+  Theme := GetPreviousData('Theme', '');
+  if (Theme = '') and FileExists(UserIni) then
+    Theme := GetIniString('{#IniSection}', 'ChromeTheme', '', UserIni);
+  if Theme = '' then
+    Light := WindowsUsesLightTheme
+  else
+    Light := CompareText(Theme, 'light') = 0;
+  Minimal := GetPreviousData('Layout', 'full') = 'minimal';
+
+  // Two radio groups in one list: 0 colors, 1 dark, 2 light, 3 layout, 4 full, 5 minimal
+  ThemePage := CreateInputOptionPage(PrefPage.ID, CustomMessage('ThemeTitle'), CustomMessage('ThemeDesc'), '', False, False);
+  ThemePage.CheckListBox.AddGroup(CustomMessage('ThemeSub'), '', 0, nil);
+  ThemePage.CheckListBox.AddRadioButton(CustomMessage('ThemeDark'), '', 1, not Light, True, nil);
+  ThemePage.CheckListBox.AddRadioButton(CustomMessage('ThemeLight'), '', 1, Light, True, nil);
+  ThemePage.CheckListBox.AddGroup(CustomMessage('LayoutSub'), '', 0, nil);
+  ThemePage.CheckListBox.AddRadioButton(CustomMessage('LayoutFull'), '', 1, not Minimal, True, nil);
+  ThemePage.CheckListBox.AddRadioButton(CustomMessage('LayoutMinimal'), '', 1, Minimal, True, nil);
+
   DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
   DownloadPage.ShowBaseNameInsteadOfUrl := True;
 end;
