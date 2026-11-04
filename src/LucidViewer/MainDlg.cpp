@@ -5830,8 +5830,12 @@ static CString PickFolder(HWND hWnd, LPCTSTR sTitle, LPCTSTR sInitialFolder) {
 		pDialog->SetTitle(sTitle);
 	}
 	if (sInitialFolder != NULL && sInitialFolder[0] != 0) {
+		// loaded at runtime: WINVER of the project is older than the declaration of the function
+		typedef HRESULT(STDAPICALLTYPE* SHCreateItemFromParsingNameFunc)(PCWSTR, IBindCtx*, REFIID, void**);
+		SHCreateItemFromParsingNameFunc pCreateItem = (SHCreateItemFromParsingNameFunc)::GetProcAddress(
+			::GetModuleHandle(_T("shell32.dll")), "SHCreateItemFromParsingName");
 		IShellItem* pFolder = NULL;
-		if (SUCCEEDED(::SHCreateItemFromParsingName(sInitialFolder, NULL, IID_PPV_ARGS(&pFolder)))) {
+		if (pCreateItem != NULL && SUCCEEDED(pCreateItem(sInitialFolder, NULL, IID_PPV_ARGS(&pFolder))) && pFolder != NULL) {
 			pDialog->SetFolder(pFolder);
 			pFolder->Release();
 		}
