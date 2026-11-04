@@ -37,6 +37,8 @@ public:
 	bool GetShowStatusBar() { return m_bShowStatusBar; }
 	bool GetShowSidePanel() { return m_bShowSidePanel; }
 	bool GetSidePanelCollapsed() { return m_bSideCollapsed; }
+	bool GetShowFilmstrip() { return m_bShowFilmstrip; }
+	void SetShowFilmstrip(bool bShow);
 	void SetShowToolbar(bool bShow);
 	void SetShowStatusBar(bool bShow);
 	void SetShowSidePanel(bool bShow);
@@ -142,6 +144,11 @@ private:
 	// rectangles of the chrome parts in window coordinates
 	CRect m_windowRect, m_toolbarRect, m_statusBarRect, m_sidePanelRect;
 	bool m_bHoverFileDrag; // mouse over the file name of the status bar, it can be dragged to other applications
+	bool m_bShowFilmstrip; // thumbnails of the folder in the upper part of the status bar
+	std::vector<std::pair<CRect, CString>> m_filmstripCells; // window coordinates and file of the painted thumbnails
+	class CThumbnailCache* m_pThumbnails;
+	CRect GetFilmstripRect(); // upper part of the status bar rectangle, empty if not shown
+	void PaintFilmstrip(CDC& dc, const CRect& rect);
 
 	// The file name part of the status bar, dragging it drags the file
 	bool IsInFileDragArea(CPoint ptWindow);

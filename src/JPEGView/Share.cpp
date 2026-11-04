@@ -49,6 +49,19 @@ namespace Share {
 		}
 	}
 
+	HBITMAP GetThumbnail(LPCWSTR sFileName, int nSize) {
+		HBITMAP hBitmap = NULL;
+		IShellItemImageFactory* pFactory = NULL;
+		if (SUCCEEDED(::SHCreateItemFromParsingName(sFileName, NULL, IID_PPV_ARGS(&pFactory)))) {
+			SIZE size = { nSize, nSize };
+			if (FAILED(pFactory->GetImage(size, SIIGBF_BIGGERSIZEOK | SIIGBF_THUMBNAILONLY, &hBitmap))) {
+				hBitmap = NULL;
+			}
+			pFactory->Release();
+		}
+		return hBitmap;
+	}
+
 	bool DragFile(HWND hWnd, LPCWSTR sFileName) {
 		bool bSuccess = false;
 		::OleInitialize(NULL); // drag and drop needs OLE, does nothing if already initialized

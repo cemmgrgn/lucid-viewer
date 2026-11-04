@@ -140,6 +140,8 @@ public:
 	bool ChromeDarkTheme() { return m_bChromeDarkTheme; }
 	LPCTSTR ConvertCustomPresets() { return m_sConvertCustomPresets; }
 	LPCTSTR ConvertOutputFolder() { return m_sConvertOutputFolder; }
+	bool ShowFilmstrip() { return m_bShowFilmstrip; }
+	void SaveShowFilmstrip(bool bShow);
 
 	double ZoomPauseFactor() { return m_zoomPauseFactor; }  // while internally this is represented in doubles, using a whole number percent simplifies it for the user... configuring doubles is not user friendly at all
 
@@ -325,6 +327,7 @@ private:
 	bool m_bChromeDarkTheme;
 	CString m_sConvertCustomPresets;
 	CString m_sConvertOutputFolder;
+	bool m_bShowFilmstrip;
 
 	std::list<CUserCommand*> m_userCommands;
 	std::list<CUserCommand*> m_openWithCommands;

@@ -193,6 +193,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bChromeDarkTheme = GetString(_T("ChromeTheme"), _T("dark")).CompareNoCase(_T("light")) != 0;
 	m_sConvertCustomPresets = GetString(_T("ConvertCustomPresets"), _T(""));
 	m_sConvertOutputFolder = GetString(_T("ConvertOutputFolder"), _T(""));
+	m_bShowFilmstrip = GetBool(_T("ShowFilmstrip"), true);
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
 	m_bSaveWithoutPrompt = GetBool(_T("OverwriteOriginalFileWithoutSaveDialog"), false);
 	m_bCropWithoutPromptLosslessJPEG = GetBool(_T("CropWithoutPromptLosslessJPEG"), false);
@@ -570,6 +571,13 @@ void CSettingsProvider::SaveGeneralSettings(bool bDarkTheme, int nSidePanelWidth
 	m_sConvertOutputFolder = sConvertOutputFolder;
 	WriteString(_T("ConvertOutputFolder"), sConvertOutputFolder);
 
+	m_bUserINIExists = true;
+}
+
+void CSettingsProvider::SaveShowFilmstrip(bool bShow) {
+	MakeSureUserINIExists();
+	m_bShowFilmstrip = bShow;
+	WriteBool(_T("ShowFilmstrip"), bShow);
 	m_bUserINIExists = true;
 }
 

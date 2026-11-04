@@ -19,6 +19,8 @@
 #include "Share.h"
 #include <shellapi.h>
 #include <math.h>
+#include <map>
+#include <process.h>
 
 // Sizes in pixels at 96 DPI
 static const int MENUBAR_HEIGHT = 28; // first row: menu titles
@@ -168,6 +170,86 @@ static CString KeepTogether(LPCTSTR sText, LPCTSTR sBreakAt) {
 
 static int S(int nValue) { return HelpersGUI::ScaleToScreen(nValue); }
 
+static const int FILMSTRIP_HEIGHT = 76;
+static const int THUMBNAIL_SIZE = 96; // requested from the thumbnail cache, scaled down for painting
+
+// Thumbnails of the Windows thumbnail cache, loaded in a background thread. A loaded thumbnail repaints the window frame.
+class CThumbnailCache {
+public:
+	CThumbnailCache(HWND hWnd) {
+		m_hWnd = hWnd;
+		m_bStop = false;
+		::InitializeCriticalSection(&m_lock);
+		m_hEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+		m_hThread = (HANDLE)_beginthreadex(NULL, 0, ThreadProc, this, 0, NULL);
+	}
+	~CThumbnailCache() {
+		m_bStop = true;
+		::SetEvent(m_hEvent);
+		::WaitForSingleObject(m_hThread, 5000);
+		::CloseHandle(m_hThread);
+		::CloseHandle(m_hEvent);
+		for (auto& entry : m_cache) {
+			if (entry.second != NULL) ::DeleteObject(entry.second);
+		}
+		::DeleteCriticalSection(&m_lock);
+	}
+	// Returns the thumbnail if loaded, NULL otherwise. Loading is requested for the files given in the order of the list.
+	HBITMAP Get(const CString& sFile, bool& bLoaded) {
+		::EnterCriticalSection(&m_lock);
+		auto iter = m_cache.find(sFile);
+		bLoaded = iter != m_cache.end();
+		HBITMAP hBitmap = bLoaded ? iter->second : NULL;
+		::LeaveCriticalSection(&m_lock);
+		return hBitmap;
+	}
+	void Request(const std::vector<CString>& files) {
+		::EnterCriticalSection(&m_lock);
+		m_queue = files; // only the currently visible files are loaded
+		::LeaveCriticalSection(&m_lock);
+		::SetEvent(m_hEvent);
+	}
+private:
+	HWND m_hWnd;
+	volatile bool m_bStop;
+	CRITICAL_SECTION m_lock;
+	HANDLE m_hEvent, m_hThread;
+	std::map<CString, HBITMAP> m_cache;
+	std::vector<CString> m_queue;
+
+	static unsigned __stdcall ThreadProc(void* pParam) {
+		CThumbnailCache* pThis = (CThumbnailCache*)pParam;
+		::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+		while (!pThis->m_bStop) {
+			::WaitForSingleObject(pThis->m_hEvent, INFINITE);
+			for (;;) {
+				CString sFile;
+				::EnterCriticalSection(&pThis->m_lock);
+				while (!pThis->m_queue.empty() && sFile.IsEmpty()) {
+					CString sCandidate = pThis->m_queue.front();
+					pThis->m_queue.erase(pThis->m_queue.begin());
+					if (pThis->m_cache.find(sCandidate) == pThis->m_cache.end()) sFile = sCandidate;
+				}
+				::LeaveCriticalSection(&pThis->m_lock);
+				if (sFile.IsEmpty() || pThis->m_bStop) break;
+				HBITMAP hBitmap = Share::GetThumbnail(sFile, S(THUMBNAIL_SIZE));
+				::EnterCriticalSection(&pThis->m_lock);
+				if (pThis->m_cache.size() > 400) {
+					for (auto& entry : pThis->m_cache) {
+						if (entry.second != NULL) ::DeleteObject(entry.second);
+					}
+					pThis->m_cache.clear();
+				}
+				pThis->m_cache[sFile] = hBitmap;
+				::LeaveCriticalSection(&pThis->m_lock);
+				::RedrawWindow(pThis->m_hWnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_NOERASE | RDW_NOINTERNALPAINT);
+			}
+		}
+		::CoUninitialize();
+		return 0;
+	}
+};
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Public
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +269,8 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_nDragSlider = -1;
 	m_hitOrigin = CPoint(0, 0);
 	m_bHoverFileDrag = false;
+	m_bShowFilmstrip = sp.ShowFilmstrip();
+	m_pThumbnails = new CThumbnailCache(pMainDlg->GetHWND());
 
 	if (sp.ChromeDarkTheme()) {
 		CColors dark = { RGB(32, 32, 32), RGB(26, 26, 26), RGB(58, 58, 58), RGB(232, 232, 232), RGB(150, 150, 150),
@@ -290,6 +374,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 }
 
 CWindowChrome::~CWindowChrome() {
+	delete m_pThumbnails;
 	if (m_hTooltip != NULL) {
 		::DestroyWindow(m_hTooltip);
 	}
@@ -428,7 +513,7 @@ LRESULT CWindowChrome::HitTest(CPoint ptScreen) {
 		return (FindItem(pt) >= 0) ? HT_CHROME : HTCAPTION; // empty toolbar area moves the window
 	}
 	if (m_statusBarRect.PtInRect(pt)) {
-		return IsInFileDragArea(pt) ? HT_CHROME : HTCAPTION;
+		return (IsInFileDragArea(pt) || GetFilmstripRect().PtInRect(pt)) ? HT_CHROME : HTCAPTION;
 	}
 	if (m_sidePanelRect.PtInRect(pt)) {
 		return HT_CHROME;
@@ -477,7 +562,7 @@ void CWindowChrome::OnNCMouseMove(CPoint ptScreen) {
 
 bool CWindowChrome::IsInFileDragArea(CPoint ptWindow) {
 	CJPEGImage* pImage = m_pMainDlg->GetCurrentImage();
-	return m_statusBarRect.PtInRect(ptWindow) && ptWindow.x < m_statusBarRect.left + m_statusBarRect.Width() * 2 / 5 &&
+	return m_statusBarRect.PtInRect(ptWindow) && !GetFilmstripRect().PtInRect(ptWindow) && ptWindow.x < m_statusBarRect.left + m_statusBarRect.Width() * 2 / 5 &&
 		pImage != NULL && !pImage->IsClipboardImage() && m_pMainDlg->GetFileList() != NULL && m_pMainDlg->GetFileList()->Current() != NULL;
 }
 
@@ -500,6 +585,16 @@ void CWindowChrome::OnNCLButtonDown(CPoint ptScreen, bool bDoubleClick) {
 		if (nHit >= 0) {
 			CSideHit hit = m_sideHits[nHit]; // copy, painting rebuilds the list
 			ExecuteSideHit(hit, pt, bDoubleClick);
+		}
+		return;
+	}
+	if (GetFilmstripRect().PtInRect(pt)) {
+		for (const auto& cell : m_filmstripCells) {
+			if (cell.first.PtInRect(pt)) {
+				CString sFile = cell.second; // the cells are rebuilt when the new image is painted
+				m_pMainDlg->ShowFile(sFile);
+				break;
+			}
 		}
 		return;
 	}
@@ -647,7 +742,20 @@ int CWindowChrome::TrackOverflowMenu(const CRect& rectButton) {
 }
 
 int CWindowChrome::ToolbarHeight() { return S(MENUBAR_HEIGHT) + S(TOOLBAR_HEIGHT); }
-int CWindowChrome::StatusBarHeight() { return S(STATUSBAR_HEIGHT); }
+int CWindowChrome::StatusBarHeight() { return S(STATUSBAR_HEIGHT) + (m_bShowFilmstrip ? S(FILMSTRIP_HEIGHT) : 0); }
+
+CRect CWindowChrome::GetFilmstripRect() {
+	if (!m_bShowFilmstrip || m_statusBarRect.IsRectEmpty()) {
+		return CRect(0, 0, 0, 0);
+	}
+	return CRect(m_statusBarRect.left, m_statusBarRect.top, m_statusBarRect.right, m_statusBarRect.bottom - S(STATUSBAR_HEIGHT));
+}
+
+void CWindowChrome::SetShowFilmstrip(bool bShow) {
+	m_bShowFilmstrip = bShow;
+	CSettingsProvider::This().SaveShowFilmstrip(bShow);
+	UpdateFrame();
+}
 int CWindowChrome::SidePanelWidth() { return m_bSideCollapsed ? S(SIDE_COLLAPSED_WIDTH) : S(CSettingsProvider::This().SidePanelWidth()); }
 
 CPoint CWindowChrome::ScreenToWindow(CPoint ptScreen) {
@@ -1062,12 +1170,76 @@ CString CWindowChrome::GetStatusText() {
 	return sText;
 }
 
+void CWindowChrome::PaintFilmstrip(CDC& dc, const CRect& rect) {
+	m_filmstripCells.clear();
+	dc.FillSolidRect(&rect, m_colors.PanelBackground);
+	DrawHorizontalLine(dc, rect.left, rect.right, rect.top, m_colors.Border);
+	CFileList* pFileList = m_pMainDlg->GetFileList();
+	if (pFileList == NULL || pFileList->Size() == 0 || pFileList->IsSlideShowList()) {
+		return;
+	}
+	std::list<CFileDesc>& files = pFileList->GetFileList();
+	int nCurrent = pFileList->CurrentIndex();
+	int nCell = rect.Height() - S(8);
+	int nGap = S(4);
+	int nCount = (int)files.size();
+	int nVisible = max(1, (rect.Width() - nGap) / (nCell + nGap));
+	// the current image in the middle
+	int nFirst = max(0, min(nCurrent - nVisible / 2, nCount - nVisible));
+	int nLast = min(nCount - 1, nFirst + nVisible - 1);
+	int nX = rect.left + (rect.Width() - (nLast - nFirst + 1) * (nCell + nGap) + nGap) / 2;
+	std::vector<CString> missing;
+	int nIndex = 0;
+	for (const CFileDesc& file : files) {
+		if (nIndex > nLast) break;
+		if (nIndex >= nFirst) {
+			CRect cellRect(nX, rect.top + S(4), nX + nCell, rect.top + S(4) + nCell);
+			m_filmstripCells.push_back(std::make_pair(cellRect, file.GetName()));
+			bool bLoaded;
+			HBITMAP hThumbnail = m_pThumbnails->Get(file.GetName(), bLoaded);
+			if (!bLoaded) missing.push_back(file.GetName());
+			dc.FillSolidRect(&cellRect, m_colors.Background);
+			if (hThumbnail != NULL) {
+				BITMAP bitmapInfo;
+				::GetObject(hThumbnail, sizeof(bitmapInfo), &bitmapInfo);
+				double dScale = min((double)nCell / max(1, bitmapInfo.bmWidth), (double)nCell / max(1, abs(bitmapInfo.bmHeight)));
+				int nW = (int)(bitmapInfo.bmWidth * dScale), nH = (int)(abs(bitmapInfo.bmHeight) * dScale);
+				CDC memDC;
+				memDC.CreateCompatibleDC(dc);
+				HBITMAP hOld = memDC.SelectBitmap(hThumbnail);
+				dc.SetStretchBltMode(HALFTONE);
+				dc.StretchBlt(cellRect.left + (nCell - nW) / 2, cellRect.top + (nCell - nH) / 2, nW, nH, memDC, 0, 0, bitmapInfo.bmWidth, abs(bitmapInfo.bmHeight), SRCCOPY);
+				memDC.SelectBitmap(hOld);
+			}
+			if (nIndex == nCurrent) {
+				// frame around the current image
+				int nFrame = max(2, S(2));
+				dc.FillSolidRect(cellRect.left - nFrame, cellRect.top - nFrame, cellRect.Width() + 2 * nFrame, nFrame, m_colors.Accent);
+				dc.FillSolidRect(cellRect.left - nFrame, cellRect.bottom, cellRect.Width() + 2 * nFrame, nFrame, m_colors.Accent);
+				dc.FillSolidRect(cellRect.left - nFrame, cellRect.top, nFrame, cellRect.Height(), m_colors.Accent);
+				dc.FillSolidRect(cellRect.right, cellRect.top, nFrame, cellRect.Height(), m_colors.Accent);
+			}
+			nX += nCell + nGap;
+		}
+		nIndex++;
+	}
+	if (!missing.empty()) {
+		// the current image first, then the others
+		m_pThumbnails->Request(missing);
+	}
+}
+
 void CWindowChrome::PaintStatusBar(CDC& dc) {
-	dc.FillSolidRect(&m_statusBarRect, m_colors.Background);
-	DrawHorizontalLine(dc, m_statusBarRect.left, m_statusBarRect.right, m_statusBarRect.top, m_colors.Border);
+	CRect filmstripRect = GetFilmstripRect();
+	if (!filmstripRect.IsRectEmpty()) {
+		PaintFilmstrip(dc, filmstripRect);
+	}
+	CRect barRect(m_statusBarRect.left, m_statusBarRect.bottom - S(STATUSBAR_HEIGHT), m_statusBarRect.right, m_statusBarRect.bottom);
+	dc.FillSolidRect(&barRect, m_colors.Background);
+	DrawHorizontalLine(dc, barRect.left, barRect.right, barRect.top, m_colors.Border);
 	HFONT hOldFont = dc.SelectFont(m_hFont);
 	int nPadding = S(10);
-	CRect textRect(m_statusBarRect.left + nPadding, m_statusBarRect.top, m_statusBarRect.right - nPadding, m_statusBarRect.bottom);
+	CRect textRect(barRect.left + nPadding, barRect.top, barRect.right - nPadding, barRect.bottom);
 
 	// the right part shows the temporary message or the tooltip of the hovered toolbar button
 	CString sRight = m_sMessage;

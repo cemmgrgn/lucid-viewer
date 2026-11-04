@@ -200,6 +200,8 @@ public:
 	void ApplyAnnotations();
 	// True if colors were made transparent with the remove color tool
 	bool HasTransparency() { return !m_transparencyMask.empty(); }
+	// Shows the given file of the current folder (thumbnail strip)
+	void ShowFile(LPCTSTR sFileName) { OpenFile(sFileName, false); }
 	void SetCompareMode(bool bCompare);
 	// Called when the image processing parameters were changed from outside, e.g. by the side panel sliders
 	void OnImageProcessingChanged();

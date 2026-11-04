@@ -6,4 +6,6 @@ namespace Share {
 	bool ShareFile(HWND hWnd, LPCWSTR sFileName);
 	// Starts dragging the file to other applications (OLE drag and drop), returns after the drop
 	bool DragFile(HWND hWnd, LPCWSTR sFileName);
+	// Thumbnail of the file from the Windows thumbnail cache (as shown by Explorer), NULL on error. The caller deletes the bitmap.
+	HBITMAP GetThumbnail(LPCWSTR sFileName, int nSize);
 }
