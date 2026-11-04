@@ -445,6 +445,9 @@ void CSettingsProvider::ReadWriteableINISettings() {
 	else if (sSorting.CompareNoCase(_T("FileSize")) == 0) {
 		m_eSorting = Helpers::FS_FileSize;
 	}
+	else if (sSorting.CompareNoCase(_T("Rating")) == 0) {
+		m_eSorting = Helpers::FS_Rating;
+	}
 	else {
 		m_eSorting = Helpers::FS_LastModTime;
 	}
@@ -502,6 +505,8 @@ void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams,
 		sSorting = _T("Random");
 	} else if (eFileSorting == Helpers::FS_FileSize) {
 		sSorting = _T("FileSize");
+	} else if (eFileSorting == Helpers::FS_Rating) {
+		sSorting = _T("Rating");
 	}
 	WriteString(_T("FileDisplayOrder"), sSorting);
 

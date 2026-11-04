@@ -331,6 +331,13 @@
 #define IDM_UNDO			16450		// :KeyMap: undo the last operation (editing, drawing, crop, rotation, rating, metadata, delete)
 #define IDM_REDO			16460		// :KeyMap: redo the last undone operation
 #define IDM_SIGNATURE_DRAW	16470		// :KeyMap: draw a new signature in a window
+#define IDM_SORT_RATING		16480		// :KeyMap: sorting order star rating (most stars first)
+#define IDM_RATING_FILTER_0	16490		// :KeyMap: show all images of the folder
+#define IDM_RATING_FILTER_1	16491		// :KeyMap: show only images with 1 star or more
+#define IDM_RATING_FILTER_2	16492		// :KeyMap: show only images with 2 stars or more
+#define IDM_RATING_FILTER_3	16493		// :KeyMap: show only images with 3 stars or more
+#define IDM_RATING_FILTER_4	16494		// :KeyMap: show only images with 4 stars or more
+#define IDM_RATING_FILTER_5	16495		// :KeyMap: show only images with 5 stars
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

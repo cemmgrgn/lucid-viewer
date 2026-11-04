@@ -317,6 +317,8 @@ namespace HelpersGUI {
 			sText += CNLS::GetString(_T("Last modification date/time"));
 		}  else if (eFileSorting == Helpers::FS_FileSize) {
 			sText += CNLS::GetString(_T("File size"));
+		}  else if (eFileSorting == Helpers::FS_Rating) {
+			sText += CNLS::GetString(_T("Star rating"));
 		}else if (eFileSorting == Helpers::FS_Random) {
 			sText += CNLS::GetString(_T("Random"));
 		} else {

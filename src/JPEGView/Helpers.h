@@ -24,7 +24,8 @@ namespace Helpers {
 		FS_CreationTime,
 		FS_FileName,
 		FS_Random,
-		FS_FileSize
+		FS_FileSize,
+		FS_Rating
 	};
 
 	// Navigation mode over directories

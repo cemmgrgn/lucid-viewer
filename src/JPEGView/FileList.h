@@ -36,7 +36,11 @@ public:
 	const FILETIME& GetCreationTime() const { return m_creationTime; }
 
 	// Gets file size in bytes
-	__int64 GetFileSize() const { return m_fileSize; } 
+	__int64 GetFileSize() const { return m_fileSize; }
+
+	// Star rating (0-5) of the Windows property System.Rating, read once
+	int GetRating() const;
+	void SetRating(int nRating) { m_nRating = nRating; }
 
 private:
 	static Helpers::ESorting sm_eSorting;
@@ -48,6 +52,7 @@ private:
 	FILETIME m_creationTime;
 	int m_nRandomOrderNumber;
 	__int64 m_fileSize;
+	mutable int m_nRating; // -2: not read yet
 };
 
 
@@ -147,6 +152,14 @@ public:
 
 private:
 	static Helpers::ENavigationMode sm_eMode;
+public:
+	// Only files with at least this star rating are in the list (0: all files)
+	static int GetMinRating() { return sm_nMinRating; }
+	static void SetMinRating(int nMinRating) { sm_nMinRating = nMinRating; }
+	// Updates the cached rating of the file after it was changed
+	void UpdateRating(LPCTSTR sFileName, int nRating);
+private:
+	static int sm_nMinRating;
 
 	bool m_bDeleteHistory;
 	bool m_bIsSlideShowList;

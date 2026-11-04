@@ -794,3 +794,15 @@ The settings were saved. Most of them take effect after a restart of JPEGView. R
 Pixelate	Pikselleştir
 Hides an area (faces, names, numbers) with large blocks, drag a rectangle	Bir alanı (yüz, isim, numara) büyük bloklarla gizler; dikdörtgen sürükleyin
 Pixelate (hide an area)	Pikselleştir (alanı gizle)
+Star rating	Yıldız puanı
+Sort by star rating	Yıldıza göre sırala
+All images	Tüm görüntüler
+1 star or more	1 yıldız ve üstü
+2 stars or more	2 yıldız ve üstü
+3 stars or more	3 yıldız ve üstü
+4 stars or more	4 yıldız ve üstü
+Only 5 stars	Yalnızca 5 yıldız
+Sorted by star rating	Yıldıza göre sıralandı
+No image of this folder has so many stars.	Bu klasörde bu kadar yıldızlı görüntü yok.
+All %d images are shown	%d görüntünün tümü gösteriliyor
+%d images with %d stars or more are shown	%d görüntü gösteriliyor (%d yıldız ve üstü)

@@ -1431,7 +1431,8 @@ HMENU CMainDlg::LoadPreparedContextMenu(HMENU& hMenuRoot) {
 		(m_pFileList->GetSorting() == Helpers::FS_LastModTime) ? IDM_SORT_MOD_DATE :
 		(m_pFileList->GetSorting() == Helpers::FS_CreationTime) ? IDM_SORT_CREATION_DATE :
 		(m_pFileList->GetSorting() == Helpers::FS_FileName) ? IDM_SORT_NAME :
-		(m_pFileList->GetSorting() == Helpers::FS_Random) ? IDM_SORT_RANDOM : IDM_SORT_SIZE
+		(m_pFileList->GetSorting() == Helpers::FS_Random) ? IDM_SORT_RANDOM :
+		(m_pFileList->GetSorting() == Helpers::FS_Rating) ? IDM_SORT_RATING : IDM_SORT_SIZE
 		, MF_CHECKED);
 	::CheckMenuItem(hMenuOrdering, m_pFileList->IsSortedAscending() ? IDM_SORT_ASCENDING : IDM_SORT_DESCENDING, MF_CHECKED);
 	if (m_pFileList->GetSorting() == Helpers::FS_Random) {
@@ -1829,6 +1830,48 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 				(nCommand == IDM_SORT_SIZE) ? Helpers::FS_FileSize : Helpers::FS_FileName, m_pFileList->IsSortedAscending());
 			if (m_pEXIFDisplayCtl->IsActive() || m_bShowFileName) {
 				this->Invalidate(FALSE);
+			}
+			break;
+		case IDM_SORT_RATING:
+			// most stars first
+			m_pFileList->SetSorting(Helpers::FS_Rating, false);
+			m_pChrome->ShowMessage(CNLS::GetString(_T("Sorted by star rating")));
+			Invalidate(FALSE);
+			m_pChrome->Paint();
+			break;
+		case IDM_RATING_FILTER_0:
+		case IDM_RATING_FILTER_1:
+		case IDM_RATING_FILTER_2:
+		case IDM_RATING_FILTER_3:
+		case IDM_RATING_FILTER_4:
+		case IDM_RATING_FILTER_5:
+			if (m_pFileList != NULL && m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) {
+				int nOldMin = CFileList::GetMinRating();
+				int nMin = nCommand - IDM_RATING_FILTER_0;
+				CString sCurrent = m_pFileList->Current() != NULL ? m_pFileList->Current() : _T("");
+				HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+				CFileList::SetMinRating(nMin);
+				m_pFileList->Reload(sCurrent, false);
+				::SetCursor(hOldCursor);
+				if (m_pFileList->Size() == 0) {
+					// nothing to show, the filter is not used
+					CFileList::SetMinRating(nOldMin);
+					m_pFileList->Reload(sCurrent, false);
+					m_pChrome->ShowMessage(CNLS::GetString(_T("No image of this folder has so many stars.")));
+				} else {
+					CString sMessage;
+					if (nMin == 0) {
+						sMessage.Format(CNLS::GetString(_T("All %d images are shown")), m_pFileList->Size());
+					} else {
+						sMessage.Format(CNLS::GetString(_T("%d images with %d stars or more are shown")), m_pFileList->Size(), nMin);
+					}
+					m_pChrome->ShowMessage(sMessage);
+					if (m_pFileList->Current() == NULL || sCurrent.CompareNoCase(m_pFileList->Current()) != 0) {
+						GotoImage(POS_Current); // the shown image was filtered out, the first of the list is shown
+					}
+				}
+				Invalidate(FALSE);
+				m_pChrome->Paint();
 			}
 			break;
 		case IDM_SORT_ASCENDING:
@@ -4015,7 +4058,7 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27, MBAR_RATING = -28
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, IDM_RELOAD, MBAR_SEPARATOR,
@@ -4025,7 +4068,7 @@ static const int s_menuBarEdit[] = { MBAR_UNDO, MBAR_SEPARATOR, IDM_COPY, IDM_CO
 static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
 static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
-	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
+	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MBAR_RATING, MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
 static const int s_menuBarTools[] = { MBAR_SCREENSHOT, MBAR_SEPARATOR, MBAR_CONVERT, MBAR_CONVERT_FOLDER, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
 static const int s_menuBarHelp[] = { MBAR_HELP, MBAR_SHORTCUTS, IDM_ABOUT };
 
@@ -4082,11 +4125,19 @@ static void AppendMenuString(CKeyMap* pKeyMap, HMENU hMenu, UINT nCommand, LPCTS
 	::AppendMenu(hMenu, MF_STRING | (bChecked ? MF_CHECKED : 0) | (bEnabled ? 0 : MF_GRAYED), nCommand, sText);
 }
 
+// True if the item is a separator. GetMenuState() can not be used: for sub menus its high byte is the number of items.
+static bool IsMenuSeparator(HMENU hMenu, int nPos) {
+	MENUITEMINFO info{ 0 };
+	info.cbSize = sizeof(info);
+	info.fMask = MIIM_FTYPE;
+	return ::GetMenuItemInfo(hMenu, nPos, TRUE, &info) && (info.fType & MFT_SEPARATOR) != 0;
+}
+
 // Removes separators at the start, at the end and following each other
 static void RemoveSurplusSeparators(HMENU hMenu) {
 	bool bLastWasSeparator = true;
 	for (int i = 0; i < ::GetMenuItemCount(hMenu); i++) {
-		bool bIsSeparator = (::GetMenuState(hMenu, i, MF_BYPOSITION) & MF_SEPARATOR) != 0;
+		bool bIsSeparator = IsMenuSeparator(hMenu, i);
 		if (bIsSeparator && bLastWasSeparator) {
 			::DeleteMenu(hMenu, i, MF_BYPOSITION);
 			i--;
@@ -4095,7 +4146,7 @@ static void RemoveSurplusSeparators(HMENU hMenu) {
 		}
 	}
 	int nCount = ::GetMenuItemCount(hMenu);
-	if (nCount > 0 && (::GetMenuState(hMenu, nCount - 1, MF_BYPOSITION) & MF_SEPARATOR) != 0) {
+	if (nCount > 0 && IsMenuSeparator(hMenu, nCount - 1)) {
 		::DeleteMenu(hMenu, nCount - 1, MF_BYPOSITION);
 	}
 }
@@ -4169,6 +4220,20 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_EXPORT:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_EXPORT, _T("Export..."), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_RATING:
+				{
+					// sorting and filtering by the star rating
+					HMENU hRatingMenu = ::CreatePopupMenu();
+					bool bHasFolder = m_pFileList != NULL && m_pFileList->Size() > 0;
+					AppendMenuString(m_pKeyMap, hRatingMenu, IDM_SORT_RATING, _T("Sort by star rating"), m_pFileList != NULL && m_pFileList->GetSorting() == Helpers::FS_Rating, bHasFolder);
+					::AppendMenu(hRatingMenu, MF_SEPARATOR, 0, NULL);
+					LPCTSTR filters[6] = { _T("All images"), _T("1 star or more"), _T("2 stars or more"), _T("3 stars or more"), _T("4 stars or more"), _T("Only 5 stars") };
+					for (int i = 0; i <= 5; i++) {
+						AppendMenuString(m_pKeyMap, hRatingMenu, IDM_RATING_FILTER_0 + i, filters[i], CFileList::GetMinRating() == i, bHasFolder);
+					}
+					::AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)hRatingMenu, CNLS::GetString(_T("Star rating")));
+				}
 				break;
 			case MBAR_UNDO:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_UNDO, _T("Undo"), false, CanUndo());
@@ -4771,6 +4836,7 @@ void CMainDlg::SetRating(int nStars) {
 		m_sRatingFile = sFile;
 		m_nRating = nStars;
 		m_sMetadataFile.Empty();
+		m_pFileList->UpdateRating(sFile, nStars);
 		CString sMessage;
 		if (nStars == 0) {
 			sMessage = CNLS::GetString(_T("Rating removed"));

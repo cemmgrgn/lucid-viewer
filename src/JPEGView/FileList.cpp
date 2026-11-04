@@ -4,6 +4,9 @@
 #include "Helpers.h"
 #include "DirectoryWatcher.h"
 #include "Shlwapi.h"
+#include <propsys.h>
+#include <propkey.h>
+#include <shobjidl.h>
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -13,6 +16,7 @@
 Helpers::ESorting CFileDesc::sm_eSorting = Helpers::FS_LastModTime;
 bool CFileDesc::sm_bSortAscending = true;
 Helpers::ENavigationMode CFileList::sm_eMode = Helpers::NM_LoopDirectory;
+int CFileList::sm_nMinRating = 0;
 
 // Helper to add the current file of filefind object to the list
 static void AddToFileList(std::list<CFileDesc> & fileList, CFindFile & fileFind, LPCTSTR expectedExtension) {
@@ -77,6 +81,25 @@ CFileDesc::CFileDesc(const CString & sName, const FILETIME* lastModTime, const F
 	memcpy(&m_creationTime, creationTime, sizeof(FILETIME));
 	m_nRandomOrderNumber = rand();
 	m_fileSize = fileSize;
+	m_nRating = -2;
+}
+
+int CFileDesc::GetRating() const {
+	if (m_nRating == -2) {
+		m_nRating = 0;
+		IPropertyStore* pStore = NULL;
+		if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(m_sName, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
+			PROPVARIANT value;
+			::PropVariantInit(&value);
+			if (SUCCEEDED(pStore->GetValue(PKEY_Rating, &value)) && value.vt == VT_UI4) {
+				UINT n = value.ulVal;
+				m_nRating = (n == 0) ? 0 : (n < 13) ? 1 : (n < 38) ? 2 : (n < 63) ? 3 : (n < 88) ? 4 : 5;
+			}
+			::PropVariantClear(&value);
+			pStore->Release();
+		}
+	}
+	return m_nRating;
 }
 
 bool CFileDesc::SortAscending(const CFileDesc& other) const {
@@ -94,6 +117,8 @@ bool CFileDesc::SortAscending(const CFileDesc& other) const {
 		return m_nRandomOrderNumber < other.m_nRandomOrderNumber;
 	} else if (sm_eSorting == Helpers::FS_FileSize) {
 		return m_fileSize < other.m_fileSize;
+	} else if (sm_eSorting == Helpers::FS_Rating && GetRating() != other.GetRating()) {
+		return GetRating() < other.GetRating();
 	} else {
 		if (UseLogicalStringCompare()) {
 			// If the filename contains numbers, we want to sort the files
@@ -630,6 +655,12 @@ void CFileList::MoveIterToLast() {
 	m_iter = lastIter;
 }
 
+void CFileList::UpdateRating(LPCTSTR sFileName, int nRating) {
+	for (CFileDesc& file : m_fileList) {
+		if (file.GetName().CompareNoCase(sFileName) == 0) file.SetRating(nRating);
+	}
+}
+
 std::list<CFileDesc>::iterator CFileList::FindFile(const CString& sName) {
 	int nStart = sName.ReverseFind(_T('\\')) + 1;
 	if (nStart == sName.GetLength()) {
@@ -824,6 +855,9 @@ void CFileList::FindFiles() {
 				}
 			}
 		}
+	}
+	if (sm_nMinRating > 0) {
+		m_fileList.remove_if([](const CFileDesc& file) { return file.GetRating() < sm_nMinRating; });
 	}
 
 	m_fileList.sort();
