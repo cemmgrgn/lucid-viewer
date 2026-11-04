@@ -1,185 +1,165 @@
-[![Documentation](https://img.shields.io/badge/Docs-Outdated-yellowgreen)](https://htmlpreview.github.io/?https://github.com/sylikc/jpegview/blob/master/src/JPEGView/Config/readme.html) [![Localization Progress](https://img.shields.io/badge/Localized-91%25-blueviolet)](#Localization) [![Build x64](https://github.com/sylikc/jpegview/actions/workflows/build-release-x64.yml/badge.svg?branch=master)](https://github.com/sylikc/jpegview/actions/workflows/build-release-x64.yml) [![OS Support](https://img.shields.io/badge/Windows-XP%20%7C%207%20%7C%208%20%7C%2010%20%7C%2011-blue)](#) [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue)](https://github.com/sylikc/jpegview/blob/master/LICENSE.txt)
+<p align="center">
+  <img src="docs/brand/logo.svg" width="128" alt="Lucid Viewer logo">
+</p>
 
-[![Latest GitHub Release](https://img.shields.io/github/v/release/sylikc/jpegview?label=GitHub&style=social)](https://github.com/sylikc/jpegview/releases)[![Downloads](https://badgen.net/github/assets-dl/sylikc/jpegview?cache=3600&color=grey&label=)](#) [![WinGet](https://repology.org/badge/version-for-repo/winget/jpegview.svg?allow_ignored=1&header=WinGet)](https://winstall.app/apps/sylikc.JPEGView) [![PortableApps](https://img.shields.io/badge/PortableApps-Current-green)](https://portableapps.com/apps/graphics_pictures/jpegview_portable) [![Scoop](https://repology.org/badge/version-for-repo/scoop/jpegview-fork.svg?header=Scoop)](https://scoop.sh/#/apps?q=%22jpegview-fork%22) [![Chocolatey](https://img.shields.io/chocolatey/v/jpegview)](https://community.chocolatey.org/packages/jpegview) [![Npackd](https://repology.org/badge/version-for-repo/npackd_stable/jpegview.svg?allow_ignored=1&header=Npackd)](https://www.npackd.org/p/jpegview)
+<h1 align="center">Lucid Viewer</h1>
 
-# JPEGView - Image Viewer and Editor
+<p align="center">
+  <b>The image viewer that opens before you blink.</b><br>
+  Fast, free and open source viewer and light editor for Windows 10 and 11.
+</p>
 
-This is the official re-release of JPEGView.
+<p align="center">
+  <a href="https://github.com/cemmgrgn/lucid-viewer/releases/latest"><img src="https://img.shields.io/github/v/release/cemmgrgn/lucid-viewer?label=Download&color=3B82F6" alt="Latest release"></a>
+  <a href="https://github.com/cemmgrgn/lucid-viewer/actions"><img src="https://img.shields.io/github/actions/workflow/status/cemmgrgn/lucid-viewer/build.yml?label=Build" alt="Build"></a>
+  <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4" alt="Windows 10 and 11">
+  <a href="LICENSE.txt"><img src="https://img.shields.io/badge/License-GPL%20v2-8B5CF6" alt="GPL v2"></a>
+</p>
 
-## Description
+<p align="center">
+  <img src="docs/images/hero.png" width="900" alt="Lucid Viewer showing a photo with the info panel">
+</p>
 
-JPEGView is a lean, fast and highly configurable image viewer/editor with a minimal GUI.
+---
 
-### Formats Supported
+## Why Lucid Viewer
 
-JPEGView has built-in support the following formats:
+<!-- TODO: fill in measured numbers from tools/bench/startup_bench.py before release.
+     Every competitor cell below must be checked against the installed version listed in the footnote. -->
 
-* Popular: JPEG, GIF
-* Lossless: BMP, PNG, TIFF, PSD
-* Web: WEBP, JXL, HEIF/HEIC, AVIF
-* Legacy: TGA, WDP, HDP, JXR
-* Camera RAW formats:
-  * Adobe (DNG), Canon (CRW, CR2, CR3), Nikon (NEF, NRW), Sony (ARW, SR2)
-  * Olympus (ORF), Panasonic (RW2), Fujifilm (RAF)
-  * Sigma (X3F), Pentax (PEF), Minolta (MRW), Kodak (KDC, DCR)
-  * A full list is available here: [LibRaw supported cameras](https://www.libraw.org/supported-cameras)
+| | **Lucid Viewer** | Windows Photos | ImageGlass | IrfanView | XnView MP | FastStone |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| **Time to show a 24 MP JPEG** ¹ | **TBD ms** | TBD ms | TBD ms | TBD ms | TBD ms | TBD ms |
+| **Time to show a 24 MP PNG** ¹ | **TBD ms** | TBD ms | TBD ms | TBD ms | TBD ms | TBD ms |
+| **Memory with one photo open** | **TBD MB** | TBD MB | TBD MB | TBD MB | TBD MB | TBD MB |
+| **Install size** | **TBD MB** | TBD MB | TBD MB | TBD MB | TBD MB | TBD MB |
+| Open source | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| No ads, no account, no telemetry | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| HEIC, AVIF, JPEG XL, RAW without extra codecs | ✅ | ❌ | ✅ | ✅ ² | ✅ | ❌ |
+| Light editing (exposure, contrast, temperature, vignette…) | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
+| Before / after comparison slider | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Undo / redo for every edit | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Draw, annotate and sign | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
+| Copy text from images (OCR) | ✅ | ❌ | ❌ | ✅ ² | ❌ | ❌ |
+| AI background removal (offline) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Screenshot tool with markup and OCR | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Convert from Explorer's right-click menu | ✅ | ❌ | ❌ | ❌ | ✅ ³ | ❌ |
+| Batch convert a folder | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Star ratings, filter and sort by rating | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Edit and strip metadata (incl. GPS) | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| Find similar / duplicate photos | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Dark and light theme | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 
-Many additional formats are supported by Windows Imaging Component (WIC)
+<sub>
+¹ Time from starting the program until the image is on screen, median of 10 runs on the same PC, measured with
+<a href="tools/bench/startup_bench.py"><code>tools/bench/startup_bench.py</code></a>. Hardware and versions: TBD.<br>
+² With the official plug-in pack. ³ With the separate XnShell extension.
+</sub>
 
-### Basic Image Editor
+## Features
 
-Basic on-the-fly image processing is provided - allowing adjusting typical parameters:
+### Viewing
+- Opens JPEG, PNG, GIF, WebP, HEIC/HEIF, AVIF, JPEG XL, TIFF, BMP, PSD, QOI, TGA, JXR and camera RAW files (via LibRaw) out of the box.
+- Start screen with recent, pinned and screenshot photos instead of an empty window.
+- Filmstrip, smooth zoom, fullscreen, slideshow, multi-monitor support.
+- Info panel with histogram, EXIF summary and a full metadata view.
 
-* sharpness
-* color balance
-* rotation
-* perspective
-* contrast
-* local under-exposure/over-exposure
+<p align="center"><img src="docs/images/start-screen.png" width="800" alt="Start screen with recent and pinned photos"></p>
 
-### Other Features
+### Editing
+- Exposure, contrast, brightness, saturation, temperature, tint, sharpness, vignette and local contrast sliders, with an **Auto** button.
+- Before / after comparison with a draggable divider (<kbd>Ctrl</kbd>+<kbd>K</kbd>).
+- Crop with aspect ratios, straighten, perspective correction, resize, lossless JPEG rotation.
+- Undo and redo for everything, including deletes and metadata edits.
 
-* Small and fast, uses AVX2/SSE2 and up to 4 CPU cores
-* High quality resampling filter, preserving sharpness of images
-* Basic image processing tools can be applied realtime during viewing
-* Movie/Slideshow mode - to play folder of JPEGs as movie
+<p align="center"><img src="docs/images/edit.png" width="800" alt="Edit tab with sliders and the before/after divider"></p>
 
-# Installation
+### Draw and sign
+Pen, highlighter, rectangle, arrow, text and pixelate tools. Save your signature once and drop it on any document; move and resize it before it is burned in.
 
-## Official Releases
+<p align="center"><img src="docs/images/draw.png" width="800" alt="Drawing tools and a signature on a document"></p>
 
-Official releases will be made to [sylikc's GitHub Releases](https://github.com/sylikc/jpegview/releases) page.  Each release includes:
+### Copy text (OCR)
+Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd>: every word is highlighted, select with the mouse and copy. Uses the built-in Windows OCR, or the optional **PP-OCR** model for harder text.
 
-* **Archive Zip/7z** - Portable
-* **Windows Installer MSI** - For Installs
-* **Source code** - Build it yourself
+<p align="center"><img src="docs/images/ocr.png" width="800" alt="OCR overlay with selected words"></p>
 
-## Portable
+### Remove background
+One click removes the background with an on-device AI model and saves a transparent PNG. Nothing is uploaded.
 
-JPEGView _does not require installation_ to run.  Just **unzip, and run** either the 64-bit version, or the 32-bit version depending on which platform you're on.  It can save the settings to the extracted folder and run entirely portable.
+<p align="center"><img src="docs/images/remove-bg.png" width="800" alt="Photo with the background removed"></p>
 
-## MSI Installer
+### Screenshot tool
+<kbd>PrtScn</kbd> freezes the screen: pick a region or a window, annotate, pixelate, OCR, copy or save. A magnifier shows coordinates and pixel colors.
 
-For those who prefer to have JPEGView installed for All Users, a 32-bit/64-bit installer is available to download starting with v1.0.40.
+<p align="center"><img src="docs/images/screenshot-tool.png" width="800" alt="Screenshot tool with a selected region and toolbar"></p>
 
-(Unfortunately, I don't own a code signing certificate yet, so the MSI release is not signed.  Please verify checksums!)
+### Convert anywhere
+Right-click images in Explorer → **Convert to** → JPG, PNG, WebP, HEIC, PDF and more, with resize presets. Many files are converted in one go with a progress window. The same presets work from the command line:
 
-### WinGet
-
-If you're on Windows 11, or Windows 10 (build 1709 or later), you can also download it directly from the official [Microsoft WinGet tool](https://docs.microsoft.com/en-us/windows/package-manager/winget/) repository.  This downloads the latest MSI installer directly from GitHub for installation.
-
-Example Usage:
-
-C:\> `winget search jpegview`
 ```
-Name     Id              Version  Source
------------------------------------------
-JPEGView sylikc.JPEGView 1.1.43  winget
-```
-
-C:\> `winget install jpegview`
-```
-Found JPEGView [sylikc.JPEGView] Version 1.1.43
-This application is licensed to you by its owner.
-Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
-Downloading https://github.com/sylikc/jpegview/releases/download/v1.1.43/JPEGView64_en-us_1.1.43.msi
-  ██████████████████████████████  4.23 MB / 4.23 MB
-Successfully verified installer hash
-Starting package install...
-Successfully installed
-```
-
-## PortableApps
-
-Another option is to use the official [JPEGView on PortableApps](https://portableapps.com/apps/graphics_pictures/jpegview_portable) package.  The PortableApps launcher preserves user settings in a separate directory from the extracted application directory.  This release is signed.
-
-## Scoop
-
-[Scoop](https://scoop.sh/) is a Windows command-line installer and manager for portable applications.
-
-To install with Scoop, run the following commands:
-
-```shell
-scoop bucket add extras
-scoop install extras/jpegview-fork
+LucidViewer.exe /convert:fit1920:webp photo.jpg
 ```
 
-After installation, the configuration file is located at `%UserProfile%\scoop\persist\JPEGView-fork\JPEGView.ini`.
+<p align="center"><img src="docs/images/convert-menu.png" width="600" alt="Convert to submenu in Explorer"></p>
 
-## System Requirements
+### Organize
+Star ratings (keys <kbd>0</kbd>–<kbd>5</kbd>) stored in the file, filter and sort by rating, metadata editor that can strip your GPS location in one click, and a similar photo finder.
 
-* 64-bit version: Windows 7/8/10/11 64-bit or later
-* 32-bit version: Windows 7 or later
-  * A special _32-bit Windows XP SP2_ build is available, which supports most formats (except for formats added after v1.0.37.1, ex. Animated PNG, JXL, HEIC).  Other features and options are the same as the normal builds.
+<p align="center"><img src="docs/images/metadata.png" width="800" alt="Metadata panel"></p>
 
-## What's New
+### Make it yours
+Searchable settings page, a shortcut editor where you just press the new key, dark and light themes.
 
-* See what has changed in the [latest releases](https://github.com/sylikc/jpegview/releases)
-* Or Check the [CHANGELOG.txt](https://github.com/sylikc/jpegview/blob/master/CHANGELOG.txt) to review new features in detail.
+<p align="center">
+  <img src="docs/images/settings.png" width="420" alt="Settings window">
+  <img src="docs/images/shortcuts.png" width="420" alt="Keyboard shortcut editor">
+</p>
 
-# Localization
+## Install
 
-By default, the language is auto-detected to match your Windows Locale.  All the text in the menus and user interface should show in your language.  To override the auto-detection, manually set `Language` option in `JPEGView.ini`
+**Installer (recommended):** download `LucidViewer-Setup-x64.exe` from the [latest release](https://github.com/cemmgrgn/lucid-viewer/releases/latest). During setup you can choose:
 
-JPEGView is currently translated/localized to 28 languages:
+- Desktop and Start menu shortcuts *(on by default)*
+- Explorer right-click **Convert to** menu *(on by default)*
+- File associations
+- Optional AI models, downloaded during setup: background removal, enhanced OCR
 
-| INI Option | Language |
-| ---------- | -------- |
-| be | Belarusian |
-| bg | Bulgarian |
-| cs | Czech |
-| de | German |
-| el | Greek, Modern |
-| es-ar | Spanish (Argentina) |
-| es | Spanish |
-| eu | Basque |
-| fi | Finnish |
-| fr | French (Français) |
-| hu | Hungarian |
-| it | Italian |
-| ja | Japanese (日本語) |
-| ko | Korean (한국어) |
-| pl | Polish |
-| pt-br | Portuguese (Brazilian) |
-| pt | Portuguese |
-| ro | Romanian |
-| ru | Russian (Русский) |
-| sk | Slovak |
-| sl | Slovenian (Slovenščina) |
-| sr | Serbian (српски) |
-| sv | Swedish |
-| ta | Tamil |
-| tr | Turkish (Türkçe) |
-| uk | Ukrainian (Українська) |
-| zh-tw | Chinese, Traditional (繁體中文) |
-| zh | Chinese, Simplified (简体中文) |
+**Portable:** download the `.zip`, extract it anywhere and run `LucidViewer.exe`. Settings are kept next to the program when the folder is writable.
 
-See the [Localization wiki page](https://github.com/sylikc/jpegview/wiki/Localization#localization-status) for translation status for each language.
+Requires Windows 10 version 1809 or later, 64-bit.
 
-# Help / Documentation
+## Keyboard shortcuts
 
-The JPEGView documentation is a little out of the date at the moment, but should still give a good summary of the features.
+| Key | Action | Key | Action |
+|---|---|---|---|
+| <kbd>←</kbd> <kbd>→</kbd> | Previous / next image | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> | Undo / redo |
+| <kbd>F11</kbd> | Fullscreen | <kbd>Ctrl</kbd>+<kbd>K</kbd> | Before / after |
+| <kbd>F2</kbd> | Info panel | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | Copy text (OCR) |
+| <kbd>0</kbd>–<kbd>5</kbd> | Star rating | <kbd>Alt</kbd>+<kbd>Enter</kbd> | Metadata |
+| <kbd>Del</kbd> | Move to Recycle Bin | <kbd>PrtScn</kbd> | Screenshot tool |
+| <kbd>Alt</kbd>+<kbd>Home</kbd> | Start screen | <kbd>F1</kbd> | All shortcuts |
 
-This [readme.html](https://htmlpreview.github.io/?https://github.com/sylikc/jpegview/blob/master/src/JPEGView/Config/readme.html) is part of the JPEGView package.
+All shortcuts can be changed in **Help → Keyboard shortcuts**.
 
-# Brief History
+## Building from source
 
-This GitHub repo continues the legacy (is a "fork") of the excellent project [JPEGView by David Kleiner](https://sourceforge.net/projects/jpegview/).  Unfortunately, starting in 2020, the SourceForge project has essentially been abandoned, with the last update being [2018-02-24 (1.0.37)](https://sourceforge.net/projects/jpegview/files/jpegview/).  It's an excellent lightweight image viewer that I use almost daily!
+Visual Studio 2022 or 2026 with the *Desktop development with C++* workload (MSVC, ATL, Windows 11 SDK).
 
-The starting point for this repo was a direct clone from SourceForge SVN to GitHub Git.  By continuing this way, it retains all previous commits and all original author comments.
+```
+git clone https://github.com/cemmgrgn/lucid-viewer.git
+cd lucid-viewer
+msbuild src\LucidViewer.sln /p:Configuration=Release /p:Platform=x64
+```
 
-I'm hoping with this project, some devs might help me keep the project alive!  It's been awhile, and could use some new features or updates.  Looking forward to the community making suggestions, and devs will help with some do pull requests as some of the image code is quite a learning curve for me to pick it up. -sylikc
+The installer is built with [Inno Setup 6](https://jrsoftware.org/isinfo.php): `iscc installer\LucidViewer.iss`. See [docs/BUILDING.md](docs/BUILDING.md) for details.
 
-## Special Thanks
+## Credits
 
-Special thanks to [qbnu](https://github.com/qbnu) for adding additional codec support!
-* Animated WebP
-* Animated PNG
-* JPEG XL with animation support
-* HEIF/HEIC/AVIF support
-* QOI support
-* ICC Profile support for WebP, JPEG XL, HEIF/HEIC, AVIF
-* LibRaw support (all updated RAW formats, such as CR3)
-* Photoshop PSD support
+Lucid Viewer started as a fork of **JPEGView** and keeps its fast image pipeline at its core. Thanks to David Kleiner, the original author, to [sylikc](https://github.com/sylikc/jpegview) who maintained the re-release, to [qbnu](https://github.com/qbnu/jpegview) for the updated codecs, and to every JPEGView translator and contributor.
 
-Thanks to all the _translators_ which keep JPEGView strings up-to-date in different languages!  See [CHANGELOG.txt](https://github.com/sylikc/jpegview/blob/master/CHANGELOG.txt) to find credits for translators at each release!
+Third-party libraries and models are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## License
+
+GNU General Public License v2.0 or later, see [LICENSE.txt](LICENSE.txt).

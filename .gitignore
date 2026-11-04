@@ -39,3 +39,8 @@ ipch/
 
 # Visual Studio upgrade reports
 UpgradeLog*.htm
+
+# Installer output
+installer/Output/
+# Benchmark results
+tools/bench/*.jsonl

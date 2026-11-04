@@ -24,6 +24,17 @@ namespace BackgroundRemoval {
 	static const int MODEL_SIZE = 320; // input size of U2-Net
 
 	static std::wstring GetModelPath() {
+		// The installer puts the model next to the program (models\u2net.onnx), use that copy when it is there
+		wchar_t sExePath[MAX_PATH];
+		DWORD nLen = ::GetModuleFileNameW(NULL, sExePath, MAX_PATH);
+		if (nLen > 0 && nLen < MAX_PATH) {
+			std::wstring sInstalled(sExePath);
+			sInstalled = sInstalled.substr(0, sInstalled.find_last_of(L'\\') + 1) + L"models\\u2net.onnx";
+			WIN32_FILE_ATTRIBUTE_DATA data;
+			if (::GetFileAttributesExW(sInstalled.c_str(), GetFileExInfoStandard, &data) && (data.nFileSizeLow > 1000000 || data.nFileSizeHigh > 0)) {
+				return sInstalled;
+			}
+		}
 		wchar_t* sLocalAppData = NULL;
 		std::wstring sPath;
 		if (SUCCEEDED(::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &sLocalAppData))) {
