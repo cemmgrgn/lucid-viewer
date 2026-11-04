@@ -10,7 +10,7 @@ namespace Gdiplus { class Graphics; }
 class CAnnotations
 {
 public:
-	enum ETool { TOOL_NONE, TOOL_PEN, TOOL_HIGHLIGHTER, TOOL_RECTANGLE, TOOL_ARROW, TOOL_TEXT };
+	enum ETool { TOOL_NONE, TOOL_PEN, TOOL_HIGHLIGHTER, TOOL_RECTANGLE, TOOL_ARROW, TOOL_TEXT, TOOL_REMOVE_COLOR };
 
 	CAnnotations();
 
@@ -43,6 +43,9 @@ public:
 	bool HasSignature();
 	// Inserts the signature with the given width (image pixels) centered at the given point
 	bool InsertSignature(float fCenterX, float fCenterY, float fWidth);
+
+	// Writes 32 bpp BGRA pixels with the alpha values of the mask (0: transparent) as PNG, returns false on error
+	static bool SaveTransparentPNG(LPCTSTR sFileName, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight);
 
 	// Asks for the text of the text tool, returns false if cancelled or empty
 	static bool AskForText(HWND hParent, LPCTSTR sTitle, LPCTSTR sOK, LPCTSTR sCancel, CString& sText);

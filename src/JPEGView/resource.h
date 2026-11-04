@@ -314,6 +314,8 @@
 #define IDM_TOGGLE_CROP_TOOL	16280	// :KeyMap: crop tool on/off, the left mouse button selects the crop rectangle while on
 #define IDM_SHARE	16290				// :KeyMap: share the current file with the Windows share window
 #define IDM_EXPORT	16300				// :KeyMap: export window with format, quality, size and size estimate
+#define IDM_SAVE_TRANSPARENT	16310	// :KeyMap: save the image with the removed colors as transparent PNG
+#define IDM_UNDO_TRANSPARENCY	16320	// :KeyMap: restore the colors removed with the remove color tool
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

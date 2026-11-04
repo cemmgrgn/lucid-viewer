@@ -198,6 +198,8 @@ public:
 	bool IsDrawMode();
 	// Draws the drawings into the original pixels of the image
 	void ApplyAnnotations();
+	// True if colors were made transparent with the remove color tool
+	bool HasTransparency() { return !m_transparencyMask.empty(); }
 	void SetCompareMode(bool bCompare);
 	// Called when the image processing parameters were changed from outside, e.g. by the side panel sliders
 	void OnImageProcessingChanged();
@@ -386,6 +388,11 @@ private:
 	volatile LONG m_nRunningConversions;
 	bool m_bCompareMode;
 	CAnnotations* m_pAnnotations; // drawings over the current image
+	std::vector<uint8> m_transparencyMask; // alpha per original pixel (0: removed) of the remove color tool, empty if not used
+	std::vector<uint8> m_transparencyBackup; // original pixels before the first removed color
+	// Makes the area around the image point with similar color transparent, shown as checker board
+	void RemoveColorAt(float fX, float fY);
+	void ClearTransparency(bool bRestorePixels);
 	CString m_sRatingFile; // file of the cached rating
 	bool m_bCropTool;
 	bool m_bDragOutPending; // left button pressed on an image fitting the window, moving drags the file out

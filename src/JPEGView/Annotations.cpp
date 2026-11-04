@@ -302,3 +302,35 @@ bool CAnnotations::AskForText(HWND hParent, LPCTSTR sTitle, LPCTSTR sOK, LPCTSTR
 	::DeleteObject(hFont);
 	return input.OK && !sText.IsEmpty();
 }
+
+bool CAnnotations::SaveTransparentPNG(LPCTSTR sFileName, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight) {
+	Gdiplus::Bitmap bitmap(nWidth, nHeight, PixelFormat32bppARGB);
+	Gdiplus::BitmapData data;
+	Gdiplus::Rect rect(0, 0, nWidth, nHeight);
+	if (bitmap.LockBits(&rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &data) != Gdiplus::Ok) {
+		return false;
+	}
+	const unsigned char* pSource = (const unsigned char*)pBGRA;
+	for (int y = 0; y < nHeight; y++) {
+		unsigned char* pTarget = (unsigned char*)data.Scan0 + (size_t)y * data.Stride;
+		for (int x = 0; x < nWidth; x++) {
+			size_t nIndex = (size_t)y * nWidth + x;
+			pTarget[x * 4] = pSource[nIndex * 4];
+			pTarget[x * 4 + 1] = pSource[nIndex * 4 + 1];
+			pTarget[x * 4 + 2] = pSource[nIndex * 4 + 2];
+			pTarget[x * 4 + 3] = pMask[nIndex];
+		}
+	}
+	bitmap.UnlockBits(&data);
+	UINT nEncoders = 0, nSize = 0;
+	Gdiplus::GetImageEncodersSize(&nEncoders, &nSize);
+	std::vector<BYTE> buffer(nSize);
+	Gdiplus::ImageCodecInfo* pEncoders = (Gdiplus::ImageCodecInfo*)&buffer[0];
+	Gdiplus::GetImageEncoders(nEncoders, nSize, pEncoders);
+	for (UINT i = 0; i < nEncoders; i++) {
+		if (wcscmp(pEncoders[i].MimeType, L"image/png") == 0) {
+			return bitmap.Save(sFileName, &pEncoders[i].Clsid, NULL) == Gdiplus::Ok;
+		}
+	}
+	return false;
+}

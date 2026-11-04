@@ -638,3 +638,10 @@ Estimated size: calculating...	Tahmini boyut: hesaplanıyor...
 Estimated size:	Tahmini boyut:
 This format can not be written.	Bu biçim yazılamıyor.
 The image was exported.	Görüntü dışa aktarıldı.
+Remove color	Rengi sil
+Click on a color to make the connected area transparent, the width sets the tolerance	Bağlı alanı saydam yapmak için bir renge tıkla, kalınlık toleransı belirler
+Save as transparent PNG...	Saydam PNG olarak kaydet...
+Saves the image with the removed colors as transparent PNG	Silinen renkleri saydam olarak PNG kaydeder
+Restore removed colors	Silinen renkleri geri getir
+The transparent image was saved.	Saydam görüntü kaydedildi.
+%d pixels made transparent. Save them with 'Save as transparent PNG'.	%d piksel saydam yapıldı. 'Saydam PNG olarak kaydet' ile kaydedin.

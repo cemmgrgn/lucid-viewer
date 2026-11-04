@@ -1529,6 +1529,7 @@ int CWindowChrome::PaintDrawTab(CDC& dc, int nWidth, int nY) {
 		{ _T("Rectangle"), CAnnotations::TOOL_RECTANGLE, _T("Draw a rectangle") },
 		{ _T("Arrow"), CAnnotations::TOOL_ARROW, _T("Draw an arrow") },
 		{ _T("Text"), CAnnotations::TOOL_TEXT, _T("Click on the image to write a text") },
+		{ _T("Remove color"), CAnnotations::TOOL_REMOVE_COLOR, _T("Click on a color to make the connected area transparent, the width sets the tolerance") },
 		{ _T("Off"), CAnnotations::TOOL_NONE, _T("No tool, the mouse pans and selects again") },
 	};
 	int nColumnWidth = (nInnerWidth - 2 * S(6)) / 3;
@@ -1540,6 +1541,7 @@ int CWindowChrome::PaintDrawTab(CDC& dc, int nWidth, int nY) {
 		PaintSideButton(dc, buttonRect, CNLS::GetString(tools[i].Text), pAnnotations->GetTool() == tools[i].Tool, bHover, true);
 		if (i % 3 == 2) nY += nButtonHeight + S(6);
 	}
+	if ((sizeof(tools) / sizeof(tools[0])) % 3 != 0) nY += nButtonHeight + S(6);
 	nY += S(6);
 
 	// colors
@@ -1581,6 +1583,8 @@ int CWindowChrome::PaintDrawTab(CDC& dc, int nWidth, int nY) {
 		{ _T("Save pen strokes as signature"), IDM_SIGNATURE_SAVE, bHasDrawing, _T("Write your signature with the pen first") },
 		{ _T("Insert signature"), IDM_SIGNATURE_INSERT, bHasImage && pAnnotations->HasSignature(), NULL },
 		{ _T("Draw into the image"), IDM_ANNOTATION_APPLY, bHasDrawing, _T("Saving the image does this too") },
+		{ _T("Save as transparent PNG..."), IDM_SAVE_TRANSPARENT, m_pMainDlg->HasTransparency(), _T("Saves the image with the removed colors as transparent PNG") },
+		{ _T("Restore removed colors"), IDM_UNDO_TRANSPARENCY, m_pMainDlg->HasTransparency(), NULL },
 		{ _T("Save processed image..."), IDM_SAVE, bHasImage, NULL },
 	};
 	for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {

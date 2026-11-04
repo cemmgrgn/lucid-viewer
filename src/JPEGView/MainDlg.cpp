@@ -821,6 +821,11 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	if (IsDrawMode() && !isCropping) {
 		float fX = (float)pointClicked.x, fY = (float)pointClicked.y;
 		ScreenToImage(fX, fY);
+		if (m_pAnnotations->GetTool() == CAnnotations::TOOL_REMOVE_COLOR) {
+			::ReleaseCapture();
+			RemoveColorAt(fX, fY);
+			return 0;
+		}
 		if (m_pAnnotations->GetTool() == CAnnotations::TOOL_TEXT) {
 			::ReleaseCapture();
 			CString sText;
@@ -2410,6 +2415,30 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_SAVE_TRANSPARENT:
+			if (m_pCurrentImage != NULL && HasTransparency() && m_pCurrentImage->OriginalPixels() != NULL) {
+				LPCTSTR sCurrent = m_pFileList->Current();
+				CString sProposal = (sCurrent != NULL && !m_pCurrentImage->IsClipboardImage()) ? CString(sCurrent) : CString(_T("image"));
+				int nDot = sProposal.ReverseFind(_T('.'));
+				if (nDot > sProposal.ReverseFind(_T('\\'))) sProposal = sProposal.Left(nDot);
+				sProposal += _T("_transparent.png");
+				CString sFileName;
+				int nFilterIndex = 1;
+				if (HelpersGUI::ShowFileDialog(m_hWnd, true, _T("PNG (*.png)|*.png|"), _T("png"), sProposal, NULL, nFilterIndex, sFileName)) {
+					HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+					bool bSuccess = CAnnotations::SaveTransparentPNG(sFileName, m_pCurrentImage->OriginalPixels(), &m_transparencyMask[0],
+						m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight());
+					::SetCursor(hOldCursor);
+					m_pFileList->Reload();
+					m_pChrome->ShowMessage(CNLS::GetString(bSuccess ? _T("The transparent image was saved.") : _T("Error writing file to disk!")));
+				}
+			}
+			break;
+		case IDM_UNDO_TRANSPARENCY:
+			ClearTransparency(true);
+			Invalidate(FALSE);
+			m_pChrome->Paint();
+			break;
 		case IDM_EXPORT:
 			if (m_pCurrentImage != NULL) {
 				MouseOn();
@@ -3422,6 +3451,7 @@ void CMainDlg::ExchangeProcessingParams() {
 
 void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow) {
 	m_pAnnotations->Clear(); // drawings belong to the image they were made on
+	ClearTransparency(false);
 	UpdateWindowTitle();
 	InvalidateHelpDlg();
 	m_pDirectoryWatcher->SetCurrentFile(CurrentFileName(false));
@@ -4444,5 +4474,74 @@ void CMainDlg::SetRating(int nStars) {
 	} else {
 		m_pChrome->ShowMessage(CNLS::GetString(_T("The rating could not be saved in this file format.")));
 	}
+	m_pChrome->Paint();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Remove color tool (transparent background)
+///////////////////////////////////////////////////////////////////////////////////
+
+void CMainDlg::ClearTransparency(bool bRestorePixels) {
+	if (bRestorePixels && m_pCurrentImage != NULL && !m_transparencyBackup.empty()) {
+		uint8* pPixels = (uint8*)m_pCurrentImage->GetOriginalPixelsForWriting();
+		size_t nBytes = (size_t)m_pCurrentImage->OrigWidth() * m_pCurrentImage->OrigHeight() * 4;
+		if (pPixels != NULL && m_transparencyBackup.size() == nBytes) {
+			memcpy(pPixels, &m_transparencyBackup[0], nBytes);
+		}
+	}
+	std::vector<uint8>().swap(m_transparencyMask);
+	std::vector<uint8>().swap(m_transparencyBackup);
+}
+
+void CMainDlg::RemoveColorAt(float fX, float fY) {
+	if (m_pCurrentImage == NULL) {
+		return;
+	}
+	int nWidth = m_pCurrentImage->OrigWidth(), nHeight = m_pCurrentImage->OrigHeight();
+	int nStartX = (int)fX, nStartY = (int)fY;
+	if (nStartX < 0 || nStartY < 0 || nStartX >= nWidth || nStartY >= nHeight) {
+		return;
+	}
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	uint8* pPixels = (uint8*)m_pCurrentImage->GetOriginalPixelsForWriting();
+	if (pPixels == NULL) {
+		::SetCursor(hOldCursor);
+		return;
+	}
+	size_t nPixels = (size_t)nWidth * nHeight;
+	if (m_transparencyMask.size() != nPixels) {
+		m_transparencyMask.assign(nPixels, 255);
+		m_transparencyBackup.assign(pPixels, pPixels + nPixels * 4);
+	}
+	// the width buttons of the drawing tools select the tolerance
+	int nTolerance = max(6, min(90, m_pAnnotations->GetWidth() * 5));
+	const uint8* pSeed = &m_transparencyBackup[((size_t)nStartY * nWidth + nStartX) * 4];
+	int nSeedB = pSeed[0], nSeedG = pSeed[1], nSeedR = pSeed[2];
+	// flood fill over the connected pixels of similar color, compared with the original colors
+	std::vector<int> stack;
+	stack.push_back(nStartY * nWidth + nStartX);
+	int nRemoved = 0;
+	while (!stack.empty()) {
+		int nIndex = stack.back();
+		stack.pop_back();
+		if (m_transparencyMask[nIndex] == 0) continue;
+		const uint8* p = &m_transparencyBackup[(size_t)nIndex * 4];
+		if (abs(p[0] - nSeedB) > nTolerance || abs(p[1] - nSeedG) > nTolerance || abs(p[2] - nSeedR) > nTolerance) continue;
+		m_transparencyMask[nIndex] = 0;
+		nRemoved++;
+		int x = nIndex % nWidth, y = nIndex / nWidth;
+		// checker board for the transparent pixels
+		uint8 nChecker = (((x >> 4) + (y >> 4)) & 1) ? 204 : 255;
+		pPixels[(size_t)nIndex * 4] = pPixels[(size_t)nIndex * 4 + 1] = pPixels[(size_t)nIndex * 4 + 2] = nChecker;
+		if (x > 0) stack.push_back(nIndex - 1);
+		if (x < nWidth - 1) stack.push_back(nIndex + 1);
+		if (y > 0) stack.push_back(nIndex - nWidth);
+		if (y < nHeight - 1) stack.push_back(nIndex + nWidth);
+	}
+	::SetCursor(hOldCursor);
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(_T("%d pixels made transparent. Save them with 'Save as transparent PNG'.")), nRemoved);
+	m_pChrome->ShowMessage(sMessage);
+	Invalidate(FALSE);
 	m_pChrome->Paint();
 }
