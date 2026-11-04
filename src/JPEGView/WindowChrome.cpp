@@ -1637,6 +1637,8 @@ int CWindowChrome::PaintMetadata(CDC& dc, int nWidth, int nY) {
 			bHasWritable = true;
 			bHasLocation = bHasLocation || entry.Group == Metadata::GROUP_LOCATION;
 		}
+		// the location in the EXIF block of PNG and WebP files is removed by JPEGView itself
+		if (entry.Embedded && entry.Present && entry.Group == Metadata::GROUP_LOCATION) bHasLocation = true;
 		if (entry.Group != nGroup) {
 			nGroup = entry.Group;
 			nY += (i > 0) ? S(10) : 0;

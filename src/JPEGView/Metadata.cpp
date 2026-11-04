@@ -32,6 +32,14 @@ static LPCTSTR s_descriptionNames[] = {
 
 static const int MAX_DISPLAY_LENGTH = 300;
 
+static const struct { LPCTSTR Canonical; LPCTSTR Name; } s_fallbackNames[] = {
+	{ _T("System.GPS.LatitudeRef"), _T("Latitude direction") }, { _T("System.GPS.LongitudeRef"), _T("Longitude direction") },
+	{ _T("System.GPS.AltitudeRef"), _T("Altitude reference") }, { _T("System.GPS.Date"), _T("GPS time") },
+	{ _T("System.GPS.DestBearing"), _T("Direction of the target") }, { _T("System.GPS.DestBearingRef"), _T("Direction of the target reference") },
+	{ _T("System.GPS.ImgDirection"), _T("Camera direction") }, { _T("System.GPS.ImgDirectionRef"), _T("Camera direction reference") },
+	{ _T("System.GPS.Speed"), _T("Speed") }, { _T("System.GPS.SpeedRef"), _T("Speed unit") },
+};
+
 LPCTSTR GetGroupName(EGroup eGroup) {
 	switch (eGroup) {
 		case GROUP_DESCRIPTION: return _T("Description");
@@ -109,6 +117,9 @@ static CString GetDisplayText(const PROPERTYKEY& key, const PROPVARIANT& value) 
 	} else if (SUCCEEDED(::PSFormatForDisplayAlloc(key, value, PDFF_DEFAULT, &pText))) {
 		s = pText;
 		::CoTaskMemFree(pText);
+		if (value.vt == VT_R8 && s.GetLength() > 10 && s.SpanIncluding(_T("0123456789.,-")) == s) {
+			s.Format(_T("%.6g"), value.dblVal);
+		}
 	} else {
 		s = GetEditText(value);
 	}
@@ -135,6 +146,283 @@ static VARTYPE GetPropertyType(const PROPERTYKEY& key) {
 	return vt;
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+// EXIF block of PNG (eXIf chunk) and WebP (EXIF chunk) files, the property handlers of Windows do not read it
+///////////////////////////////////////////////////////////////////////////////////
+
+enum { IFD_MAIN = 0, IFD_GPS = 1 };
+
+static const struct { int Ifd; WORD Tag; const PROPERTYKEY* Key; } s_exifTags[] = {
+	{ IFD_MAIN, 0x010E, &PKEY_Title }, { IFD_MAIN, 0x010F, &PKEY_Photo_CameraManufacturer }, { IFD_MAIN, 0x0110, &PKEY_Photo_CameraModel },
+	{ IFD_MAIN, 0x0112, &PKEY_Photo_Orientation }, { IFD_MAIN, 0x0131, &PKEY_SoftwareUsed }, { IFD_MAIN, 0x013B, &PKEY_Author },
+	{ IFD_MAIN, 0x8298, &PKEY_Copyright }, { IFD_MAIN, 0x829A, &PKEY_Photo_ExposureTime }, { IFD_MAIN, 0x829D, &PKEY_Photo_FNumber },
+	{ IFD_MAIN, 0x8822, &PKEY_Photo_ProgramMode }, { IFD_MAIN, 0x8827, &PKEY_Photo_ISOSpeed }, { IFD_MAIN, 0x9003, &PKEY_Photo_DateTaken },
+	{ IFD_MAIN, 0x9201, &PKEY_Photo_ShutterSpeed }, { IFD_MAIN, 0x9202, &PKEY_Photo_Aperture }, { IFD_MAIN, 0x9203, &PKEY_Photo_Brightness },
+	{ IFD_MAIN, 0x9204, &PKEY_Photo_ExposureBias }, { IFD_MAIN, 0x9207, &PKEY_Photo_MeteringMode }, { IFD_MAIN, 0x9209, &PKEY_Photo_Flash },
+	{ IFD_MAIN, 0x920A, &PKEY_Photo_FocalLength }, { IFD_MAIN, 0xA001, &PKEY_Image_ColorSpace }, { IFD_MAIN, 0xA403, &PKEY_Photo_WhiteBalance },
+	{ IFD_MAIN, 0xA405, &PKEY_Photo_FocalLengthInFilm }, { IFD_MAIN, 0xA433, &PKEY_Photo_LensManufacturer }, { IFD_MAIN, 0xA434, &PKEY_Photo_LensModel },
+	{ IFD_GPS, 1, &PKEY_GPS_LatitudeRef }, { IFD_GPS, 2, &PKEY_GPS_Latitude }, { IFD_GPS, 3, &PKEY_GPS_LongitudeRef }, { IFD_GPS, 4, &PKEY_GPS_Longitude },
+	{ IFD_GPS, 5, &PKEY_GPS_AltitudeRef }, { IFD_GPS, 6, &PKEY_GPS_Altitude }, { IFD_GPS, 12, &PKEY_GPS_SpeedRef }, { IFD_GPS, 13, &PKEY_GPS_Speed },
+	{ IFD_GPS, 16, &PKEY_GPS_ImgDirectionRef }, { IFD_GPS, 17, &PKEY_GPS_ImgDirection }, { IFD_GPS, 23, &PKEY_GPS_DestBearingRef },
+	{ IFD_GPS, 24, &PKEY_GPS_DestBearing },
+};
+
+struct CExifValue {
+	int Ifd;
+	WORD Tag;
+	bool IsText;
+	CString Text;
+	std::vector<double> Numbers;
+};
+
+class CTiff {
+public:
+	CTiff(const unsigned char* d, size_t n) : m_d(d), m_n(n), m_bLittle(false), m_bValid(false) {
+		if (n >= 8 && ((d[0] == 'I' && d[1] == 'I' && d[2] == 42 && d[3] == 0) || (d[0] == 'M' && d[1] == 'M' && d[2] == 0 && d[3] == 42))) {
+			m_bLittle = d[0] == 'I';
+			m_bValid = true;
+		}
+	}
+	bool Valid() const { return m_bValid; }
+	bool Little() const { return m_bLittle; }
+	bool Has(size_t nPos, size_t nSize) const { return nPos <= m_n && nSize <= m_n - nPos; }
+	unsigned U16(size_t p) const { return Has(p, 2) ? (m_bLittle ? m_d[p] | (m_d[p + 1] << 8) : (m_d[p] << 8) | m_d[p + 1]) : 0; }
+	unsigned U32(size_t p) const { return Has(p, 4) ? (m_bLittle ? m_d[p] | (m_d[p + 1] << 8) | (m_d[p + 2] << 16) | ((unsigned)m_d[p + 3] << 24) :
+		((unsigned)m_d[p] << 24) | (m_d[p + 1] << 16) | (m_d[p + 2] << 8) | m_d[p + 3]) : 0; }
+	static size_t TypeSize(unsigned nType) {
+		static const size_t sizes[] = { 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8 };
+		return nType < 13 ? sizes[nType] : 0;
+	}
+	// position of the value data of the entry at nEntry, SIZE_MAX if invalid
+	size_t ValuePos(size_t nEntry, size_t& nTotal) const {
+		unsigned nType = U16(nEntry + 2), nCount = U32(nEntry + 4);
+		size_t nSize = TypeSize(nType);
+		if (nSize == 0 || nCount > 0x10000000) return SIZE_MAX;
+		nTotal = nSize * nCount;
+		size_t nPos = nTotal <= 4 ? nEntry + 8 : U32(nEntry + 8);
+		return Has(nPos, nTotal) ? nPos : SIZE_MAX;
+	}
+	const unsigned char* Data() const { return m_d; }
+private:
+	const unsigned char* m_d;
+	size_t m_n;
+	bool m_bLittle, m_bValid;
+};
+
+static void ReadExifIfd(const CTiff& tiff, size_t nOffset, int nIfd, std::vector<CExifValue>& values, int nDepth) {
+	if (nDepth > 3 || !tiff.Has(nOffset, 2)) return;
+	unsigned nEntries = tiff.U16(nOffset);
+	for (unsigned i = 0; i < nEntries && i < 1000; i++) {
+		size_t nEntry = nOffset + 2 + 12 * (size_t)i;
+		if (!tiff.Has(nEntry, 12)) break;
+		WORD nTag = (WORD)tiff.U16(nEntry);
+		unsigned nType = tiff.U16(nEntry + 2), nCount = tiff.U32(nEntry + 4);
+		if (nIfd == IFD_MAIN && (nTag == 0x8769 || nTag == 0x8825)) {
+			ReadExifIfd(tiff, tiff.U32(nEntry + 8), nTag == 0x8825 ? IFD_GPS : IFD_MAIN, values, nDepth + 1);
+			continue;
+		}
+		size_t nTotal = 0;
+		size_t nPos = tiff.ValuePos(nEntry, nTotal);
+		if (nPos == SIZE_MAX) continue;
+		CExifValue value;
+		value.Ifd = nIfd;
+		value.Tag = nTag;
+		value.IsText = nType == 2;
+		if (value.IsText) {
+			CStringA sText((const char*)tiff.Data() + nPos, (int)strnlen((const char*)tiff.Data() + nPos, nTotal));
+			value.Text = CA2W(sText, CP_UTF8);
+			value.Text.Trim();
+		} else {
+			for (unsigned n = 0; n < nCount && n < 16; n++) {
+				size_t p = nPos + n * CTiff::TypeSize(nType);
+				switch (nType) {
+					case 1: case 7: value.Numbers.push_back(tiff.Data()[p]); break;
+					case 6: value.Numbers.push_back((signed char)tiff.Data()[p]); break;
+					case 3: value.Numbers.push_back(tiff.U16(p)); break;
+					case 8: value.Numbers.push_back((short)tiff.U16(p)); break;
+					case 4: value.Numbers.push_back(tiff.U32(p)); break;
+					case 9: value.Numbers.push_back((int)tiff.U32(p)); break;
+					case 5: if (tiff.U32(p + 4) != 0) value.Numbers.push_back((double)tiff.U32(p) / tiff.U32(p + 4)); break;
+					case 10: if (tiff.U32(p + 4) != 0) value.Numbers.push_back((double)(int)tiff.U32(p) / (int)tiff.U32(p + 4)); break;
+				}
+			}
+		}
+		values.push_back(value);
+	}
+}
+
+static bool ReadAt(HANDLE hFile, unsigned __int64 nPos, void* pBuffer, DWORD nSize) {
+	LARGE_INTEGER pos;
+	pos.QuadPart = (LONGLONG)nPos;
+	DWORD nRead = 0;
+	return ::SetFilePointerEx(hFile, pos, NULL, FILE_BEGIN) && ::ReadFile(hFile, pBuffer, nSize, &nRead, NULL) && nRead == nSize;
+}
+
+static unsigned BigEndian32(const unsigned char* p) { return ((unsigned)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]; }
+
+// Finds the EXIF block (TIFF header) in a PNG or WebP file: file position and size, false if there is none
+static bool FindEmbeddedExif(HANDLE hFile, unsigned __int64& nPos, DWORD& nSize, bool& bPng) {
+	LARGE_INTEGER fileSize;
+	if (!::GetFileSizeEx(hFile, &fileSize)) return false;
+	unsigned __int64 nFileSize = (unsigned __int64)fileSize.QuadPart;
+	unsigned char header[12];
+	if (!ReadAt(hFile, 0, header, 12)) return false;
+	static const unsigned char pngSignature[8] = { 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
+	if (memcmp(header, pngSignature, 8) == 0) {
+		bPng = true;
+		unsigned __int64 nChunk = 8;
+		for (int i = 0; i < 100000 && nChunk + 12 <= nFileSize; i++) {
+			unsigned char chunk[8];
+			if (!ReadAt(hFile, nChunk, chunk, 8)) return false;
+			unsigned nLength = BigEndian32(chunk);
+			if (memcmp(chunk + 4, "eXIf", 4) == 0) {
+				if (nLength < 8 || nLength > 16 * 1024 * 1024 || nChunk + 8 + nLength > nFileSize) return false;
+				nPos = nChunk + 8;
+				nSize = nLength;
+				return true;
+			}
+			if (memcmp(chunk + 4, "IEND", 4) == 0) return false;
+			nChunk += 12 + (unsigned __int64)nLength;
+		}
+		return false;
+	}
+	if (memcmp(header, "RIFF", 4) == 0 && memcmp(header + 8, "WEBP", 4) == 0) {
+		bPng = false;
+		unsigned __int64 nChunk = 12;
+		for (int i = 0; i < 10000 && nChunk + 8 <= nFileSize; i++) {
+			unsigned char chunk[8];
+			if (!ReadAt(hFile, nChunk, chunk, 8)) return false;
+			unsigned nLength = chunk[4] | (chunk[5] << 8) | (chunk[6] << 16) | ((unsigned)chunk[7] << 24);
+			if (memcmp(chunk, "EXIF", 4) == 0) {
+				if (nLength < 8 || nLength > 16 * 1024 * 1024 || nChunk + 8 + nLength > nFileSize) return false;
+				nPos = nChunk + 8;
+				nSize = nLength;
+				unsigned char prefix[6];
+				if (ReadAt(hFile, nPos, prefix, 6) && memcmp(prefix, "Exif\0\0", 6) == 0) {
+					nPos += 6;
+					nSize -= 6;
+				}
+				return true;
+			}
+			nChunk += 8 + (unsigned __int64)nLength + (nLength & 1);
+		}
+	}
+	return false;
+}
+
+static bool ReadEmbeddedExif(LPCTSTR sFileName, std::vector<unsigned char>& tiff) {
+	HANDLE hFile = ::CreateFile(sFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) return false;
+	unsigned __int64 nPos = 0;
+	DWORD nSize = 0;
+	bool bPng = false;
+	bool bOK = FindEmbeddedExif(hFile, nPos, nSize, bPng);
+	if (bOK) {
+		tiff.resize(nSize);
+		bOK = ReadAt(hFile, nPos, &tiff[0], nSize);
+	}
+	::CloseHandle(hFile);
+	return bOK;
+}
+
+static bool ParseExifDate(const CString& sText, SYSTEMTIME& time) {
+	memset(&time, 0, sizeof(time));
+	int nYear, nMonth, nDay, nHour = 0, nMinute = 0, nSecond = 0;
+	if (_stscanf_s(sText, _T("%d:%d:%d %d:%d:%d"), &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond) < 3) return false;
+	if (nYear < 1601 || nMonth < 1 || nMonth > 12 || nDay < 1 || nDay > 31) return false;
+	time.wYear = (WORD)nYear; time.wMonth = (WORD)nMonth; time.wDay = (WORD)nDay;
+	time.wHour = (WORD)nHour; time.wMinute = (WORD)nMinute; time.wSecond = (WORD)nSecond;
+	return true;
+}
+
+// Values of the EXIF block that are not in the list of Windows yet
+static void AddEmbeddedExif(LPCTSTR sFileName, std::vector<std::pair<PROPERTYKEY, PROPVARIANT>>& values, std::vector<PROPERTYKEY>& embeddedKeys) {
+	std::vector<unsigned char> data;
+	if (!ReadEmbeddedExif(sFileName, data)) return;
+	CTiff tiff(&data[0], data.size());
+	if (!tiff.Valid()) return;
+	std::vector<CExifValue> exif;
+	ReadExifIfd(tiff, tiff.U32(4), IFD_MAIN, exif, 0);
+
+	auto Find = [&](int nIfd, WORD nTag) -> const CExifValue* {
+		for (const CExifValue& value : exif) if (value.Ifd == nIfd && value.Tag == nTag) return &value;
+		return NULL;
+	};
+	auto Add = [&](const PROPERTYKEY& key, PROPVARIANT& value) {
+		for (auto& existing : values) {
+			if (IsEqualPropertyKey(existing.first, key)) {
+				::PropVariantClear(&value);
+				return;
+			}
+		}
+		values.push_back({ key, value });
+		embeddedKeys.push_back(key);
+	};
+	for (const auto& mapping : s_exifTags) {
+		const CExifValue* pValue = Find(mapping.Ifd, mapping.Tag);
+		if (pValue == NULL) continue;
+		PROPVARIANT value;
+		::PropVariantInit(&value);
+		HRESULT hr = E_FAIL;
+		if (IsEqualPropertyKey(*mapping.Key, PKEY_Photo_DateTaken)) {
+			// local time of the camera, with the time zone if the camera wrote it
+			SYSTEMTIME local, utc;
+			FILETIME fileTime;
+			if (pValue->IsText && ParseExifDate(pValue->Text, local)) {
+				const CExifValue* pOffset = Find(IFD_MAIN, 0x9011);
+				int nSign = 1, nHours = 0, nMinutes = 0;
+				bool bOffset = pOffset != NULL && pOffset->IsText && pOffset->Text.GetLength() >= 6 &&
+					_stscanf_s(pOffset->Text.Mid(1), _T("%d:%d"), &nHours, &nMinutes) == 2;
+				if (bOffset) nSign = pOffset->Text[0] == _T('-') ? -1 : 1;
+				if (bOffset && ::SystemTimeToFileTime(&local, &fileTime)) {
+					ULARGE_INTEGER n;
+					n.LowPart = fileTime.dwLowDateTime;
+					n.HighPart = fileTime.dwHighDateTime;
+					n.QuadPart -= (ULONGLONG)(nSign * (nHours * 60 + nMinutes)) * 60 * 10000000;
+					fileTime.dwLowDateTime = n.LowPart;
+					fileTime.dwHighDateTime = n.HighPart;
+					hr = ::InitPropVariantFromFileTime(&fileTime, &value);
+				} else if (::TzSpecificLocalTimeToSystemTime(NULL, &local, &utc) && ::SystemTimeToFileTime(&utc, &fileTime)) {
+					hr = ::InitPropVariantFromFileTime(&fileTime, &value);
+				}
+			}
+		} else {
+			VARTYPE vt = GetPropertyType(*mapping.Key);
+			if (pValue->IsText) {
+				LPCWSTR texts[1] = { pValue->Text };
+				if (pValue->Text.IsEmpty()) hr = E_FAIL;
+				else if (vt == (VT_VECTOR | VT_LPWSTR)) hr = ::InitPropVariantFromStringVector(texts, 1, &value);
+				else if (vt == VT_LPWSTR) hr = ::InitPropVariantFromString(pValue->Text, &value);
+			} else if (!pValue->Numbers.empty()) {
+				if (vt == (VT_VECTOR | VT_R8)) {
+					hr = ::InitPropVariantFromDoubleVector(&pValue->Numbers[0], (ULONG)pValue->Numbers.size(), &value);
+				} else if ((vt & VT_VECTOR) == 0) {
+					PROPVARIANT number;
+					::InitPropVariantFromDouble(pValue->Numbers[0], &number);
+					hr = ::PropVariantChangeType(&value, number, PVCHF_DEFAULT, vt);
+					::PropVariantClear(&number);
+				}
+			}
+		}
+		if (SUCCEEDED(hr) && value.vt != VT_EMPTY) Add(*mapping.Key, value);
+		else ::PropVariantClear(&value);
+	}
+	// GPS time stamp (UTC)
+	const CExifValue* pDate = Find(IFD_GPS, 29);
+	const CExifValue* pTime = Find(IFD_GPS, 7);
+	SYSTEMTIME gpsTime;
+	if (pDate != NULL && pDate->IsText && ParseExifDate(pDate->Text, gpsTime)) {
+		if (pTime != NULL && pTime->Numbers.size() == 3) {
+			gpsTime.wHour = (WORD)pTime->Numbers[0];
+			gpsTime.wMinute = (WORD)pTime->Numbers[1];
+			gpsTime.wSecond = (WORD)pTime->Numbers[2];
+		}
+		FILETIME fileTime;
+		PROPVARIANT value;
+		if (::SystemTimeToFileTime(&gpsTime, &fileTime) && SUCCEEDED(::InitPropVariantFromFileTime(&fileTime, &value))) Add(PKEY_GPS_Date, value);
+	}
+}
+
 void Read(LPCTSTR sFileName, std::vector<CEntry>& entries) {
 	entries.clear();
 	IPropertyStore* pStore = NULL;
@@ -157,6 +445,8 @@ void Read(LPCTSTR sFileName, std::vector<CEntry>& entries) {
 		}
 	}
 	pStore->Release();
+	std::vector<PROPERTYKEY> embeddedKeys;
+	AddEmbeddedExif(sFileName, values, embeddedKeys);
 
 	// the capabilities tell which properties the handler of the file format can write
 	IPropertyStore* pWritableStore = NULL;
@@ -188,11 +478,19 @@ void Read(LPCTSTR sFileName, std::vector<CEntry>& entries) {
 			entry.Name = pText;
 		} else {
 			entry.Name = sCanonical.Find(_T("System.")) == 0 ? sCanonical.Mid(7) : sCanonical;
+			for (const auto& fallback : s_fallbackNames) {
+				if (sCanonical == fallback.Canonical) entry.Name = CNLS::GetString(fallback.Name);
+			}
 		}
 		if (pText != NULL) ::CoTaskMemFree(pText);
 		entry.Group = GetGroup(sCanonical);
 		entry.Order = GetOrder(sCanonical);
-		entry.Writable = IsWritable(key, pDescription);
+		entry.Embedded = false;
+		for (const PROPERTYKEY& embeddedKey : embeddedKeys) {
+			if (IsEqualPropertyKey(embeddedKey, key)) entry.Embedded = true;
+		}
+		// Windows can not write the values it does not read
+		entry.Writable = !entry.Embedded && IsWritable(key, pDescription);
 		entry.Present = pValue != NULL;
 		if (pValue != NULL) {
 			entry.Value = GetDisplayText(key, *pValue);
@@ -206,9 +504,39 @@ void Read(LPCTSTR sFileName, std::vector<CEntry>& entries) {
 		}
 	};
 
+	double dLatitude = 0, dLongitude = 0;
+	bool bLatitude = false, bLongitude = false, bSouth = false, bWest = false, bEmbeddedLocation = false;
+	for (auto& value : values) {
+		const PROPVARIANT& v = value.second;
+		if (v.vt == (VT_VECTOR | VT_R8) && v.cadbl.cElems == 3) {
+			double dDecimal = v.cadbl.pElems[0] + v.cadbl.pElems[1] / 60 + v.cadbl.pElems[2] / 3600;
+			if (IsEqualPropertyKey(value.first, PKEY_GPS_Latitude)) { dLatitude = dDecimal; bLatitude = true; }
+			if (IsEqualPropertyKey(value.first, PKEY_GPS_Longitude)) { dLongitude = dDecimal; bLongitude = true; }
+		}
+		if (v.vt == VT_LPWSTR && v.pwszVal != NULL) {
+			if (IsEqualPropertyKey(value.first, PKEY_GPS_LatitudeRef)) bSouth = v.pwszVal[0] == L'S' || v.pwszVal[0] == L's';
+			if (IsEqualPropertyKey(value.first, PKEY_GPS_LongitudeRef)) bWest = v.pwszVal[0] == L'W' || v.pwszVal[0] == L'w';
+		}
+		for (const PROPERTYKEY& embeddedKey : embeddedKeys) {
+			if (IsEqualPropertyKey(embeddedKey, value.first) && IsEqualPropertyKey(value.first, PKEY_GPS_Latitude)) bEmbeddedLocation = true;
+		}
+	}
 	for (auto& value : values) {
 		AddEntry(value.first, &value.second);
 		::PropVariantClear(&value.second);
+	}
+	if (bLatitude && bLongitude) {
+		CEntry coordinates;
+		coordinates.Key = PKEY_GPS_Latitude;
+		coordinates.Name = CNLS::GetString(_T("Coordinates"));
+		coordinates.Value.Format(_T("%.6f, %.6f"), bSouth ? -dLatitude : dLatitude, bWest ? -dLongitude : dLongitude);
+		coordinates.EditValue = coordinates.Value;
+		coordinates.Group = GROUP_LOCATION;
+		coordinates.Order = -1;
+		coordinates.Writable = false;
+		coordinates.Present = true;
+		coordinates.Embedded = bEmbeddedLocation;
+		entries.push_back(coordinates);
 	}
 	// common editable properties the file does not have yet
 	if (pWritableStore != NULL) {
@@ -609,6 +937,131 @@ bool Edit(HWND hParent, LPCTSTR sFileName, const CEntry& entry, CString& sError)
 	return bOK;
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+// Removing the location from the EXIF block of PNG and WebP files
+///////////////////////////////////////////////////////////////////////////////////
+
+static unsigned Crc32(const unsigned char* p, size_t n, unsigned nCrc = 0xFFFFFFFF) {
+	static unsigned table[256];
+	static bool bInitialized = false;
+	if (!bInitialized) {
+		for (unsigned i = 0; i < 256; i++) {
+			unsigned c = i;
+			for (int k = 0; k < 8; k++) c = (c & 1) ? 0xEDB88320 ^ (c >> 1) : c >> 1;
+			table[i] = c;
+		}
+		bInitialized = true;
+	}
+	for (size_t i = 0; i < n; i++) nCrc = table[(nCrc ^ p[i]) & 0xFF] ^ (nCrc >> 8);
+	return nCrc;
+}
+
+// Empties the GPS directory of the TIFF block in place (the size does not change), returns the number of removed values
+static int StripGps(unsigned char* d, size_t n) {
+	CTiff tiff(d, n);
+	if (!tiff.Valid()) return 0;
+	size_t nIfd0 = tiff.U32(4);
+	if (!tiff.Has(nIfd0, 2)) return 0;
+	unsigned nEntries = tiff.U16(nIfd0);
+	for (unsigned i = 0; i < nEntries && i < 1000; i++) {
+		size_t nEntry = nIfd0 + 2 + 12 * (size_t)i;
+		if (!tiff.Has(nEntry, 12)) break;
+		if (tiff.U16(nEntry) != 0x8825) continue;
+		size_t nGps = tiff.U32(nEntry + 8);
+		if (!tiff.Has(nGps, 2)) return 0;
+		unsigned nGpsEntries = tiff.U16(nGps);
+		if (!tiff.Has(nGps + 2, 12 * (size_t)nGpsEntries + 4)) return 0;
+		for (unsigned k = 0; k < nGpsEntries; k++) {
+			size_t nTotal = 0;
+			size_t nPos = tiff.ValuePos(nGps + 2 + 12 * (size_t)k, nTotal);
+			if (nPos != SIZE_MAX && nTotal > 4) memset(d + nPos, 0, nTotal);
+		}
+		// an empty directory, the pointer to it stays valid
+		memset(d + nGps, 0, 2 + 12 * (size_t)nGpsEntries + 4);
+		return (int)nGpsEntries;
+	}
+	return 0;
+}
+
+// Removes the GPS values of the EXIF block of a PNG or WebP file, also the "exif:GPS..." text chunks of PNG files (ImageMagick).
+// Returns the number of removed values, -1 on error.
+static int RemoveEmbeddedLocation(LPCTSTR sFileName) {
+	std::vector<char> data;
+	if (!ReadFileData(sFileName, data) || data.size() < 12) return -1;
+	unsigned char* d = (unsigned char*)&data[0];
+	size_t n = data.size();
+	int nRemoved = 0, nRemovedTexts = 0;
+	static const unsigned char pngSignature[8] = { 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
+	if (memcmp(d, pngSignature, 8) == 0) {
+		std::vector<char> result(data.begin(), data.begin() + 8);
+		size_t nChunk = 8;
+		while (nChunk + 12 <= n) {
+			size_t nLength = BigEndian32(d + nChunk);
+			if (nLength > n - nChunk - 12) return -1;
+			unsigned char* pType = d + nChunk + 4;
+			unsigned char* pData = d + nChunk + 8;
+			bool bSkip = false;
+			if (memcmp(pType, "tEXt", 4) == 0 || memcmp(pType, "zTXt", 4) == 0 || memcmp(pType, "iTXt", 4) == 0) {
+				bSkip = nLength >= 8 && memcmp(pData, "exif:GPS", 8) == 0;
+				if (bSkip) nRemovedTexts++;
+			} else if (memcmp(pType, "eXIf", 4) == 0) {
+				int nGps = StripGps(pData, nLength);
+				if (nGps > 0) {
+					nRemoved += nGps;
+					unsigned nCrc = Crc32(pType, 4 + nLength) ^ 0xFFFFFFFF;
+					unsigned char* pCrc = pData + nLength;
+					pCrc[0] = (unsigned char)(nCrc >> 24); pCrc[1] = (unsigned char)(nCrc >> 16);
+					pCrc[2] = (unsigned char)(nCrc >> 8); pCrc[3] = (unsigned char)nCrc;
+				}
+			}
+			if (!bSkip) result.insert(result.end(), data.begin() + nChunk, data.begin() + nChunk + 12 + nLength);
+			bool bEnd = memcmp(pType, "IEND", 4) == 0;
+			nChunk += 12 + nLength;
+			if (bEnd) break;
+		}
+		if (nChunk < n) result.insert(result.end(), data.begin() + nChunk, data.end());
+		if (nRemoved == 0) nRemoved = nRemovedTexts;
+		if (nRemoved == 0) return 0;
+		return WriteFileData(sFileName, result) ? nRemoved : -1;
+	}
+	if (memcmp(d, "RIFF", 4) == 0 && memcmp(d + 8, "WEBP", 4) == 0) {
+		size_t nChunk = 12;
+		while (nChunk + 8 <= n) {
+			size_t nLength = d[nChunk + 4] | (d[nChunk + 5] << 8) | (d[nChunk + 6] << 16) | ((size_t)d[nChunk + 7] << 24);
+			if (nLength > n - nChunk - 8) return -1;
+			if (memcmp(d + nChunk, "EXIF", 4) == 0) {
+				size_t nStart = nChunk + 8;
+				if (nLength >= 6 && memcmp(d + nStart, "Exif\0\0", 6) == 0) nStart += 6;
+				nRemoved += StripGps(d + nStart, nChunk + 8 + nLength - nStart);
+			}
+			nChunk += 8 + nLength + (nLength & 1);
+		}
+		if (nRemoved == 0) return 0;
+		return WriteFileData(sFileName, data) ? nRemoved : -1;
+	}
+	return 0;
+}
+
+bool ReadFileData(LPCTSTR sFileName, std::vector<char>& data) {
+	return ReadFileBytes(sFileName, data);
+}
+
+bool WriteFileData(LPCTSTR sFileName, const std::vector<char>& data) {
+	// written to a new file first, ReplaceFile keeps the creation time, attributes and security of the old one
+	CString sTemp = CString(sFileName) + _T(".jpegview-tmp");
+	HANDLE hFile = ::CreateFile(sTemp, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) return false;
+	DWORD nWritten = 0;
+	bool bOK = data.empty() || (::WriteFile(hFile, &data[0], (DWORD)data.size(), &nWritten, NULL) && nWritten == data.size());
+	bOK = ::FlushFileBuffers(hFile) && bOK;
+	::CloseHandle(hFile);
+	if (bOK) {
+		bOK = ::ReplaceFile(sFileName, sTemp, NULL, REPLACEFILE_IGNORE_MERGE_ERRORS, NULL, NULL) != FALSE;
+	}
+	if (!bOK) ::DeleteFile(sTemp);
+	return bOK;
+}
+
 int Remove(LPCTSTR sFileName, const std::vector<CEntry>& entries, bool bLocationOnly, CString& sError) {
 	PROPVARIANT empty;
 	::PropVariantInit(&empty);
@@ -619,13 +1072,23 @@ int Remove(LPCTSTR sFileName, const std::vector<CEntry>& entries, bool bLocation
 			values.push_back({ entry.Key, &empty });
 		}
 	}
-	if (values.empty()) {
-		return 0;
-	}
 	int nWritten = 0;
-	if (!WriteValues(sFileName, values, nWritten)) {
+	if (!values.empty() && !WriteValues(sFileName, values, nWritten)) {
 		sError = CNLS::GetString(_T("The value could not be written to the file."));
 		return -1;
+	}
+	// the location in the EXIF block of PNG and WebP files, Windows can not remove it
+	bool bEmbeddedLocation = false;
+	for (const CEntry& entry : entries) {
+		if (entry.Embedded && entry.Present && entry.Group == GROUP_LOCATION) bEmbeddedLocation = true;
+	}
+	if (bEmbeddedLocation) {
+		int nRemoved = RemoveEmbeddedLocation(sFileName);
+		if (nRemoved < 0) {
+			sError = CNLS::GetString(_T("The value could not be written to the file."));
+			return -1;
+		}
+		nWritten += nRemoved;
 	}
 	return nWritten;
 }

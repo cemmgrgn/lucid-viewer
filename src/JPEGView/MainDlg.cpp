@@ -2685,8 +2685,25 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 							undo.Metadata.push_back({ entry.Key, entry.EditValue });
 						}
 					}
+					// Windows can not write the location of PNG and WebP files back, the whole file is kept for undo
+					std::shared_ptr<std::vector<char>> pBackup;
+					for (const Metadata::CEntry& entry : GetMetadata()) {
+						if (entry.Embedded && entry.Present && entry.Group == Metadata::GROUP_LOCATION) {
+							pBackup = std::make_shared<std::vector<char>>();
+							if (!Metadata::ReadFileData(sFile, *pBackup)) pBackup.reset();
+							break;
+						}
+					}
 					int nRemoved = Metadata::Remove(sFile, GetMetadata(), bLocationOnly, sError);
-					if (nRemoved > 0 && !undo.Metadata.empty()) PushUndoEntry(undo);
+					if (nRemoved > 0 && pBackup) {
+						CUndoEntry fileUndo;
+						fileUndo.Kind = UNDO_FILE;
+						fileUndo.File = sFile;
+						fileUndo.FileData = pBackup;
+						PushUndoEntry(fileUndo);
+					} else if (nRemoved > 0 && !undo.Metadata.empty()) {
+						PushUndoEntry(undo);
+					}
 					if (nRemoved < 0) {
 						m_pChrome->ShowMessage(sError);
 					} else {
@@ -5379,10 +5396,28 @@ void CMainDlg::Undo() {
 				ExecuteCommand(entry.Command);
 			}
 			break;
+		case UNDO_FILE:
+			if (SwapFileData(entry)) {
+				sMessage = CNLS::GetString(_T("The metadata was restored."));
+			} else {
+				sMessage = CNLS::GetString(_T("The value could not be written to the file."));
+			}
+			break;
 	}
 	m_bUndoing = false;
 	m_pChrome->ShowMessage(sMessage);
 	m_pChrome->Paint();
+}
+
+// Writes the kept file data back, the current file data goes to the other stack (redo after undo and undo after redo)
+bool CMainDlg::SwapFileData(const CUndoEntry& entry, bool bRedo) {
+	if (!entry.FileData) return false;
+	CUndoEntry other = entry;
+	other.FileData = std::make_shared<std::vector<char>>();
+	if (!Metadata::ReadFileData(entry.File, *other.FileData) || !Metadata::WriteFileData(entry.File, *entry.FileData)) return false;
+	(bRedo ? m_undoStack : m_redoStack).push_back(other);
+	if (entry.File.CompareNoCase(CurrentFileName(false)) == 0) AfterMetadataChanged();
+	return true;
 }
 
 void CMainDlg::Redo() {
@@ -5406,6 +5441,8 @@ void CMainDlg::Redo() {
 			SetRating(entry.Rating);
 			m_undoStack.push_back(undo);
 		}
+	} else if (entry.Kind == UNDO_FILE) {
+		SwapFileData(entry, true);
 	}
 	m_bUndoing = false;
 	m_pChrome->ShowMessage(CNLS::GetString(_T("Redone")));

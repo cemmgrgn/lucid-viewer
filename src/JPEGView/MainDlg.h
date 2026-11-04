@@ -425,7 +425,7 @@ private:
 		std::shared_ptr<CPixelSnapshot> Pixels; // NULL if the operation did not change the pixels
 		std::shared_ptr<std::vector<uint8>> TransparencyMask, TransparencyBackup; // only with pixels
 	};
-	enum EUndoKind { UNDO_EDIT, UNDO_RATING, UNDO_METADATA, UNDO_DELETE, UNDO_LOSSLESS };
+	enum EUndoKind { UNDO_EDIT, UNDO_RATING, UNDO_METADATA, UNDO_DELETE, UNDO_LOSSLESS, UNDO_FILE };
 	struct CUndoEntry {
 		EUndoKind Kind;
 		CString File;
@@ -433,6 +433,7 @@ private:
 		int Rating;
 		std::vector<std::pair<PROPERTYKEY, CString>> Metadata;
 		int Command;
+		std::shared_ptr<std::vector<char>> FileData; // UNDO_FILE: the whole file before the change
 	};
 	std::vector<CUndoEntry> m_undoStack, m_redoStack;
 	CEditState m_pendingEdit;
@@ -445,6 +446,7 @@ private:
 	void PushUndoEntry(const CUndoEntry& entry);
 	void Undo();
 	void Redo();
+	bool SwapFileData(const CUndoEntry& entry, bool bRedo = false);
 	void ExecuteCommandInternal(int nCommand);
 	// Sub menu for sorting and filtering by the star rating
 	HMENU CreateRatingMenu();

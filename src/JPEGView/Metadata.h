@@ -17,6 +17,7 @@ namespace Metadata {
 		int Order;         // sort order inside the group
 		bool Writable;
 		bool Present;      // the file has a value
+		bool Embedded;     // read by JPEGView from the EXIF block of a PNG or WebP file, Windows does not show it
 	};
 
 	// English name of the group, translate with CNLS
@@ -46,6 +47,10 @@ namespace Metadata {
 		std::vector<char> m_trailer;
 		std::vector<__int64> m_trailerOffsets; // position of the MPF images 1..n in the trailer, -1 if outside
 	};
+
+	// Whole file as bytes (backup for undo) and writing it back, keeps the creation time and attributes
+	bool ReadFileData(LPCTSTR sFileName, std::vector<char>& data);
+	bool WriteFileData(LPCTSTR sFileName, const std::vector<char>& data);
 
 	// All entries with a value as text, one per line (for the clipboard)
 	CString ToText(const std::vector<CEntry>& entries);

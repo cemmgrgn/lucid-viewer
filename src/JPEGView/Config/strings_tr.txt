@@ -881,3 +881,14 @@ Sharpen less	Daha az keskinleştir
 Resume slideshow	Slayt gösterisine devam et
 Move to the next monitor	Sonraki monitöre taşı
 Window always on top	Pencere her zaman üstte
+Latitude direction	Enlem yönü
+Longitude direction	Boylam yönü
+Altitude reference	İrtifa referansı
+GPS time	GPS zamanı
+Direction of the target	Hedef yönü
+Direction of the target reference	Hedef yönü referansı
+Camera direction	Kamera yönü
+Camera direction reference	Kamera yönü referansı
+Speed	Hız
+Speed unit	Hız birimi
+Coordinates	Koordinatlar
