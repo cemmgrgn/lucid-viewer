@@ -94,6 +94,17 @@ static void SplitList(CString sList, std::vector<CString>& values) {
 	}
 }
 
+// "'auto' for 2/3 of screen size" -> "auto \x2014 2/3 of screen size"
+static CString OptionLabel(const CString& sValue, CString sRest) {
+	sRest.Trim();
+	sRest.TrimLeft(_T(":"));
+	sRest.Trim();
+	if (sRest.Left(4).CompareNoCase(_T("for ")) == 0) sRest = sRest.Mid(4);
+	else if (sRest.Left(3).CompareNoCase(_T("to ")) == 0) sRest = sRest.Mid(3);
+	sRest.TrimRight(_T(".,;"));
+	return sRest.IsEmpty() ? sValue : sValue + _T(" \x2014 ") + sRest;
+}
+
 static void ParseOptions(CSetting& setting) {
 	CString sDefault = Trim(setting.Default);
 	if (sDefault.CompareNoCase(_T("true")) == 0 || sDefault.CompareNoCase(_T("false")) == 0) {
@@ -125,14 +136,14 @@ static void ParseOptions(CSetting& setting) {
 			for (int i = 0; i < sValue.GetLength(); i++) {
 				if (!_istdigit(sValue[i]) && !(i == 0 && sValue[i] == _T('-'))) bNumber = false;
 			}
-			if (bNumber) options.push_back({ sValue, sTrimmed });
+			if (bNumber) options.push_back({ sValue, OptionLabel(sValue, sTrimmed.Mid(nColon + 1)) });
 		}
 		// "'auto' for 2/3 of screen size", "'tr'    Turkish"
 		if (sTrimmed.GetLength() > 2 && sTrimmed[0] == _T('\'')) {
 			int nEnd = sTrimmed.Find(_T('\''), 1);
 			if (nEnd > 1) {
 				CString sValue = sTrimmed.Mid(1, nEnd - 1);
-				if (sValue.Find(_T(' ')) < 0) options.push_back({ sValue, sTrimmed });
+				if (sValue.Find(_T(' ')) < 0) options.push_back({ sValue, OptionLabel(sValue, sTrimmed.Mid(nEnd + 1)) });
 			}
 		}
 		// "...: dark or light" with the default value as one of the two words
@@ -390,6 +401,11 @@ static void LayoutPage(CEditor& editor) {
 		CString sLabel = Humanize(setting.Key);
 		CString sDescription = setting.Comment;
 		sDescription.Replace(_T("\n"), _T(" "));
+		if (setting.Kind == KIND_LANGUAGE) {
+			// the language list is in the dropdown, the file name rules are not needed here
+			int nCut = sDescription.Find(_T("JPEGView will"));
+			if (nCut > 0) sDescription = sDescription.Left(nCut);
+		}
 		sDescription.Trim();
 		sDescription += (sDescription.IsEmpty() ? _T("") : _T("  ")) + CString(_T("[")) + setting.Key + _T("]");
 		::SelectObject(hDC, editor.SmallFont);
@@ -924,6 +940,45 @@ static struct { LPCTSTR Name; LPCTSTR Text; } s_commandTexts[] = {
 	{ _T("IDM_CHANGESIZE"), _T("Resize image...") }, { _T("IDM_CONVERT_MENU"), _T("Convert to") },
 	{ _T("IDM_TOGGLE_SIDEPANEL_COLLAPSED"), _T("Collapse the side panel") }, { _T("IDM_EXPLORER_CONVERT_MENU"), _T("'Convert to' in the Explorer context menu") },
 	{ _T("IDM_HELP"), _T("Keyboard shortcuts...") },
+	{ _T("IDM_SAVE_SCREEN"), _T("Save as shown on screen...") },
+	{ _T("IDM_SAVE_ALLOW_NO_PROMPT"), _T("Save") },
+	{ _T("IDM_TOGGLE"), _T("Switch between this and the marked image") },
+	{ _T("IDM_MARK_FOR_TOGGLE"), _T("Mark the image for switching") },
+	{ _T("IDM_EXCHANGE_PROC_PARAMS"), _T("Swap edit settings with the marked image") },
+	{ _T("IDM_ZOOM_INC"), _T("Zoom in") },
+	{ _T("IDM_ZOOM_DEC"), _T("Zoom out") },
+	{ _T("IDM_TOGGLE_RESAMPLING_QUALITY"), _T("Resampling quality: high / fast") },
+	{ _T("IDM_TOGGLE_FIT_TO_SCREEN_100_PERCENTS"), _T("Fit to screen / 100%") },
+	{ _T("IDM_PAN_UP"), _T("Move the zoomed image up") },
+	{ _T("IDM_PAN_DOWN"), _T("Move the zoomed image down") },
+	{ _T("IDM_PAN_LEFT"), _T("Move the zoomed image left") },
+	{ _T("IDM_PAN_RIGHT"), _T("Move the zoomed image right") },
+	{ _T("IDM_ROTATE_90_LOSSLESS_CONFIRM"), _T("Rotate +90 without quality loss (JPEG)") },
+	{ _T("IDM_ROTATE_270_LOSSLESS_CONFIRM"), _T("Rotate -90 without quality loss (JPEG)") },
+	{ _T("IDM_AUTO_CORRECTION"), _T("Automatic color and contrast correction on / off") },
+	{ _T("IDM_AUTO_CORRECTION_SECTION"), _T("Automatic correction for the visible part") },
+	{ _T("IDM_LDC"), _T("Shadow and highlight correction on / off") },
+	{ _T("IDM_LANDSCAPE_MODE"), _T("Landscape enhancement mode") },
+	{ _T("IDM_KEEP_PARAMETERS"), _T("Keep edit settings for the next images") },
+	{ _T("IDM_SAVE_PARAM_DB"), _T("Remember edit settings for this image") },
+	{ _T("IDM_COLOR_CORRECTION_INC"), _T("Color correction stronger") },
+	{ _T("IDM_COLOR_CORRECTION_DEC"), _T("Color correction weaker") },
+	{ _T("IDM_CONTRAST_CORRECTION_INC"), _T("Contrast correction stronger") },
+	{ _T("IDM_CONTRAST_CORRECTION_DEC"), _T("Contrast correction weaker") },
+	{ _T("IDM_CONTRAST_INC"), _T("More contrast") },
+	{ _T("IDM_CONTRAST_DEC"), _T("Less contrast") },
+	{ _T("IDM_GAMMA_INC"), _T("Brightness (gamma) up") },
+	{ _T("IDM_GAMMA_DEC"), _T("Brightness (gamma) down") },
+	{ _T("IDM_LDC_SHADOWS_INC"), _T("Lighten shadows more") },
+	{ _T("IDM_LDC_SHADOWS_DEC"), _T("Lighten shadows less") },
+	{ _T("IDM_LDC_HIGHLIGHTS_INC"), _T("Darken highlights more") },
+	{ _T("IDM_LDC_HIGHLIGHTS_DEC"), _T("Darken highlights less") },
+	{ _T("IDM_SHARPEN_INC"), _T("Sharpen more") },
+	{ _T("IDM_SHARPEN_DEC"), _T("Sharpen less") },
+	{ _T("IDM_SLIDESHOW_RESUME"), _T("Resume slideshow") },
+	{ _T("IDM_TOGGLE_MONITOR"), _T("Move to the next monitor") },
+	{ _T("IDM_ALWAYS_ON_TOP"), _T("Window always on top") },
+	{ _T("IDM_HIDE_TITLE_BAR"), _T("Hide window title bar") },
 };
 
 // Mouse actions, shown on the page but they can not be changed here

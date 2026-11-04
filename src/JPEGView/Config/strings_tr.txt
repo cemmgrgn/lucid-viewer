@@ -846,3 +846,38 @@ Forward / back mouse button	İleri / geri fare tuşu
 Next / previous image	Sonraki / önceki görüntü
 Right click	Sağ tıklama
 Menu with all functions	Tüm işlevlerin menüsü
+Save as shown on screen...	Ekranda göründüğü gibi kaydet...
+Switch between this and the marked image	Bu resimle işaretli resim arasında geçiş
+Mark the image for switching	Resmi geçiş için işaretle
+Swap edit settings with the marked image	Düzenleme ayarlarını işaretli resimle değiştir
+Resampling quality: high / fast	Yeniden örnekleme kalitesi: yüksek / hızlı
+Fit to screen / 100%	Ekrana sığdır / %100
+Move the zoomed image up	Yakınlaştırılmış resmi yukarı kaydır
+Move the zoomed image down	Yakınlaştırılmış resmi aşağı kaydır
+Move the zoomed image left	Yakınlaştırılmış resmi sola kaydır
+Move the zoomed image right	Yakınlaştırılmış resmi sağa kaydır
+Rotate +90 without quality loss (JPEG)	Kayıpsız +90 döndür (JPEG)
+Rotate -90 without quality loss (JPEG)	Kayıpsız -90 döndür (JPEG)
+Automatic color and contrast correction on / off	Otomatik renk ve kontrast düzeltme aç / kapat
+Automatic correction for the visible part	Görünen bölüme göre otomatik düzeltme
+Shadow and highlight correction on / off	Gölge ve parlak alan düzeltme aç / kapat
+Landscape enhancement mode	Manzara iyileştirme modu
+Keep edit settings for the next images	Düzenleme ayarlarını sonraki resimlerde koru
+Remember edit settings for this image	Bu resmin düzenleme ayarlarını hatırla
+Color correction stronger	Renk düzeltme daha güçlü
+Color correction weaker	Renk düzeltme daha zayıf
+Contrast correction stronger	Kontrast düzeltme daha güçlü
+Contrast correction weaker	Kontrast düzeltme daha zayıf
+More contrast	Kontrastı artır
+Less contrast	Kontrastı azalt
+Brightness (gamma) up	Parlaklık (gama) artır
+Brightness (gamma) down	Parlaklık (gama) azalt
+Lighten shadows more	Gölgeleri daha çok aç
+Lighten shadows less	Gölgeleri daha az aç
+Darken highlights more	Parlak alanları daha çok koyulaştır
+Darken highlights less	Parlak alanları daha az koyulaştır
+Sharpen more	Daha çok keskinleştir
+Sharpen less	Daha az keskinleştir
+Resume slideshow	Slayt gösterisine devam et
+Move to the next monitor	Sonraki monitöre taşı
+Window always on top	Pencere her zaman üstte
