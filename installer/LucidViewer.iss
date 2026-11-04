@@ -63,7 +63,9 @@ DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
+#ifndef NoLicensePage
 LicenseFile=..\LICENSE.txt
+#endif
 OutputDir=Output
 OutputBaseFilename=LucidViewer-{#AppVersion}-Setup-x64
 SetupIconFile=..\docs\brand\LucidViewer.ico
@@ -197,6 +199,7 @@ Root: HKA; Subkey: "Software\Classes\{#ProgId}\shell\open\command"; ValueType: s
 Root: HKA; Subkey: "Software\Classes\Applications\{#AppExe}"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#AppName}"; Flags: uninsdeletekey; Tasks: fileassoc
 Root: HKA; Subkey: "Software\Classes\Applications\{#AppExe}\shell\open\command"; ValueType: string; ValueData: """{app}\{#AppExe}"" ""%1"""; Tasks: fileassoc
 ; Capabilities, so Windows lists the program in Default apps
+Root: HKA; Subkey: "Software\{#AppId}"; Flags: uninsdeletekeyifempty; Tasks: fileassoc
 Root: HKA; Subkey: "Software\{#AppId}\Capabilities"; ValueType: string; ValueName: "ApplicationName"; ValueData: "{#AppName}"; Flags: uninsdeletekey; Tasks: fileassoc
 Root: HKA; Subkey: "Software\{#AppId}\Capabilities"; ValueType: string; ValueName: "ApplicationDescription"; ValueData: "{cm:AppDescription}"; Tasks: fileassoc
 Root: HKA; Subkey: "Software\{#AppId}\Capabilities"; ValueType: string; ValueName: "ApplicationIcon"; ValueData: "{app}\{#AppExe},0"; Tasks: fileassoc
