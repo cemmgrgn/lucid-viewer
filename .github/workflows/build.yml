@@ -20,7 +20,7 @@ jobs:
       - name: Get WTL
         run: git submodule update --init deps/WTL-sf
 
-      # the runner image has no ATL, the program needs it
+      # the program needs ATL, older runner images do not have it
       - name: Add ATL to Visual Studio
         shell: pwsh
         run: |
@@ -32,8 +32,7 @@ jobs:
       - uses: microsoft/setup-msbuild@v2
 
       - name: Build
-        # The project is set up for Visual Studio 2026 (v145), the runner has Visual Studio 2022 (v143)
-        run: msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m /v:m
+        run: msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=x64 /m /v:m
 
       - name: Version
         id: version
