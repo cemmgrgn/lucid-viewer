@@ -11,3 +11,4 @@
 #define ANIMATION_TIMER_EVENT_ID 9 // GIF animation timer ID
 #define STATUSBAR_MESSAGE_TIMER_EVENT_ID 10 // removes the temporary message from the status bar
 #define TOOLTIP_TIMER_EVENT_ID 11 // shows the tooltip of the toolbar button under the mouse
+#define REPAINT_TIMER_EVENT_ID 12 // repaints the image after the window size was changed for the image

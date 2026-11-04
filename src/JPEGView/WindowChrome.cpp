@@ -687,6 +687,7 @@ void CWindowChrome::OnDragMove(CPoint ptScreen) {
 }
 
 void CWindowChrome::EndDrag() {
+	if (m_nDragSlider >= 0) m_pMainDlg->EndEdit();
 	m_nDragSlider = -1;
 	Paint();
 }
@@ -924,7 +925,7 @@ bool CWindowChrome::IsItemEnabled(const CToolbarItem& item) {
 
 bool CWindowChrome::IsItemChecked(const CToolbarItem& item) {
 	switch (item.Command) {
-		case IDM_TOGGLE_SIDEPANEL: return m_bShowSidePanel;
+		case IDM_TOGGLE_SIDEPANEL: return m_bShowSidePanel && !m_bSideCollapsed;
 		case IDM_TOGGLE_EDITPANEL: return IsEditTabShown();
 		case IDM_TOGGLE_DRAWPANEL: return IsDrawTabShown();
 		case IDM_COMPARE_BEFORE_AFTER: return m_pMainDlg->IsCompareMode();
@@ -995,12 +996,14 @@ void CWindowChrome::ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bD
 			}
 			if (bDoubleClick) {
 				// double click resets the value
+				m_pMainDlg->PushUndo(false);
 				const CSideSlider& slider = m_sliders[hit.Value];
 				m_pMainDlg->GetImageProcessingParams()->*slider.Value = GetSliderDefault(slider);
 				m_pMainDlg->OnImageProcessingChanged();
 				Paint();
 			} else {
 				m_nDragSlider = hit.Value;
+				m_pMainDlg->BeginEdit();
 				::SetCapture(m_pMainDlg->GetHWND());
 				SetSliderFromPosition(hit.Value, ptWindow.x);
 			}
@@ -1329,15 +1332,31 @@ void CWindowChrome::PaintCollapsedSidePanel(CDC& dc) {
 	dc.FillSolidRect(&rect, m_colors.PanelBackground);
 	dc.FillSolidRect(rect.left, rect.top, max(1, S(1)), rect.Height(), m_colors.Border);
 
+	// the tabs and shortcuts to frequently used functions, they stay when the panel is closed
 	struct { wchar_t Glyph; LPCTSTR Text; ESideHitType Type; int Value; LPCTSTR Tooltip; } buttons[] = {
 		{ 0xE76B, _T("<"), SH_Expand, 0, _T("Expand the side panel") },
 		{ 0xE946, _T("i"), SH_Tab, TAB_INFO, _T("Information") },
+		{ 0xE8EC, _T("M"), SH_Button, IDM_SHOW_METADATA, _T("Metadata...") },
 		{ 0xE70F, _T("E"), SH_Tab, TAB_EDIT, _T("Edit image (brightness, contrast, colors)") },
 		{ 0xE76D, _T("D"), SH_Tab, TAB_DRAW, _T("Draw and write on the image") },
+		{ 0, NULL, SH_Button, 0, NULL },
+		{ 0xE7A7, _T("U"), SH_Button, IDM_UNDO, _T("Undo") },
+		{ 0xE7AD, _T("R"), SH_Button, IDM_ROTATE_90, _T("Rotate +90") },
+		{ 0xE7A8, _T("C"), SH_Button, IDM_TOGGLE_CROP_TOOL, _T("Crop tool") },
+		{ 0xE8D2, _T("T"), SH_Button, IDM_OCR_COPY_TEXT, _T("Copy text from image") },
+		{ 0xE722, _T("S"), SH_Button, IDM_SCREENSHOT, _T("Take screenshot") },
+		{ 0xE72D, _T("H"), SH_Button, IDM_SHARE, _T("Share...") },
+		{ 0xE74D, _T("X"), SH_Button, IDM_MOVE_TO_RECYCLE_BIN_CONFIRM, _T("Move to recycle bin") },
 	};
 	int nSize = rect.Width() - S(6);
 	int nY = S(6);
 	for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
+		if (buttons[i].Glyph == 0) {
+			DrawHorizontalLine(dc, rect.left + S(6), rect.right - S(6), rect.top + nY + S(3), m_colors.Border);
+			nY += S(8);
+			continue;
+		}
+		if (rect.top + nY + nSize > rect.bottom) break;
 		CRect buttonRect(S(3), nY, S(3) + nSize, nY + nSize);
 		AddSideHit(buttons[i].Type, buttons[i].Value, buttonRect, buttons[i].Tooltip);
 		buttonRect.OffsetRect(rect.TopLeft());
@@ -1902,10 +1921,11 @@ int CWindowChrome::PaintDrawTab(CDC& dc, int nWidth, int nY) {
 	// actions
 	bool bHasDrawing = !pAnnotations->IsEmpty();
 	struct { LPCTSTR Text; int Command; bool Enabled; LPCTSTR Tooltip; } buttons[] = {
-		{ _T("Undo"), IDM_ANNOTATION_UNDO, bHasDrawing, _T("Remove the last drawing") },
+		{ _T("Undo"), IDM_UNDO, m_pMainDlg->CanUndo(), _T("Undo the last operation (Ctrl+Z)") },
 		{ _T("Remove all drawings"), IDM_ANNOTATION_CLEAR, bHasDrawing, NULL },
 		{ _T("Save pen strokes as signature"), IDM_SIGNATURE_SAVE, bHasDrawing, _T("Write your signature with the pen first") },
-		{ _T("Insert signature"), IDM_SIGNATURE_INSERT, bHasImage && pAnnotations->HasSignature(), NULL },
+		{ _T("Insert signature"), IDM_SIGNATURE_INSERT, bHasImage, _T("Inserts the saved signature, without a saved signature it can be drawn first") },
+		{ _T("Draw a new signature..."), IDM_SIGNATURE_DRAW, true, NULL },
 		{ _T("Draw into the image"), IDM_ANNOTATION_APPLY, bHasDrawing, _T("Saving the image does this too") },
 		{ _T("Remove background"), IDM_REMOVE_BACKGROUND, bHasImage, _T("Makes the background transparent with an AI model (176 MB download on first use)") },
 		{ _T("Save as transparent PNG..."), IDM_SAVE_TRANSPARENT, m_pMainDlg->HasTransparency(), _T("Saves the image with the removed colors as transparent PNG") },

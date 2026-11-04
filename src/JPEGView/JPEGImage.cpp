@@ -706,6 +706,47 @@ bool CJPEGImage::Rotate(int nRotation) {
 	return true;
 }
 
+static size_t GetOriginalPixelBytes(int nWidth, int nHeight, int nChannels) {
+	int nStride = (nChannels == 4) ? nWidth * 4 : Helpers::DoPadding(nWidth * nChannels, 4);
+	return (size_t)nStride * nHeight;
+}
+
+bool CJPEGImage::TakeSnapshot(CPixelSnapshot& snapshot) const {
+	if (m_pOrigPixels == NULL) return false;
+	size_t nBytes = GetOriginalPixelBytes(m_nOrigWidth, m_nOrigHeight, m_nOriginalChannels);
+	try {
+		snapshot.Pixels.assign((const char*)m_pOrigPixels, (const char*)m_pOrigPixels + nBytes);
+	} catch (...) {
+		return false;
+	}
+	snapshot.Width = m_nOrigWidth;
+	snapshot.Height = m_nOrigHeight;
+	snapshot.Channels = m_nOriginalChannels;
+	snapshot.Rotation = m_rotationParams;
+	snapshot.Cropped = m_bCropped;
+	snapshot.Destructive = m_bIsDestructivelyProcessed;
+	snapshot.NoParamDB = m_bIsProcessedNoParamDB;
+	return true;
+}
+
+bool CJPEGImage::RestoreSnapshot(const CPixelSnapshot& snapshot) {
+	if (snapshot.Pixels.empty()) return false;
+	char* pPixels = new(std::nothrow) char[snapshot.Pixels.size()];
+	if (pPixels == NULL) return false;
+	memcpy(pPixels, &snapshot.Pixels[0], snapshot.Pixels.size());
+	InvalidateAllCachedPixelData();
+	delete[] m_pOrigPixels;
+	m_pOrigPixels = pPixels;
+	m_nOrigWidth = snapshot.Width;
+	m_nOrigHeight = snapshot.Height;
+	m_nOriginalChannels = snapshot.Channels;
+	m_rotationParams = snapshot.Rotation;
+	m_bCropped = snapshot.Cropped;
+	m_bIsDestructivelyProcessed = snapshot.Destructive;
+	m_bIsProcessedNoParamDB = snapshot.NoParamDB;
+	return true;
+}
+
 void* CJPEGImage::GetOriginalPixelsForWriting() {
 	if (!ConvertSrcTo4Channels()) {
 		return NULL;

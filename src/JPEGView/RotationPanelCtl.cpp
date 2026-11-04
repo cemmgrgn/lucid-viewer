@@ -125,6 +125,7 @@ void CRotationPanelCtl::ApplyTransformation() {
 		// ignore any parameter DB value for free rotation)
 		m_pMainDlg->ReloadImage(true, false);
 	}
+	m_pMainDlg->PushUndo(true);
 	if (!CurrentImage()->RotateOriginalPixels(rotation, m_bAutoCrop, m_bKeepAspectRatio)) {
 		::MessageBox(m_pMainDlg->GetHWND(), CNLS::GetString(_T("The operation failed because not enough memory is available!")),
 			_T("JPEGView"), MB_ICONSTOP | MB_OK);

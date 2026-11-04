@@ -1,6 +1,7 @@
 ﻿#include "StdAfx.h"
 #include "Annotations.h"
 #include "SettingsProvider.h"
+#include "NLS.h"
 #include <gdiplus.h>
 #include <math.h>
 
@@ -333,4 +334,168 @@ bool CAnnotations::SaveTransparentPNG(LPCTSTR sFileName, const void* pBGRA, cons
 		}
 	}
 	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Signature pad
+///////////////////////////////////////////////////////////////////////////////////
+
+struct CSignaturePad {
+	CAnnotations Strokes;
+	CRect Canvas;
+	bool Done, Saved, Drawing;
+};
+
+static const int ID_SIGNATURE_CLEAR = 101;
+
+static LRESULT CALLBACK SignatureWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
+	CSignaturePad* pPad = (CSignaturePad*)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	switch (nMsg) {
+		case WM_CREATE:
+			::SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams);
+			return 0;
+		case WM_PAINT: {
+			PAINTSTRUCT ps;
+			HDC hDC = ::BeginPaint(hWnd, &ps);
+			if (pPad != NULL) {
+				CRect client;
+				::GetClientRect(hWnd, &client);
+				HDC hMemDC = ::CreateCompatibleDC(hDC);
+				HBITMAP hBitmap = ::CreateCompatibleBitmap(hDC, client.Width(), client.Height());
+				HGDIOBJ hOld = ::SelectObject(hMemDC, hBitmap);
+				::FillRect(hMemDC, &client, ::GetSysColorBrush(COLOR_BTNFACE));
+				::FillRect(hMemDC, &pPad->Canvas, (HBRUSH)::GetStockObject(WHITE_BRUSH));
+				// signature line
+				HPEN hPen = ::CreatePen(PS_DOT, 1, RGB(160, 160, 160));
+				HGDIOBJ hOldPen = ::SelectObject(hMemDC, hPen);
+				int nLineY = pPad->Canvas.bottom - pPad->Canvas.Height() / 4;
+				::MoveToEx(hMemDC, pPad->Canvas.left + 20, nLineY, NULL);
+				::LineTo(hMemDC, pPad->Canvas.right - 20, nLineY);
+				::SelectObject(hMemDC, hOldPen);
+				::DeleteObject(hPen);
+				{
+					Gdiplus::Graphics graphics(hMemDC);
+					graphics.SetClip(Gdiplus::Rect(pPad->Canvas.left, pPad->Canvas.top, pPad->Canvas.Width(), pPad->Canvas.Height()));
+					pPad->Strokes.Render(graphics);
+				}
+				::BitBlt(hDC, 0, 0, client.Width(), client.Height(), hMemDC, 0, 0, SRCCOPY);
+				::SelectObject(hMemDC, hOld);
+				::DeleteObject(hBitmap);
+				::DeleteDC(hMemDC);
+			}
+			::EndPaint(hWnd, &ps);
+			return 0;
+		}
+		case WM_ERASEBKGND:
+			return 1;
+		case WM_LBUTTONDOWN:
+			if (pPad != NULL) {
+				CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));
+				if (pPad->Canvas.PtInRect(pt)) {
+					pPad->Strokes.BeginShape((float)pt.x, (float)pt.y, 1.0);
+					pPad->Drawing = true;
+					::SetCapture(hWnd);
+				}
+			}
+			return 0;
+		case WM_MOUSEMOVE:
+			if (pPad != NULL && pPad->Drawing) {
+				CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));
+				pt.x = max(pPad->Canvas.left, min(pPad->Canvas.right, pt.x));
+				pt.y = max(pPad->Canvas.top, min(pPad->Canvas.bottom, pt.y));
+				pPad->Strokes.ContinueShape((float)pt.x, (float)pt.y);
+				::InvalidateRect(hWnd, &pPad->Canvas, FALSE);
+			}
+			return 0;
+		case WM_LBUTTONUP:
+			if (pPad != NULL && pPad->Drawing) {
+				pPad->Strokes.EndShape();
+				pPad->Drawing = false;
+				::ReleaseCapture();
+			}
+			return 0;
+		case WM_COMMAND:
+			if (pPad == NULL) break;
+			if (LOWORD(wParam) == ID_SIGNATURE_CLEAR) {
+				pPad->Strokes.Clear();
+				::InvalidateRect(hWnd, NULL, FALSE);
+			} else if (LOWORD(wParam) == IDOK) {
+				if (pPad->Strokes.SaveSignature()) {
+					pPad->Saved = true;
+					pPad->Done = true;
+					::PostMessage(hWnd, WM_NULL, 0, 0);
+				}
+			} else if (LOWORD(wParam) == IDCANCEL) {
+				pPad->Done = true;
+				::PostMessage(hWnd, WM_NULL, 0, 0);
+			}
+			return 0;
+		case WM_CLOSE:
+			if (pPad != NULL) {
+				pPad->Done = true;
+				::PostMessage(hWnd, WM_NULL, 0, 0);
+			}
+			return 0;
+	}
+	return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+}
+
+bool CAnnotations::DrawSignature(HWND hParent) {
+	HINSTANCE hInstance = ::GetModuleHandle(NULL);
+	WNDCLASS wndClass{ 0 };
+	wndClass.lpfnWndProc = SignatureWndProc;
+	wndClass.hInstance = hInstance;
+	wndClass.hCursor = ::LoadCursor(NULL, IDC_CROSS);
+	wndClass.lpszClassName = _T("JPEGViewSignaturePad");
+	::RegisterClass(&wndClass);
+	HDC hDC = ::GetDC(NULL);
+	int nDPI = ::GetDeviceCaps(hDC, LOGPIXELSX);
+	::ReleaseDC(NULL, hDC);
+	auto S = [nDPI](int n) { return ::MulDiv(n, nDPI, 96); };
+
+	CSignaturePad pad;
+	pad.Strokes.SetTool(TOOL_PEN);
+	pad.Strokes.SetColor(RGB(20, 20, 60));
+	pad.Strokes.SetWidth(3);
+	pad.Done = pad.Saved = pad.Drawing = false;
+	int nWidth = S(620), nHeight = S(330);
+	pad.Canvas = CRect(S(12), S(40), nWidth - S(12), nHeight - S(56));
+	RECT windowRect = { 0, 0, nWidth, nHeight };
+	DWORD nStyle = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+	::AdjustWindowRectEx(&windowRect, nStyle, FALSE, WS_EX_DLGMODALFRAME);
+	RECT parentRect;
+	::GetWindowRect(hParent, &parentRect);
+	int nWindowWidth = windowRect.right - windowRect.left, nWindowHeight = windowRect.bottom - windowRect.top;
+	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewSignaturePad"), CNLS::GetString(_T("Draw your signature")), nStyle,
+		(parentRect.left + parentRect.right - nWindowWidth) / 2, (parentRect.top + parentRect.bottom - nWindowHeight) / 2,
+		nWindowWidth, nWindowHeight, hParent, NULL, hInstance, &pad);
+	if (hWnd == NULL) return false;
+	NONCLIENTMETRICS metrics{ 0 };
+	metrics.cbSize = sizeof(metrics);
+	::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0);
+	HFONT hFont = ::CreateFontIndirect(&metrics.lfMessageFont);
+	HWND hHint = ::CreateWindow(_T("STATIC"), CNLS::GetString(_T("Write your signature in the white area with the mouse or a pen.")),
+		WS_CHILD | WS_VISIBLE, S(12), S(12), nWidth - S(24), S(22), hWnd, NULL, hInstance, NULL);
+	int nButton = S(110), nButtonY = nHeight - S(44);
+	HWND hClear = ::CreateWindow(_T("BUTTON"), CNLS::GetString(_T("Clear")), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		S(12), nButtonY, nButton, S(30), hWnd, (HMENU)(INT_PTR)ID_SIGNATURE_CLEAR, hInstance, NULL);
+	HWND hSave = ::CreateWindow(_T("BUTTON"), CNLS::GetString(_T("Save")), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
+		nWidth - S(12) - 2 * nButton - S(8), nButtonY, nButton, S(30), hWnd, (HMENU)IDOK, hInstance, NULL);
+	HWND hCancel = ::CreateWindow(_T("BUTTON"), CNLS::GetString(_T("Cancel")), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		nWidth - S(12) - nButton, nButtonY, nButton, S(30), hWnd, (HMENU)IDCANCEL, hInstance, NULL);
+	for (HWND hControl : { hHint, hClear, hSave, hCancel }) ::SendMessage(hControl, WM_SETFONT, (WPARAM)hFont, FALSE);
+	::EnableWindow(hParent, FALSE);
+	::ShowWindow(hWnd, SW_SHOWNORMAL);
+	MSG msg;
+	while (!pad.Done && ::GetMessage(&msg, NULL, 0, 0) > 0) {
+		if (!::IsDialogMessage(hWnd, &msg)) {
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+		}
+	}
+	::EnableWindow(hParent, TRUE);
+	::DestroyWindow(hWnd);
+	::SetActiveWindow(hParent);
+	::DeleteObject(hFont);
+	return pad.Saved;
 }

@@ -92,6 +92,7 @@ void CUnsharpMaskPanelCtl::OnCancelUnsharpMask(void* pContext, int nParameter, C
 void CUnsharpMaskPanelCtl::OnApplyUnsharpMask(void* pContext, int nParameter, CButtonCtrl & sender) {
 	CUnsharpMaskPanelCtl* pThis = (CUnsharpMaskPanelCtl*)pContext;
 	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	pThis->m_pMainDlg->PushUndo(true);
 	if (!pThis->CurrentImage()->ApplyUnsharpMaskToOriginalPixels(*(pThis->m_pUnsharpMaskParams))) {
 		::MessageBox(pThis->m_pMainDlg->GetHWND(), CNLS::GetString(_T("The operation failed because not enough memory is available!")),
 			_T("JPEGView"), MB_ICONSTOP | MB_OK);

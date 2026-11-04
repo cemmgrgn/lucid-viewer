@@ -330,6 +330,9 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_bCropTool = false;
 	m_bDragOutPending = false;
 	m_bTransparencySaved = false;
+	m_bEditPending = false;
+	m_bUndoing = false;
+	m_nCommandDepth = 0;
 	m_nCropModeCommand = IDM_CROPMODE_FREE;
 	m_nRunningConversions = 0;
 	m_bCompareMode = false;
@@ -840,9 +843,11 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 			::ReleaseCapture();
 			CString sText;
 			if (CAnnotations::AskForText(m_hWnd, CNLS::GetString(_T("Text")), CNLS::GetString(_T("OK")), CNLS::GetString(_T("Cancel")), sText)) {
+				PushUndo(false);
 				m_pAnnotations->AddText(fX, fY, m_dRealizedZoom, sText);
 			}
 		} else {
+			PushUndo(false);
 			m_pAnnotations->BeginShape(fX, fY, m_dRealizedZoom);
 		}
 		Invalidate(FALSE);
@@ -1295,6 +1300,11 @@ LRESULT CMainDlg::OnDropFiles(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 }
 
 LRESULT CMainDlg::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
+	if (wParam == REPAINT_TIMER_EVENT_ID) {
+		::KillTimer(m_hWnd, REPAINT_TIMER_EVENT_ID);
+		::RedrawWindow(m_hWnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_FRAME | RDW_UPDATENOW);
+		return 0;
+	}
 	if (wParam == ANIMATION_TIMER_EVENT_ID || (wParam == SLIDESHOW_TIMER_EVENT_ID && m_nCurrentTimeout > 0)) {
 		// Remove all timer messages for slideshow and animation events that accumulated in the queue
 		MSG msg;
@@ -1595,6 +1605,39 @@ bool CMainDlg::CloseHelpDlg() {
 }
 
 void CMainDlg::ExecuteCommand(int nCommand) {
+	if (nCommand == IDM_UNDO) {
+		Undo();
+		return;
+	}
+	if (nCommand == IDM_REDO) {
+		Redo();
+		return;
+	}
+	// the state before the outermost command is saved if the command changes it (editing values, rotation)
+	bool bTrack = m_nCommandDepth == 0 && !m_bUndoing && m_pCurrentImage != NULL;
+	CEditState before;
+	CJPEGImage* pImageBefore = m_pCurrentImage;
+	size_t nUndoBefore = m_undoStack.size();
+	if (bTrack) {
+		CaptureState(before, false);
+	}
+	m_nCommandDepth++;
+	ExecuteCommandInternal(nCommand);
+	m_nCommandDepth--;
+	if (bTrack && m_pCurrentImage != NULL && m_pCurrentImage == pImageBefore && m_undoStack.size() == nUndoBefore) {
+		CEditState after;
+		CaptureState(after, false);
+		if (!IsSameEditState(before, after)) {
+			CUndoEntry entry;
+			entry.Kind = UNDO_EDIT;
+			entry.File = CurrentFileName(false);
+			entry.State = before;
+			PushUndoEntry(entry);
+		}
+	}
+}
+
+void CMainDlg::ExecuteCommandInternal(int nCommand) {
 	if (nCommand >= IDM_CROPMODE_FREE && nCommand <= IDM_CROPMODE_USER) {
 		m_nCropModeCommand = nCommand;
 	}
@@ -1700,8 +1743,15 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				if (noConfirmation || ConfirmDelete(m_hWnd, CString(CNLS::GetString(sQuestion)) + _T("\n\n") + currentFileName + _T("\n\n") +
 						CNLS::GetString(_T("Enter or Del: delete, Esc: cancel")), bHasRecycleBin)) {
 					CFileList* fileListOfDeletedImage = m_pFileList;
+					CString sDeletedFile = currentFileName;
 					GotoImage(POS_AwayFromCurrent, NO_REQUEST);
-					if (m_pFileList->DeleteFile(currentFileName)) {
+					if (m_pFileList->DeleteFile(sDeletedFile)) {
+						if (bHasRecycleBin) {
+							CUndoEntry entry;
+							entry.Kind = UNDO_DELETE;
+							entry.File = sDeletedFile;
+							PushUndoEntry(entry);
+						}
 						fileListOfDeletedImage->Reload(NULL, false);
 						m_pFileList->DeleteHistory(true);
 						Invalidate();
@@ -1718,7 +1768,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			if (m_pChrome->IsEnabled()) {
 				// in window mode the information is on the side panel, the overlay over the image is only used in full screen mode
 				if (m_pChrome->IsSidePanelExpanded() && !m_pChrome->IsEditTabShown()) {
-					m_pChrome->SetShowSidePanel(false);
+					m_pChrome->SetSidePanelCollapsed(true);
 				} else {
 					m_pChrome->ShowSideTab(CWindowChrome::TAB_INFO);
 				}
@@ -1888,6 +1938,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				CResizeDlg dlgResize(m_pCurrentImage->OrigSize());
 				if (dlgResize.DoModal(m_hWnd) == IDOK) {
 					HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+					PushUndo(true);
 					m_pCurrentImage->ResizeOriginalPixels(dlgResize.GetFilter(), dlgResize.GetNewSize());
 					::SetCursor(hOldCursor);
 					m_pImageProcPanelCtl->ShowHideSaveDBButtons();
@@ -1902,6 +1953,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_MIRROR_H:
 		case IDM_MIRROR_V:
 			if (m_pCurrentImage != NULL) {
+				PushUndo(true);
 				m_pCurrentImage->Mirror(nCommand == IDM_MIRROR_H);
 				m_pImageProcPanelCtl->ShowHideSaveDBButtons();
 				this->Invalidate(FALSE);
@@ -1943,6 +1995,14 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 								_T("\n") + CNLS::GetString(_T("Reason:")) + _T(" ") + HelpersGUI::LosslessTransformationResultToString(eResult),
 								CNLS::GetString(_T("Lossless JPEG transformations")), MB_OK | MB_ICONWARNING);
 						} else {
+							if (!m_bUndoing && !(bCrop || (!bCanTransformWithoutCrop && sp.CropWithoutPromptLosslessJPEG()))) {
+								CUndoEntry entry;
+								entry.Kind = UNDO_LOSSLESS;
+								entry.File = m_pFileList->Current();
+								entry.Command = (nCommand == IDM_ROTATE_90_LOSSLESS || nCommand == IDM_ROTATE_90_LOSSLESS_CONFIRM) ? IDM_ROTATE_270_LOSSLESS :
+									(nCommand == IDM_ROTATE_270_LOSSLESS || nCommand == IDM_ROTATE_270_LOSSLESS_CONFIRM) ? IDM_ROTATE_90_LOSSLESS : nCommand;
+								PushUndoEntry(entry);
+							}
 							ReloadImage(false); // reload current image
 						}
 					}
@@ -2236,6 +2296,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_CROP_SEL:
 			if (m_pCurrentImage != NULL) {
+				PushUndo(true);
 				m_pCurrentImage->Crop(m_pCropCtl->GetImageCropRect(false));
 				m_pImageProcPanelCtl->ShowHideSaveDBButtons();
 				this->Invalidate(FALSE);
@@ -2401,7 +2462,13 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			Invalidate(FALSE);
 			break;
 		case IDM_TOGGLE_SIDEPANEL:
-			m_pChrome->SetShowSidePanel(!m_pChrome->GetShowSidePanel());
+			// closing keeps the narrow strip with the tabs and shortcuts
+			if (!m_pChrome->GetShowSidePanel()) {
+				m_pChrome->SetShowSidePanel(true);
+				m_pChrome->SetSidePanelCollapsed(false);
+			} else {
+				m_pChrome->SetSidePanelCollapsed(!m_pChrome->GetSidePanelCollapsed());
+			}
 			Invalidate(FALSE);
 			break;
 		case IDM_TOGGLE_EDITPANEL:
@@ -2457,7 +2524,16 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 					_T("Remove all editable metadata (description, camera, location and others) from the file? The orientation is kept.")),
 					CNLS::GetString(_T("Confirm")), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2)) {
 					CString sFile = GetMetadataFileName(), sError;
+					CUndoEntry undo;
+					undo.Kind = UNDO_METADATA;
+					undo.File = sFile;
+					for (const Metadata::CEntry& entry : GetMetadata()) {
+						if (entry.Writable && entry.Present && !entry.EditValue.IsEmpty() && (!bLocationOnly || entry.Group == Metadata::GROUP_LOCATION)) {
+							undo.Metadata.push_back({ entry.Key, entry.EditValue });
+						}
+					}
 					int nRemoved = Metadata::Remove(sFile, GetMetadata(), bLocationOnly, sError);
+					if (nRemoved > 0 && !undo.Metadata.empty()) PushUndoEntry(undo);
 					if (nRemoved < 0) {
 						m_pChrome->ShowMessage(sError);
 					} else {
@@ -2477,7 +2553,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 					{ IDM_PREV, _T("Previous image") }, { IDM_NEXT, _T("Next image") }, { IDM_FULL_SCREEN_MODE, _T("Full screen mode") },
 					{ IDM_TOGGLE_TOOLBAR, _T("Toolbar") }, { IDM_TOGGLE_SIDEPANEL, _T("Information panel") }, { IDM_SHOW_FILEINFO, _T("Information") },
 					{ IDM_TOGGLE_EDITPANEL, _T("Edit image (brightness, contrast, colors)") }, { IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing") },
-					{ IDM_TOGGLE_DRAWPANEL, _T("Draw and write on the image") }, { IDM_ANNOTATION_UNDO, _T("Undo") },
+					{ IDM_TOGGLE_DRAWPANEL, _T("Draw and write on the image") }, { IDM_UNDO, _T("Undo") }, { IDM_REDO, _T("Redo") },
 					{ IDM_OCR_COPY_TEXT, _T("Copy text from image") }, { IDM_CHANGESIZE, _T("Resize image...") }, { IDM_SHOW_METADATA, _T("Metadata...") },
 					{ IDM_MOVE_TO_RECYCLE_BIN_CONFIRM, _T("Move to recycle bin") }, { IDM_EXIT, _T("Exit") },
 				};
@@ -2523,6 +2599,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				if (!bSuccess) {
 					m_pChrome->ShowMessage(sError.c_str());
 				} else {
+					PushUndo(true);
 					ApplyTransparencyMask(alpha);
 					m_pChrome->ShowSideTab(CWindowChrome::TAB_DRAW);
 					m_pChrome->ShowMessage(CNLS::GetString(_T("Background removed. Save it with 'Save as transparent PNG'.")));
@@ -2570,6 +2647,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			}
 			break;
 		case IDM_UNDO_TRANSPARENCY:
+			if (HasTransparency()) PushUndo(true);
 			ClearTransparency(true);
 			Invalidate(FALSE);
 			m_pChrome->Paint();
@@ -2640,18 +2718,30 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			m_pChrome->Paint();
 			break;
 		case IDM_ANNOTATION_CLEAR:
+			PushUndo(false);
 			m_pAnnotations->Clear();
 			Invalidate(FALSE);
 			m_pChrome->Paint();
 			break;
 		case IDM_ANNOTATION_APPLY:
+			if (m_pCurrentImage != NULL && !m_pAnnotations->IsEmpty()) PushUndo(true);
 			ApplyAnnotations();
+			break;
+		case IDM_SIGNATURE_DRAW:
+			if (CAnnotations::DrawSignature(m_hWnd)) {
+				m_pChrome->ShowMessage(CNLS::GetString(_T("The signature was saved.")));
+				m_pChrome->Paint();
+			}
 			break;
 		case IDM_SIGNATURE_SAVE:
 			m_pChrome->ShowMessage(CNLS::GetString(m_pAnnotations->SaveSignature() ? _T("The pen strokes were saved as signature.") :
 				_T("Write your signature with the pen first.")));
 			break;
 		case IDM_SIGNATURE_INSERT:
+			if (m_pCurrentImage != NULL && !m_pAnnotations->HasSignature() && !CAnnotations::DrawSignature(m_hWnd)) {
+				break;
+			}
+			if (m_pCurrentImage != NULL) PushUndo(false);
 			if (m_pCurrentImage != NULL && m_pAnnotations->InsertSignature(m_pCurrentImage->OrigWidth() / 2.0f,
 				m_pCurrentImage->OrigHeight() / 2.0f, m_pCurrentImage->OrigWidth() / 4.0f)) {
 				Invalidate(FALSE);
@@ -3606,6 +3696,13 @@ void CMainDlg::ExchangeProcessingParams() {
 void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow) {
 	m_pAnnotations->Clear(); // drawings belong to the image they were made on
 	m_sMetadataFile.Empty(); // the file could have been changed
+	// undo entries of editing belong to the previous image, the file operations stay
+	auto RemoveEdits = [](std::vector<CUndoEntry>& stack) {
+		stack.erase(std::remove_if(stack.begin(), stack.end(), [](const CUndoEntry& e) { return e.Kind == UNDO_EDIT; }), stack.end());
+	};
+	RemoveEdits(m_undoStack);
+	RemoveEdits(m_redoStack);
+	m_bEditPending = false;
 	ClearTransparency(false);
 	UpdateWindowTitle();
 	InvalidateHelpDlg();
@@ -3679,6 +3776,9 @@ void CMainDlg::AdjustWindowToImage(bool bAfterStartup) {
 		this->SetWindowPos(HWND_TOP, windowRect.left, windowRect.top, windowRect.Width(), windowRect.Height(), SWP_NOZORDER | SWP_NOCOPYBITS);
 		this->GetClientRect(&m_clientRect);
 		m_bResizeForNewImage = false;
+		// the invalidation of the resize can get lost with the custom window frame (rotating an image), repaint again shortly after
+		this->RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
+		this->SetTimer(REPAINT_TIMER_EVENT_ID, 150);
 	}
 }
 
@@ -3904,12 +4004,12 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
-static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
+static const int s_menuBarEdit[] = { MBAR_UNDO, MBAR_SEPARATOR, IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
 static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
@@ -4058,6 +4158,10 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_EXPORT:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_EXPORT, _T("Export..."), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_UNDO:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_UNDO, _T("Undo"), false, CanUndo());
+				AppendMenuString(m_pKeyMap, hMenu, IDM_REDO, _T("Redo"), false, CanRedo());
 				break;
 			case MBAR_SCREENSHOT:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SCREENSHOT, _T("Take screenshot"), false, true);
@@ -4626,6 +4730,7 @@ void CMainDlg::SetRating(int nStars) {
 	if (sFile == NULL || nStars < 0 || nStars > 5) {
 		return;
 	}
+	int nOldRating = GetRating();
 	bool bSuccess = false;
 	IPropertyStore* pStore = NULL;
 	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFile, NULL, GPS_READWRITE, IID_PPV_ARGS(&pStore)))) {
@@ -4641,6 +4746,13 @@ void CMainDlg::SetRating(int nStars) {
 		pStore->Release();
 	}
 	if (bSuccess) {
+		if (!m_bUndoing && nOldRating >= 0 && nOldRating != nStars) {
+			CUndoEntry entry;
+			entry.Kind = UNDO_RATING;
+			entry.File = sFile;
+			entry.Rating = nOldRating;
+			PushUndoEntry(entry);
+		}
 		m_sRatingFile = sFile;
 		m_nRating = nStars;
 		m_sMetadataFile.Empty();
@@ -4674,6 +4786,7 @@ void CMainDlg::ClearTransparency(bool bRestorePixels) {
 }
 
 void CMainDlg::RemoveColorAt(float fX, float fY) {
+	if (m_pCurrentImage != NULL) PushUndo(true);
 	if (m_pCurrentImage == NULL) {
 		return;
 	}
@@ -4805,6 +4918,11 @@ void CMainDlg::EditMetadata(int nIndex) {
 	Metadata::CEntry entry = entries[nIndex]; // copy, the list is read again after writing
 	CString sFileName = sFile, sError;
 	if (Metadata::Edit(m_hWnd, sFileName, entry, sError)) {
+		CUndoEntry undo;
+		undo.Kind = UNDO_METADATA;
+		undo.File = sFileName;
+		undo.Metadata.push_back({ entry.Key, entry.Present ? entry.EditValue : CString() });
+		PushUndoEntry(undo);
 		m_pChrome->ShowMessage(CNLS::GetString(_T("The metadata was saved in the file.")));
 		AfterMetadataChanged();
 	} else if (!sError.IsEmpty()) {
@@ -4819,5 +4937,282 @@ void CMainDlg::AfterMetadataChanged() {
 	if (m_pAnnotations->IsEmpty() && !HasTransparency()) {
 		ReloadImage(true);
 	}
+	m_pChrome->Paint();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Undo and redo
+///////////////////////////////////////////////////////////////////////////////////
+
+static const int MAX_UNDO_ENTRIES = 60;
+static const size_t MAX_UNDO_BYTES = (size_t)1536 * 1024 * 1024; // copies of original pixels
+
+// Restores the file deleted last from the given path from the recycle bin (shell verb "undelete")
+static bool RestoreFromRecycleBin(LPCTSTR sFileName) {
+	CString sTarget(sFileName);
+	int nSlash = sTarget.ReverseFind(_T('\\'));
+	if (nSlash < 0) return false;
+	CString sFolder = sTarget.Left(nSlash), sName = sTarget.Mid(nSlash + 1);
+	CString sNameNoExt = sName.Find(_T('.')) > 0 ? sName.Left(sName.ReverseFind(_T('.'))) : sName;
+	bool bRestored = false;
+	IShellFolder* pDesktop = NULL;
+	LPITEMIDLIST pidlBin = NULL;
+	IShellFolder2* pBin = NULL;
+	IEnumIDList* pEnum = NULL;
+	if (FAILED(::SHGetDesktopFolder(&pDesktop))) return false;
+	if (SUCCEEDED(::SHGetSpecialFolderLocation(NULL, CSIDL_BITBUCKET, &pidlBin)) &&
+		SUCCEEDED(pDesktop->BindToObject(pidlBin, NULL, IID_PPV_ARGS(&pBin))) &&
+		SUCCEEDED(pBin->EnumObjects(NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &pEnum)) && pEnum != NULL) {
+		// original location and deletion date of the recycle bin items
+		static const SHCOLUMNID columnFrom = { { 0x9B174B33, 0x40FF, 0x11D2, { 0xA2, 0x7E, 0x00, 0xC0, 0x4F, 0xC3, 0x08, 0x71 } }, 2 };
+		static const SHCOLUMNID columnDate = { { 0x9B174B33, 0x40FF, 0x11D2, { 0xA2, 0x7E, 0x00, 0xC0, 0x4F, 0xC3, 0x08, 0x71 } }, 3 };
+		LPITEMIDLIST pidl = NULL, pidlBest = NULL;
+		double dBestDate = -1;
+		while (pEnum->Next(1, &pidl, NULL) == S_OK) {
+			bool bMatch = false;
+			VARIANT from;
+			::VariantInit(&from);
+			if (SUCCEEDED(pBin->GetDetailsEx(pidl, &columnFrom, &from)) && from.vt == VT_BSTR && sFolder.CompareNoCase(from.bstrVal) == 0) {
+				STRRET name;
+				TCHAR sItemName[MAX_PATH];
+				if (SUCCEEDED(pBin->GetDisplayNameOf(pidl, SHGDN_INFOLDER, &name)) && SUCCEEDED(::StrRetToBuf(&name, pidl, sItemName, MAX_PATH))) {
+					bMatch = sName.CompareNoCase(sItemName) == 0 || sNameNoExt.CompareNoCase(sItemName) == 0;
+				}
+			}
+			::VariantClear(&from);
+			double dDate = 0;
+			if (bMatch) {
+				VARIANT date;
+				::VariantInit(&date);
+				if (SUCCEEDED(pBin->GetDetailsEx(pidl, &columnDate, &date)) && date.vt == VT_DATE) dDate = date.date;
+				::VariantClear(&date);
+			}
+			if (bMatch && dDate >= dBestDate) {
+				if (pidlBest != NULL) ::CoTaskMemFree(pidlBest);
+				pidlBest = pidl;
+				dBestDate = dDate;
+			} else {
+				::CoTaskMemFree(pidl);
+			}
+		}
+		if (pidlBest != NULL) {
+			IContextMenu* pMenu = NULL;
+			LPCITEMIDLIST items[1] = { pidlBest };
+			if (SUCCEEDED(pBin->GetUIObjectOf(NULL, 1, items, IID_IContextMenu, NULL, (void**)&pMenu))) {
+				HMENU hMenu = ::CreatePopupMenu();
+				if (SUCCEEDED(pMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL))) {
+					int nCount = ::GetMenuItemCount(hMenu);
+					for (int i = 0; i < nCount && !bRestored; i++) {
+						UINT nId = ::GetMenuItemID(hMenu, i);
+						if (nId == (UINT)-1 || nId < 1) continue;
+						char sVerb[64] = { 0 };
+						if (SUCCEEDED(pMenu->GetCommandString(nId - 1, GCS_VERBA, NULL, sVerb, sizeof(sVerb))) && _stricmp(sVerb, "undelete") == 0) {
+							CMINVOKECOMMANDINFO info = { sizeof(info) };
+							info.lpVerb = MAKEINTRESOURCEA(nId - 1);
+							info.nShow = SW_SHOWNORMAL;
+							bRestored = SUCCEEDED(pMenu->InvokeCommand(&info));
+						}
+					}
+				}
+				::DestroyMenu(hMenu);
+				pMenu->Release();
+			}
+			::CoTaskMemFree(pidlBest);
+		}
+	}
+	if (pEnum != NULL) pEnum->Release();
+	if (pBin != NULL) pBin->Release();
+	if (pidlBin != NULL) ::CoTaskMemFree(pidlBin);
+	pDesktop->Release();
+	return bRestored && ::GetFileAttributes(sFileName) != INVALID_FILE_ATTRIBUTES;
+}
+
+void CMainDlg::CaptureState(CEditState& state, bool bPixels) {
+	state.Params = *m_pImageProcParams;
+	state.AutoContrast = m_bAutoContrast;
+	state.AutoContrastSection = m_bAutoContrastSection;
+	state.LDC = m_bLDC;
+	state.LandscapeMode = m_bLandscapeMode;
+	state.Rotation = m_nRotation;
+	state.UserRotation = m_nUserRotation;
+	state.Annotations = std::make_shared<CAnnotations>(*m_pAnnotations);
+	state.Pixels.reset();
+	state.TransparencyMask.reset();
+	state.TransparencyBackup.reset();
+	if (bPixels && m_pCurrentImage != NULL) {
+		std::shared_ptr<CPixelSnapshot> pSnapshot = std::make_shared<CPixelSnapshot>();
+		if (m_pCurrentImage->TakeSnapshot(*pSnapshot)) {
+			state.Pixels = pSnapshot;
+			state.TransparencyMask = std::make_shared<std::vector<uint8>>(m_transparencyMask);
+			state.TransparencyBackup = std::make_shared<std::vector<uint8>>(m_transparencyBackup);
+		}
+	}
+}
+
+bool CMainDlg::IsSameEditState(const CEditState& a, const CEditState& b) {
+	return memcmp(&a.Params, &b.Params, sizeof(CImageProcessingParams)) == 0 && a.AutoContrast == b.AutoContrast &&
+		a.AutoContrastSection == b.AutoContrastSection && a.LDC == b.LDC && a.LandscapeMode == b.LandscapeMode &&
+		a.Rotation == b.Rotation && a.UserRotation == b.UserRotation;
+}
+
+void CMainDlg::RestoreState(const CEditState& state) {
+	if (m_pCurrentImage == NULL) return;
+	CSize oldSize = m_pCurrentImage->OrigSize();
+	*m_pImageProcParams = state.Params;
+	m_bAutoContrast = state.AutoContrast;
+	m_bAutoContrastSection = state.AutoContrastSection;
+	m_bLDC = state.LDC;
+	m_bLandscapeMode = state.LandscapeMode;
+	if (state.Pixels) {
+		m_pCurrentImage->RestoreSnapshot(*state.Pixels);
+		m_transparencyMask = state.TransparencyMask ? *state.TransparencyMask : std::vector<uint8>();
+		m_transparencyBackup = state.TransparencyBackup ? *state.TransparencyBackup : std::vector<uint8>();
+	} else if (state.Rotation != m_nRotation) {
+		// rotation by 90 degree steps is undone by the inverse rotation
+		m_pCurrentImage->Rotate((state.Rotation - m_nRotation + 360) % 360);
+	}
+	m_nRotation = state.Rotation;
+	m_nUserRotation = state.UserRotation;
+	if (state.Annotations) {
+		*m_pAnnotations = *state.Annotations;
+	}
+	if (m_pCurrentImage->OrigSize() != oldSize) {
+		if (!IsAdjustWindowToImage()) m_dZoom = -1;
+		m_bUserZoom = false;
+		m_bUserPan = false;
+		AdjustWindowToImage(false);
+	}
+	m_pImageProcPanelCtl->ShowHideSaveDBButtons();
+	Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::PushUndoEntry(const CUndoEntry& entry) {
+	if (m_bUndoing) return;
+	m_undoStack.push_back(entry);
+	m_redoStack.clear();
+	// limits the number of entries and the memory of the pixel copies
+	size_t nBytes = 0;
+	for (const CUndoEntry& e : m_undoStack) {
+		if (e.State.Pixels) nBytes += e.State.Pixels->Pixels.size();
+		if (e.State.TransparencyBackup) nBytes += e.State.TransparencyBackup->size() + (e.State.TransparencyMask ? e.State.TransparencyMask->size() : 0);
+	}
+	while (m_undoStack.size() > 1 && (m_undoStack.size() > MAX_UNDO_ENTRIES || nBytes > MAX_UNDO_BYTES)) {
+		const CUndoEntry& oldest = m_undoStack.front();
+		if (oldest.State.Pixels) nBytes -= min(nBytes, oldest.State.Pixels->Pixels.size());
+		if (oldest.State.TransparencyBackup) nBytes -= min(nBytes, oldest.State.TransparencyBackup->size() + (oldest.State.TransparencyMask ? oldest.State.TransparencyMask->size() : 0));
+		m_undoStack.erase(m_undoStack.begin());
+	}
+}
+
+void CMainDlg::PushUndo(bool bPixels) {
+	if (m_bUndoing || m_pCurrentImage == NULL) return;
+	CUndoEntry entry;
+	entry.Kind = UNDO_EDIT;
+	entry.File = CurrentFileName(false);
+	CaptureState(entry.State, bPixels);
+	PushUndoEntry(entry);
+}
+
+void CMainDlg::BeginEdit() {
+	if (m_pCurrentImage == NULL) return;
+	CaptureState(m_pendingEdit, false);
+	m_bEditPending = true;
+}
+
+void CMainDlg::EndEdit() {
+	if (!m_bEditPending || m_pCurrentImage == NULL) return;
+	m_bEditPending = false;
+	CEditState now;
+	CaptureState(now, false);
+	if (!IsSameEditState(m_pendingEdit, now)) {
+		CUndoEntry entry;
+		entry.Kind = UNDO_EDIT;
+		entry.File = CurrentFileName(false);
+		entry.State = m_pendingEdit;
+		PushUndoEntry(entry);
+	}
+}
+
+void CMainDlg::Undo() {
+	if (m_undoStack.empty()) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("Nothing to undo")));
+		return;
+	}
+	CUndoEntry entry = m_undoStack.back();
+	m_undoStack.pop_back();
+	m_bUndoing = true;
+	CString sMessage = CNLS::GetString(_T("Undone"));
+	switch (entry.Kind) {
+		case UNDO_EDIT:
+			if (m_pCurrentImage != NULL) {
+				CUndoEntry redo = entry;
+				CaptureState(redo.State, entry.State.Pixels != NULL);
+				RestoreState(entry.State);
+				m_redoStack.push_back(redo);
+			}
+			break;
+		case UNDO_RATING:
+			if (entry.File.CompareNoCase(CurrentFileName(false)) != 0) OpenFile(entry.File, false);
+			if (entry.File.CompareNoCase(CurrentFileName(false)) == 0) {
+				CUndoEntry redo = entry;
+				redo.Rating = GetRating();
+				SetRating(entry.Rating);
+				m_redoStack.push_back(redo);
+			}
+			break;
+		case UNDO_METADATA:
+			if (Metadata::WriteTexts(entry.File, entry.Metadata)) {
+				if (entry.File.CompareNoCase(CurrentFileName(false)) == 0) AfterMetadataChanged();
+				sMessage = CNLS::GetString(_T("The metadata was restored."));
+			} else {
+				sMessage = CNLS::GetString(_T("The value could not be written to the file."));
+			}
+			break;
+		case UNDO_DELETE:
+			if (RestoreFromRecycleBin(entry.File)) {
+				m_pFileList->Reload(NULL, false);
+				OpenFile(entry.File, false);
+				sMessage = CNLS::GetString(_T("The file was restored from the recycle bin."));
+			} else {
+				sMessage = CNLS::GetString(_T("The file was not found in the recycle bin."));
+			}
+			break;
+		case UNDO_LOSSLESS:
+			if (entry.File.CompareNoCase(CurrentFileName(false)) != 0) OpenFile(entry.File, false);
+			if (entry.File.CompareNoCase(CurrentFileName(false)) == 0) {
+				ExecuteCommand(entry.Command);
+			}
+			break;
+	}
+	m_bUndoing = false;
+	m_pChrome->ShowMessage(sMessage);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::Redo() {
+	if (m_redoStack.empty()) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("Nothing to redo")));
+		return;
+	}
+	CUndoEntry entry = m_redoStack.back();
+	m_redoStack.pop_back();
+	m_bUndoing = true;
+	if (entry.Kind == UNDO_EDIT && m_pCurrentImage != NULL) {
+		CUndoEntry undo = entry;
+		CaptureState(undo.State, entry.State.Pixels != NULL);
+		RestoreState(entry.State);
+		m_undoStack.push_back(undo);
+	} else if (entry.Kind == UNDO_RATING) {
+		if (entry.File.CompareNoCase(CurrentFileName(false)) != 0) OpenFile(entry.File, false);
+		if (entry.File.CompareNoCase(CurrentFileName(false)) == 0) {
+			CUndoEntry undo = entry;
+			undo.Rating = GetRating();
+			SetRating(entry.Rating);
+			m_undoStack.push_back(undo);
+		}
+	}
+	m_bUndoing = false;
+	m_pChrome->ShowMessage(CNLS::GetString(_T("Redone")));
 	m_pChrome->Paint();
 }

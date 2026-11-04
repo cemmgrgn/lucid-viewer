@@ -31,6 +31,9 @@ namespace Metadata {
 	// Removes the editable values (only the location if bLocationOnly), returns the number of removed values or -1 on error
 	int Remove(LPCTSTR sFileName, const std::vector<CEntry>& entries, bool bLocationOnly, CString& sError);
 
+	// Writes the values given as edit text (empty removes the value), returns false on error
+	bool WriteTexts(LPCTSTR sFileName, const std::vector<std::pair<PROPERTYKEY, CString>>& values);
+
 	// All entries with a value as text, one per line (for the clipboard)
 	CString ToText(const std::vector<CEntry>& entries);
 }

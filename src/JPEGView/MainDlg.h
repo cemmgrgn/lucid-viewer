@@ -9,6 +9,7 @@
 #include "Helpers.h"
 #include "CropCtl.h"
 #include "Metadata.h"
+#include <memory>
 
 class CFileList;
 class CJPEGProvider;
@@ -195,6 +196,15 @@ public:
 	int GetRating();
 	// Writes the star rating (0-5) into the current file
 	void SetRating(int nStars);
+	// Undo (Ctrl+Z) and redo (Ctrl+Y) of all operations: editing values, drawings, crop, rotation, resize, perspective,
+	// removed colors, rating, metadata, moving to the recycle bin and lossless JPEG transformations.
+	// PushUndo() saves the current state before an operation, bPixels also copies the original pixels.
+	void PushUndo(bool bPixels);
+	// For changes over several messages (dragging a slider): BeginEdit() remembers the state, EndEdit() saves it if changed
+	void BeginEdit();
+	void EndEdit();
+	bool CanUndo() { return !m_undoStack.empty(); }
+	bool CanRedo() { return !m_redoStack.empty(); }
 	// All metadata of the current file (cached), empty if not available
 	const std::vector<Metadata::CEntry>& GetMetadata();
 	// Shows the edit window for the metadata entry with the given index and writes the value into the file
@@ -406,6 +416,36 @@ private:
 	// Asks before drawings or removed colors that are not saved get lost, returns true to continue
 	bool ConfirmDiscardEdits();
 	CString m_sRatingFile; // file of the cached rating
+	// undo and redo
+	struct CEditState {
+		CImageProcessingParams Params;
+		bool AutoContrast, AutoContrastSection, LDC, LandscapeMode;
+		int Rotation, UserRotation;
+		std::shared_ptr<CAnnotations> Annotations;
+		std::shared_ptr<CPixelSnapshot> Pixels; // NULL if the operation did not change the pixels
+		std::shared_ptr<std::vector<uint8>> TransparencyMask, TransparencyBackup; // only with pixels
+	};
+	enum EUndoKind { UNDO_EDIT, UNDO_RATING, UNDO_METADATA, UNDO_DELETE, UNDO_LOSSLESS };
+	struct CUndoEntry {
+		EUndoKind Kind;
+		CString File;
+		CEditState State;
+		int Rating;
+		std::vector<std::pair<PROPERTYKEY, CString>> Metadata;
+		int Command;
+	};
+	std::vector<CUndoEntry> m_undoStack, m_redoStack;
+	CEditState m_pendingEdit;
+	bool m_bEditPending;
+	bool m_bUndoing; // no new undo entries while undoing
+	int m_nCommandDepth;
+	void CaptureState(CEditState& state, bool bPixels);
+	void RestoreState(const CEditState& state);
+	bool IsSameEditState(const CEditState& a, const CEditState& b);
+	void PushUndoEntry(const CUndoEntry& entry);
+	void Undo();
+	void Redo();
+	void ExecuteCommandInternal(int nCommand);
 	CString m_sMetadataFile; // file of the cached metadata
 	std::vector<Metadata::CEntry> m_metadata;
 	LPCTSTR GetMetadataFileName(); // current file if metadata can be read from it, else NULL

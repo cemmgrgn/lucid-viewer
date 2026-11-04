@@ -729,3 +729,26 @@ Start with Windows	Windows ile başlat
 Print Screen key settings of Windows...	Windows Print Screen tuşu ayarları...
 The shortcut %s is used by another program. It can be changed in the INI file (ScreenshotHotkey).	%s kısayolu başka bir program tarafından kullanılıyor. INI dosyasında (ScreenshotHotkey) değiştirilebilir.
 Windows opens the Snipping Tool with the Print Screen key. Switch this off in Settings > Accessibility > Keyboard (right click on this icon).	Windows, Print Screen tuşuyla Ekran Alıntısı Aracı'nı açıyor. Bunu Ayarlar > Erişilebilirlik > Klavye'den kapatın (bu simgeye sağ tıklayın).
+Show the text in the selection, it can be selected and copied (Ctrl+T)	Seçimdeki metni göster; seçilip kopyalanabilir (Ctrl+T)
+Copy all text	Tüm metni kopyala
+Copies all recognized text	Tanınan tüm metni kopyalar
+Select words with the mouse, Ctrl+C copies them, Ctrl+A selects all.	Kelimeleri fareyle seçin, Ctrl+C kopyalar, Ctrl+A hepsini seçer.
+All text was copied (%d lines). Select words to copy a part.	Tüm metin kopyalandı (%d satır). Bir kısmını kopyalamak için kelimeleri seçin.
+%d characters were copied to the clipboard.	%d karakter panoya kopyalandı.
+Select the area with the text, click for a window, Ctrl+C for the whole screen. Esc cancels.	Metnin olduğu alanı seçin, pencere için tıklayın, tüm ekran için Ctrl+C. Esc iptal eder.
+Drag to select an area, click for a window, Ctrl+C or Ctrl+S for the whole screen. Esc cancels.	Alan seçmek için sürükleyin, pencere için tıklayın, tüm ekran için Ctrl+C veya Ctrl+S. Esc iptal eder.
+Redo	Yinele
+Undone	Geri alındı
+Redone	Yinelendi
+Nothing to undo	Geri alınacak işlem yok
+Nothing to redo	Yinelenecek işlem yok
+The metadata was restored.	Meta veri geri yüklendi.
+The file was restored from the recycle bin.	Dosya geri dönüşüm kutusundan geri yüklendi.
+The file was not found in the recycle bin.	Dosya geri dönüşüm kutusunda bulunamadı.
+Undo the last operation (Ctrl+Z)	Son işlemi geri al (Ctrl+Z)
+Draw your signature	İmzanızı çizin
+Write your signature in the white area with the mouse or a pen.	İmzanızı beyaz alana fareyle veya kalemle yazın.
+Clear	Temizle
+Draw a new signature...	Yeni imza çiz...
+The signature was saved.	İmza kaydedildi.
+Inserts the saved signature, without a saved signature it can be drawn first	Kayıtlı imzayı ekler; kayıtlı imza yoksa önce çizilebilir

@@ -56,7 +56,7 @@ namespace Ocr {
 		return OcrEngine::TryCreateFromUserProfileLanguages();
 	}
 
-	bool RecognizeText(const void* pPixels, int nWidth, int nHeight, int nChannels, std::wstring& sText, std::wstring& sError) {
+	static bool Recognize(const void* pPixels, int nWidth, int nHeight, int nChannels, std::wstring& sText, std::vector<CWord>* pWords, std::wstring& sError) {
 		bool bSuccess = false;
 		// the asynchronous WinRT calls must not block the UI thread (STA), they run in a multithreaded apartment
 		std::thread worker([&]() {
@@ -101,9 +101,18 @@ namespace Ocr {
 					}
 					SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(buffer, BitmapPixelFormat::Bgra8, nTargetWidth, nTargetHeight, BitmapAlphaMode::Premultiplied);
 					OcrResult result = engine.RecognizeAsync(bitmap).get();
+					int nLine = 0;
 					for (OcrLine const& line : result.Lines()) {
 						sText += line.Text();
 						sText += L"\r\n";
+						if (pWords != nullptr) {
+							for (OcrWord const& word : line.Words()) {
+								winrt::Windows::Foundation::Rect bounds = word.BoundingRect();
+								CWord ocrWord = { std::wstring(word.Text()), bounds.X * nStep, bounds.Y * nStep, bounds.Width * nStep, bounds.Height * nStep, nLine };
+								pWords->push_back(ocrWord);
+							}
+						}
+						nLine++;
 					}
 					bSuccess = true;
 				}
@@ -116,5 +125,15 @@ namespace Ocr {
 		});
 		worker.join();
 		return bSuccess;
+	}
+
+	bool RecognizeText(const void* pPixels, int nWidth, int nHeight, int nChannels, std::wstring& sText, std::wstring& sError) {
+		return Recognize(pPixels, nWidth, nHeight, nChannels, sText, nullptr, sError);
+	}
+
+	bool RecognizeWords(const void* pPixels, int nWidth, int nHeight, int nChannels, std::vector<CWord>& words, std::wstring& sError) {
+		std::wstring sText;
+		words.clear();
+		return Recognize(pPixels, nWidth, nHeight, nChannels, sText, &words, sError);
 	}
 }

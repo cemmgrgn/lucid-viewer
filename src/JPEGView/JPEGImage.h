@@ -203,6 +203,11 @@ public:
 	// Write access to the original pixels as 32 bpp BGRA (converted if needed). Marks the image as changed and
 	// invalidates all cached DIBs. Returns NULL on error.
 	void* GetOriginalPixelsForWriting();
+	// Snapshot of the original pixels (see CPixelSnapshot), used to undo operations on the original pixels
+	// Copies the original pixels, returns false if there is not enough memory
+	bool TakeSnapshot(CPixelSnapshot& snapshot) const;
+	// Replaces the original pixels by the snapshot, returns false if there is not enough memory
+	bool RestoreSnapshot(const CPixelSnapshot& snapshot);
 	// remove original pixels from class - OriginalPixels() will return NULL afterwards
 	void DetachOriginalPixels() { m_pOrigPixels = NULL; }
 

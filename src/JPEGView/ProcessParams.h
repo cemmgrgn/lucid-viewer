@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "Helpers.h"
 
 // Processing flags for image processing
@@ -183,4 +185,13 @@ public:
 	CImageProcessingParams ImageProcParams;
 	EProcessingFlags ProcFlags;
 	Helpers::EAutoZoomMode AutoZoomMode;
+};
+
+// Copy of the original pixels of an image and their state, used to undo operations on the original pixels
+struct CPixelSnapshot {
+	std::vector<char> Pixels;
+	int Width, Height, Channels;
+	CRotationParams Rotation;
+	bool Cropped, Destructive, NoParamDB;
+	CPixelSnapshot() : Width(0), Height(0), Channels(0), Rotation(0), Cropped(false), Destructive(false), NoParamDB(false) {}
 };

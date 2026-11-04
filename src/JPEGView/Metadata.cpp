@@ -482,6 +482,21 @@ int Remove(LPCTSTR sFileName, const std::vector<CEntry>& entries, bool bLocation
 	return nWritten;
 }
 
+bool WriteTexts(LPCTSTR sFileName, const std::vector<std::pair<PROPERTYKEY, CString>>& texts) {
+	std::vector<PROPVARIANT> values(texts.size());
+	std::vector<std::pair<PROPERTYKEY, PROPVARIANT*>> pointers;
+	for (size_t i = 0; i < texts.size(); i++) {
+		::PropVariantInit(&values[i]);
+		if (texts[i].second.IsEmpty() || ParseValue(texts[i].first, texts[i].second, values[i])) {
+			pointers.push_back({ texts[i].first, &values[i] });
+		}
+	}
+	int nWritten = 0;
+	bool bOK = !pointers.empty() && WriteValues(sFileName, pointers, nWritten);
+	for (PROPVARIANT& value : values) ::PropVariantClear(&value);
+	return bOK;
+}
+
 CString ToText(const std::vector<CEntry>& entries) {
 	CString sText;
 	int nGroup = -1;

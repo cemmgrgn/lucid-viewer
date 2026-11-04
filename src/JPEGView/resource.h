@@ -328,6 +328,9 @@
 #define IDM_SCREENSHOT		16420		// :KeyMap: take a screenshot (select area, draw, copy, save, OCR)
 #define IDM_SCREENSHOT_TEXT	16430		// :KeyMap: select an area of the screen and copy its text (OCR)
 #define IDM_SCREENSHOT_TRAY	16440		// :KeyMap: start the screenshot tool in the notification area (global hotkeys)
+#define IDM_UNDO			16450		// :KeyMap: undo the last operation (editing, drawing, crop, rotation, rating, metadata, delete)
+#define IDM_REDO			16460		// :KeyMap: redo the last undone operation
+#define IDM_SIGNATURE_DRAW	16470		// :KeyMap: draw a new signature in a window
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

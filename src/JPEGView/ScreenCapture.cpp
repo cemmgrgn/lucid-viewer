@@ -202,6 +202,35 @@ static bool RecognizeText(const std::vector<DWORD>& pixels, int nWidth, int nHei
 	return bOK;
 }
 
+// Words with their rectangles in the given pixels
+static bool RecognizeWords(const std::vector<DWORD>& pixels, int nWidth, int nHeight, std::vector<Ocr::CWord>& words, CString& sError) {
+	int nFactor = (nHeight < 300) ? 3 : (nHeight < 900) ? 2 : 1;
+	while (nFactor > 1 && (nWidth * nFactor > 6000 || nHeight * nFactor > 6000)) nFactor--;
+	std::vector<DWORD> scaled;
+	const DWORD* pSource = &pixels[0];
+	int nScaledWidth = nWidth * nFactor, nScaledHeight = nHeight * nFactor;
+	if (nFactor > 1) {
+		scaled.resize((size_t)nScaledWidth * nScaledHeight);
+		Gdiplus::Bitmap source(nWidth, nHeight, nWidth * 4, PixelFormat32bppRGB, (BYTE*)&pixels[0]);
+		Gdiplus::Bitmap target(nScaledWidth, nScaledHeight, nScaledWidth * 4, PixelFormat32bppRGB, (BYTE*)&scaled[0]);
+		Gdiplus::Graphics graphics(&target);
+		graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+		graphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
+		graphics.DrawImage(&source, Gdiplus::Rect(0, 0, nScaledWidth, nScaledHeight), 0, 0, nWidth, nHeight, Gdiplus::UnitPixel);
+		pSource = &scaled[0];
+	}
+	std::wstring sResultError;
+	bool bOK = Ocr::RecognizeWords(pSource, nScaledWidth, nScaledHeight, 4, words, sResultError);
+	for (Ocr::CWord& word : words) {
+		word.Left /= nFactor;
+		word.Top /= nFactor;
+		word.Width /= nFactor;
+		word.Height /= nFactor;
+	}
+	sError = sResultError.c_str();
+	return bOK;
+}
+
 static HFONT CreateFontForDpi(LPCTSTR sFace, int nPoints96, int nWeight, UINT nDpi) {
 	return ::CreateFont(-::MulDiv(nPoints96, nDpi, 96), 0, 0, 0, nWeight, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, sFace);
@@ -537,8 +566,13 @@ public:
 
 private:
 	enum EButton { BTN_PEN = 1, BTN_HIGHLIGHTER, BTN_RECTANGLE, BTN_ARROW, BTN_TEXT, BTN_COLOR, BTN_UNDO,
-		BTN_OCR, BTN_OPEN, BTN_SAVE, BTN_COPY, BTN_CLOSE, BTN_SWATCH };
-	enum EDrag { DRAG_NONE, DRAG_NEW, DRAG_MOVE, DRAG_RESIZE, DRAG_DRAW };
+		BTN_OCR, BTN_OPEN, BTN_SAVE, BTN_COPY, BTN_CLOSE, BTN_COPY_TEXT, BTN_SWATCH };
+	enum EDrag { DRAG_NONE, DRAG_NEW, DRAG_MOVE, DRAG_RESIZE, DRAG_DRAW, DRAG_TEXT };
+	struct CTextWord {
+		CRect Rect; // screen bitmap coordinates
+		CString Text;
+		int Line;
+	};
 	struct CButton {
 		EButton Id;
 		wchar_t Glyph;
@@ -573,6 +607,17 @@ private:
 	bool m_bColorPopup;
 	CRect m_lastUIBounds;
 	CPoint m_mouse;
+	// text layer: the recognized words over the selection, they can be selected and copied
+	bool m_bTextLayer;
+	std::vector<CTextWord> m_words;
+	int m_nTextStart, m_nTextEnd; // selected words, -1 if none
+	CString m_sTextHint;
+	void ShowTextLayer(bool bCopyAll);
+	void HideTextLayer();
+	int WordAt(const CPoint& pt, bool bNearest);
+	CString GetSelectedText(bool bAllIfNone);
+	void CopySelectedText();
+	CRect GetTextHintRect();
 
 	int S(int n) { return ::MulDiv(n, m_nDpi, 96); }
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
@@ -626,6 +671,8 @@ COverlay::COverlay(CScreen& screen, EMode eMode) : m_screen(screen), m_eMode(eMo
 	m_nResizeEdges = 0;
 	m_nHoverButton = -1;
 	m_bColorPopup = false;
+	m_bTextLayer = false;
+	m_nTextStart = m_nTextEnd = -1;
 	m_annotations.SetTool(CAnnotations::TOOL_NONE);
 	m_annotations.SetWidth(3);
 }
@@ -780,7 +827,7 @@ void COverlay::UpdateDpi() {
 
 void COverlay::Layout() {
 	m_buttons.clear();
-	if (!m_bHasSelection || m_eMode == MODE_TEXT) {
+	if (!m_bHasSelection || (m_eMode == MODE_TEXT && !m_bTextLayer)) {
 		return;
 	}
 	UpdateDpi();
@@ -798,7 +845,7 @@ void COverlay::Layout() {
 		{ BTN_COLOR, 0, _T(""), _T("Color") },
 		{ BTN_UNDO, 0xE7A7, _T("U"), _T("Undo (Ctrl+Z)") },
 	};
-	int nToolCount = sizeof(tools) / sizeof(tools[0]);
+	int nToolCount = (m_bTextLayer || m_eMode == MODE_TEXT) ? 0 : sizeof(tools) / sizeof(tools[0]);
 	int nBarHeight = nToolCount * nButton + (nToolCount - 1) * nGap + 2 * nPad;
 	int nBarWidth = nButton + 2 * nPad;
 	int nX = m_selection.right + S(8);
@@ -812,16 +859,36 @@ void COverlay::Layout() {
 	}
 
 	// actions: horizontal bar below the selection (right aligned), else above, else inside
-	struct { EButton Id; wchar_t Glyph; LPCTSTR Text; LPCTSTR Tooltip; } actions[] = {
-		{ BTN_OCR, 0, _T("OCR"), _T("Copy the text in the selection (OCR)") },
-		{ BTN_OPEN, 0xE8E5, _T("O"), _T("Open in JPEGView") },
-		{ BTN_SAVE, 0xE74E, _T("S"), _T("Save (Ctrl+S)") },
-		{ BTN_COPY, 0xE8C8, _T("C"), _T("Copy (Ctrl+C)") },
-		{ BTN_CLOSE, 0xE711, _T("X"), _T("Close (Esc)") },
-	};
-	int nActionCount = sizeof(actions) / sizeof(actions[0]);
+	struct CActionDef { EButton Id; wchar_t Glyph; LPCTSTR Text; LPCTSTR Tooltip; };
+	std::vector<CActionDef> actions;
+	if (m_eMode == MODE_CAPTURE) {
+		actions.push_back({ BTN_OCR, 0, _T("OCR"), _T("Show the text in the selection, it can be selected and copied (Ctrl+T)") });
+	}
+	if (m_bTextLayer) {
+		actions.push_back({ BTN_COPY_TEXT, 0, _T("Copy all text"), _T("Copies all recognized text") });
+	}
+	if (m_eMode == MODE_CAPTURE) {
+		actions.push_back({ BTN_OPEN, 0xE8E5, _T("O"), _T("Open in JPEGView") });
+		actions.push_back({ BTN_SAVE, 0xE74E, _T("S"), _T("Save (Ctrl+S)") });
+		actions.push_back({ BTN_COPY, 0xE8C8, _T("C"), _T("Copy (Ctrl+C)") });
+	}
+	actions.push_back({ BTN_CLOSE, 0xE711, _T("X"), _T("Close (Esc)") });
+	int nActionCount = (int)actions.size();
 	int nOcrWidth = S(48);
-	int nActionWidth = (nActionCount - 1) * nButton + nOcrWidth + (nActionCount - 1) * nGap + 2 * nPad;
+	// text buttons are as wide as their text
+	auto ButtonWidth = [&](const CActionDef& action) {
+		if (action.Id == BTN_OCR) return nOcrWidth;
+		if (action.Glyph != 0) return nButton;
+		HDC hDC = ::GetDC(NULL);
+		HGDIOBJ hOld = ::SelectObject(hDC, m_hSmallFont);
+		CRect textRect(0, 0, 0, 0);
+		::DrawText(hDC, CNLS::GetString(action.Text), -1, &textRect, DT_CALCRECT | DT_SINGLELINE | DT_NOPREFIX);
+		::SelectObject(hDC, hOld);
+		::ReleaseDC(NULL, hDC);
+		return (int)textRect.Width() + S(20);
+	};
+	int nActionWidth = (nActionCount - 1) * nGap + 2 * nPad;
+	for (const CActionDef& action : actions) nActionWidth += ButtonWidth(action);
 	int nActionHeight = nButton + 2 * nPad;
 	nX = max((int)work.left + S(8), min((int)m_selection.right - nActionWidth, (int)work.right - nActionWidth - S(8)));
 	nY = m_selection.bottom + S(8);
@@ -829,7 +896,7 @@ void COverlay::Layout() {
 	if (nY < work.top) nY = m_selection.bottom - nActionHeight - S(8);
 	int nButtonX = nX + nPad;
 	for (int i = 0; i < nActionCount; i++) {
-		int nWidth = actions[i].Id == BTN_OCR ? nOcrWidth : nButton;
+		int nWidth = ButtonWidth(actions[i]);
 		CButton button = { actions[i].Id, actions[i].Glyph, actions[i].Text, actions[i].Tooltip,
 			CRect(nButtonX, nY + nPad, nButtonX + nWidth, nY + nPad + nButton), CLR_INVALID };
 		m_buttons.push_back(button);
@@ -863,8 +930,8 @@ CRect COverlay::GetHintRect() {
 }
 
 CString COverlay::GetHintText() {
-	return CNLS::GetString(m_eMode == MODE_TEXT ? _T("Select the area with the text, click for a window. Esc cancels.") :
-		_T("Drag to select an area, click for a window. Esc cancels."));
+	return CNLS::GetString(m_eMode == MODE_TEXT ? _T("Select the area with the text, click for a window, Ctrl+C for the whole screen. Esc cancels.") :
+		_T("Drag to select an area, click for a window, Ctrl+C or Ctrl+S for the whole screen. Esc cancels."));
 }
 
 CRect COverlay::GetUIBounds() {
@@ -888,6 +955,11 @@ CRect COverlay::GetUIBounds() {
 		CRect hintRect = GetHintRect();
 		hintRect.InflateRect(S(4), S(4));
 		bounds.UnionRect(&bounds, &hintRect);
+	}
+	if (m_bTextLayer) {
+		CRect textHint = GetTextHintRect();
+		textHint.InflateRect(S(4), S(4));
+		bounds.UnionRect(&bounds, &textHint);
 	}
 	return bounds;
 }
@@ -930,7 +1002,7 @@ void COverlay::PaintButton(const CButton& button, bool bHover, bool bChecked) {
 	bool bGlyph = m_bHasIconFont && button.Glyph != 0;
 	HGDIOBJ hOldFont = ::SelectObject(hDC, bGlyph ? m_hIconFont : m_hSmallFont);
 	wchar_t glyph[2] = { button.Glyph, 0 };
-	::DrawText(hDC, bGlyph ? glyph : button.Text, -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+	::DrawText(hDC, bGlyph ? glyph : (button.Glyph == 0 ? CNLS::GetString(button.Text) : button.Text), -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 	::SelectObject(hDC, hOldFont);
 }
 
@@ -951,6 +1023,29 @@ void COverlay::Paint(HDC hDC, const CRect& paintRect) {
 			clip.IntersectRect(&m_selection, &paintRect);
 			graphics.SetClip(Gdiplus::Rect(clip.left, clip.top, clip.Width(), clip.Height()));
 			m_annotations.Render(graphics);
+		}
+		if (m_bTextLayer) {
+			// the image is dimmed, the words are marked, the selected words in the accent color
+			Gdiplus::Graphics graphics(hMem);
+			CRect clip;
+			clip.IntersectRect(&m_selection, &paintRect);
+			graphics.SetClip(Gdiplus::Rect(clip.left, clip.top, clip.Width(), clip.Height()));
+			Gdiplus::SolidBrush dim(Gdiplus::Color(110, 0, 0, 0));
+			graphics.FillRectangle(&dim, m_selection.left, m_selection.top, m_selection.Width(), m_selection.Height());
+			int nFrom = min(m_nTextStart, m_nTextEnd), nTo = max(m_nTextStart, m_nTextEnd);
+			Gdiplus::SolidBrush wordBrush(Gdiplus::Color(55, 255, 255, 255));
+			Gdiplus::SolidBrush selectedBrush(Gdiplus::Color(120, 0, 120, 215));
+			Gdiplus::Pen wordPen(Gdiplus::Color(150, 255, 255, 255), 1.0f);
+			for (int i = 0; i < (int)m_words.size(); i++) {
+				CRect wordRect = m_words[i].Rect;
+				wordRect.InflateRect(S(2), S(2));
+				// the words are shown undimmed
+				::BitBlt(hMem, m_words[i].Rect.left, m_words[i].Rect.top, m_words[i].Rect.Width(), m_words[i].Rect.Height(),
+					m_hBrightDC, m_words[i].Rect.left, m_words[i].Rect.top, SRCCOPY);
+				bool bSelected = nFrom >= 0 && i >= nFrom && i <= nTo;
+				graphics.FillRectangle(bSelected ? &selectedBrush : &wordBrush, wordRect.left, wordRect.top, wordRect.Width(), wordRect.Height());
+				if (!bSelected) graphics.DrawRectangle(&wordPen, wordRect.left, wordRect.top, wordRect.Width() - 1, wordRect.Height() - 1);
+			}
 		}
 		CRect border = m_selection;
 		border.InflateRect(1, 1);
@@ -1030,6 +1125,17 @@ void COverlay::Paint(HDC hDC, const CRect& paintRect) {
 		}
 	}
 
+	// hint of the text layer below the selection
+	if (m_bTextLayer && !m_sTextHint.IsEmpty()) {
+		CRect hintRect = GetTextHintRect();
+		FillRound(hMem, hintRect, COLOR_BAR, S(8), COLOR_BAR_BORDER);
+		HGDIOBJ hOldFont = ::SelectObject(hMem, m_hFont);
+		::SetBkMode(hMem, TRANSPARENT);
+		::SetTextColor(hMem, COLOR_TEXT);
+		::DrawText(hMem, m_sTextHint, -1, &hintRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+		::SelectObject(hMem, hOldFont);
+	}
+
 	// hint at the top of the monitor
 	if (!m_bHasSelection || m_eDrag == DRAG_NEW) {
 		CRect hintRect = GetHintRect();
@@ -1069,6 +1175,10 @@ void COverlay::SetCursorFor(const CPoint& pt) {
 	LPCTSTR sCursor = IDC_CROSS;
 	if (HitTestButton(pt) >= 0) {
 		sCursor = IDC_HAND;
+	} else if (m_bTextLayer && m_selection.PtInRect(pt) && (m_eDrag == DRAG_TEXT || WordAt(pt, false) >= 0)) {
+		sCursor = IDC_IBEAM;
+	} else if (m_bTextLayer && m_selection.PtInRect(pt) && HitTestHandle(pt) == 0) {
+		sCursor = IDC_ARROW;
 	} else if (m_eDrag == DRAG_MOVE) {
 		sCursor = IDC_SIZEALL;
 	} else if (m_bHasSelection && m_eDrag == DRAG_NONE) {
@@ -1109,13 +1219,20 @@ void COverlay::OnButton(EButton eButton, int nIndex) {
 			::InvalidateRect(m_hWnd, &m_selection, FALSE);
 			UpdateWindow();
 			return;
-		case BTN_OCR: Close(RESULT_OCR); return;
+		case BTN_OCR:
+			if (m_bTextLayer) HideTextLayer(); else ShowTextLayer(false);
+			return;
+		case BTN_COPY_TEXT:
+			m_nTextStart = m_nTextEnd = -1;
+			CopySelectedText();
+			return;
 		case BTN_OPEN: OpenInViewer(); return;
 		case BTN_SAVE: Save(); return;
 		case BTN_COPY: Copy(); return;
 		case BTN_CLOSE: Close(RESULT_NONE); return;
 	}
 	// clicking the active tool again switches back to moving the selection
+	HideTextLayer();
 	m_annotations.SetTool(m_annotations.GetTool() == eTool ? CAnnotations::TOOL_NONE : eTool);
 	m_bColorPopup = false;
 	UpdateWindow();
@@ -1131,6 +1248,28 @@ void COverlay::OnLButtonDown(CPoint pt, bool bDoubleClick) {
 	if (m_bColorPopup) {
 		m_bColorPopup = false;
 		UpdateWindow();
+	}
+	if (m_bTextLayer && m_selection.PtInRect(pt) && HitTestHandle(pt) == 0) {
+		int nWord = WordAt(pt, false);
+		if (bDoubleClick && nWord >= 0) {
+			// double click selects the line
+			int nFirst = nWord, nLast = nWord;
+			while (nFirst > 0 && m_words[nFirst - 1].Line == m_words[nWord].Line) nFirst--;
+			while (nLast + 1 < (int)m_words.size() && m_words[nLast + 1].Line == m_words[nWord].Line) nLast++;
+			m_nTextStart = nFirst;
+			m_nTextEnd = nLast;
+		} else {
+			m_nTextStart = m_nTextEnd = nWord;
+			if (nWord >= 0) {
+				m_eDrag = DRAG_TEXT;
+				::SetCapture(m_hWnd);
+			}
+		}
+		::InvalidateRect(m_hWnd, &m_selection, FALSE);
+		return;
+	}
+	if (m_bTextLayer && (m_eMode == MODE_TEXT || m_annotations.IsEmpty())) {
+		HideTextLayer(); // the words belong to the old selection
 	}
 	if (m_bHasSelection && m_eMode == MODE_CAPTURE) {
 		CAnnotations::ETool eTool = m_annotations.GetTool();
@@ -1219,6 +1358,14 @@ void COverlay::OnMouseMove(CPoint pt) {
 			m_annotations.ContinueShape((float)pt.x, (float)pt.y);
 			::InvalidateRect(m_hWnd, &m_selection, FALSE);
 			return;
+		case DRAG_TEXT: {
+			int nWord = WordAt(pt, true);
+			if (nWord >= 0 && nWord != m_nTextEnd) {
+				m_nTextEnd = nWord;
+				::InvalidateRect(m_hWnd, &m_selection, FALSE);
+			}
+			return;
+		}
 		case DRAG_NONE: {
 			int nHover = HitTestButton(pt);
 			if (nHover != m_nHoverButton) {
@@ -1266,6 +1413,12 @@ void COverlay::OnLButtonUp(CPoint pt) {
 		UpdateWindow();
 		return;
 	}
+	if (eDrag == DRAG_TEXT) {
+		return;
+	}
+	if (eDrag == DRAG_MOVE || eDrag == DRAG_RESIZE) {
+		HideTextLayer();
+	}
 	if (eDrag == DRAG_NEW) {
 		if (!m_bHasSelection || (m_selection.Width() < 3 && m_selection.Height() < 3)) {
 			// a click: the window (or monitor) under the mouse
@@ -1283,7 +1436,8 @@ void COverlay::OnLButtonUp(CPoint pt) {
 
 void COverlay::SelectionFinished() {
 	if (m_eMode == MODE_TEXT) {
-		Close(RESULT_OCR);
+		// as the Snipping Tool: the text is shown over the image and all of it is copied
+		ShowTextLayer(true);
 		return;
 	}
 	UpdateDpi();
@@ -1302,18 +1456,42 @@ void COverlay::OnKeyDown(UINT nKey) {
 		}
 		return;
 	}
-	if (!m_bHasSelection) return;
+	if (!m_bHasSelection) {
+		// without selection the keys take the whole monitor with the mouse (Shift: all monitors)
+		bool bAction = nKey == VK_RETURN || (bCtrl && (nKey == 'C' || nKey == 'S' || nKey == 'T'));
+		if (!bAction) return;
+		m_selection = (bShift || m_screen.Monitors.empty()) ? CRect(0, 0, m_screen.Width, m_screen.Height) : m_screen.Monitors[FindMonitor(m_mouse)];
+		m_bHasSelection = true;
+		m_hoverWindow.SetRectEmpty();
+		UpdateDpi();
+	}
+	if (m_bTextLayer && bCtrl && nKey == 'A') {
+		m_nTextStart = 0;
+		m_nTextEnd = (int)m_words.size() - 1;
+		::InvalidateRect(m_hWnd, &m_selection, FALSE);
+		return;
+	}
 	if (nKey == VK_RETURN) {
-		if (m_eMode == MODE_TEXT) Close(RESULT_OCR); else Copy();
+		if (m_eMode == MODE_TEXT) {
+			if (!m_bTextLayer) ShowTextLayer(true);
+			else if (m_nTextStart >= 0) { CopySelectedText(); Close(RESULT_NONE); }
+			else Close(RESULT_NONE);
+		} else {
+			Copy();
+		}
 	} else if (bCtrl && nKey == 'C') {
-		Copy();
+		if (m_bTextLayer || m_eMode == MODE_TEXT) {
+			if (!m_bTextLayer) ShowTextLayer(true); else CopySelectedText();
+		} else {
+			Copy();
+		}
 	} else if (bCtrl && nKey == 'S') {
 		Save();
 	} else if (bCtrl && nKey == 'Z') {
 		m_annotations.Undo();
 		::InvalidateRect(m_hWnd, &m_selection, FALSE);
 	} else if (bCtrl && nKey == 'T') {
-		Close(RESULT_OCR);
+		if (m_bTextLayer && m_eMode == MODE_CAPTURE) HideTextLayer(); else ShowTextLayer(m_eMode == MODE_TEXT);
 	} else if (nKey == VK_LEFT || nKey == VK_RIGHT || nKey == VK_UP || nKey == VK_DOWN) {
 		// arrows move the selection by a pixel, with Shift they change the size
 		int nDX = (nKey == VK_LEFT) ? -1 : (nKey == VK_RIGHT) ? 1 : 0;
@@ -1333,6 +1511,121 @@ void COverlay::OnKeyDown(UINT nKey) {
 			UpdateWindow();
 		}
 	}
+}
+
+CRect COverlay::GetTextHintRect() {
+	HDC hDC = ::GetDC(NULL);
+	HGDIOBJ hOld = ::SelectObject(hDC, m_hFont);
+	CRect textRect(0, 0, 0, 0);
+	::DrawText(hDC, m_sTextHint.IsEmpty() ? _T(" ") : (LPCTSTR)m_sTextHint, -1, &textRect, DT_CALCRECT | DT_SINGLELINE | DT_NOPREFIX);
+	::SelectObject(hDC, hOld);
+	::ReleaseDC(NULL, hDC);
+	textRect.InflateRect(S(10), S(5));
+	int nX = m_selection.left;
+	int nY = m_selection.top - S(8) - textRect.Height() - S(26); // above the size label
+	if (nY < 0) nY = m_selection.top + S(8);
+	textRect.OffsetRect(nX - textRect.left, nY - textRect.top);
+	return textRect;
+}
+
+void COverlay::ShowTextLayer(bool bCopyAll) {
+	if (!m_bHasSelection) return;
+	std::vector<DWORD> pixels;
+	int nWidth, nHeight;
+	GetCrop(pixels, nWidth, nHeight);
+	if (nWidth <= 0 || nHeight <= 0) return;
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	std::vector<Ocr::CWord> words;
+	CString sError;
+	bool bOK = RecognizeWords(pixels, nWidth, nHeight, words, sError);
+	::SetCursor(hOldCursor);
+	m_words.clear();
+	for (const Ocr::CWord& word : words) {
+		CTextWord textWord;
+		textWord.Rect = CRect((int)word.Left, (int)word.Top, (int)(word.Left + word.Width + 0.999f), (int)(word.Top + word.Height + 0.999f));
+		textWord.Rect.OffsetRect(m_selection.TopLeft());
+		textWord.Rect.IntersectRect(&textWord.Rect, &m_selection);
+		textWord.Text = word.Text.c_str();
+		textWord.Line = word.Line;
+		m_words.push_back(textWord);
+	}
+	m_bTextLayer = true;
+	m_annotations.SetTool(CAnnotations::TOOL_NONE);
+	m_bColorPopup = false;
+	m_nTextStart = m_nTextEnd = -1;
+	if (!bOK) {
+		m_sTextHint = sError.IsEmpty() ? CNLS::GetString(_T("The text could not be recognized.")) : (LPCTSTR)sError;
+	} else if (m_words.empty()) {
+		m_sTextHint = CNLS::GetString(_T("No text was found in the image."));
+	} else if (bCopyAll) {
+		CopySelectedText();
+	} else {
+		m_sTextHint = CNLS::GetString(_T("Select words with the mouse, Ctrl+C copies them, Ctrl+A selects all."));
+	}
+	UpdateWindow();
+	::InvalidateRect(m_hWnd, &m_selection, FALSE);
+}
+
+void COverlay::HideTextLayer() {
+	if (!m_bTextLayer) return;
+	m_bTextLayer = false;
+	m_words.clear();
+	m_nTextStart = m_nTextEnd = -1;
+	m_sTextHint.Empty();
+	UpdateWindow();
+	::InvalidateRect(m_hWnd, &m_selection, FALSE);
+}
+
+int COverlay::WordAt(const CPoint& pt, bool bNearest) {
+	int nBest = -1;
+	double dBest = 1e30;
+	for (int i = 0; i < (int)m_words.size(); i++) {
+		CRect rect = m_words[i].Rect;
+		rect.InflateRect(S(3), S(3));
+		if (rect.PtInRect(pt)) return i;
+		if (bNearest) {
+			// distance to the rectangle, the vertical distance counts more (stays on the line)
+			double dX = max(0, max((int)rect.left - pt.x, pt.x - (int)rect.right));
+			double dY = max(0, max((int)rect.top - pt.y, pt.y - (int)rect.bottom));
+			double dDistance = dX * dX + 4 * dY * dY;
+			if (dDistance < dBest) {
+				dBest = dDistance;
+				nBest = i;
+			}
+		}
+	}
+	return nBest;
+}
+
+CString COverlay::GetSelectedText(bool bAllIfNone) {
+	int nFrom = min(m_nTextStart, m_nTextEnd), nTo = max(m_nTextStart, m_nTextEnd);
+	if (nFrom < 0) {
+		if (!bAllIfNone || m_words.empty()) return CString();
+		nFrom = 0;
+		nTo = (int)m_words.size() - 1;
+	}
+	CString sText;
+	for (int i = nFrom; i <= nTo && i < (int)m_words.size(); i++) {
+		if (i > nFrom) sText += (m_words[i].Line != m_words[i - 1].Line) ? _T("\r\n") : _T(" ");
+		sText += m_words[i].Text;
+	}
+	return sText;
+}
+
+void COverlay::CopySelectedText() {
+	CString sText = GetSelectedText(true);
+	if (sText.IsEmpty()) return;
+	CopyTextToClipboard(m_hWnd, sText);
+	int nLines = 1;
+	for (int i = 0; i < sText.GetLength(); i++) if (sText[i] == _T('\n')) nLines++;
+	CString sMessage;
+	if (m_nTextStart < 0) {
+		sMessage.Format(CNLS::GetString(_T("All text was copied (%d lines). Select words to copy a part.")), nLines);
+	} else {
+		sMessage.Format(CNLS::GetString(_T("%d characters were copied to the clipboard.")), sText.GetLength());
+	}
+	m_sTextHint = sMessage;
+	UpdateWindow();
 }
 
 void COverlay::GetCrop(std::vector<DWORD>& pixels, int& nWidth, int& nHeight) {
