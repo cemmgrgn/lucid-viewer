@@ -1,6 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
+#include "..\Version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -505,8 +506,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
+ FILEVERSION LUCID_VERSION_RC
+ PRODUCTVERSION LUCID_VERSION_RC
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -521,14 +522,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "Cem Girgin"
-            VALUE "FileDescription", "Lucid Viewer"
-            VALUE "FileVersion", "1.0.0.0"
+            VALUE "CompanyName", LUCID_COMPANY_NAME
+            VALUE "FileDescription", LUCID_PRODUCT_NAME
+            VALUE "FileVersion", LUCID_VERSION_STR
             VALUE "InternalName", "LucidViewer"
             VALUE "LegalCopyright", "Copyright 2026 Cem Girgin. Based on JPEGView, 2020-2023 Kevin M (sylikc), 2006-2018 David Kleiner. GPL v2"
             VALUE "OriginalFilename", "LucidViewer.exe"
-            VALUE "ProductName", "Lucid Viewer"
-            VALUE "ProductVersion", "1.0.0.0"
+            VALUE "ProductName", LUCID_PRODUCT_NAME
+            VALUE "ProductVersion", LUCID_VERSION_STR
         END
     END
     BLOCK "VarFileInfo"

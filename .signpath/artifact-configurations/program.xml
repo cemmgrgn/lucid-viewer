@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SignPath artifact configuration "program" (paste into the project in SignPath).
+     The Build workflow uploads LucidViewer.exe and WICLoader.dll as one GitHub artifact, a ZIP with both files at the root.
+     The workflow passes the 4-part file version as the parameter "version", e.g. 1.0.0.0. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file-set product-name="Lucid Viewer" product-version="${version}" file-version="${version}" company-name="Cem Girgin">
+      <include path="LucidViewer.exe" original-filename="LucidViewer.exe" />
+      <include path="WICLoader.dll" original-filename="WICLoader.dll" />
+      <for-each>
+        <authenticode-sign description="Lucid Viewer" description-url="https://github.com/cemmgrgn/lucid-viewer" />
+      </for-each>
+    </pe-file-set>
+  </zip-file>
+</artifact-configuration>

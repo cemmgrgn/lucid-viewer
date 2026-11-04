@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SignPath artifact configuration "installer" (paste into the project in SignPath).
+     The Build workflow uploads the Inno Setup installer LucidViewer-<version>-Setup-x64.exe as a GitHub artifact (ZIP).
+     The installer already contains the signed program; Inno Setup sets the version resource from the program version. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="LucidViewer-*-Setup-x64.exe" product-name="Lucid Viewer" product-version="${version}" file-version="${version}" company-name="Cem Girgin">
+      <authenticode-sign description="Lucid Viewer Setup" description-url="https://github.com/cemmgrgn/lucid-viewer" />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

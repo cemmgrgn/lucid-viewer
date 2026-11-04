@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- WICLoader.dll and the installer carry the product name *Lucid Viewer* and the same version as the program (one
+  version in `src/Version.h`), as code signing requires.
+
+### Project
+- winget package `CemGirgin.LucidViewer` (`packaging/winget`), new versions are sent to winget-pkgs when a release is
+  published.
+- Wiki with installation, feature pages, keyboard shortcuts, settings and command line reference (`docs/wiki`).
+- SignPath configuration for signed releases (`.signpath`).
+
 ## 1.0.0 (2026-11-05)
 
 First release of Lucid Viewer, based on JPEGView 1.3.46 (with the updated codecs by qbnu).

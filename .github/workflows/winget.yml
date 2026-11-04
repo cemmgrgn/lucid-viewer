@@ -1,0 +1,31 @@
+name: winget
+
+# Sends a pull request for the new version to microsoft/winget-pkgs when a release is published.
+# Needs the secret WINGET_TOKEN: a classic GitHub token of the maintainer with the public_repo scope
+# (wingetcreate pushes a branch to the maintainer's fork of winget-pkgs). Without it the job does nothing.
+# The first version (packaging/winget) was submitted by hand.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, e.g. v1.0.1
+        required: true
+
+jobs:
+  winget:
+    runs-on: windows-2025
+    env:
+      WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+    steps:
+      - name: Submit to winget
+        if: env.WINGET_TOKEN != ''
+        shell: pwsh
+        run: |
+          $tag = '${{ github.event.release.tag_name || inputs.tag }}'
+          $version = $tag.TrimStart('v')
+          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/LucidViewer-$version-Setup-x64.exe"
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe update CemGirgin.LucidViewer --version $version --urls "$url|x64|user" "$url|x64|machine" --token $env:WINGET_TOKEN --submit

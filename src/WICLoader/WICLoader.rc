@@ -1,3 +1,4 @@
+#include "..\Version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -5,8 +6,8 @@
 //
 
 1 VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
+ FILEVERSION LUCID_VERSION_RC
+ PRODUCTVERSION LUCID_VERSION_RC
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -21,14 +22,14 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "WIC interface DLL\0"
-            VALUE "FileVersion", "1.0.0.0\0"
-            VALUE "InternalName", "JPEGView WICLoader\0"
-            VALUE "LegalCopyright", "Copyright 2006-2011 David Kleiner\0"
-            VALUE "OriginalFilename", "WICLoader.dll\0"
-            VALUE "ProductName", "WIC Interface\0"
-            VALUE "ProductVersion", "1.0.0.0\0"
+            VALUE "CompanyName", LUCID_COMPANY_NAME
+            VALUE "FileDescription", "Lucid Viewer WIC image loader"
+            VALUE "FileVersion", LUCID_VERSION_STR
+            VALUE "InternalName", "WICLoader"
+            VALUE "LegalCopyright", "Copyright 2026 Cem Girgin. Based on JPEGView, 2006-2011 David Kleiner. GPL v2"
+            VALUE "OriginalFilename", "WICLoader.dll"
+            VALUE "ProductName", LUCID_PRODUCT_NAME
+            VALUE "ProductVersion", LUCID_VERSION_STR
         END
     END
     BLOCK "VarFileInfo"

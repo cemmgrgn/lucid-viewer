@@ -42,6 +42,8 @@ jobs:
         run: |
           $v = (Get-Item src\LucidViewer\bin\x64\Release\LucidViewer.exe).VersionInfo
           "version=$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart)" >> $env:GITHUB_OUTPUT
+          # 4-part version SignPath compares with the version resources
+          "fileversion=$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart).$($v.FilePrivatePart)" >> $env:GITHUB_OUTPUT
 
       # Code signing with SignPath (docs/CODE_SIGNING.md), only for version tags and only once the
       # SIGNPATH_API_TOKEN secret and the SIGNPATH_ORGANIZATION_ID variable are set up
@@ -57,15 +59,19 @@ jobs:
 
       - name: Sign program
         if: steps.unsigned.outcome == 'success'
-        uses: signpath/github-action-submit-signing-request@v1
+        uses: signpath/github-action-submit-signing-request@v3
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
           project-slug: lucid-viewer
           signing-policy-slug: release-signing
           artifact-configuration-slug: program
+          parameters: |
+            version: "${{ steps.version.outputs.fileversion }}"
           github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
           wait-for-completion: true
+          # time for the manual approval in SignPath
+          wait-for-completion-timeout-in-seconds: 3600
           output-artifact-directory: signed-program
 
       - name: Use the signed program
@@ -101,15 +107,19 @@ jobs:
 
       - name: Sign installer
         if: steps.unsignedsetup.outcome == 'success'
-        uses: signpath/github-action-submit-signing-request@v1
+        uses: signpath/github-action-submit-signing-request@v3
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
           project-slug: lucid-viewer
           signing-policy-slug: release-signing
           artifact-configuration-slug: installer
+          parameters: |
+            version: "${{ steps.version.outputs.fileversion }}"
           github-artifact-id: ${{ steps.unsignedsetup.outputs.artifact-id }}
           wait-for-completion: true
+          # time for the manual approval in SignPath
+          wait-for-completion-timeout-in-seconds: 3600
           output-artifact-directory: installer/Output
 
       - uses: actions/upload-artifact@v4
@@ -124,6 +134,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
+          # SignPath requires the words "Code signing policy" on the download page
+          body: |
+            See the [changelog](https://github.com/cemmgrgn/lucid-viewer/blob/main/CHANGELOG.md) for what is new.
+
+            [Code signing policy](https://github.com/cemmgrgn/lucid-viewer/blob/main/docs/CODE_SIGNING.md)
           files: |
             LucidViewer-*-portable-x64.zip
             installer/Output/*.exe

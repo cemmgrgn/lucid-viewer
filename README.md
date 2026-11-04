@@ -7,7 +7,7 @@
 <p align="center">
   <b>The photo is on screen before you blink.</b><br>
   A fast, free and open source image viewer and light editor for Windows 10 and 11.<br>
-  <a href="https://cemmgrgn.github.io/lucid-viewer/"><b>Website</b></a> · <a href="https://github.com/cemmgrgn/lucid-viewer/releases/latest"><b>Download</b></a>
+  <a href="https://cemmgrgn.github.io/lucid-viewer/"><b>Website</b></a> · <a href="https://github.com/cemmgrgn/lucid-viewer/releases/latest"><b>Download</b></a> · <a href="https://github.com/cemmgrgn/lucid-viewer/wiki"><b>Wiki</b></a> · <a href="docs/CODE_SIGNING.md">Code signing policy</a>
 </p>
 
 <p align="center">
@@ -159,8 +159,15 @@ Download from the [latest release](https://github.com/cemmgrgn/lucid-viewer/rele
   - start screen, recent photos, screenshot tool on <kbd>PrtScn</kbd>, theme and layout
 - **`LucidViewer-1.0.0-portable-x64.zip`**: extract anywhere and run `LucidViewer.exe`. Settings stay in that folder.
 
+With [winget](https://learn.microsoft.com/windows/package-manager/) (once the package is accepted):
+
+```
+winget install CemGirgin.LucidViewer
+```
+
 Windows 10 version 1809 or later, 64-bit. If you used JPEGView before, your settings, shortcuts and signature are taken
-over on the first start.
+over on the first start. More in the [wiki](https://github.com/cemmgrgn/lucid-viewer/wiki/Installation), including silent
+installation.
 
 ## Keyboard shortcuts
 

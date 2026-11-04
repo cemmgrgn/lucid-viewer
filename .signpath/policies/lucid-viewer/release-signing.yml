@@ -1,0 +1,22 @@
+# SignPath pipeline policy for the signing policy "release-signing" of the project "lucid-viewer".
+# In SignPath: Pipeline policies > Add > external definition stored in this repository at this path,
+# then add it to the signing policy "release-signing" (start with the level "Log", switch to "Enforce" once
+# a signing request passes).
+# Reference: https://docs.signpath.io/trusted-build-systems/github
+
+# Only builds on GitHub-hosted runners may be signed (required for SignPath Foundation projects)
+github-build-policies:
+  version: '1.0'
+  disallow_reruns: false
+  runners:
+    require_github_hosted: true
+
+# The main branch must be protected by a GitHub ruleset that blocks force pushes and deletion
+# (.github/rulesets/main.json)
+github-scm-policies:
+  version: '1.0'
+  ruleset_constraints:
+  - allow_bypass_actors: false
+    rules:
+      - type: non_fast_forward
+      - type: deletion

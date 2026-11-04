@@ -90,7 +90,14 @@ AppMutex={#AppMutexes}
 CloseApplications=yes
 ChangesAssociations=yes
 UsedUserAreasWarning=no
-VersionInfoVersion={#AppVersion}
+; same product name and 4-part version as the program (SignPath checks them, .signpath/artifact-configurations)
+VersionInfoVersion={#AppVersion}.0
+VersionInfoTextVersion={#AppVersion}.0
+VersionInfoProductName={#AppName}
+VersionInfoProductVersion={#AppVersion}.0
+VersionInfoProductTextVersion={#AppVersion}.0
+VersionInfoCompany={#AppPublisher}
+VersionInfoCopyright=Copyright 2026 {#AppPublisher}. GPL v2
 VersionInfoDescription={#AppName} Setup
 
 [Languages]
