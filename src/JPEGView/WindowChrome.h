@@ -105,7 +105,7 @@ private:
 	};
 
 	// Clickable element of the side panel, rectangles in window coordinates
-	enum ESideHitType { SH_Collapse, SH_Expand, SH_Tab, SH_Location, SH_Slider, SH_GroupCheck, SH_Button, SH_Tool, SH_Color, SH_Width };
+	enum ESideHitType { SH_Collapse, SH_Expand, SH_Tab, SH_Location, SH_Slider, SH_GroupCheck, SH_Button, SH_Tool, SH_Color, SH_Width, SH_Rating };
 	struct CSideHit {
 		ESideHitType Type;
 		int Value; // tab, slider index, group or command

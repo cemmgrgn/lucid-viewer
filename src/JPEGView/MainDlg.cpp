@@ -58,6 +58,8 @@
 #include "SettingsDlg.h"
 #include "Annotations.h"
 #include "Ocr.h"
+#include <propsys.h>
+#include <propkey.h>
 #include <gdiplus.h>
 #include <process.h>
 
@@ -317,6 +319,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pHelpDlg = NULL;
 	m_pChrome = NULL;
 	m_pAnnotations = new CAnnotations();
+	m_nRating = -1;
 	m_nRunningConversions = 0;
 	m_bCompareMode = false;
 	m_dCompareSplit = 0.5;
@@ -1156,6 +1159,10 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOO
 		bHandled = true;
 		m_pFileList->SetNavigationMode(Helpers::NM_LoopSubDirectories);
 		GotoImage(POS_Next);
+	} else if (!bCtrl && !bShift && !bAlt && ((wParam >= '0' && wParam <= '5') || (wParam >= VK_NUMPAD0 && wParam <= VK_NUMPAD5))) {
+		// star rating as in Windows Photos and Lightroom, 0 removes it
+		bHandled = true;
+		SetRating((int)wParam - ((wParam >= VK_NUMPAD0) ? VK_NUMPAD0 : '0'));
 	} else if (wParam >= '1' && wParam <= '9' && (!bShift || bCtrl)) {
 		// Start the slideshow
 		bHandled = true;
@@ -4316,5 +4323,71 @@ void CMainDlg::ApplyAnnotations() {
 	}
 	m_pImageProcPanelCtl->ShowHideSaveDBButtons();
 	Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Star rating (Windows property System.Rating, also shown by Explorer and read by Lightroom)
+///////////////////////////////////////////////////////////////////////////////////
+
+// Rating values of the Windows property for 1 to 5 stars
+static const UINT RATING_VALUES[6] = { 0, 1, 25, 50, 75, 99 };
+
+int CMainDlg::GetRating() {
+	LPCTSTR sFile = (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) ? m_pFileList->Current() : NULL;
+	if (sFile == NULL) {
+		return -1;
+	}
+	if (m_sRatingFile.CompareNoCase(sFile) == 0) {
+		return m_nRating;
+	}
+	m_sRatingFile = sFile;
+	m_nRating = -1;
+	IPropertyStore* pStore = NULL;
+	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFile, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
+		PROPVARIANT value;
+		::PropVariantInit(&value);
+		if (SUCCEEDED(pStore->GetValue(PKEY_Rating, &value))) {
+			UINT nValue = (value.vt == VT_UI4) ? value.ulVal : 0;
+			m_nRating = (nValue == 0) ? 0 : (nValue < 13) ? 1 : (nValue < 38) ? 2 : (nValue < 63) ? 3 : (nValue < 88) ? 4 : 5;
+		}
+		::PropVariantClear(&value);
+		pStore->Release();
+	}
+	return m_nRating;
+}
+
+void CMainDlg::SetRating(int nStars) {
+	LPCTSTR sFile = (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) ? m_pFileList->Current() : NULL;
+	if (sFile == NULL || nStars < 0 || nStars > 5) {
+		return;
+	}
+	bool bSuccess = false;
+	IPropertyStore* pStore = NULL;
+	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFile, NULL, GPS_READWRITE, IID_PPV_ARGS(&pStore)))) {
+		PROPVARIANT value;
+		::PropVariantInit(&value);
+		if (nStars == 0) {
+			value.vt = VT_EMPTY;
+		} else {
+			value.vt = VT_UI4;
+			value.ulVal = RATING_VALUES[nStars];
+		}
+		bSuccess = SUCCEEDED(pStore->SetValue(PKEY_Rating, value)) && SUCCEEDED(pStore->Commit());
+		pStore->Release();
+	}
+	if (bSuccess) {
+		m_sRatingFile = sFile;
+		m_nRating = nStars;
+		CString sMessage;
+		if (nStars == 0) {
+			sMessage = CNLS::GetString(_T("Rating removed"));
+		} else {
+			sMessage.Format(CNLS::GetString(_T("Rating: %d stars")), nStars);
+		}
+		m_pChrome->ShowMessage(sMessage);
+	} else {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The rating could not be saved in this file format.")));
+	}
 	m_pChrome->Paint();
 }

@@ -609,3 +609,7 @@ Copy text from image	Görüntüdeki yazıyı kopyala
 Recognizes the text in the image and copies it to the clipboard	Görüntüdeki yazıyı tanır ve panoya kopyalar
 No text was found in the image.	Görüntüde yazı bulunamadı.
 %d lines of text were copied to the clipboard.	%d satır yazı panoya kopyalandı.
+Rating removed	Puan kaldırıldı
+Rating: %d stars	Puan: %d yıldız
+The rating could not be saved in this file format.	Bu dosya biçiminde puan kaydedilemiyor.
+Rating (keys 1 to 5, 0 removes it)	Puan (1-5 tuşları, 0 kaldırır)

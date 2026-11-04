@@ -877,6 +877,10 @@ void CWindowChrome::ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bD
 			m_pMainDlg->ExecuteCommand(hit.Value);
 			Paint();
 			break;
+		case SH_Rating:
+			// clicking the current rating removes it
+			m_pMainDlg->SetRating(m_pMainDlg->GetRating() == hit.Value ? 0 : hit.Value);
+			break;
 		case SH_Tool:
 			m_pMainDlg->GetAnnotations()->SetTool((CAnnotations::ETool)hit.Value);
 			Paint();
@@ -1225,6 +1229,25 @@ int CWindowChrome::PaintInfoTab(CDC& dc, int nWidth, int nY) {
 		CRect prefixRect(nPad, nY, nPad + nInnerWidth, nY + S(18));
 		dc.DrawText(pEXIF->GetPrefix(), -1, &prefixRect, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
 		nY = prefixRect.bottom;
+	}
+	// star rating, the stars can be clicked
+	int nRating = m_pMainDlg->GetRating();
+	if (nRating >= 0) {
+		nY += S(4);
+		int nStar = S(20);
+		HFONT hStarFont = m_bHasIconFont ? m_hIconFont : m_hFont;
+		HFONT hPrevFont = dc.SelectFont(hStarFont);
+		for (int i = 1; i <= 5; i++) {
+			CRect starRect(nPad + (i - 1) * (nStar + S(2)), nY, nPad + (i - 1) * (nStar + S(2)) + nStar, nY + nStar);
+			AddSideHit(SH_Rating, i, starRect, _T("Rating (keys 1 to 5, 0 removes it)"));
+			bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+			bool bFilled = i <= nRating;
+			dc.SetTextColor(bFilled ? RGB(255, 196, 0) : bHover ? m_colors.Text : m_colors.DimText);
+			wchar_t star[2] = { (wchar_t)(m_bHasIconFont ? (bFilled ? 0xE735 : 0xE734) : (bFilled ? 0x2605 : 0x2606)), 0 };
+			dc.DrawText(star, 1, &starRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		}
+		dc.SelectFont(hPrevFont);
+		nY += nStar;
 	}
 	nY += nGap;
 	DrawHorizontalLine(dc, nPad, nPad + nInnerWidth, nY, m_colors.Border);

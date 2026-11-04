@@ -186,6 +186,10 @@ public:
 	// Before/after comparison: the left part of the image is shown unedited, the split can be dragged
 	bool IsCompareMode() { return m_bCompareMode; }
 	CAnnotations* GetAnnotations() { return m_pAnnotations; }
+	// Star rating of the current file as shown by Explorer (0: none, 1-5 stars, -1: not available)
+	int GetRating();
+	// Writes the star rating (0-5) into the current file
+	void SetRating(int nStars);
 	// True if the drawing tools are shown and a tool is selected, the mouse draws on the image then
 	bool IsDrawMode();
 	// Draws the drawings into the original pixels of the image
@@ -378,6 +382,8 @@ private:
 	volatile LONG m_nRunningConversions;
 	bool m_bCompareMode;
 	CAnnotations* m_pAnnotations; // drawings over the current image
+	CString m_sRatingFile; // file of the cached rating
+	int m_nRating;
 	void PaintAnnotations(CDC& dc);
 	double m_dCompareSplit; // position of the split line relative to the client width
 	bool m_bDraggingCompareSplit;
