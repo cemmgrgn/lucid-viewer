@@ -40,6 +40,8 @@ public:
 		CyanRed = dCyanRed;
 		MagentaGreen = dMagentaGreen;
 		YellowBlue = dYellowBlue;
+		Exposure = 0.0;
+		Vignette = 0.0;
 	}
 
 	CImageProcessingParams() {
@@ -55,6 +57,8 @@ public:
 		CyanRed = -1;
 		MagentaGreen = -1;
 		YellowBlue = -1;
+		Exposure = 0.0;
+		Vignette = 0.0;
 	}
 
 	double Contrast; // in [-0.5..0.5], 0 means no contrast enhancement
@@ -69,6 +73,8 @@ public:
 	double CyanRed; // in [-1..1], 0 means no color correction
 	double MagentaGreen; // in [-1..1], 0 means no color correction
 	double YellowBlue; // in [-1..1], 0 means no color correction
+	double Exposure; // in [-2..2] f-stops, 0 means no change (not stored in the parameter DB)
+	double Vignette; // in [-1..1], negative darkens, positive lightens the corners, 0 means no vignette (not stored in the parameter DB)
 };
 
 // Parameters used in unsharp masking

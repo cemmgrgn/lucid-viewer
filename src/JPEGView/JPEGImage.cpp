@@ -1128,13 +1128,15 @@ void* CJPEGImage::ApplyCorrectionLUTandLDC(const CImageProcessingParams & imageP
 	bool bLDC = GetProcessingFlag(eProcFlags, PFLAG_LDC);
 	bool bLDCOld = GetProcessingFlag(m_eProcFlags, PFLAG_LDC);
 
-	bool bNoContrastAndGammaLUT = fabs(imageProcParams.Contrast) < 1e-4 && fabs(imageProcParams.Gamma - 1) < 1e-4;
+	bool bNoContrastAndGammaLUT = fabs(imageProcParams.Contrast) < 1e-4 && fabs(imageProcParams.Gamma - 1) < 1e-4 && fabs(imageProcParams.Exposure) < 1e-4;
+	bool bVignette = fabs(imageProcParams.Vignette) > 1e-4;
+	bool bVignetteChanged = fabs(imageProcParams.Vignette - m_imageProcParams.Vignette) > 1e-4;
 	bool bMustUseSaturationLUTs = fabs(imageProcParams.Saturation - 1.0) > 1e-4;
 	bool bNoColorCastCorrection = fabs(imageProcParams.CyanRed) < 1e-4 && fabs(imageProcParams.MagentaGreen) < 1e-4 &&
 		fabs(imageProcParams.YellowBlue) < 1e-4;
-	bool bNoLUTsApplied = bNoContrastAndGammaLUT && bNoColorCastCorrection && !bAutoContrast && !bMustUseSaturationLUTs;
+	bool bNoLUTsApplied = bNoContrastAndGammaLUT && bNoColorCastCorrection && !bAutoContrast && !bMustUseSaturationLUTs && !bVignette;
 	bool bContrastOrGammaChanged = fabs(imageProcParams.Contrast - m_imageProcParams.Contrast) > 1e-4 ||
-		fabs(imageProcParams.Gamma - m_imageProcParams.Gamma) > 1e-4;
+		fabs(imageProcParams.Gamma - m_imageProcParams.Gamma) > 1e-4 || fabs(imageProcParams.Exposure - m_imageProcParams.Exposure) > 1e-4;
 	bool bColorCastCorrChanged = fabs(imageProcParams.CyanRed - m_imageProcParams.CyanRed) > 1e-4 ||
 		fabs(imageProcParams.MagentaGreen - m_imageProcParams.MagentaGreen) > 1e-4 ||
 		fabs(imageProcParams.YellowBlue - m_imageProcParams.YellowBlue) > 1e-4;
@@ -1142,7 +1144,7 @@ void* CJPEGImage::ApplyCorrectionLUTandLDC(const CImageProcessingParams & imageP
 		fabs(imageProcParams.ContrastCorrectionFactor-m_imageProcParams.ContrastCorrectionFactor) > 1e-4;
 	bool bSaturationChanged = fabs(imageProcParams.Saturation - m_imageProcParams.Saturation) > 1e-4;
 	bool bMustReapplyLUTs = bAutoContrast != bAutoContrastOld || bAutoContrastSection != bAutoContrastSectionOld || bLDC != bLDCOld || 
-		bCorrectionFactorChanged || bContrastOrGammaChanged || bColorCastCorrChanged || bSaturationChanged;
+		bCorrectionFactorChanged || bContrastOrGammaChanged || bColorCastCorrChanged || bSaturationChanged || bVignetteChanged;
 	bool bLDCParametersChanged = fabs(imageProcParams.LightenShadows - m_imageProcParams.LightenShadows) > 1e-4 ||
 		fabs(imageProcParams.DarkenHighlights - m_imageProcParams.DarkenHighlights) > 1e-4 ||
 		fabs(imageProcParams.LightenShadowSteepness - m_imageProcParams.LightenShadowSteepness) > 1e-4 ;
@@ -1173,6 +1175,14 @@ void* CJPEGImage::ApplyCorrectionLUTandLDC(const CImageProcessingParams & imageP
 	if (bContrastOrGammaChanged || m_pLUTAllChannels == NULL) {
 		delete[] m_pLUTAllChannels;
 		m_pLUTAllChannels = bNoContrastAndGammaLUT ? NULL : CBasicProcessing::CreateSingleChannelLUT(imageProcParams.Contrast, imageProcParams.Gamma);
+		if (m_pLUTAllChannels != NULL && fabs(imageProcParams.Exposure) >= 1e-4) {
+			// exposure in f-stops, applied to linear light (gamma 2.2)
+			double dFactor = pow(2.0, imageProcParams.Exposure);
+			for (int i = 0; i < 256; i++) {
+				double dLinear = pow(m_pLUTAllChannels[i] / 255.0, 2.2) * dFactor;
+				m_pLUTAllChannels[i] = (uint8)min(255.0, 255.0 * pow(dLinear, 1.0 / 2.2) + 0.5);
+			}
+		}
 	}
 
 	// Calculate LDC if needed
@@ -1255,6 +1265,29 @@ void* CJPEGImage::ApplyCorrectionLUTandLDC(const CImageProcessingParams & imageP
 		pCachedTargetDIB = new(std::nothrow) uint32[dibSize.cx*dibSize.cy];
 		if (pCachedTargetDIB != NULL) {
 			memcpy(pCachedTargetDIB, pSourceDIB, dibSize.cx*dibSize.cy*4);
+		}
+	}
+
+	if (bVignette && pCachedTargetDIB != NULL && pCachedTargetDIB != pSourceDIB) {
+		// darker (or lighter) corners, the distance is measured in the full image, not in the shown section
+		double dHalfW = max(1, fullTargetSize.cx) / 2.0, dHalfH = max(1, fullTargetSize.cy) / 2.0;
+		std::vector<float> dx2(dibSize.cx);
+		for (int x = 0; x < dibSize.cx; x++) {
+			double d = (targetOffset.x + x + 0.5 - dHalfW) / dHalfW;
+			dx2[x] = (float)(d * d);
+		}
+		float fAmount = (float)imageProcParams.Vignette;
+		uint8* pPixel = (uint8*)pCachedTargetDIB;
+		for (int y = 0; y < dibSize.cy; y++) {
+			double d = (targetOffset.y + y + 0.5 - dHalfH) / dHalfH;
+			float fDy2 = (float)(d * d);
+			for (int x = 0; x < dibSize.cx; x++, pPixel += 4) {
+				float fR2 = (dx2[x] + fDy2) * 0.5f; // 0 in the center, 1 in the corners
+				float fFactor = max(0.0f, 1.0f + fAmount * fR2 * fR2 * 1.5f);
+				pPixel[0] = (uint8)min(255.0f, pPixel[0] * fFactor);
+				pPixel[1] = (uint8)min(255.0f, pPixel[1] * fFactor);
+				pPixel[2] = (uint8)min(255.0f, pPixel[2] * fFactor);
+			}
 		}
 	}
 

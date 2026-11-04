@@ -339,13 +339,16 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 
 	// Sliders of the edit tab, same ranges as the image processing panel
 	const CSideSlider sliders[] = {
+		{ _T("Exposure"), &CImageProcessingParams::Exposure, -2.0, 2.0, 0.0, false, false, 0 },
 		{ _T("Brightness"), &CImageProcessingParams::Gamma, 0.5, 2.0, 1.0, true, true, 0 },
 		{ _T("Contrast"), &CImageProcessingParams::Contrast, -0.5, 0.5, 0.0, false, false, 0 },
 		{ _T("Saturation"), &CImageProcessingParams::Saturation, 0.0, 2.0, 1.0, false, false, 0 },
 		{ _T("Sharpen"), &CImageProcessingParams::Sharpen, 0.0, 0.5, 0.0, false, false, 0 },
+		{ _T("Vignette"), &CImageProcessingParams::Vignette, -1.0, 1.0, 0.0, false, false, 0 },
 		{ _T("Cyan-Red"), &CImageProcessingParams::CyanRed, -1.0, 1.0, 0.0, false, false, 0 },
-		{ _T("Magenta-Green"), &CImageProcessingParams::MagentaGreen, -1.0, 1.0, 0.0, false, false, 0 },
-		{ _T("Yellow-Blue"), &CImageProcessingParams::YellowBlue, -1.0, 1.0, 0.0, false, false, 0 },
+		// as in other editors: temperature to the right is warmer (yellow), tint to the right is magenta
+		{ _T("Temperature"), &CImageProcessingParams::YellowBlue, -1.0, 1.0, 0.0, false, true, 0 },
+		{ _T("Tint"), &CImageProcessingParams::MagentaGreen, -1.0, 1.0, 0.0, false, true, 0 },
 		{ _T("Lighten Shadows"), &CImageProcessingParams::LightenShadows, 0.0, 1.0, 0.0, false, false, 1 },
 		{ _T("Darken Highlights"), &CImageProcessingParams::DarkenHighlights, 0.0, 1.0, 0.0, false, false, 1 },
 		{ _T("Deep Shadows"), &CImageProcessingParams::LightenShadowSteepness, 0.0, 1.0, 0.0, false, false, 1 },
@@ -1579,7 +1582,8 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 		CRect labelRect(nPad, nY, nPad + nInnerWidth, nY + S(16));
 		dc.DrawText(CNLS::GetString(slider.Name), -1, &labelRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 		TCHAR buff[16];
-		_stprintf_s(buff, 16, _T("%.2f"), dValue);
+		// sliders with inverted direction show the value as seen on the slider (temperature: positive is warmer)
+		_stprintf_s(buff, 16, _T("%.2f"), (slider.Inverted && !slider.Logarithmic) ? -dValue : dValue);
 		dc.SetTextColor(fabs(dValue - GetSliderDefault(slider)) > 0.005 ? m_colors.Accent : m_colors.DimText);
 		dc.DrawText(buff, -1, &labelRect, DT_RIGHT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 		nY += S(18);

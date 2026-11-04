@@ -660,3 +660,7 @@ Makes the background transparent with an AI model (176 MB download on first use)
 Downloading the background removal model (176 MB)	Arka plan kaldırma modeli indiriliyor (176 MB)
 The background removal model could not be downloaded.	Arka plan kaldırma modeli indirilemedi.
 Background removed. Save it with 'Save as transparent PNG'.	Arka plan kaldırıldı. 'Saydam PNG olarak kaydet' ile kaydedin.
+Exposure	Pozlama
+Vignette	Vinyet
+Temperature	Sıcaklık
+Tint	Renk tonu
