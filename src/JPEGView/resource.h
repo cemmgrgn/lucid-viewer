@@ -320,6 +320,7 @@
 #define IDM_FIND_SIMILAR	16340		// :KeyMap: find similar and duplicate photos in the current folder
 #define IDM_REMOVE_BACKGROUND	16350	// :KeyMap: make the background transparent (U2-Net model, downloaded on first use)
 #define IDM_AUTO_ENHANCE	16360		// :KeyMap: automatic color, contrast and local density correction on/off
+#define IDM_SHOW_SHORTCUTS	16370		// :KeyMap: show the keyboard shortcuts of the new functions
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

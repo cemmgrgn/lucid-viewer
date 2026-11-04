@@ -668,3 +668,8 @@ Auto	Otomatik
 Automatic color, contrast and shadow correction	Otomatik renk, kontrast ve gölge düzeltmesi
 The drawings or removed colors of this image are not saved. Discard them?	Bu görüntüdeki çizimler veya silinen renkler kaydedilmedi. Atılsın mı?
 Convert all images of this folder	Bu klasördeki tüm görüntüleri dönüştür
+Keyboard shortcuts...	Klavye kısayolları...
+Keyboard shortcuts	Klavye kısayolları
+Move to recycle bin without the question	Sormadan geri dönüşüm kutusuna taşı
+drag	sürükle
+Select the area to crop	Kırpılacak alanı seç
