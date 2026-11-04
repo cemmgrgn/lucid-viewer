@@ -1585,7 +1585,8 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 		dc.DrawText(CNLS::GetString(slider.Name), -1, &labelRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 		TCHAR buff[16];
 		// sliders with inverted direction show the value as seen on the slider (temperature: positive is warmer)
-		_stprintf_s(buff, 16, _T("%.2f"), (slider.Inverted && !slider.Logarithmic) ? -dValue : dValue);
+		double dShown = (slider.Inverted && !slider.Logarithmic) ? -dValue : dValue;
+		_stprintf_s(buff, 16, _T("%.2f"), fabs(dShown) < 0.005 ? 0.0 : dShown); // no "-0.00"
 		dc.SetTextColor(fabs(dValue - GetSliderDefault(slider)) > 0.005 ? m_colors.Accent : m_colors.DimText);
 		dc.DrawText(buff, -1, &labelRect, DT_RIGHT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
 		nY += S(18);
