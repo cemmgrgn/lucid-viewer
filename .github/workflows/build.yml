@@ -20,6 +20,15 @@ jobs:
       - name: Get WTL
         run: git submodule update --init deps/WTL-sf
 
+      # the runner image has no ATL, the program needs it
+      - name: Add ATL to Visual Studio
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $p = Start-Process "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe" -ArgumentList "modify --installPath `"$vs`" --add Microsoft.VisualStudio.Component.VC.ATL --quiet --norestart --nocache" -Wait -PassThru
+          "vs_installer exit code: $($p.ExitCode)"
+          if (-not (Get-ChildItem "$vs\VC\Tools\MSVC\*\atlmfc\include\atlbase.h" -ErrorAction SilentlyContinue)) { throw "ATL was not installed" }
+
       - uses: microsoft/setup-msbuild@v2
 
       - name: Build
