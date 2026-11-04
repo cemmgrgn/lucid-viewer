@@ -565,7 +565,7 @@ public:
 	EResult Run(std::vector<DWORD>& cropPixels, int& nCropWidth, int& nCropHeight);
 
 private:
-	enum EButton { BTN_PEN = 1, BTN_HIGHLIGHTER, BTN_RECTANGLE, BTN_ARROW, BTN_TEXT, BTN_PIXELATE, BTN_COLOR, BTN_UNDO,
+	enum EButton { BTN_PEN = 1, BTN_HIGHLIGHTER, BTN_RECTANGLE, BTN_ARROW, BTN_TEXT, BTN_PIXELATE, BTN_COLOR, BTN_WIDTH, BTN_UNDO,
 		BTN_OCR, BTN_OPEN, BTN_SAVE, BTN_COPY, BTN_CLOSE, BTN_COPY_TEXT, BTN_SWATCH };
 	enum EDrag { DRAG_NONE, DRAG_NEW, DRAG_MOVE, DRAG_RESIZE, DRAG_DRAW, DRAG_TEXT };
 	struct CTextWord {
@@ -631,6 +631,10 @@ private:
 	void Paint(HDC hDC, const CRect& paintRect);
 	void PaintButton(const CButton& button, bool bHover, bool bChecked);
 	CRect GetHintRect();
+	// Magnifier at the mouse while selecting: enlarged pixels, position and color
+	bool IsLoupeShown() { return !m_bHasSelection || m_eDrag == DRAG_NEW; }
+	CRect GetLoupeRect();
+	void PaintLoupe(HDC hDC);
 	CString GetHintText();
 	int HitTestHandle(const CPoint& pt);
 	int HitTestButton(const CPoint& pt);
@@ -844,6 +848,7 @@ void COverlay::Layout() {
 		{ BTN_TEXT, 0xE8D2, _T("T"), _T("Text") },
 		{ BTN_PIXELATE, 0, _T("\x25A6"), _T("Pixelate (hide an area)") },
 		{ BTN_COLOR, 0, _T(""), _T("Color") },
+		{ BTN_WIDTH, 0, _T(""), _T("Line width") },
 		{ BTN_UNDO, 0xE7A7, _T("U"), _T("Undo (Ctrl+Z)") },
 	};
 	int nToolCount = (m_bTextLayer || m_eMode == MODE_TEXT) ? 0 : sizeof(tools) / sizeof(tools[0]);
@@ -956,6 +961,9 @@ CRect COverlay::GetUIBounds() {
 		CRect hintRect = GetHintRect();
 		hintRect.InflateRect(S(4), S(4));
 		bounds.UnionRect(&bounds, &hintRect);
+		CRect loupeRect = GetLoupeRect();
+		loupeRect.InflateRect(S(4), S(4));
+		bounds.UnionRect(&bounds, &loupeRect);
 	}
 	if (m_bTextLayer) {
 		CRect textHint = GetTextHintRect();
@@ -996,6 +1004,15 @@ void COverlay::PaintButton(const CButton& button, bool bHover, bool bChecked) {
 		CRect swatch = rect;
 		swatch.DeflateRect(S(8), S(8));
 		FillRound(hDC, swatch, m_annotations.GetColor(), S(6), RGB(200, 200, 200));
+		return;
+	}
+	if (button.Id == BTN_WIDTH) {
+		// a line as thick as the drawings
+		int nLine = max(1, S(m_annotations.GetWidth()));
+		CRect line(rect.left + S(8), rect.CenterPoint().y - nLine / 2, rect.right - S(8), rect.CenterPoint().y - nLine / 2 + nLine);
+		HBRUSH hBrush = ::CreateSolidBrush(COLOR_TEXT);
+		::FillRect(hDC, &line, hBrush);
+		::DeleteObject(hBrush);
 		return;
 	}
 	::SetBkMode(hDC, TRANSPARENT);
@@ -1165,8 +1182,54 @@ void COverlay::Paint(HDC hDC, const CRect& paintRect) {
 		::SelectObject(hMem, hOldFont);
 	}
 
+	if (IsLoupeShown()) {
+		PaintLoupe(hMem);
+	}
+
 	::RestoreDC(hMem, nSaved);
 	::BitBlt(hDC, paintRect.left, paintRect.top, paintRect.Width(), paintRect.Height(), hMem, paintRect.left, paintRect.top, SRCCOPY);
+}
+
+static const int LOUPE_PIXELS = 15, LOUPE_ZOOM = 8;
+
+CRect COverlay::GetLoupeRect() {
+	int nSize = LOUPE_PIXELS * LOUPE_ZOOM;
+	int nHeight = nSize + S(24);
+	CRect monitor = m_screen.Monitors.empty() ? CRect(0, 0, m_screen.Width, m_screen.Height) : m_screen.Monitors[FindMonitor(m_mouse)];
+	int nX = m_mouse.x + S(24), nY = m_mouse.y + S(24);
+	if (nX + nSize > monitor.right) nX = m_mouse.x - S(24) - nSize;
+	if (nY + nHeight > monitor.bottom) nY = m_mouse.y - S(24) - nHeight;
+	return CRect(nX, nY, nX + nSize, nY + nHeight);
+}
+
+void COverlay::PaintLoupe(HDC hDC) {
+	CRect rect = GetLoupeRect();
+	int nSize = LOUPE_PIXELS * LOUPE_ZOOM;
+	CRect zoomRect(rect.left, rect.top, rect.left + nSize, rect.top + nSize);
+	int nOldMode = ::SetStretchBltMode(hDC, COLORONCOLOR);
+	::StretchBlt(hDC, zoomRect.left, zoomRect.top, nSize, nSize, m_hBrightDC, m_mouse.x - LOUPE_PIXELS / 2, m_mouse.y - LOUPE_PIXELS / 2,
+		LOUPE_PIXELS, LOUPE_PIXELS, SRCCOPY);
+	::SetStretchBltMode(hDC, nOldMode);
+	// the pixel under the mouse
+	CRect center(zoomRect.left + (LOUPE_PIXELS / 2) * LOUPE_ZOOM, zoomRect.top + (LOUPE_PIXELS / 2) * LOUPE_ZOOM, 0, 0);
+	center.right = center.left + LOUPE_ZOOM;
+	center.bottom = center.top + LOUPE_ZOOM;
+	FrameRect(hDC, center, RGB(255, 255, 255), 1);
+	FrameRect(hDC, zoomRect, COLOR_BAR_BORDER, 1);
+	// position and color
+	DWORD c = (m_mouse.x >= 0 && m_mouse.y >= 0 && m_mouse.x < m_screen.Width && m_mouse.y < m_screen.Height) ?
+		m_screen.Pixels[(size_t)m_mouse.y * m_screen.Width + m_mouse.x] : 0;
+	CString sText;
+	sText.Format(_T("%d, %d   #%02X%02X%02X"), m_mouse.x + m_screen.Left, m_mouse.y + m_screen.Top, (c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+	CRect textRect(rect.left, zoomRect.bottom, rect.right, rect.bottom);
+	HBRUSH hBrush = ::CreateSolidBrush(COLOR_BAR);
+	::FillRect(hDC, &textRect, hBrush);
+	::DeleteObject(hBrush);
+	HGDIOBJ hOldFont = ::SelectObject(hDC, m_hSmallFont);
+	::SetBkMode(hDC, TRANSPARENT);
+	::SetTextColor(hDC, COLOR_TEXT);
+	::DrawText(hDC, sText, -1, &textRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+	::SelectObject(hDC, hOldFont);
 }
 
 int COverlay::HitTestHandle(const CPoint& pt) {
@@ -1233,6 +1296,14 @@ void COverlay::OnButton(EButton eButton, int nIndex) {
 			UpdateWindow();
 			::InvalidateRect(m_hWnd, &m_selection, FALSE);
 			return;
+		case BTN_WIDTH: {
+			static const int widths[] = { 2, 3, 5, 8 };
+			int nNext = widths[0];
+			for (int i = 0; i < 4; i++) if (widths[i] > m_annotations.GetWidth()) { nNext = widths[i]; break; }
+			m_annotations.SetWidth(nNext);
+			UpdateWindow();
+			return;
+		}
 		case BTN_UNDO:
 			m_annotations.Undo();
 			::InvalidateRect(m_hWnd, &m_selection, FALSE);
@@ -1408,12 +1479,7 @@ void COverlay::OnMouseMove(CPoint pt) {
 					UpdateDpi();
 					UpdateWindow();
 				}
-				CRect hint = GetHintRect();
-				static CRect s_lastHint;
-				if (hint != s_lastHint) {
-					s_lastHint = hint;
-					UpdateWindow();
-				}
+				UpdateWindow(); // hint and magnifier follow the mouse
 			}
 			return;
 		}
@@ -1473,6 +1539,16 @@ void COverlay::OnKeyDown(UINT nKey) {
 		} else {
 			Close(RESULT_NONE);
 		}
+		return;
+	}
+	if (!m_bHasSelection && !bCtrl && nKey == 'C' && m_mouse.x >= 0 && m_mouse.y >= 0 && m_mouse.x < m_screen.Width && m_mouse.y < m_screen.Height) {
+		// C copies the color under the mouse
+		DWORD c = m_screen.Pixels[(size_t)m_mouse.y * m_screen.Width + m_mouse.x];
+		CString sColor;
+		sColor.Format(_T("#%02X%02X%02X"), (c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF);
+		CopyTextToClipboard(m_hWnd, sColor);
+		Close(RESULT_NONE);
+		ShowToast(CString(CNLS::GetString(_T("Color copied:"))) + _T(" ") + sColor, false);
 		return;
 	}
 	if (!m_bHasSelection) {

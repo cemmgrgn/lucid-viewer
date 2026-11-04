@@ -822,3 +822,5 @@ Open file...	Dosyayı aç...
 The settings were applied. These take effect after a restart of JPEGView: %s. Restart now?	Ayarlar uygulandı. Şunlar JPEGView yeniden başlatılınca geçerli olur: %s. Şimdi yeniden başlatılsın mı?
 The settings were applied.	Ayarlar uygulandı.
 In JPEG files Windows stores title and subject in the same field, both change.	Windows JPEG dosyalarında başlık ve konuyu aynı alana yazar, ikisi birlikte değişir.
+Line width	Çizgi kalınlığı
+Color copied:	Renk kopyalandı:
