@@ -1755,6 +1755,7 @@ int CWindowChrome::PaintDrawTab(CDC& dc, int nWidth, int nY) {
 		{ _T("Save pen strokes as signature"), IDM_SIGNATURE_SAVE, bHasDrawing, _T("Write your signature with the pen first") },
 		{ _T("Insert signature"), IDM_SIGNATURE_INSERT, bHasImage && pAnnotations->HasSignature(), NULL },
 		{ _T("Draw into the image"), IDM_ANNOTATION_APPLY, bHasDrawing, _T("Saving the image does this too") },
+		{ _T("Remove background"), IDM_REMOVE_BACKGROUND, bHasImage, _T("Makes the background transparent with an AI model (176 MB download on first use)") },
 		{ _T("Save as transparent PNG..."), IDM_SAVE_TRANSPARENT, m_pMainDlg->HasTransparency(), _T("Saves the image with the removed colors as transparent PNG") },
 		{ _T("Restore removed colors"), IDM_UNDO_TRANSPARENCY, m_pMainDlg->HasTransparency(), NULL },
 		{ _T("Save processed image..."), IDM_SAVE, bHasImage, NULL },

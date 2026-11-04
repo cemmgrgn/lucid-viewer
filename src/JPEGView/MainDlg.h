@@ -395,6 +395,8 @@ private:
 	// Makes the area around the image point with similar color transparent, shown as checker board
 	void RemoveColorAt(float fX, float fY);
 	void ClearTransparency(bool bRestorePixels);
+	// Combines the alpha values (0: transparent) with the current transparency and shows the result over a checker board
+	void ApplyTransparencyMask(const std::vector<uint8>& alpha);
 	CString m_sRatingFile; // file of the cached rating
 	bool m_bCropTool;
 	bool m_bDragOutPending; // left button pressed on an image fitting the window, moving drags the file out

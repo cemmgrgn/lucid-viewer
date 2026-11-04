@@ -66,6 +66,9 @@
     <ClCompile Include="Share.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BackgroundRemoval.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Clipboard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -342,6 +345,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Share.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BackgroundRemoval.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Clipboard.h">

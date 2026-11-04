@@ -61,6 +61,7 @@
 #include "Share.h"
 #include "ExportDlg.h"
 #include "DuplicatesDlg.h"
+#include "BackgroundRemoval.h"
 #include <propsys.h>
 #include <propkey.h>
 #include <gdiplus.h>
@@ -2416,6 +2417,30 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_REMOVE_BACKGROUND:
+			if (m_pCurrentImage != NULL && m_pCurrentImage->OriginalPixels() != NULL) {
+				if (!BackgroundRemoval::IsModelAvailable() &&
+					!BackgroundRemoval::DownloadModel(m_hWnd, CNLS::GetString(_T("Downloading the background removal model (176 MB)")), CNLS::GetString(_T("Cancel")))) {
+					m_pChrome->ShowMessage(CNLS::GetString(_T("The background removal model could not be downloaded.")));
+					break;
+				}
+				HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+				std::vector<uint8> alpha;
+				std::wstring sError;
+				// the original pixels may show the checker board of a previous removal, the backup has the colors
+				const void* pPixels = m_transparencyBackup.empty() ? m_pCurrentImage->OriginalPixels() : &m_transparencyBackup[0];
+				int nChannels = m_transparencyBackup.empty() ? m_pCurrentImage->OriginalChannels() : 4;
+				bool bSuccess = BackgroundRemoval::ComputeMask(pPixels, m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight(), nChannels, alpha, sError);
+				::SetCursor(hOldCursor);
+				if (!bSuccess) {
+					m_pChrome->ShowMessage(sError.c_str());
+				} else {
+					ApplyTransparencyMask(alpha);
+					m_pChrome->ShowSideTab(CWindowChrome::TAB_DRAW);
+					m_pChrome->ShowMessage(CNLS::GetString(_T("Background removed. Save it with 'Save as transparent PNG'.")));
+				}
+			}
+			break;
 		case IDM_FIND_SIMILAR:
 			if (m_pFileList != NULL && m_pFileList->Size() > 1) {
 				MouseOn();
@@ -2438,7 +2463,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				int nFilterIndex = 1;
 				if (HelpersGUI::ShowFileDialog(m_hWnd, true, _T("PNG (*.png)|*.png|"), _T("png"), sProposal, NULL, nFilterIndex, sFileName)) {
 					HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
-					bool bSuccess = CAnnotations::SaveTransparentPNG(sFileName, m_pCurrentImage->OriginalPixels(), &m_transparencyMask[0],
+					bool bSuccess = CAnnotations::SaveTransparentPNG(sFileName, &m_transparencyBackup[0], &m_transparencyMask[0],
 						m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight());
 					::SetCursor(hOldCursor);
 					m_pFileList->Reload();
@@ -3761,13 +3786,13 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
-	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
+	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
 static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
 static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
@@ -3896,6 +3921,9 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_RESET:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_RESET_PROCESSING, _T("Reset all values to the defaults"), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_REMOVE_BACKGROUND:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_REMOVE_BACKGROUND, _T("Remove background"), false, m_pCurrentImage != NULL);
 				break;
 			case MBAR_SIMILAR:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_FIND_SIMILAR, _T("Find similar photos..."), false, m_pFileList != NULL && m_pFileList->Size() > 1);
@@ -4560,6 +4588,37 @@ void CMainDlg::RemoveColorAt(float fX, float fY) {
 	CString sMessage;
 	sMessage.Format(CNLS::GetString(_T("%d pixels made transparent. Save them with 'Save as transparent PNG'.")), nRemoved);
 	m_pChrome->ShowMessage(sMessage);
+	Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::ApplyTransparencyMask(const std::vector<uint8>& alpha) {
+	if (m_pCurrentImage == NULL) {
+		return;
+	}
+	int nWidth = m_pCurrentImage->OrigWidth(), nHeight = m_pCurrentImage->OrigHeight();
+	size_t nPixels = (size_t)nWidth * nHeight;
+	if (alpha.size() != nPixels) {
+		return;
+	}
+	uint8* pPixels = (uint8*)m_pCurrentImage->GetOriginalPixelsForWriting();
+	if (pPixels == NULL) {
+		return;
+	}
+	if (m_transparencyMask.size() != nPixels) {
+		m_transparencyMask.assign(nPixels, 255);
+		m_transparencyBackup.assign(pPixels, pPixels + nPixels * 4);
+	}
+	for (size_t i = 0; i < nPixels; i++) {
+		uint8 nAlpha = min(m_transparencyMask[i], alpha[i]);
+		m_transparencyMask[i] = nAlpha;
+		// shown blended over a checker board
+		int x = (int)(i % nWidth), y = (int)(i / nWidth);
+		int nChecker = (((x >> 4) + (y >> 4)) & 1) ? 204 : 255;
+		for (int c = 0; c < 3; c++) {
+			pPixels[i * 4 + c] = (uint8)((m_transparencyBackup[i * 4 + c] * nAlpha + nChecker * (255 - nAlpha)) / 255);
+		}
+	}
 	Invalidate(FALSE);
 	m_pChrome->Paint();
 }

@@ -318,6 +318,7 @@
 #define IDM_UNDO_TRANSPARENCY	16320	// :KeyMap: restore the colors removed with the remove color tool
 #define IDM_TOGGLE_FILMSTRIP	16330	// :KeyMap: show or hide the thumbnails of the folder above the status bar
 #define IDM_FIND_SIMILAR	16340		// :KeyMap: find similar and duplicate photos in the current folder
+#define IDM_REMOVE_BACKGROUND	16350	// :KeyMap: make the background transparent (U2-Net model, downloaded on first use)
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

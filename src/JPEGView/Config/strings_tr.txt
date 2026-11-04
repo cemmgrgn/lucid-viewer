@@ -655,3 +655,8 @@ Group	Grup
 No similar photos found in %d files.	%d dosyada benzer fotoğraf bulunamadı.
 %d groups of similar photos found in %d files.	%d dosyada %d benzer fotoğraf grubu bulundu.
 Comparing photos: %d / %d	Fotoğraflar karşılaştırılıyor: %d / %d
+Remove background	Arka planı kaldır
+Makes the background transparent with an AI model (176 MB download on first use)	Arka planı yapay zekâ modeliyle saydam yapar (ilk kullanımda 176 MB indirilir)
+Downloading the background removal model (176 MB)	Arka plan kaldırma modeli indiriliyor (176 MB)
+The background removal model could not be downloaded.	Arka plan kaldırma modeli indirilemedi.
+Background removed. Save it with 'Save as transparent PNG'.	Arka plan kaldırıldı. 'Saydam PNG olarak kaydet' ile kaydedin.
