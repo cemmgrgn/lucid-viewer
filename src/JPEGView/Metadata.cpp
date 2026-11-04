@@ -299,8 +299,152 @@ static bool ParseValue(const PROPERTYKEY& key, const CString& sText, PROPVARIANT
 	return bOK;
 }
 
+// Offset after the EOI marker of the first image of a JPEG file, -1 if not a JPEG or not found
+static __int64 GetEndOfFirstJpegImage(const std::vector<char>& data) {
+	const unsigned char* d = (const unsigned char*)(data.empty() ? NULL : &data[0]);
+	size_t n = data.size();
+	if (n < 4 || d[0] != 0xFF || d[1] != 0xD8) return -1;
+	size_t pos = 2;
+	while (pos + 1 < n) {
+		if (d[pos] != 0xFF) return -1;
+		while (pos < n && d[pos] == 0xFF) pos++;
+		if (pos >= n) return -1;
+		unsigned char marker = d[pos++];
+		if (marker == 0xD9) return (__int64)pos;
+		if ((marker >= 0xD0 && marker <= 0xD7) || marker == 0x01 || marker == 0xD8) continue;
+		if (pos + 2 > n) return -1;
+		size_t length = ((size_t)d[pos] << 8) | d[pos + 1];
+		pos += length;
+		if (marker == 0xDA) {
+			// entropy coded data up to the next marker
+			while (pos + 1 < n) {
+				if (d[pos] == 0xFF) {
+					unsigned char next = d[pos + 1];
+					if (next == 0x00 || (next >= 0xD0 && next <= 0xD7)) { pos += 2; continue; }
+					if (next == 0xFF) { pos++; continue; }
+					break;
+				}
+				pos++;
+			}
+		}
+	}
+	return -1;
+}
+
+static bool ReadFileBytes(LPCTSTR sFileName, std::vector<char>& data) {
+	HANDLE hFile = ::CreateFile(sFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) return false;
+	LARGE_INTEGER size;
+	bool bOK = ::GetFileSizeEx(hFile, &size) && size.QuadPart < 512 * 1024 * 1024;
+	if (bOK) {
+		data.resize((size_t)size.QuadPart);
+		DWORD nRead = 0;
+		bOK = data.empty() || (::ReadFile(hFile, &data[0], (DWORD)data.size(), &nRead, NULL) && nRead == data.size());
+	}
+	::CloseHandle(hFile);
+	return bOK;
+}
+
+// Multi picture format (APP2 "MPF"): the image list has the size of the first image and the offsets of the others,
+// relative to the MP header. Returns false if there is none.
+struct CMpfEntries {
+	size_t Base;          // position of the MP header (TIFF header) in the file
+	size_t EntriesPos;    // position of the first 16 byte entry
+	int Count;
+	bool LittleEndian;
+};
+
+static unsigned int ReadUInt(const char* p, bool bLittle, int nBytes) {
+	const unsigned char* d = (const unsigned char*)p;
+	unsigned int n = 0;
+	for (int i = 0; i < nBytes; i++) n |= (unsigned int)d[bLittle ? i : nBytes - 1 - i] << (8 * i);
+	return n;
+}
+
+static void WriteUInt(char* p, unsigned int n, bool bLittle) {
+	for (int i = 0; i < 4; i++) p[bLittle ? i : 3 - i] = (char)((n >> (8 * i)) & 0xFF);
+}
+
+static bool FindMpf(const std::vector<char>& data, __int64 nEnd, CMpfEntries& mpf) {
+	size_t nLimit = (size_t)min((__int64)data.size(), nEnd > 0 ? nEnd : (__int64)data.size());
+	static const char signature[4] = { 'M', 'P', 'F', 0 };
+	for (size_t i = 0; i + 16 < nLimit && i < 256 * 1024; i++) {
+		if (memcmp(&data[i], signature, 4) != 0) continue;
+		size_t nBase = i + 4;
+		bool bLittle = data[nBase] == 'I';
+		unsigned int nIfd = ReadUInt(&data[nBase + 4], bLittle, 4);
+		if (nBase + nIfd + 2 > data.size()) return false;
+		int nTags = (int)ReadUInt(&data[nBase + nIfd], bLittle, 2);
+		int nCount = 0;
+		unsigned int nEntries = 0;
+		for (int t = 0; t < nTags; t++) {
+			size_t e = nBase + nIfd + 2 + 12 * t;
+			if (e + 12 > data.size()) return false;
+			unsigned int nTag = ReadUInt(&data[e], bLittle, 2);
+			unsigned int nValue = ReadUInt(&data[e + 8], bLittle, 4);
+			if (nTag == 0xB001) nCount = (int)nValue;
+			if (nTag == 0xB002) nEntries = nValue;
+		}
+		if (nCount < 2 || nEntries == 0 || nBase + nEntries + 16 * nCount > data.size()) return false;
+		mpf.Base = nBase;
+		mpf.EntriesPos = nBase + nEntries;
+		mpf.Count = nCount;
+		mpf.LittleEndian = bLittle;
+		return true;
+	}
+	return false;
+}
+
+CJpegTrailerGuard::CJpegTrailerGuard(LPCTSTR sFileName) : m_sFileName(sFileName) {
+	std::vector<char> data;
+	if (ReadFileBytes(sFileName, data)) {
+		__int64 nEnd = GetEndOfFirstJpegImage(data);
+		if (nEnd > 0 && nEnd < (__int64)data.size()) {
+			m_trailer.assign(data.begin() + (size_t)nEnd, data.end());
+			CMpfEntries mpf;
+			if (FindMpf(data, nEnd, mpf)) {
+				for (int k = 1; k < mpf.Count; k++) {
+					__int64 nOffset = ReadUInt(&data[mpf.EntriesPos + 16 * k + 8], mpf.LittleEndian, 4);
+					__int64 nInTrailer = (__int64)mpf.Base + nOffset - nEnd;
+					m_trailerOffsets.push_back((nOffset != 0 && nInTrailer >= 0 && nInTrailer < (__int64)m_trailer.size()) ? nInTrailer : -1);
+				}
+			}
+		}
+	}
+}
+
+bool CJpegTrailerGuard::Restore() {
+	if (m_trailer.empty()) return true;
+	std::vector<char> data;
+	if (!ReadFileBytes(m_sFileName, data)) return false;
+	__int64 nEnd = GetEndOfFirstJpegImage(data);
+	if (nEnd <= 0) return true; // not a JPEG anymore
+	if (nEnd == (__int64)data.size()) {
+		data.insert(data.end(), m_trailer.begin(), m_trailer.end());
+	} else if (data.size() - (size_t)nEnd != m_trailer.size() || memcmp(&data[(size_t)nEnd], &m_trailer[0], m_trailer.size()) != 0) {
+		return true; // other data than before, nothing is changed
+	}
+	// the first image changed its size (new EXIF data): the image list of MPF must point to the moved images
+	CMpfEntries mpf;
+	if (FindMpf(data, nEnd, mpf) && mpf.Count - 1 == (int)m_trailerOffsets.size()) {
+		WriteUInt(&data[mpf.EntriesPos + 4], (unsigned int)nEnd, mpf.LittleEndian);
+		for (int k = 1; k < mpf.Count; k++) {
+			if (m_trailerOffsets[k - 1] >= 0) {
+				WriteUInt(&data[mpf.EntriesPos + 16 * k + 8], (unsigned int)(nEnd + m_trailerOffsets[k - 1] - (__int64)mpf.Base), mpf.LittleEndian);
+			}
+		}
+	}
+	HANDLE hFile = ::CreateFile(m_sFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) return false;
+	DWORD nWritten = 0;
+	bool bOK = ::WriteFile(hFile, &data[0], (DWORD)data.size(), &nWritten, NULL) && nWritten == data.size() && ::SetEndOfFile(hFile);
+	::CloseHandle(hFile);
+	return bOK;
+}
+
 static bool WriteValues(LPCTSTR sFileName, const std::vector<std::pair<PROPERTYKEY, PROPVARIANT*>>& values, int& nWritten) {
 	nWritten = 0;
+	CJpegTrailerGuard trailerGuard(sFileName);
 	IPropertyStore* pStore = NULL;
 	if (FAILED(::SHGetPropertyStoreFromParsingName(sFileName, NULL, GPS_READWRITE, IID_PPV_ARGS(&pStore)))) {
 		return false;
@@ -312,6 +456,7 @@ static bool WriteValues(LPCTSTR sFileName, const std::vector<std::pair<PROPERTYK
 	}
 	bool bOK = nWritten > 0 && SUCCEEDED(pStore->Commit());
 	pStore->Release();
+	if (bOK) trailerGuard.Restore();
 	return bOK;
 }
 

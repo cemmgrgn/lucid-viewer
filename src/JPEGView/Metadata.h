@@ -34,6 +34,19 @@ namespace Metadata {
 	// Writes the values given as edit text (empty removes the value), returns false on error
 	bool WriteTexts(LPCTSTR sFileName, const std::vector<std::pair<PROPERTYKEY, CString>>& values);
 
+	// Keeps the data after the end of the first image of a JPEG file (HDR gain maps and other images of phones, MPF).
+	// The property handler of Windows removes it when it writes properties. Create before writing, call Restore() after.
+	class CJpegTrailerGuard {
+	public:
+		CJpegTrailerGuard(LPCTSTR sFileName);
+		// Appends the old data again if it was removed, returns true if nothing was lost
+		bool Restore();
+	private:
+		CString m_sFileName;
+		std::vector<char> m_trailer;
+		std::vector<__int64> m_trailerOffsets; // position of the MPF images 1..n in the trailer, -1 if outside
+	};
+
 	// All entries with a value as text, one per line (for the clipboard)
 	CString ToText(const std::vector<CEntry>& entries);
 }

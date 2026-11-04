@@ -4733,6 +4733,8 @@ void CMainDlg::SetRating(int nStars) {
 	int nOldRating = GetRating();
 	bool bSuccess = false;
 	IPropertyStore* pStore = NULL;
+	// read before the file is opened for writing (the property store opens it exclusively)
+	Metadata::CJpegTrailerGuard trailerGuard(sFile);
 	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFile, NULL, GPS_READWRITE, IID_PPV_ARGS(&pStore)))) {
 		PROPVARIANT value;
 		::PropVariantInit(&value);
@@ -4744,6 +4746,8 @@ void CMainDlg::SetRating(int nStars) {
 		}
 		bSuccess = SUCCEEDED(pStore->SetValue(PKEY_Rating, value)) && SUCCEEDED(pStore->Commit());
 		pStore->Release();
+		// the property handler removes the HDR gain map of phone photos
+		if (bSuccess) trailerGuard.Restore();
 	}
 	if (bSuccess) {
 		if (!m_bUndoing && nOldRating >= 0 && nOldRating != nStars) {
