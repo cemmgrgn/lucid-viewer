@@ -13,6 +13,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-2025
+    env:
+      SIGNPATH_ENABLED: ${{ secrets.SIGNPATH_API_TOKEN != '' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +43,36 @@ jobs:
           $v = (Get-Item src\LucidViewer\bin\x64\Release\LucidViewer.exe).VersionInfo
           "version=$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart)" >> $env:GITHUB_OUTPUT
 
+      # Code signing with SignPath (docs/CODE_SIGNING.md), only for version tags and only once the
+      # SIGNPATH_API_TOKEN secret and the SIGNPATH_ORGANIZATION_ID variable are set up
+      - name: Upload unsigned program
+        id: unsigned
+        if: startsWith(github.ref, 'refs/tags/v') && env.SIGNPATH_ENABLED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-program
+          path: |
+            src/LucidViewer/bin/x64/Release/LucidViewer.exe
+            src/LucidViewer/bin/x64/Release/WICLoader.dll
+
+      - name: Sign program
+        if: steps.unsigned.outcome == 'success'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: lucid-viewer
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: program
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-program
+
+      - name: Use the signed program
+        if: steps.unsigned.outcome == 'success'
+        shell: pwsh
+        run: Copy-Item signed-program\* src\LucidViewer\bin\x64\Release\ -Force
+
       - name: Portable zip
         shell: pwsh
         run: |
@@ -58,6 +90,27 @@ jobs:
         run: |
           choco install innosetup --no-progress -y
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\LucidViewer.iss
+
+      - name: Upload unsigned installer
+        id: unsignedsetup
+        if: steps.unsigned.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-installer
+          path: installer/Output/*.exe
+
+      - name: Sign installer
+        if: steps.unsignedsetup.outcome == 'success'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: lucid-viewer
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.unsignedsetup.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: installer/Output
 
       - uses: actions/upload-artifact@v4
         with:

@@ -200,4 +200,4 @@ The photos in this README are by NASA ([images.nasa.gov](https://images.nasa.gov
 
 ## License
 
-GNU General Public License v2.0 or later, see [LICENSE.txt](LICENSE.txt).
+GNU General Public License v2.0 or later, see [LICENSE.txt](LICENSE.txt). [Code signing policy](docs/CODE_SIGNING.md).
