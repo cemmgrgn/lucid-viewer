@@ -40,7 +40,9 @@ jobs:
           New-Item -ItemType Directory $out | Out-Null
           Copy-Item src\LucidViewer\bin\x64\Release\* $out -Exclude *.pdb,*.lib,*.exp,*.ilk,*.iobj,*.ipdb
           # the portable version keeps its settings next to the program
-          (Get-Content "$out\LucidViewer.ini") -replace '^StoreToEXEPath=false', 'StoreToEXEPath=true' | Set-Content "$out\LucidViewer.ini" -Encoding utf8
+          $ini = "$out\LucidViewer.ini"
+          # no byte order mark, the Windows INI functions would not find the first section
+          [IO.File]::WriteAllText($ini, ([IO.File]::ReadAllText($ini) -replace '(?m)^StoreToEXEPath=false', 'StoreToEXEPath=true'), (New-Object Text.UTF8Encoding($false)))
           Compress-Archive -Path "$out\*" -DestinationPath "$out.zip"
 
       - name: Installer

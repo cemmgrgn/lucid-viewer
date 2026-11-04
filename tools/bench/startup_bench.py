@@ -58,6 +58,8 @@ def window_shows_marker(hwnd):
     w, h = r.right - r.left, r.bottom - r.top
     if w < 200 or h < 200:
         return False
+    if PRINTWINDOW_ONLY:
+        return window_shows_marker_printwindow(hwnd)
     dc = user32.GetWindowDC(hwnd)
     try:
         for gy in range(1, 16):
@@ -70,6 +72,7 @@ def window_shows_marker(hwnd):
 
 
 USE_PRINTWINDOW = False
+PRINTWINDOW_ONLY = False
 
 
 def window_shows_marker_printwindow(hwnd):
@@ -97,6 +100,29 @@ def window_shows_marker_printwindow(hwnd):
         gdi32.DeleteObject(bmp)
         gdi32.DeleteDC(mem)
         user32.ReleaseDC(0, screen)
+
+
+class PMC(ctypes.Structure):
+    _fields_ = [("cb", wt.DWORD), ("PageFaultCount", wt.DWORD), ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t), ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t), ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t), ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t), ("PrivateUsage", ctypes.c_size_t)]
+
+
+def private_mb(pid):
+    """Private memory of a process in MB (what Task Manager shows as 'Memory')."""
+    h = ctypes.windll.kernel32.OpenProcess(0x1000 | 0x0010, False, pid)  # QUERY_LIMITED_INFORMATION | VM_READ
+    if not h:
+        return None
+    try:
+        pmc = PMC()
+        pmc.cb = ctypes.sizeof(PMC)
+        if ctypes.windll.psapi.GetProcessMemoryInfo(h, ctypes.byref(pmc), pmc.cb):
+            return pmc.PrivateUsage / (1024 * 1024)
+        return None
+    finally:
+        ctypes.windll.kernel32.CloseHandle(h)
 
 
 def window_pid(hwnd):
@@ -170,11 +196,15 @@ def main():
     p.add_argument("--runs", type=int, default=10)
     p.add_argument("--timeout", type=float, default=20)
     p.add_argument("--out", default="bench_results.jsonl")
+    p.add_argument("--printwindow-only", action="store_true",
+                   help="only use PrintWindow, to compare the overhead with programs measured with --printwindow")
     p.add_argument("--printwindow", action="store_true",
                    help="also render the window with PrintWindow (slower, for apps that do not draw with GDI, e.g. Windows Photos)")
     a = p.parse_args(argv)
     global USE_PRINTWINDOW
-    USE_PRINTWINDOW = a.printwindow
+    USE_PRINTWINDOW = a.printwindow or a.printwindow_only
+    global PRINTWINDOW_ONLY
+    PRINTWINDOW_ONLY = a.printwindow_only
     if a.make_image:
         make_image(a.make_image)
         return
@@ -183,11 +213,17 @@ def main():
     image = os.path.abspath(a.image)
     cmd = [c.replace("{image}", image) for c in cmd]
     times = []
+    mems = []
     for i in range(a.runs):
         ms, win = run_once(cmd, a.timeout)
+        mem = None
         if win:
+            time.sleep(1.5)  # let the program finish its work after the first frame
+            mem = private_mb(window_pid(win))
+            if mem is not None:
+                mems.append(mem)
             close_window(win)
-        print(f"run {i + 1}: {'timeout' if ms is None else f'{ms:.0f} ms'}")
+        print(f"run {i + 1}: {'timeout' if ms is None else f'{ms:.0f} ms'}" + (f", {mem:.0f} MB" if mem else ""))
         if ms is not None:
             times.append(ms)
         time.sleep(1.0)
@@ -198,6 +234,7 @@ def main():
         "name": a.name, "image": os.path.basename(image), "runs": len(times),
         "first_ms": round(times[0]), "median_ms": round(statistics.median(times)),
         "min_ms": round(min(times)), "max_ms": round(max(times)),
+        "memory_mb": round(statistics.median(mems)) if mems else None,
     }
     print(json.dumps(res))
     with open(a.out, "a", encoding="utf-8") as f:

@@ -22,4 +22,7 @@
 // LPARAM is a heap allocated CMainDlg::CRatingResult*, freed by the receiver.
 #define WM_RATING_READ (WM_APP + 26)
 
+// Runs a command (IDM_* in WPARAM) as if it was chosen from the menu, used by UI tests and scripts
+#define WM_EXECUTE_COMMAND (WM_APP + 27)
+
 #define KEY_MAGIC 2978465

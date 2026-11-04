@@ -1,6 +1,7 @@
 ﻿#include "StdAfx.h"
 #include "Annotations.h"
 #include "SettingsProvider.h"
+#include "Helpers.h"
 #include "NLS.h"
 #include <gdiplus.h>
 #include <math.h>
@@ -352,11 +353,10 @@ void CAnnotations::PixelateInto(void* pPixels, int nWidth, int nHeight, int nOff
 }
 
 CString CAnnotations::GetSignatureFileName() {
-	TCHAR sAppData[MAX_PATH];
-	if (!::SHGetSpecialFolderPath(NULL, sAppData, CSIDL_APPDATA, TRUE)) {
-		return CString();
-	}
-	return CString(sAppData) + _T("\\LucidViewer\\signature.txt");
+	// the settings folder: %APPDATA%\LucidViewer, or the program folder of the portable version
+	CString sFolder = Helpers::JPEGViewAppDataPath();
+	::CreateDirectory(sFolder, NULL);
+	return sFolder + _T("signature.txt");
 }
 
 bool CAnnotations::SaveSignature() {

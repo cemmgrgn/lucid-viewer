@@ -127,7 +127,7 @@ AllowEditGlobalSettings=false
 ; Start in full screen or windowed mode
 ; 'true' or 'false' to always start in full screen, respectively windowed mode
 ; 'auto' to choose best mode depending on image size of first image - windowed when it is small, full screen when it is large
-ShowFullScreen=auto
+ShowFullScreen=false
 
 ; If set to true, only one single instance of Lucid Viewer runs in full screen mode, if false multiple instances are allowed
 ; The value is ignored if SingleInstance=true
