@@ -315,6 +315,7 @@
     </ClCompile>
     <ClCompile Include="Metadata.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
+    <ClCompile Include="SettingsEditor.cpp" />
     <ClCompile Include="Share.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -424,6 +425,7 @@
     <ClInclude Include="Ocr.h" />
     <ClInclude Include="Metadata.h" />
     <ClInclude Include="ScreenCapture.h" />
+    <ClInclude Include="SettingsEditor.h" />
     <ClInclude Include="Share.h" />
     <ClInclude Include="BackgroundRemoval.h" />
     <ClInclude Include="dcraw_mod.h" />

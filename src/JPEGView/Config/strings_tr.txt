@@ -752,3 +752,42 @@ Clear	Temizle
 Draw a new signature...	Yeni imza çiz...
 The signature was saved.	İmza kaydedildi.
 Inserts the saved signature, without a saved signature it can be drawn first	Kayıtlı imzayı ekler; kayıtlı imza yoksa önce çizilebilir
+Program options	Program seçenekleri
+User interface options	Arayüz seçenekleri
+Window behavior options	Pencere davranışı
+Toolbar, status bar and side panel	Araç çubuğu, durum çubuğu ve yan panel
+Screenshot tool	Ekran görüntüsü aracı
+Image control panels	Görüntü kontrol panelleri
+File navigation options	Dosyalar arasında gezinme
+Mouse navigation options	Fareyle gezinme
+User input config	Kullanıcı girişi
+Image display options	Görüntü gösterimi
+Transparency options	Saydamlık
+Image zoom options	Yakınlaştırma
+Advanced image correction parameters	Gelişmiş görüntü düzeltme
+Default image editing options	Varsayılan düzenleme seçenekleri
+Crop options	Kırpma
+Image info display options	Görüntü bilgisi gösterimi
+File name area	Dosya adı alanı
+File EXIF info box	EXIF bilgi kutusu
+Auto contrast correction	Otomatik kontrast düzeltme
+Auto color correction	Otomatik renk düzeltme
+Auto brightness correction	Otomatik parlaklık düzeltme
+Auto local density correction	Otomatik yerel yoğunluk düzeltme
+Auto landscape mode correction	Otomatik manzara modu
+Slideshow options	Slayt gösterisi
+Confirmation options	Onay soruları
+File save options	Kaydetme
+Print options	Yazdırma
+Custom user commands	Özel kullanıcı komutları
+On	Açık
+Color...	Renk...
+No setting found.	Ayar bulunamadı.
+Search in all settings	Tüm ayarlarda ara
+Edit keyboard shortcuts...	Klavye kısayollarını düzenle...
+Defaults of this page	Bu sayfanın varsayılanları
+Set all settings of this page to the default values?	Bu sayfadaki tüm ayarlar varsayılan değerlere döndürülsün mü?
+The settings could not be written to the user INI file.	Ayarlar kullanıcı INI dosyasına yazılamadı.
+Automatic (Windows language)	Otomatik (Windows dili)
+The INI file with the settings was not found.	Ayarların bulunduğu INI dosyası bulunamadı.
+The settings were saved. Most of them take effect after a restart of JPEGView. Restart now?	Ayarlar kaydedildi. Çoğu JPEGView yeniden başlatılınca geçerli olur. Şimdi yeniden başlatılsın mı?

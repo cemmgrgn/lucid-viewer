@@ -64,6 +64,7 @@
 #include "BackgroundRemoval.h"
 #include "Metadata.h"
 #include "ScreenCapture.h"
+#include "SettingsEditor.h"
 #include <propsys.h>
 #include <propkey.h>
 #include <gdiplus.h>
@@ -2751,8 +2752,7 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 		case IDM_SETTINGS:
 			{
 				MouseOn();
-				CSettingsDlg dlgSettings(this);
-				if (dlgSettings.DoModal()) {
+				if (SettingsEditor::Show(m_hWnd, CurrentFileName(false))) {
 					Invalidate(FALSE);
 				}
 			}
