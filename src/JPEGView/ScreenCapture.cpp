@@ -565,7 +565,7 @@ public:
 	EResult Run(std::vector<DWORD>& cropPixels, int& nCropWidth, int& nCropHeight);
 
 private:
-	enum EButton { BTN_PEN = 1, BTN_HIGHLIGHTER, BTN_RECTANGLE, BTN_ARROW, BTN_TEXT, BTN_COLOR, BTN_UNDO,
+	enum EButton { BTN_PEN = 1, BTN_HIGHLIGHTER, BTN_RECTANGLE, BTN_ARROW, BTN_TEXT, BTN_PIXELATE, BTN_COLOR, BTN_UNDO,
 		BTN_OCR, BTN_OPEN, BTN_SAVE, BTN_COPY, BTN_CLOSE, BTN_COPY_TEXT, BTN_SWATCH };
 	enum EDrag { DRAG_NONE, DRAG_NEW, DRAG_MOVE, DRAG_RESIZE, DRAG_DRAW, DRAG_TEXT };
 	struct CTextWord {
@@ -842,6 +842,7 @@ void COverlay::Layout() {
 		{ BTN_RECTANGLE, 0xE739, _T("R"), _T("Rectangle") },
 		{ BTN_ARROW, 0xE72A, _T("A"), _T("Arrow") },
 		{ BTN_TEXT, 0xE8D2, _T("T"), _T("Text") },
+		{ BTN_PIXELATE, 0, _T("\x25A6"), _T("Pixelate (hide an area)") },
 		{ BTN_COLOR, 0, _T(""), _T("Color") },
 		{ BTN_UNDO, 0xE7A7, _T("U"), _T("Undo (Ctrl+Z)") },
 	};
@@ -1017,6 +1018,22 @@ void COverlay::Paint(HDC hDC, const CRect& paintRect) {
 		::BitBlt(hMem, bright.left, bright.top, bright.Width(), bright.Height(), m_hBrightDC, bright.left, bright.top, SRCCOPY);
 	}
 	if (m_bHasSelection) {
+		if (m_annotations.HasPixelate()) {
+			// pixelated copy of the selection (blocks aligned as in the result)
+			std::vector<DWORD> pixels((size_t)m_selection.Width() * m_selection.Height());
+			for (int y = 0; y < m_selection.Height(); y++) {
+				memcpy(&pixels[(size_t)y * m_selection.Width()], &m_screen.Pixels[(size_t)(m_selection.top + y) * m_screen.Width + m_selection.left], m_selection.Width() * sizeof(DWORD));
+			}
+			m_annotations.PixelateInto(&pixels[0], m_selection.Width(), m_selection.Height(), m_selection.left, m_selection.top);
+			BITMAPINFO bmi = { 0 };
+			bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+			bmi.bmiHeader.biWidth = m_selection.Width();
+			bmi.bmiHeader.biHeight = -m_selection.Height();
+			bmi.bmiHeader.biPlanes = 1;
+			bmi.bmiHeader.biBitCount = 32;
+			bmi.bmiHeader.biCompression = BI_RGB;
+			::SetDIBitsToDevice(hMem, m_selection.left, m_selection.top, m_selection.Width(), m_selection.Height(), 0, 0, 0, m_selection.Height(), &pixels[0], &bmi, DIB_RGB_COLORS);
+		}
 		if (!m_annotations.IsEmpty()) {
 			Gdiplus::Graphics graphics(hMem);
 			CRect clip;
@@ -1097,7 +1114,8 @@ void COverlay::Paint(HDC hDC, const CRect& paintRect) {
 			const CButton& button = m_buttons[i];
 			bool bChecked = (button.Id == BTN_PEN && eTool == CAnnotations::TOOL_PEN) || (button.Id == BTN_HIGHLIGHTER && eTool == CAnnotations::TOOL_HIGHLIGHTER) ||
 				(button.Id == BTN_RECTANGLE && eTool == CAnnotations::TOOL_RECTANGLE) || (button.Id == BTN_ARROW && eTool == CAnnotations::TOOL_ARROW) ||
-				(button.Id == BTN_TEXT && eTool == CAnnotations::TOOL_TEXT) || (button.Id == BTN_COLOR && m_bColorPopup);
+				(button.Id == BTN_TEXT && eTool == CAnnotations::TOOL_TEXT) || (button.Id == BTN_PIXELATE && eTool == CAnnotations::TOOL_PIXELATE) ||
+				(button.Id == BTN_COLOR && m_bColorPopup);
 			PaintButton(button, i == m_nHoverButton, bChecked);
 		}
 		// tooltip beside the hovered button, away from the selection
@@ -1203,6 +1221,7 @@ void COverlay::OnButton(EButton eButton, int nIndex) {
 		case BTN_RECTANGLE: eTool = CAnnotations::TOOL_RECTANGLE; break;
 		case BTN_ARROW: eTool = CAnnotations::TOOL_ARROW; break;
 		case BTN_TEXT: eTool = CAnnotations::TOOL_TEXT; break;
+		case BTN_PIXELATE: eTool = CAnnotations::TOOL_PIXELATE; break;
 		case BTN_COLOR:
 			m_bColorPopup = !m_bColorPopup;
 			UpdateWindow();
@@ -1636,6 +1655,7 @@ void COverlay::GetCrop(std::vector<DWORD>& pixels, int& nWidth, int& nHeight) {
 		memcpy(&pixels[(size_t)y * nWidth], &m_screen.Pixels[(size_t)(m_selection.top + y) * m_screen.Width + m_selection.left], nWidth * sizeof(DWORD));
 	}
 	if (!m_annotations.IsEmpty()) {
+		m_annotations.PixelateInto(&pixels[0], nWidth, nHeight, m_selection.left, m_selection.top);
 		Gdiplus::Bitmap bitmap(nWidth, nHeight, nWidth * 4, PixelFormat32bppRGB, (BYTE*)&pixels[0]);
 		Gdiplus::Graphics graphics(&bitmap);
 		graphics.TranslateTransform((Gdiplus::REAL)-m_selection.left, (Gdiplus::REAL)-m_selection.top);

@@ -848,7 +848,8 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 				m_pAnnotations->AddText(fX, fY, m_dRealizedZoom, sText);
 			}
 		} else {
-			PushUndo(false);
+			// pixelation changes the pixels, the undo step needs a copy of them
+			PushUndo(m_pAnnotations->GetTool() == CAnnotations::TOOL_PIXELATE);
 			m_pAnnotations->BeginShape(fX, fY, m_dRealizedZoom);
 		}
 		Invalidate(FALSE);
@@ -904,6 +905,16 @@ LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 		m_pChrome->EndDrag();
 	} else if (m_pAnnotations->IsDrawing()) {
 		m_pAnnotations->EndShape();
+		CRect pixelateRect;
+		if (m_pAnnotations->TakeLastPixelate(pixelateRect) && m_pCurrentImage != NULL) {
+			void* pPixels = m_pCurrentImage->GetOriginalPixelsForWriting();
+			if (pPixels != NULL) {
+				int nWidth = m_pCurrentImage->OrigWidth(), nHeight = m_pCurrentImage->OrigHeight();
+				CAnnotations::Pixelate((DWORD*)pPixels, nWidth, nHeight, nWidth, pixelateRect, CAnnotations::GetPixelateBlockSize(nWidth, nHeight));
+			}
+			m_pImageProcPanelCtl->ShowHideSaveDBButtons();
+		}
+		Invalidate(FALSE);
 		m_pChrome->Paint();
 	} else if (m_bDraggingCompareSplit) {
 		m_bDraggingCompareSplit = false;

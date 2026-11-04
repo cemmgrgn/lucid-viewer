@@ -791,3 +791,6 @@ The settings could not be written to the user INI file.	Ayarlar kullanıcı INI 
 Automatic (Windows language)	Otomatik (Windows dili)
 The INI file with the settings was not found.	Ayarların bulunduğu INI dosyası bulunamadı.
 The settings were saved. Most of them take effect after a restart of JPEGView. Restart now?	Ayarlar kaydedildi. Çoğu JPEGView yeniden başlatılınca geçerli olur. Şimdi yeniden başlatılsın mı?
+Pixelate	Pikselleştir
+Hides an area (faces, names, numbers) with large blocks, drag a rectangle	Bir alanı (yüz, isim, numara) büyük bloklarla gizler; dikdörtgen sürükleyin
+Pixelate (hide an area)	Pikselleştir (alanı gizle)

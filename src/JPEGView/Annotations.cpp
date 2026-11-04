@@ -17,14 +17,14 @@ CAnnotations::CAnnotations() {
 }
 
 void CAnnotations::BeginShape(float fX, float fY, double dZoom) {
-	if (m_eTool == TOOL_NONE || m_eTool == TOOL_TEXT) {
+	if (m_eTool == TOOL_NONE || m_eTool == TOOL_TEXT || m_eTool == TOOL_REMOVE_COLOR) {
 		return;
 	}
 	CShape shape;
 	shape.Tool = m_eTool;
 	shape.Color = m_color;
 	float fWidth = (float)(m_nWidth / max(0.01, dZoom));
-	shape.Width = (m_eTool == TOOL_HIGHLIGHTER) ? fWidth * 4 : fWidth;
+	shape.Width = (m_eTool == TOOL_HIGHLIGHTER) ? fWidth * 4 : (m_eTool == TOOL_PIXELATE) ? (float)max(8, m_nWidth * 3) : fWidth;
 	shape.Points.push_back(fX);
 	shape.Points.push_back(fY);
 	shape.Points.push_back(fX);
@@ -86,8 +86,18 @@ void CAnnotations::Clear() {
 void CAnnotations::Render(Gdiplus::Graphics& graphics) {
 	graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 	graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
-	for (const CShape& shape : m_shapes) {
+	for (size_t nShape = 0; nShape < m_shapes.size(); nShape++) {
+		const CShape& shape = m_shapes[nShape];
 		const std::vector<float>& p = shape.Points;
+		if (shape.Tool == TOOL_PIXELATE) {
+			// the pixelation itself is done on the pixels, while dragging the rectangle is shown
+			if (m_bDrawing && nShape + 1 == m_shapes.size()) {
+				Gdiplus::Pen dashPen(Gdiplus::Color(220, 255, 255, 255), 1.0f);
+				dashPen.SetDashStyle(Gdiplus::DashStyleDash);
+				graphics.DrawRectangle(&dashPen, min(p[0], p[2]), min(p[1], p[3]), fabs(p[2] - p[0]), fabs(p[3] - p[1]));
+			}
+			continue;
+		}
 		if (shape.Tool == TOOL_TEXT) {
 			Gdiplus::FontFamily fontFamily(L"Segoe UI");
 			Gdiplus::Font font(&fontFamily, shape.Width, Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
@@ -132,10 +142,69 @@ bool CAnnotations::BurnInto(void* pPixels, int nWidth, int nHeight) {
 	if (bitmap.GetLastStatus() != Gdiplus::Ok) {
 		return false;
 	}
+	PixelateInto(pPixels, nWidth, nHeight, 0, 0);
 	Gdiplus::Graphics graphics(&bitmap);
 	Render(graphics);
 	graphics.Flush(Gdiplus::FlushIntentionSync);
 	return true;
+}
+
+static CRect GetShapeRect(const std::vector<float>& p) {
+	CRect rect((int)floor(min(p[0], p[2])), (int)floor(min(p[1], p[3])), (int)ceil(max(p[0], p[2])), (int)ceil(max(p[1], p[3])));
+	return rect;
+}
+
+bool CAnnotations::TakeLastPixelate(CRect& rect) {
+	if (m_shapes.empty() || m_shapes.back().Tool != TOOL_PIXELATE) return false;
+	rect = GetShapeRect(m_shapes.back().Points);
+	m_shapes.pop_back();
+	return rect.Width() > 1 && rect.Height() > 1;
+}
+
+bool CAnnotations::HasPixelate() {
+	for (const CShape& shape : m_shapes) if (shape.Tool == TOOL_PIXELATE) return true;
+	return false;
+}
+
+int CAnnotations::GetPixelateBlockSize(int nImageWidth, int nImageHeight) {
+	return max(8, min(nImageWidth, nImageHeight) / 70);
+}
+
+void CAnnotations::Pixelate(DWORD* pPixels, int nWidth, int nHeight, int nStride, CRect rect, int nBlock) {
+	rect.IntersectRect(&rect, CRect(0, 0, nWidth, nHeight));
+	if (rect.IsRectEmpty() || nBlock < 2) return;
+	for (int nY = rect.top; nY < rect.bottom; nY += nBlock) {
+		int nY2 = min((int)rect.bottom, nY + nBlock);
+		for (int nX = rect.left; nX < rect.right; nX += nBlock) {
+			int nX2 = min((int)rect.right, nX + nBlock);
+			unsigned int nR = 0, nG = 0, nB = 0, nCount = 0;
+			for (int y = nY; y < nY2; y++) {
+				const DWORD* pRow = pPixels + (size_t)y * nStride;
+				for (int x = nX; x < nX2; x++) {
+					DWORD c = pRow[x];
+					nB += c & 0xFF; nG += (c >> 8) & 0xFF; nR += (c >> 16) & 0xFF;
+					nCount++;
+				}
+			}
+			if (nCount == 0) continue;
+			for (int y = nY; y < nY2; y++) {
+				DWORD* pRow = pPixels + (size_t)y * nStride;
+				for (int x = nX; x < nX2; x++) {
+					pRow[x] = (pRow[x] & 0xFF000000) | ((nR / nCount) << 16) | ((nG / nCount) << 8) | (nB / nCount);
+				}
+			}
+		}
+	}
+}
+
+void CAnnotations::PixelateInto(void* pPixels, int nWidth, int nHeight, int nOffsetX, int nOffsetY) {
+	for (const CShape& shape : m_shapes) {
+		if (shape.Tool != TOOL_PIXELATE || shape.Points.size() < 4) continue;
+		CRect rect = GetShapeRect(shape.Points);
+		// the blocks are aligned to the rectangle, the same in the preview and in the result
+		rect.OffsetRect(-nOffsetX, -nOffsetY);
+		Pixelate((DWORD*)pPixels, nWidth, nHeight, nWidth, rect, (int)max(8.0f, shape.Width));
+	}
 }
 
 CString CAnnotations::GetSignatureFileName() {

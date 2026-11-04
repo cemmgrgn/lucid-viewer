@@ -10,7 +10,7 @@ namespace Gdiplus { class Graphics; }
 class CAnnotations
 {
 public:
-	enum ETool { TOOL_NONE, TOOL_PEN, TOOL_HIGHLIGHTER, TOOL_RECTANGLE, TOOL_ARROW, TOOL_TEXT, TOOL_REMOVE_COLOR };
+	enum ETool { TOOL_NONE, TOOL_PEN, TOOL_HIGHLIGHTER, TOOL_RECTANGLE, TOOL_ARROW, TOOL_TEXT, TOOL_REMOVE_COLOR, TOOL_PIXELATE };
 
 	CAnnotations();
 
@@ -32,6 +32,17 @@ public:
 
 	void Undo();
 	void Clear();
+
+	// Pixelate tool: the rectangles hide what is below them with large blocks
+	// Removes the last shape if it is a pixelate rectangle, returns its rectangle (image coordinates)
+	bool TakeLastPixelate(CRect& rect);
+	bool HasPixelate();
+	// Pixelates the rectangles into 32 bpp pixels whose origin is at (nOffsetX, nOffsetY) in image coordinates
+	void PixelateInto(void* pPixels, int nWidth, int nHeight, int nOffsetX, int nOffsetY);
+	// Block size of the pixelation for the given image size
+	static int GetPixelateBlockSize(int nImageWidth, int nImageHeight);
+	// Pixelates the rectangle of 32 bpp pixels (stride in pixels)
+	static void Pixelate(DWORD* pPixels, int nWidth, int nHeight, int nStride, CRect rect, int nBlock);
 
 	// Paints all shapes. The graphics transformation must map image coordinates to the target.
 	void Render(Gdiplus::Graphics& graphics);
