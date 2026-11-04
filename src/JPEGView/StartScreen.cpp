@@ -126,78 +126,106 @@ struct CStartScreen::CThumbnails {
 	CThumbnails() : Cancel(false) {}
 };
 
+// Copy of the shell bitmap, always top-down (GetDIBits with a negative height): the row order of the
+// shell bitmaps is not reliable. Stored premultiplied, the fastest format for drawing with GDI+.
 static std::shared_ptr<Bitmap> ToBitmap(HBITMAP hBitmap) {
-	DIBSECTION section;
-	if (::GetObject(hBitmap, sizeof(section), &section) != sizeof(section) || section.dsBm.bmBitsPixel != 32 || section.dsBm.bmBits == NULL) {
-		Bitmap* pSource = Bitmap::FromHBITMAP(hBitmap, NULL);
-		if (pSource == NULL) return NULL;
-		std::shared_ptr<Bitmap> pCopy(pSource->Clone(0, 0, (INT)pSource->GetWidth(), (INT)pSource->GetHeight(), PixelFormat32bppRGB));
-		delete pSource;
-		return pCopy;
-	}
-	int nWidth = section.dsBm.bmWidth, nHeight = section.dsBm.bmHeight;
-	bool bBottomUp = section.dsBmih.biHeight > 0;
-	const BYTE* pBits = (const BYTE*)section.dsBm.bmBits;
-	int nStride = section.dsBm.bmWidthBytes;
+	BITMAP info;
+	if (::GetObject(hBitmap, sizeof(info), &info) == 0 || info.bmWidth <= 0 || info.bmHeight <= 0) return NULL;
+	int nWidth = info.bmWidth, nHeight = abs(info.bmHeight);
+	BITMAPINFO bmi = { 0 };
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = nWidth;
+	bmi.bmiHeader.biHeight = -nHeight;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 32;
+	bmi.bmiHeader.biCompression = BI_RGB;
+	std::vector<BYTE> pixels((size_t)nWidth * nHeight * 4);
+	HDC hDC = ::GetDC(NULL);
+	int nLines = ::GetDIBits(hDC, hBitmap, 0, nHeight, &pixels[0], &bmi, DIB_RGB_COLORS);
+	::ReleaseDC(NULL, hDC);
+	if (nLines != nHeight) return NULL;
 	bool bAlpha = false;
-	for (int y = 0; y < nHeight && !bAlpha; y++) {
-		const BYTE* pRow = pBits + (size_t)y * nStride;
-		for (int x = 0; x < nWidth; x++) if (pRow[x * 4 + 3] != 0) { bAlpha = true; break; }
+	for (size_t i = 3; i < pixels.size(); i += 4) {
+		if (pixels[i] != 0) { bAlpha = true; break; }
 	}
-	PixelFormat format = bAlpha ? PixelFormat32bppPARGB : PixelFormat32bppRGB;
-	std::shared_ptr<Bitmap> pBitmap(new Bitmap(nWidth, nHeight, format));
+	if (!bAlpha) {
+		for (size_t i = 3; i < pixels.size(); i += 4) pixels[i] = 255; // photos: no alpha channel
+	}
+	std::shared_ptr<Bitmap> pBitmap(new Bitmap(nWidth, nHeight, PixelFormat32bppPARGB));
 	BitmapData data;
 	Rect rect(0, 0, nWidth, nHeight);
-	if (pBitmap->LockBits(&rect, ImageLockModeWrite, format, &data) != Ok) return NULL;
+	if (pBitmap->LockBits(&rect, ImageLockModeWrite, PixelFormat32bppPARGB, &data) != Ok) return NULL;
 	for (int y = 0; y < nHeight; y++) {
-		const BYTE* pSource = pBits + (size_t)(bBottomUp ? nHeight - 1 - y : y) * nStride;
-		memcpy((BYTE*)data.Scan0 + (size_t)y * data.Stride, pSource, (size_t)nWidth * 4);
+		memcpy((BYTE*)data.Scan0 + (size_t)y * data.Stride, &pixels[(size_t)y * nWidth * 4], (size_t)nWidth * 4);
 	}
 	pBitmap->UnlockBits(&data);
 	return pBitmap;
 }
 
+static const int IMAGE_FACTORY_INCACHEONLY = 0x10;
+
+static std::shared_ptr<Bitmap> GetThumbnail(const CString& sPath, int nSize, bool bCacheOnly) {
+	std::shared_ptr<Bitmap> pBitmap;
+	IStartScreenImageFactory* pFactory = NULL;
+	if (SUCCEEDED(CreateShellItem(sPath, __uuidof(IStartScreenImageFactory), (void**)&pFactory))) {
+		HBITMAP hBitmap = NULL;
+		SIZE size = { nSize, nSize };
+		int nFlags = IMAGE_FACTORY_BIGGERSIZEOK | (bCacheOnly ? IMAGE_FACTORY_INCACHEONLY : 0);
+		if (SUCCEEDED(pFactory->GetImage(size, nFlags, &hBitmap)) && hBitmap != NULL) {
+			pBitmap = ToBitmap(hBitmap);
+			::DeleteObject(hBitmap);
+		}
+		pFactory->Release();
+	}
+	return pBitmap;
+}
+
 void CStartScreen::LoadThumbnails() {
-	std::vector<CString> paths;
+	std::shared_ptr<std::vector<CString>> pPaths = std::make_shared<std::vector<CString>>();
 	{
 		std::lock_guard<std::mutex> lock(m_pThumbnails->Lock);
 		for (const std::vector<CString>* pList : { &m_recent, &m_pinned }) {
 			for (const CString& sPath : *pList) {
 				if (m_pThumbnails->Images.count(sPath) == 0 && m_pThumbnails->Loading.count(sPath) == 0) {
 					m_pThumbnails->Loading.insert(sPath);
-					paths.push_back(sPath);
+					pPaths->push_back(sPath);
 				}
 			}
 		}
 	}
-	if (paths.empty()) return;
+	if (pPaths->empty()) return;
 	std::shared_ptr<CThumbnails> pThumbnails = m_pThumbnails;
 	HWND hWnd = m_hWnd;
 	int nSize = S(320);
-	std::thread([pThumbnails, paths, hWnd, nSize]() {
-		HRESULT hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-		for (const CString& sPath : paths) {
-			if (pThumbnails->Cancel) break;
-			std::shared_ptr<Bitmap> pBitmap;
-			IStartScreenImageFactory* pFactory = NULL;
-			if (SUCCEEDED(CreateShellItem(sPath, __uuidof(IStartScreenImageFactory), (void**)&pFactory))) {
-				HBITMAP hBitmap = NULL;
-				SIZE size = { nSize, nSize };
-				if (SUCCEEDED(pFactory->GetImage(size, IMAGE_FACTORY_BIGGERSIZEOK, &hBitmap)) && hBitmap != NULL) {
-					pBitmap = ToBitmap(hBitmap);
-					::DeleteObject(hBitmap);
+	// first all thumbnails from the thumbnail cache of Windows (fast), then the missing ones are made, by several threads
+	std::shared_ptr<std::atomic<int>> pNextCached = std::make_shared<std::atomic<int>>(0);
+	std::shared_ptr<std::atomic<int>> pNextMade = std::make_shared<std::atomic<int>>(0);
+	unsigned nThreads = max(1u, min(4u, std::thread::hardware_concurrency()));
+	for (unsigned t = 0; t < nThreads; t++) {
+		std::thread([pThumbnails, pPaths, pNextCached, pNextMade, hWnd, nSize]() {
+			HRESULT hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+			for (int nPass = 0; nPass < 2; nPass++) {
+				std::atomic<int>& next = nPass == 0 ? *pNextCached : *pNextMade;
+				for (int i = next++; i < (int)pPaths->size(); i = next++) {
+					if (pThumbnails->Cancel) break;
+					const CString& sPath = (*pPaths)[i];
+					if (nPass == 1) {
+						std::lock_guard<std::mutex> lock(pThumbnails->Lock);
+						if (pThumbnails->Loading.count(sPath) == 0) continue; // found in the cache
+					}
+					std::shared_ptr<Bitmap> pBitmap = GetThumbnail(sPath, nSize, nPass == 0);
+					if (nPass == 0 && !pBitmap) continue;
+					{
+						std::lock_guard<std::mutex> lock(pThumbnails->Lock);
+						pThumbnails->Images[sPath] = pBitmap;
+						pThumbnails->Loading.erase(sPath);
+					}
+					if (hWnd != NULL) ::InvalidateRect(hWnd, NULL, FALSE);
 				}
-				pFactory->Release();
 			}
-			{
-				std::lock_guard<std::mutex> lock(pThumbnails->Lock);
-				pThumbnails->Images[sPath] = pBitmap;
-				pThumbnails->Loading.erase(sPath);
-			}
-			if (hWnd != NULL) ::InvalidateRect(hWnd, NULL, FALSE);
-		}
-		if (SUCCEEDED(hr)) ::CoUninitialize();
-	}).detach();
+			if (SUCCEEDED(hr)) ::CoUninitialize();
+		}).detach();
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -359,7 +387,7 @@ void CStartScreen::Paint(HDC hDC, const CRect& clientRect) {
 		Graphics g(hMemDC);
 		g.SetSmoothingMode(SmoothingModeAntiAlias);
 		g.SetTextRenderingHint(TextRenderingHintClearTypeGridFit);
-		g.SetInterpolationMode(InterpolationModeHighQualityBicubic);
+		g.SetInterpolationMode(InterpolationModeHighQualityBilinear);
 		g.SetPixelOffsetMode(PixelOffsetModeHalf);
 		const DarkUI::CPalette& colors = DarkUI::Colors();
 		g.Clear(ToColor(colors.Window));
