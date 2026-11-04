@@ -605,3 +605,7 @@ Insert signature	İmza ekle
 Draw into the image	Görüntüye işle
 Saving the image does this too	Görüntüyü kaydetmek de bunu yapar
 The pen strokes were saved as signature.	Kalem çizgileri imza olarak kaydedildi.
+Copy text from image	Görüntüdeki yazıyı kopyala
+Recognizes the text in the image and copies it to the clipboard	Görüntüdeki yazıyı tanır ve panoya kopyalar
+No text was found in the image.	Görüntüde yazı bulunamadı.
+%d lines of text were copied to the clipboard.	%d satır yazı panoya kopyalandı.

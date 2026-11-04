@@ -307,6 +307,10 @@
     <ClCompile Include="WindowChrome.cpp" />
     <ClCompile Include="SettingsDlg.cpp" />
     <ClCompile Include="Annotations.cpp" />
+    <ClCompile Include="Ocr.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
     <ClCompile Include="dcraw_mod.cpp" />
     <ClCompile Include="DesktopWallpaper.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
@@ -403,6 +407,7 @@
     <ClInclude Include="WindowChrome.h" />
     <ClInclude Include="SettingsDlg.h" />
     <ClInclude Include="Annotations.h" />
+    <ClInclude Include="Ocr.h" />
     <ClInclude Include="dcraw_mod.h" />
     <ClInclude Include="DesktopWallpaper.h" />
     <ClInclude Include="DirectoryWatcher.h" />
