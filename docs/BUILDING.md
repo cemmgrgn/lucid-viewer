@@ -50,6 +50,7 @@ The installer is written to `installer\Output`. Options for testing, e.g. `/DNoL
 | `installer` | Inno Setup script and wizard images |
 | `tools/bench` | Startup benchmark used for the numbers in the README |
 | `docs` | README images, logo, building notes, history of JPEGView |
+| `site` | The website (GitHub Pages), published by `.github/workflows/pages.yml` with the images from `docs` |
 | `deps` | WTL (submodule) |
 | `extras` | Sources of the image libraries (submodules) and the scripts to build them and the string tables |
 

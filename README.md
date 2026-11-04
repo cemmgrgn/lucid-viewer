@@ -6,7 +6,8 @@
 
 <p align="center">
   <b>The photo is on screen before you blink.</b><br>
-  A fast, free and open source image viewer and light editor for Windows 10 and 11.
+  A fast, free and open source image viewer and light editor for Windows 10 and 11.<br>
+  <a href="https://cemmgrgn.github.io/lucid-viewer/"><b>Website</b></a> · <a href="https://github.com/cemmgrgn/lucid-viewer/releases/latest"><b>Download</b></a>
 </p>
 
 <p align="center">

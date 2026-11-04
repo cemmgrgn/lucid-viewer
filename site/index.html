@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https://img.shields.io data:; style-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="Lucid Viewer: a fast, free and open source image viewer and light editor for Windows. Opens a 24 MP photo in under 0.2 s, edits, draws, removes backgrounds and converts.">
+<meta property="og:title" content="Lucid Viewer: the photo is on screen before you blink">
+<meta property="og:description" content="Fast, free and open source image viewer and light editor for Windows 10 and 11.">
+<meta property="og:image" content="images/hero.webp">
+<title>Lucid Viewer — The photo is on screen before you blink</title>
+<link rel="icon" href="brand/logo-128.png"><link rel="stylesheet" href="site.css"></head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header><a class="brand" href="#"><img src="brand/logo-128.png" alt="" width="40" height="40">Lucid Viewer</a>
+<nav aria-label="Main navigation"><a href="#speed">Speed</a><a href="#features">Features</a><a href="#formats">Formats</a><a href="#shortcuts">Shortcuts</a><a class="nav-github" href="https://github.com/cemmgrgn/lucid-viewer">GitHub ↗</a></nav></header>
+
+<main id="main">
+<section class="hero">
+  <div>
+    <span class="eyebrow">Windows 10 &amp; 11 · Free &amp; open source</span>
+    <h1>Your photos.<br><em>Before you blink.</em></h1>
+    <p class="intro">A 24-megapixel photo on screen in under 0.2 seconds. Then edit it, draw on it, sign it, read its text, remove its background or convert it, without leaving the window.</p>
+    <div class="hero-actions"><a class="button primary" href="#download">Download for Windows ↓</a><a class="button secondary" href="#features">See what it does</a></div>
+    <p class="subtle">No account. No ads. No telemetry. Everything runs on your PC.</p>
+  </div>
+  <div class="shot">
+    <img src="images/hero.webp" alt="Lucid Viewer showing a photo of the Earth at night with the information panel" width="1552" height="1032">
+    <div class="chip chip-a"><strong>176 ms</strong> 24 MP JPEG on screen</div>
+    <div class="chip chip-b">HEIC · AVIF · JXL · RAW</div>
+  </div>
+</section>
+
+<div class="stats">
+  <div><strong>176 ms</strong><span>to show a 24 MP JPEG</span></div>
+  <div><strong>3×</strong><span>faster than Windows Photos</span></div>
+  <div><strong>5.4 MB</strong><span>installer, 11 MB installed</span></div>
+  <div><strong>30+</strong><span>formats, plus camera RAW</span></div>
+</div>
+
+<section class="status" id="download">
+  <div><span class="eyebrow">Download Lucid Viewer</span><h2>Ready for your photos.</h2>
+  <p>The installer asks what you want: shortcuts, the Explorer <em>Convert to</em> menu, file associations, the AI model for background removal, the screenshot key and the theme. The portable version runs from any folder and keeps its settings there.</p>
+  <p class="subtle">Builds are not code-signed yet, Windows SmartScreen may ask once before the first start. Used JPEGView before? Your settings, shortcuts and signature are taken over.</p></div>
+  <div class="platforms">
+    <div><strong>Installer</strong><span>Windows 10 1809+ · x64</span><a class="button primary" href="https://github.com/cemmgrgn/lucid-viewer/releases/latest">Download setup ↗</a></div>
+    <div><strong>Portable</strong><span>ZIP · no installation</span><a class="button secondary" href="https://github.com/cemmgrgn/lucid-viewer/releases/latest">Download ZIP ↗</a></div>
+    <a href="https://github.com/cemmgrgn/lucid-viewer/releases">Release notes and older versions ↗</a>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="section-heading"><span class="eyebrow">The everyday flow</span><h2>Open. Fix. Done.</h2></div>
+  <div class="flow-grid">
+    <article><b>01</b><h3>Open</h3><p>Double-click a photo, or start Lucid Viewer to see your recent and pinned photos. The next photo in the folder is already loading while you look at this one.</p></article>
+    <article><b>02</b><h3>Make it right</h3><p>Exposure, colors, crop and straighten in the side panel. Draw, sign, rate with <kbd>1</kbd>–<kbd>5</kbd>, compare before and after with a draggable divider.</p></article>
+    <article><b>03</b><h3>Save, share or convert</h3><p>Save, export with a size estimate, share with Windows, or drag the file out. Every step can be undone, even a delete.</p></article>
+  </div>
+</section>
+
+<section id="speed" class="speed">
+  <div class="section-heading"><span class="eyebrow">Measured, not promised</span><h2>Fast where you feel it.</h2>
+  <p>Time from starting the program until the photo is on screen. Lucid Viewer keeps the libjpeg-turbo and AVX2 pipeline of JPEGView and shows a fast first frame of large photos; everything the first frame does not need is loaded later.</p></div>
+  <img src="images/startup-chart-light.png" alt="Startup time: Lucid Viewer 118, 176 and 517 ms; JPEGView 98, 240 and 626 ms; Windows Photos 379, 539 and 881 ms; ImageGlass 602, 649 and 879 ms for a 2 MP JPEG, a 24 MP JPEG and a 24 MP PNG" width="1800" height="450">
+  <div class="table-wrap"><table class="compare">
+    <thead><tr><th scope="col"></th><th scope="col" class="us">Lucid Viewer 1.0</th><th scope="col">JPEGView 1.3.46</th><th scope="col">Windows Photos</th><th scope="col">ImageGlass 10</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">2 MP JPEG</th><td class="us">118 ms</td><td>98 ms</td><td>379 ms</td><td>602 ms</td></tr>
+      <tr><th scope="row">24 MP JPEG</th><td class="us">176 ms</td><td>240 ms</td><td>539 ms</td><td>649 ms</td></tr>
+      <tr><th scope="row">24 MP PNG</th><td class="us">517 ms</td><td>626 ms</td><td>881 ms</td><td>879 ms</td></tr>
+      <tr><th scope="row">Memory, 24 MP JPEG</th><td class="us">200 MB</td><td>177 MB</td><td>419 MB</td><td>695 MB</td></tr>
+      <tr><th scope="row">Size on disk</th><td class="us">11 MB</td><td>–</td><td>881 MB</td><td>103 MB</td></tr>
+    </tbody></table></div>
+  <details><summary>How this was measured</summary><p>Warm start, median of 10 runs (6 for Windows Photos and ImageGlass) on an AMD Ryzen 7 7840HS with 16 GB RAM and an NVMe SSD, Windows 11 Pro build 26300, 2026-11-05. The test images are generated by the benchmark script; it detects the moment a magenta marker in the image appears in the new window. With small photos the original JPEGView is about 20 ms faster: it draws no toolbar, side panel or filmstrip. Script and raw results are <a href="https://github.com/cemmgrgn/lucid-viewer/tree/main/tools/bench">in the repository</a>.</p></details>
+</section>
+
+<section id="features">
+  <div class="section-heading"><span class="eyebrow">The toolbox</span><h2>One window. Everything you reach for.</h2><p>The things you used to open a second program for.</p></div>
+  <div class="tool-grid">
+    <article class="tool"><span class="tool-number">01</span><h3>Start screen</h3><p>Recently opened and pinned photos with thumbnails, instead of an empty window. <kbd>Ctrl</kbd>+<kbd>B</kbd> pins, <kbd>Alt</kbd>+<kbd>Home</kbd> returns.</p></article>
+    <article class="tool"><span class="tool-number">02</span><h3>Edit</h3><p>Exposure, brightness, contrast, saturation, temperature, tint, sharpness, vignette and local contrast, with an Auto button.</p></article>
+    <article class="tool"><span class="tool-number">03</span><h3>Before / after</h3><p>Drag a divider across the photo to compare the original and the edit (<kbd>Ctrl</kbd>+<kbd>K</kbd>).</p></article>
+    <article class="tool"><span class="tool-number">04</span><h3>Crop &amp; straighten</h3><p>Aspect ratios, free rotation, perspective correction, resize and lossless JPEG rotation.</p></article>
+    <article class="tool"><span class="tool-number">05</span><h3>Draw &amp; sign</h3><p>Pen, highlighter, rectangle, arrow, text and pixelate. Save your signature once, place, move and resize it on any document.</p></article>
+    <article class="tool"><span class="tool-number">06</span><h3>Remove background</h3><p>An AI model on your PC cuts out the subject. Save it as a transparent PNG. Nothing is uploaded.</p></article>
+    <article class="tool"><span class="tool-number">07</span><h3>Copy text (OCR)</h3><p>Every word is framed, select with the mouse and copy. Uses the text recognition built into Windows.</p></article>
+    <article class="tool"><span class="tool-number">08</span><h3>Screenshot tool</h3><p><kbd>PrtScn</kbd> freezes the screen. Select a region or window, annotate, pixelate, read its text, copy or save. A magnifier shows each pixel's color.</p></article>
+    <article class="tool"><span class="tool-number">09</span><h3>Convert anywhere</h3><p>Right-click in Explorer → Convert to JPG, PNG, WebP, HEIC, PDF and more, resized or without metadata. Also for whole folders and from the command line.</p></article>
+    <article class="tool"><span class="tool-number">10</span><h3>Star ratings</h3><p>Rate with <kbd>0</kbd>–<kbd>5</kbd>, stored in the file so Explorer sees it too. Sort and filter the folder by stars.</p></article>
+    <article class="tool"><span class="tool-number">11</span><h3>Metadata</h3><p>All metadata of the file, grouped. Edit titles, dates and tags, copy everything, or remove the GPS location in one click.</p></article>
+    <article class="tool"><span class="tool-number">12</span><h3>Similar photos</h3><p>Find duplicates and near-duplicates in a folder, side by side.</p></article>
+    <article class="tool"><span class="tool-number">13</span><h3>Export</h3><p>Format, quality and size with an exact file size before you save.</p></article>
+    <article class="tool"><span class="tool-number">14</span><h3>Undo everything</h3><p><kbd>Ctrl</kbd>+<kbd>Z</kbd> works for edits, drawings, crops, ratings, metadata changes and even moving a photo to the Recycle Bin.</p></article>
+    <article class="tool"><span class="tool-number">15</span><h3>Make it yours</h3><p>A searchable settings window, a shortcut editor where you just press the new key, dark and light theme.</p></article>
+  </div>
+</section>
+
+<section class="showcase">
+  <div class="section-heading"><span class="eyebrow">See it for yourself</span><h2>Lucid Viewer, up close.</h2><p>Real screenshots of version 1.0. Photos by NASA. Click any screenshot to see it in full.</p></div>
+  <div class="screenshot-grid">
+    <figure class="screenshot-card"><a href="images/start-screen.webp"><img src="images/start-screen.webp" alt="Start screen with recent and pinned photos" loading="lazy" width="1560" height="980"></a><figcaption><strong>Start screen</strong><span>Your recent and pinned photos, ready to open.</span></figcaption></figure>
+    <figure class="screenshot-card"><a href="images/edit.webp"><img src="images/edit.webp" alt="Edit tab with sliders and the before and after divider" loading="lazy" width="1560" height="980"></a><figcaption><strong>Edit with before / after</strong><span>Sliders on the right, the divider shows what changed.</span></figcaption></figure>
+    <figure class="screenshot-card"><a href="images/draw.webp"><img src="images/draw.webp" alt="A checklist with a frame, an arrow, a highlighted line and a signature" loading="lazy" width="1560" height="980"></a><figcaption><strong>Draw and sign</strong><span>Mark up a document and place your signature.</span></figcaption></figure>
+    <figure class="screenshot-card"><a href="images/remove-bg.webp"><img src="images/remove-bg.webp" alt="A person in a spacesuit with the background removed" loading="lazy" width="1560" height="980"></a><figcaption><strong>Remove background</strong><span>One click, on your PC, saved as a transparent PNG.</span></figcaption></figure>
+    <figure class="screenshot-card"><a href="images/ocr.webp"><img src="images/ocr.webp" alt="Recognized words framed, two lines selected" loading="lazy" width="1040" height="660"></a><figcaption><strong>Copy text</strong><span>Select words like in a document and copy them.</span></figcaption></figure>
+    <figure class="screenshot-card"><a href="images/screenshot-tool.webp"><img src="images/screenshot-tool.webp" alt="Screenshot tool with a selected region and an arrow" loading="lazy" width="1600" height="900"></a><figcaption><strong>Screenshot tool</strong><span>Select, annotate, copy or save in seconds.</span></figcaption></figure>
+    <figure class="screenshot-card"><a href="images/metadata.webp"><img src="images/metadata.webp" alt="Metadata view in the side panel" loading="lazy" width="1552" height="1032"></a><figcaption><strong>Metadata</strong><span>Every field of the file, editable where Windows allows it.</span></figcaption></figure>
+    <figure class="screenshot-card"><a href="images/settings.webp"><img src="images/settings.webp" alt="Settings window" loading="lazy" width="1080" height="720"></a><figcaption><strong>Settings</strong><span>Searchable, with a short description for each option.</span></figcaption></figure>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="section-heading"><span class="eyebrow">How it compares</span><h2>Everything in one window.</h2><p>Based on each program's own documentation, November 2026. Corrections are welcome.</p></div>
+  <div class="table-wrap"><table class="compare">
+    <thead><tr><th scope="col"></th><th scope="col" class="us">Lucid Viewer</th><th scope="col">Windows Photos</th><th scope="col">ImageGlass</th><th scope="col">IrfanView</th><th scope="col">XnView MP</th><th scope="col">FastStone</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Open source</th><td class="us">✓</td><td>–</td><td>✓</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><th scope="row">Free for commercial use</th><td class="us">✓</td><td>✓</td><td>✓</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><th scope="row">HEIC, AVIF, JPEG XL out of the box</th><td class="us">✓</td><td>partly ¹</td><td>✓</td><td>plug-ins</td><td>✓</td><td>partly ²</td></tr>
+      <tr><th scope="row">Exposure and color sliders</th><td class="us">✓</td><td>✓</td><td>–</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><th scope="row">Copy text (OCR)</th><td class="us">✓</td><td>✓</td><td>–</td><td>plug-in ³</td><td>–</td><td>–</td></tr>
+      <tr><th scope="row">AI background removal</th><td class="us">✓</td><td>✓</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><th scope="row">Screenshot tool</th><td class="us">✓</td><td>–</td><td>–</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><th scope="row">Batch convert</th><td class="us">✓</td><td>–</td><td>–</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><th scope="row">Convert from Explorer's right-click menu</th><td class="us">✓</td><td>–</td><td>–</td><td>–</td><td>add-on ⁴</td><td>–</td></tr>
+    </tbody></table></div>
+  <p class="subtle">¹ HEIC needs the HEVC Video Extensions from the Microsoft Store. ² Through the codecs installed in Windows. ³ Needs a separate Tesseract install. ⁴ The separate XnShell extension.</p>
+</section>
+
+<section id="formats">
+  <div class="section-heading"><span class="eyebrow">Formats, without the guesswork</span><h2>Opens what your camera and phone make.</h2></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Kind</th><th scope="col">Open</th><th scope="col">Save and convert to</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Everyday</th><td>JPEG, PNG, APNG, GIF, WebP, BMP, TIFF, ICO</td><td>JPG, PNG, WebP, BMP, TIFF, GIF, ICO, PDF</td></tr>
+      <tr><th scope="row">Phones and the modern web</th><td>HEIC, HEIF, AVIF, JPEG XL</td><td>HEIC (with the Windows HEVC codec)</td></tr>
+      <tr><th scope="row">Camera RAW</th><td>DNG, CR2, CR3, CRW, NEF, NRW, ARW, SR2, ORF, RW2, RAF, PEF, X3F, MRW, KDC, DCR and more via LibRaw</td><td>Any of the above</td></tr>
+      <tr><th scope="row">Design and others</th><td>PSD, PSB, TGA, QOI, JXR, WDP, HDP, plus any format with a Windows codec</td><td>Any of the above</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="shortcuts">
+  <div class="section-heading"><span class="eyebrow">Keep your hands on the keyboard</span><h2>The shortcut sheet.</h2><p>Defaults. Every shortcut can be changed in Help → Keyboard shortcuts.</p></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Shortcut</th><th scope="col">Action</th></tr></thead>
+    <tbody>
+      <tr><th scope="row"><kbd>←</kbd> <kbd>→</kbd></th><td>Previous / next photo</td></tr>
+      <tr><th scope="row"><kbd>F11</kbd></th><td>Full screen</td></tr>
+      <tr><th scope="row"><kbd>F2</kbd></th><td>Side panel</td></tr>
+      <tr><th scope="row"><kbd>0</kbd> – <kbd>5</kbd></th><td>Star rating</td></tr>
+      <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Z</kbd> / <kbd>Ctrl</kbd> <kbd>Y</kbd></th><td>Undo / redo</td></tr>
+      <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>K</kbd></th><td>Before / after</td></tr>
+      <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>T</kbd></th><td>Copy text (OCR)</td></tr>
+      <tr><th scope="row"><kbd>Alt</kbd> <kbd>Enter</kbd></th><td>Metadata</td></tr>
+      <tr><th scope="row"><kbd>Ctrl</kbd> <kbd>B</kbd></th><td>Pin to the start screen</td></tr>
+      <tr><th scope="row"><kbd>Alt</kbd> <kbd>Home</kbd></th><td>Start screen</td></tr>
+      <tr><th scope="row"><kbd>Del</kbd></th><td>Move to Recycle Bin</td></tr>
+      <tr><th scope="row"><kbd>PrtScn</kbd> / <kbd>Shift</kbd> <kbd>PrtScn</kbd></th><td>Screenshot / copy the text of a region</td></tr>
+      <tr><th scope="row"><kbd>F1</kbd></th><td>All shortcuts</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="trust">
+  <div><span class="eyebrow">Local first. Open by design.</span><h2>Small footprint.<br>Clear boundaries.</h2></div>
+  <div><h3>Privacy</h3><p>Viewing, editing, OCR and background removal run on your PC. Lucid Viewer has no analytics, no account and no cloud. It only goes online when you ask it to download the background removal model.</p>
+  <h3>Open source</h3><p>GPL v2, built in the open on GitHub with a public build. Read the code, build it yourself, send a fix.</p>
+  <h3>Transparent limitations</h3><p>Windows only, 64-bit. Builds are not code-signed yet, so SmartScreen may warn once. Some newer menu texts are not translated into every language yet, help is welcome.</p></div>
+</section>
+
+<section class="credits"><h2>Built on JPEGView.</h2><p>Lucid Viewer started as a fork of JPEGView and keeps its fast image pipeline at its core. Thanks to David Kleiner, who wrote JPEGView, to Kevin M (sylikc), who maintained it, to qbnu for the updated codecs, and to all JPEGView translators and contributors. The design of this page is adapted from the <a href="https://orkunisitmak.github.io/nashi-app/">Nashi</a> website (MIT). Photos by NASA, which does not endorse Lucid Viewer.</p><a href="https://github.com/sylikc/jpegview">JPEGView ↗</a></section>
+</main>
+
+<footer><a class="brand" href="#"><img src="brand/logo-128.png" alt="" width="28" height="28">Lucid Viewer</a><p>Free and open source under the GNU GPL v2. Third-party libraries keep their own licenses.</p><a href="https://github.com/cemmgrgn/lucid-viewer/blob/main/THIRD_PARTY_NOTICES.md">Notices</a><a href="https://github.com/cemmgrgn/lucid-viewer/blob/main/LICENSE.txt">GPL v2</a></footer>
+</body></html>

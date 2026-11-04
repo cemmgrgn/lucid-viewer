@@ -44,3 +44,6 @@ UpgradeLog*.htm
 installer/Output/
 # Benchmark results
 tools/bench/*.jsonl
+
+# GitHub Pages build output
+_site/
