@@ -1534,16 +1534,18 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 
 	// buttons at the top: compare and reset
 	int nButtonHeight = S(SIDE_BUTTON_HEIGHT);
-	int nHalf = (nInnerWidth - S(6)) / 2;
+	int nHalf = (nInnerWidth - 2 * S(6)) / 3;
 	struct { LPCTSTR Text; int Command; LPCTSTR Tooltip; } topButtons[] = {
+		{ _T("Auto"), IDM_AUTO_ENHANCE, _T("Automatic color, contrast and shadow correction") },
 		{ _T("Compare"), IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing") },
 		{ _T("Reset"), IDM_RESET_PROCESSING, _T("Reset all values to the defaults") },
 	};
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 3; i++) {
 		CRect buttonRect(nPad + i * (nHalf + S(6)), nY, nPad + i * (nHalf + S(6)) + nHalf, nY + nButtonHeight);
 		AddSideHit(SH_Button, topButtons[i].Command, buttonRect, topButtons[i].Tooltip);
 		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
-		bool bChecked = topButtons[i].Command == IDM_COMPARE_BEFORE_AFTER && m_pMainDlg->IsCompareMode();
+		bool bChecked = (topButtons[i].Command == IDM_COMPARE_BEFORE_AFTER && m_pMainDlg->IsCompareMode()) ||
+			(topButtons[i].Command == IDM_AUTO_ENHANCE && m_pMainDlg->IsAutoContrast() && m_pMainDlg->IsLDC());
 		PaintSideButton(dc, buttonRect, CNLS::GetString(topButtons[i].Text), bChecked, bHover, true);
 	}
 	nY += nButtonHeight + S(10);

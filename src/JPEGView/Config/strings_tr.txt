@@ -664,3 +664,6 @@ Exposure	Pozlama
 Vignette	Vinyet
 Temperature	Sıcaklık
 Tint	Renk tonu
+Auto	Otomatik
+Automatic color, contrast and shadow correction	Otomatik renk, kontrast ve gölge düzeltmesi
+The drawings or removed colors of this image are not saved. Discard them?	Bu görüntüdeki çizimler veya silinen renkler kaydedilmedi. Atılsın mı?

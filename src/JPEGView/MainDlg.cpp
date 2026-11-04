@@ -326,6 +326,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_nRating = -1;
 	m_bCropTool = false;
 	m_bDragOutPending = false;
+	m_bTransparencySaved = false;
 	m_nCropModeCommand = IDM_CROPMODE_FREE;
 	m_nRunningConversions = 0;
 	m_bCompareMode = false;
@@ -811,6 +812,10 @@ LRESULT CMainDlg::OnLoadFileAsynch(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lPar
 }
 
 LRESULT CMainDlg::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
+	if (!ConfirmDiscardEdits()) {
+		bHandled = TRUE;
+		return 0;
+	}
 	GetWindowRect(m_windowRectOnClose);
 	bHandled = FALSE;
 	return 0;
@@ -2204,7 +2209,9 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			}
 			break;
 		case IDM_EXIT:
-			CleanupAndTerminate();
+			if (ConfirmDiscardEdits()) {
+				CleanupAndTerminate();
+			}
 			break;
 		case IDM_DEFAULT_ESC:
 			if (m_bMovieMode) {
@@ -2417,6 +2424,17 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_AUTO_ENHANCE:
+			{
+				// both on: switch both off, otherwise switch both on
+				bool bOn = !(m_bAutoContrast && m_bLDC);
+				m_bAutoContrast = bOn;
+				m_bAutoContrastSection = false;
+				m_bLDC = bOn;
+				Invalidate(FALSE);
+				m_pChrome->Paint();
+			}
+			break;
 		case IDM_REMOVE_BACKGROUND:
 			if (m_pCurrentImage != NULL && m_pCurrentImage->OriginalPixels() != NULL) {
 				if (!BackgroundRemoval::IsModelAvailable() &&
@@ -2467,6 +2485,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 						m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight());
 					::SetCursor(hOldCursor);
 					m_pFileList->Reload();
+					m_bTransparencySaved = bSuccess;
 					m_pChrome->ShowMessage(CNLS::GetString(bSuccess ? _T("The transparent image was saved.") : _T("Error writing file to disk!")));
 				}
 			}
@@ -2642,6 +2661,9 @@ bool CMainDlg::OpenFileWithDialog(bool bFullScreen, bool bAfterStartup) {
 }
 
 void CMainDlg::OpenFile(LPCTSTR sFileName, bool bAfterStartup) {
+	if (!ConfirmDiscardEdits()) {
+		return;
+	}
 	StopMovieMode();
 	StopAnimation();
 	// recreate file list based on image opened
@@ -2907,6 +2929,9 @@ void CMainDlg::GotoImage(EImagePosition ePos) {
 }
 
 void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
+	if ((ePos == POS_Next || ePos == POS_Previous || ePos == POS_First || ePos == POS_Last) && !ConfirmDiscardEdits()) {
+		return;
+	}
 	// Timer handling for slideshows
 	if (ePos == POS_Next || ePos == POS_NextSlideShow) {
 		if (m_nCurrentTimeout > 0) {
@@ -4559,6 +4584,7 @@ void CMainDlg::RemoveColorAt(float fX, float fY) {
 		m_transparencyMask.assign(nPixels, 255);
 		m_transparencyBackup.assign(pPixels, pPixels + nPixels * 4);
 	}
+	m_bTransparencySaved = false;
 	// the width buttons of the drawing tools select the tolerance
 	int nTolerance = max(6, min(90, m_pAnnotations->GetWidth() * 5));
 	const uint8* pSeed = &m_transparencyBackup[((size_t)nStartY * nWidth + nStartX) * 4];
@@ -4609,6 +4635,7 @@ void CMainDlg::ApplyTransparencyMask(const std::vector<uint8>& alpha) {
 		m_transparencyMask.assign(nPixels, 255);
 		m_transparencyBackup.assign(pPixels, pPixels + nPixels * 4);
 	}
+	m_bTransparencySaved = false;
 	for (size_t i = 0; i < nPixels; i++) {
 		uint8 nAlpha = min(m_transparencyMask[i], alpha[i]);
 		m_transparencyMask[i] = nAlpha;
@@ -4621,4 +4648,19 @@ void CMainDlg::ApplyTransparencyMask(const std::vector<uint8>& alpha) {
 	}
 	Invalidate(FALSE);
 	m_pChrome->Paint();
+}
+
+bool CMainDlg::ConfirmDiscardEdits() {
+	bool bUnsavedTransparency = HasTransparency() && !m_bTransparencySaved;
+	if (m_pAnnotations->IsEmpty() && !bUnsavedTransparency) {
+		return true;
+	}
+	if (IDYES != ::MessageBox(m_hWnd, CNLS::GetString(_T("The drawings or removed colors of this image are not saved. Discard them?")),
+		CNLS::GetString(_T("Confirm")), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2)) {
+		return false;
+	}
+	// asked once, closing after navigating does not ask again
+	m_pAnnotations->Clear();
+	m_bTransparencySaved = true;
+	return true;
 }
