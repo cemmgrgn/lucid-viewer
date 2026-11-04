@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest an idea for Lucid Viewer
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Lucid Viewer to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is it useful?
+      description: How do you work today, which other program does it?

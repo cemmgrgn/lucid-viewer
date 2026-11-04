@@ -13,7 +13,7 @@
 #define AppURL         "https://github.com/cemmgrgn/lucid-viewer"
 
 #ifndef SourceDir
-  #define SourceDir    "..\src\JPEGView\bin\x64\Release"
+  #define SourceDir    "..\src\LucidViewer\bin\x64\Release"
 #endif
 #ifndef AppExe
   #define AppExe       "LucidViewer.exe"

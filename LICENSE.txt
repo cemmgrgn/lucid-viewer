@@ -1,6 +1,9 @@
-JPEGView <https://github.com/sylikc/jpegview/> 
-Lean and fast image viewer with minimal GUI
+Lucid Viewer <https://github.com/cemmgrgn/lucid-viewer>
+Fast image viewer and light editor for Windows
 
+Copyright (C) 2026 Cem Girgin <https://github.com/cemmgrgn>
+
+Lucid Viewer is based on JPEGView <https://github.com/sylikc/jpegview>:
 Copyright (C) 2020-2023 Kevin M (sylikc) <https://github.com/sylikc>
 Copyright (C) 2006-2018 David Kleiner (dkleiner) <https://sourceforge.net/u/dkleiner/profile/>
 

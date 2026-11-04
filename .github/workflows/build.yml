@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+
+      # Only WTL is needed to compile, the image libraries are committed as prebuilt binaries
+      - name: Get WTL
+        run: git submodule update --init deps/WTL-sf
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        # The project is set up for Visual Studio 2026 (v145), the runner has Visual Studio 2022 (v143)
+        run: msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m /v:m
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Get-Item src\LucidViewer\bin\x64\Release\LucidViewer.exe).VersionInfo
+          "version=$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart)" >> $env:GITHUB_OUTPUT
+
+      - name: Portable zip
+        shell: pwsh
+        run: |
+          $out = "LucidViewer-${{ steps.version.outputs.version }}-portable-x64"
+          New-Item -ItemType Directory $out | Out-Null
+          Copy-Item src\LucidViewer\bin\x64\Release\* $out -Exclude *.pdb,*.lib,*.exp,*.ilk,*.iobj,*.ipdb
+          # the portable version keeps its settings next to the program
+          (Get-Content "$out\LucidViewer.ini") -replace '^StoreToEXEPath=false', 'StoreToEXEPath=true' | Set-Content "$out\LucidViewer.ini" -Encoding utf8
+          Compress-Archive -Path "$out\*" -DestinationPath "$out.zip"
+
+      - name: Installer
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\LucidViewer.iss
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LucidViewer-${{ steps.version.outputs.version }}
+          path: |
+            LucidViewer-*-portable-x64.zip
+            installer/Output/*.exe
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            LucidViewer-*-portable-x64.zip
+            installer/Output/*.exe

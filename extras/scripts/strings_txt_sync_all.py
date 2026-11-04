@@ -20,9 +20,9 @@ import sys
 UTF8 = 'utf-8-sig'  # UTF-8 with BOM
 
 
-CONFIG_DIR = Path(__file__).resolve().parent.parent.parent / r"src\JPEGView\Config"
+CONFIG_DIR = Path(__file__).resolve().parent.parent.parent / r"src\LucidViewer\Config"
 
-REFERENCE_STRINGS = Path(__file__).resolve().parent.parent.parent / r"src\JPEGView\Config\strings.txt"
+REFERENCE_STRINGS = Path(__file__).resolve().parent.parent.parent / r"src\LucidViewer\Config\strings.txt"
 
 
 def parse_strings_txt(filepath):
@@ -407,7 +407,7 @@ def dump_strings_txt_summary_markdown():
                         done = int(x.split("=")[1].strip())
 
         #print(f"{desc:<6}:  {percentage:>4} => {total-done:4}")
-        print(f"| [{filepath.name}](https://github.com/sylikc/jpegview/blob/master/src/JPEGView/Config/{filepath.name}) | {code} | {country:2} | {lang} | {total} | {total-done:4} | {done} | {percentage:>4} |")
+        print(f"| [{filepath.name}](https://github.com/cemmgrgn/lucid-viewer/blob/main/src/LucidViewer/Config/{filepath.name}) | {code} | {country:2} | {lang} | {total} | {total-done:4} | {done} | {percentage:>4} |")
 
         running_total += total
         running_done += done
@@ -515,7 +515,7 @@ if __name__ == "__main__":
     """
         reset files in git-bash
 
-        $ find src/JPEGView/Config -name "strings_*.txt" -exec git checkout -- {} \;
+        $ find src/LucidViewer/Config -name "strings_*.txt" -exec git checkout -- {} \;
     """
 
     print()

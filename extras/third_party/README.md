@@ -1,8 +1,8 @@
 # Third-Party Submodules
 
-This contains submodules that JPEGView uses or sources from.
+This contains submodules that Lucid Viewer uses or sources from.
 
-The compiled binaries to these sources are included in JPEGView source, so these are used for reference, or if you would like to build from scratch.
+The compiled binaries to these sources are included in Lucid Viewer source, so these are used for reference, or if you would like to build from scratch.
 
 To clone all the versions specified, use the following command:
 `git submodule update --init --recursive`
@@ -13,9 +13,9 @@ A brief description along with the licenses for each are included below.  Some h
 
 ## libheif
 
-libheif and related libraries are built and included in `src\JPEGView\libheif\bin[64]` and `src\JPEGView\libheif\lib[64]`
+libheif and related libraries are built and included in `src\Lucid Viewer\libheif\bin[64]` and `src\Lucid Viewer\libheif\lib[64]`
 
-The full source files are not necessary to compile JPEGView.
+The full source files are not necessary to compile Lucid Viewer.
 
 ### dav1d
 
@@ -60,17 +60,17 @@ Find the `heif.dll` and `heif.lib` in `build\libheif`
 
 ## libjpeg-turbo
 
-libjpeg-turbo library is built and included by JPEGView in `src\JPEGView\libjpeg-turbo`
+libjpeg-turbo library is built and included by Lucid Viewer in `src\Lucid Viewer\libjpeg-turbo`
 
 License: 3 different BSD-style open source licenses [libjpeg-turbo license](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md)
 
-While the library source code is GPL-compatible, the full source files are not necessary to compile JPEGView.
+While the library source code is GPL-compatible, the full source files are not necessary to compile Lucid Viewer.
 
 The submodule indicates the version that the current *.lib and header files are from.
 
 ## libjxl
 
-libjxl library is built and included by JPEGView in `src\JPEGView\libjxl`
+libjxl library is built and included by Lucid Viewer in `src\Lucid Viewer\libjxl`
 
 License: [BSD 3-Clause license](https://github.com/libjxl/libjxl/blob/main/LICENSE)
 
@@ -91,28 +91,28 @@ as per [qbnu's investigation](https://github.com/sylikc/jpegview/pull/99#issueco
 
 For 64-bit builds, replace "Win32" with "x64" above
 
-* `src\JPEGView\libjxl\bin[64]`
+* `src\Lucid Viewer\libjxl\bin[64]`
   * brotlicommon.dll, brotlidec.dll - build\third_party\brotli\Release
   * jxl_dec.dll, jxl_threads.dll - build\Release
-* `src\JPEGView\libjxl\lib[64]`
+* `src\Lucid Viewer\libjxl\lib[64]`
   * jxl_dec.lib, jxl_threads.lib - build\lib\Release
-* `src\JPEGView\libjxl\include\jxl`
+* `src\Lucid Viewer\libjxl\include\jxl`
   * version.h - build\lib\include\jxl
   * all other header files - extras\libjxl\lib\include\jxl
 
 NOTE: JPEG XL requires the Visual C++ Runtime.  vcruntime140.dll and msvcp140.dll
 
 While Microsoft allows VC++ Runtime files to be bundled directly with apps [Redistributing Visual C++ Files](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170#install-individual-redistributable-files),
-because JPEGView is GPL-licensed, [Is dynamically linking my program with the Visual C++ (or Visual Basic) runtime library permitted under the GPL](https://www.gnu.org/licenses/gpl-faq.html#WindowsRuntimeAndGPL) states:
+because Lucid Viewer is GPL-licensed, [Is dynamically linking my program with the Visual C++ (or Visual Basic) runtime library permitted under the GPL](https://www.gnu.org/licenses/gpl-faq.html#WindowsRuntimeAndGPL) states:
 > You may not distribute these libraries in compiled DLL form with the program
 
 Most users should already have VC++ Runtime installed, but if not, users will have to download it themselves for JPEG XL support.
 
 ## libpng-apng.src-patch
 
-libpng library is patched with apng support and x64 support, and included by JPEGView in `src\JPEGView\libpng-apng`
+libpng library is patched with apng support and x64 support, and included by Lucid Viewer in `src\Lucid Viewer\libpng-apng`
 
-The full source files are not necessary to compile JPEGView.
+The full source files are not necessary to compile Lucid Viewer.
 
 ### libpng
 
@@ -126,17 +126,17 @@ This is the patch to the official libpng library which adds animated PNG support
 
 ### zlib
 
-zlib is required by libpng and included by JPEGView in `src\JPEGView\libpng-apng`
+zlib is required by libpng and included by Lucid Viewer in `src\Lucid Viewer\libpng-apng`
 
 License: [zlib permissive license](https://www.zlib.net/zlib_license.html)
 
 ## libwebp
 
-libwebp library is built and included in `src\JPEGView\libwebp`
+libwebp library is built and included in `src\Lucid Viewer\libwebp`
 
 License: [WebM Software Licence](https://www.webmproject.org/license/software/)
 
-While the library source code is GPL-compatible, the full source files are not necessary to compile JPEGView.
+While the library source code is GPL-compatible, the full source files are not necessary to compile Lucid Viewer.
 
 The submodule indicates the version that the current *.lib and header files are from.
 
@@ -144,7 +144,7 @@ The submodule indicates the version that the current *.lib and header files are 
 
 Little-CMS 2 the color management engine used to support ICC Profiles for WebP, JPEG XL, HEIF/HEIC, AVIF
 
-It is built and included in `src\JPEGView\lcms2`
+It is built and included in `src\Lucid Viewer\lcms2`
 
 License: [MIT License](https://github.com/mm2/Little-CMS/blob/master/COPYING)
 
@@ -154,12 +154,12 @@ Quite OK Image Format
 
 License: [MIT License](https://github.com/phoboslab/qoi/blob/master/LICENSE)
 
-QOI source is directly compiled into JPEGView with no binary dependencies.  This submodule indicates the version that is included in JPEGView.
+QOI source is directly compiled into Lucid Viewer with no binary dependencies.  This submodule indicates the version that is included in Lucid Viewer.
 
 ## LibRaw
 
 LibRaw - Library for reading and processing of RAW digicam images
 
-It is built and included in `src\JPEGView\libraw`
+It is built and included in `src\Lucid Viewer\libraw`
 
 License: Either [GNU Lesser General Public License v2.1](https://github.com/LibRaw/LibRaw/blob/master/LICENSE.LGPL) or [Common Development and Distribution License (CDDL) v1.0](https://github.com/LibRaw/LibRaw/blob/master/LICENSE.CDDL)
