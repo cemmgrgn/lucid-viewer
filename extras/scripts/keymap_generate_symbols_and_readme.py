@@ -2,7 +2,7 @@
 
 This autogenerates the "KeyMap_internal.config"
 
-The file is meant to be read by JPEGView on startup, and basically defines the string->number mapping, so that
+The file is meant to be read by Lucid Viewer on startup, and basically defines the string->number mapping, so that
 CMainDlg can be called with a specific number to execute a command.  It uses the same names as the internal code
 in resource.h.
 
@@ -60,7 +60,7 @@ def keymap_generate_internal_config():
 //
 // !!! THIS FILE WAS AUTO-GENERATED and can differ between releases.  DO NOT MODIFY !!!
 //
-// For the curious: JPEGView reads this file on startup to define the internally mapped values to KeyMap definitions.
+// For the curious: Lucid Viewer reads this file on startup to define the internally mapped values to KeyMap definitions.
 //
 // NOTE: This file does NOT need to be localized, as users do not (should not) interact with this file.
 //
@@ -77,7 +77,7 @@ def keymap_generate_internal_config():
 def keymap_generate_reference_readme():
     """ this will generate the reference readme for what to do with the KeyMap.txt
 
-    the generated file is NOT PARSED by JPEGView at all, it's only a readme, so it can be translated without worry of a bad edit
+    the generated file is NOT PARSED by Lucid Viewer at all, it's only a readme, so it can be translated without worry of a bad edit
     """
     TARGET_FILE = SRC_PATH / r"LucidViewer\Config\KeyMap-README.html"
 
@@ -98,7 +98,7 @@ def keymap_generate_reference_readme():
         f.write(f"""<html>
 <head>
     <title>
-        JPEGView - KeyMap.txt README
+        Lucid Viewer - KeyMap.txt README
     </title>
     <style>""")
 
@@ -124,7 +124,7 @@ def keymap_generate_reference_readme():
     </h1>
 </header>
 
-JPEGView allows customizing what each key and key combination will do.
+Lucid Viewer allows customizing what each key and key combination will do.
 
 <h2>
     Translator Credits
@@ -214,7 +214,7 @@ but not with other keys or other mouse buttons.
 </h1>
 
 <p>
-    The following is a list of available JPEGView commands which can be mapped to keys/mouse
+    The following is a list of available Lucid Viewer commands which can be mapped to keys/mouse
     On the left is the command, on the right is a brief description of the command.
 </p>
 
@@ -284,7 +284,7 @@ if __name__ == "__main__":
 # this is what it looked like before I went to HTML
 f"""=== KeyMap Configuration Readme ===
 
-JPEGView allows customizing what each key and key combination will do.
+Lucid Viewer allows customizing what each key and key combination will do.
 
 - Translation Credits -
 Language=English
@@ -333,9 +333,9 @@ WARNING: Be sure not to corrupt the "KeyMap.txt", or else no keys will work anym
 
 
 ----- Supported Commands -----
-The following is a list of available JPEGView commands which can be mapped to keys/mouse
+The following is a list of available Lucid Viewer commands which can be mapped to keys/mouse
 On the left is the command, on the right is a brief description of the command.
 
 NOTE: THIS LIST WAS AUTO-GENERATED FROM SOURCE -- LastUpdated: {datetime.now(timezone.utc).isoformat()}
-(JPEGView does not read this file, it's for documentation only)
+(Lucid Viewer does not read this file, it's for documentation only)
 (Devs: see "extras\scripts" for more info.)\n\n\n"""

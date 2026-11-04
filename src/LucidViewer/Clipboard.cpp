@@ -5,6 +5,7 @@
 #include "BasicProcessing.h"
 #include "MaxImageDef.h"
 #include <gdiplus.h>
+#include <shlobj.h>
 
 static void CopyOriginalFileNameToClipboard(LPCWSTR filename) {
 	int fileNameLength = (int)wcslen(filename);
@@ -70,6 +71,56 @@ void CClipboard::CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR file
 	pImage->EnableDimming(false);
 	DoCopyFileNameText(hWnd, fileName);
 	pImage->EnableDimming(true);
+}
+
+bool CClipboard::CopyFileToClipboard(HWND hWnd, LPCTSTR fileName) {
+	if (fileName == NULL || fileName[0] == 0) {
+		return false;
+	}
+	// CF_HDROP: DROPFILES followed by the list of file names, the list ends with two zero characters
+	size_t nChars = _tcslen(fileName);
+	HGLOBAL hDrop = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DROPFILES) + (nChars + 2) * sizeof(TCHAR));
+	if (hDrop == NULL) {
+		return false;
+	}
+	DROPFILES* pDropFiles = (DROPFILES*)::GlobalLock(hDrop);
+	if (pDropFiles == NULL) {
+		::GlobalFree(hDrop);
+		return false;
+	}
+	pDropFiles->pFiles = sizeof(DROPFILES);
+	pDropFiles->fWide = sizeof(TCHAR) == sizeof(WCHAR);
+	memcpy((BYTE*)pDropFiles + sizeof(DROPFILES), fileName, nChars * sizeof(TCHAR));
+	::GlobalUnlock(hDrop);
+
+	// Explorer pastes a copy, not a move
+	HGLOBAL hEffect = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+	if (hEffect != NULL) {
+		DWORD* pEffect = (DWORD*)::GlobalLock(hEffect);
+		if (pEffect != NULL) {
+			*pEffect = DROPEFFECT_COPY;
+			::GlobalUnlock(hEffect);
+		}
+	}
+
+	if (!::OpenClipboard(hWnd)) {
+		::GlobalFree(hDrop);
+		if (hEffect != NULL) ::GlobalFree(hEffect);
+		return false;
+	}
+	::EmptyClipboard();
+	bool bOk = ::SetClipboardData(CF_HDROP, hDrop) != NULL;
+	if (!bOk) {
+		::GlobalFree(hDrop);
+	}
+	if (hEffect != NULL && ::SetClipboardData(::RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), hEffect) == NULL) {
+		::GlobalFree(hEffect);
+	}
+	if (bOk) {
+		CopyFileNameTextToClipboard(fileName);
+	}
+	::CloseClipboard();
+	return bOk;
 }
 
 CJPEGImage* CClipboard::PasteImageFromClipboard(HWND hWnd, const CImageProcessingParams& procParams, 

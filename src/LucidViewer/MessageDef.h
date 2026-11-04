@@ -25,4 +25,12 @@
 // Runs a command (IDM_* in WPARAM) as if it was chosen from the menu, used by UI tests and scripts
 #define WM_EXECUTE_COMMAND (WM_APP + 27)
 
+// Posted to the main dialog when the check for a new version has finished.
+// LPARAM is a heap allocated CString* with the latest version, empty on error, freed by the receiver.
+#define WM_UPDATE_CHECKED (WM_APP + 28)
+
 #define KEY_MAGIC 2978465
+
+// Window property set on the main window of Lucid Viewer. A second instance finds the running one by this property,
+// the window title is not reliable (start screen without file, other programs with 'Lucid Viewer' in the title).
+#define MAIN_WINDOW_PROP _T("LucidViewer.MainWindow")

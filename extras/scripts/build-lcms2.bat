@@ -1,9 +1,9 @@
 @echo off
 
 setlocal
-REM this builds lcms2 and replaces the dlls/libs in the JPEGView src folder
+REM this builds lcms2 and replaces the dlls/libs in the Lucid Viewer src folder
 
-SET XSRC_DIR=%~dp0..\..\src\JPEGView\lcms2
+SET XSRC_DIR=%~dp0..\..\src\LucidViewer\lcms2
 SET XLIB_DIR=%~dp0..\third_party\Little-CMS
 SET XOUT_DIR=%~dp0lcms2
 
@@ -30,7 +30,7 @@ IF ERRORLEVEL 1 exit /b 1
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
 echo;
-echo TO:   src\JPEGView\lcms2\include
+echo TO:   src\LucidViewer\lcms2\include
 echo FROM: extras\third_party\Little-CMS\include
 
 exit /b 0

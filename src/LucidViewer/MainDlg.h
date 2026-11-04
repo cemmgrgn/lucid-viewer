@@ -1,4 +1,4 @@
-// Main dialog of JPEGView
+// Main dialog of Lucid Viewer
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -39,7 +39,7 @@ class CAnnotations;
 enum EMouseEvent;
 
 // The main dialog is a full screen modal dialog with no border and no window title.
-// This dialog is the main window of the JPEGView application.
+// This dialog is the main window of the Lucid Viewer application.
 class CMainDlg : public CDialogImpl<CMainDlg>
 {
 public:
@@ -80,6 +80,7 @@ public:
 		MESSAGE_HANDLER(WM_SETCURSOR, OnSetCursor)
 		MESSAGE_HANDLER(WM_CONVERSION_FINISHED, OnConversionFinished)
 		MESSAGE_HANDLER(WM_RATING_READ, OnRatingRead)
+		MESSAGE_HANDLER(WM_UPDATE_CHECKED, OnUpdateChecked)
 		MESSAGE_HANDLER(WM_EXECUTE_COMMAND, OnExecuteCommand)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
 		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
@@ -135,6 +136,7 @@ public:
 	LRESULT OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnConversionFinished(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRatingRead(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnUpdateChecked(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnExecuteCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/) { ExecuteCommand((int)wParam); return 0; }
 	LRESULT OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -322,7 +324,7 @@ private:
 	bool m_bResizeForNewImage;
 	double m_dZoom, m_dRealizedZoom;
 	double m_dStartZoom; // zoom when start zoomin in zoom mode
-	double m_dZoomAtResizeStart; // zoom factor when user started resizing JPEGView main window
+	double m_dZoomAtResizeStart; // zoom factor when user started resizing Lucid Viewer main window
 	double m_dZoomMult;
 	bool m_bZoomMode;
 	bool m_bZoomModeOnLeftMouse;
@@ -437,7 +439,7 @@ private:
 		std::shared_ptr<CPixelSnapshot> Pixels; // NULL if the operation did not change the pixels
 		std::shared_ptr<std::vector<uint8>> TransparencyMask, TransparencyBackup; // only with pixels
 	};
-	enum EUndoKind { UNDO_EDIT, UNDO_RATING, UNDO_METADATA, UNDO_DELETE, UNDO_LOSSLESS, UNDO_FILE };
+	enum EUndoKind { UNDO_EDIT, UNDO_RATING, UNDO_METADATA, UNDO_DELETE, UNDO_LOSSLESS, UNDO_FILE, UNDO_MOVE };
 	struct CUndoEntry {
 		EUndoKind Kind;
 		CString File;
@@ -446,6 +448,7 @@ private:
 		std::vector<std::pair<PROPERTYKEY, CString>> Metadata;
 		int Command;
 		std::shared_ptr<std::vector<char>> FileData; // UNDO_FILE: the whole file before the change
+		CString Target; // UNDO_MOVE: the file name after the move (File is the name before)
 	};
 	std::vector<CUndoEntry> m_undoStack, m_redoStack;
 	CEditState m_pendingEdit;
@@ -475,6 +478,12 @@ private:
 	CJPEGImage* m_pZoomAnimImage;
 	void HandleStartScreenAction(int nAction, const CString& sFile);
 	void OpenFolderWithDialog();
+	// Copies or moves the current file into a folder chosen with the folder dialog
+	void CopyOrMoveToFolder(bool bMove);
+	// Moves a file, the current image is left first if it is the moved file. Returns false on error.
+	bool MoveImageFile(const CString& sFrom, const CString& sTo);
+	CString m_sLastTargetFolder; // folder of the last 'Copy to folder' or 'Move to folder'
+	bool m_bUpdateCheckRunning;
 	void ExecuteCommandInternal(int nCommand);
 	// Sub menu for sorting and filtering by the star rating
 	HMENU CreateRatingMenu();

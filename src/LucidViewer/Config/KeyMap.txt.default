@@ -97,3 +97,6 @@ Ctrl+Shift+Z            IDM_REDO
 Ctrl+Shift+D            IDM_TOGGLE_DRAWPANEL
 Ctrl+Shift+T            IDM_OCR_COPY_TEXT
 Alt+Return              IDM_SHOW_METADATA
+Ctrl+Alt+C              IDM_COPY_FILE
+Ctrl+Shift+F            IDM_COPY_TO_FOLDER
+Ctrl+Shift+X            IDM_MOVE_TO_FOLDER

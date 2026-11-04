@@ -186,7 +186,11 @@ public:
 	~CThumbnailCache() {
 		m_bStop = true;
 		::SetEvent(m_hEvent);
-		::WaitForSingleObject(m_hThread, 5000);
+		if (::WaitForSingleObject(m_hThread, 5000) == WAIT_TIMEOUT) {
+			// the thread still waits for the shell (slow network drive): it uses the lock and the cache, they are
+			// kept, the process ends anyway
+			return;
+		}
 		::CloseHandle(m_hThread);
 		::CloseHandle(m_hEvent);
 		for (auto& entry : m_cache) {
@@ -1730,7 +1734,7 @@ int CWindowChrome::PaintMetadata(CDC& dc, int nWidth, int nY) {
 			bHasWritable = true;
 			bHasLocation = bHasLocation || entry.Group == Metadata::GROUP_LOCATION;
 		}
-		// the location in the EXIF block of PNG and WebP files is removed by JPEGView itself
+		// the location in the EXIF block of PNG and WebP files is removed by Lucid Viewer itself
 		if (entry.Embedded && entry.Present && entry.Group == Metadata::GROUP_LOCATION) bHasLocation = true;
 		if (entry.Group != nGroup) {
 			nGroup = entry.Group;

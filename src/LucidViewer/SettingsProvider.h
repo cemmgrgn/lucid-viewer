@@ -11,8 +11,8 @@
 typedef stdext::hash_map<LPCTSTR, LPCTSTR, CHashCompareLPCTSTR> IniHashMap;
 
 // INI settings
-// All settings are first searched in a file name JPEGView.ini located in User/AppData/Roaming/JPEGView
-// If not found there, the setting is searched in JPEGView.ini located in the EXE path of the application
+// All settings are first searched in a file name LucidViewer.ini located in User/AppData/Roaming/LucidViewer
+// If not found there, the setting is searched in LucidViewer.ini located in the EXE path of the application
 class CSettingsProvider
 {
 public:
@@ -161,13 +161,13 @@ public:
 
 	// Returns if a user INI file exists
 	bool ExistsUserINI();
-	// Copies the user INI file (in AppData/Roaming) from the INI file template JPEGView.ini.tpl
+	// Copies the user INI file (in AppData/Roaming) from the INI file template LucidViewer.ini.tpl
 	void CopyUserINIFromTemplate();
 
 	std::list<CUserCommand*> & UserCommandList() { return m_userCommands; }
 	std::list<CUserCommand*> & OpenWithCommandList() { return m_openWithCommands; }
 
-	// This will only save a subset of settings to the INI file located in AppData\JPEGView\JPEGView.ini.
+	// This will only save a subset of settings to the INI file located in AppData\LucidViewer\LucidViewer.ini.
 	// Note that this INI file has precedence over the INI file at the program directory
 	void SaveSettings(const CImageProcessingParams& procParams,
 		EProcessingFlags eProcFlags,

@@ -354,7 +354,7 @@ void CAnnotations::PixelateInto(void* pPixels, int nWidth, int nHeight, int nOff
 
 CString CAnnotations::GetSignatureFileName() {
 	// the settings folder: %APPDATA%\LucidViewer, or the program folder of the portable version
-	CString sFolder = Helpers::JPEGViewAppDataPath();
+	CString sFolder = Helpers::AppDataPath();
 	::CreateDirectory(sFolder, NULL);
 	return sFolder + _T("signature.txt");
 }

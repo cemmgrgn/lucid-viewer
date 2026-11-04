@@ -2,7 +2,7 @@
 //
 // !!! THIS FILE WAS AUTO-GENERATED and can differ between releases.  DO NOT MODIFY !!!
 //
-// For the curious: JPEGView reads this file on startup to define the internally mapped values to KeyMap definitions.
+// For the curious: Lucid Viewer reads this file on startup to define the internally mapped values to KeyMap definitions.
 //
 // NOTE: This file does NOT need to be localized, as users do not (should not) interact with this file.
 //
@@ -166,3 +166,7 @@
 #define IDM_RATING_FILTER_5 16495
 #define IDM_START_SCREEN 16500
 #define IDM_PIN_TO_START 16510
+#define IDM_COPY_FILE 16520
+#define IDM_COPY_TO_FOLDER 16530
+#define IDM_MOVE_TO_FOLDER 16540
+#define IDM_CHECK_FOR_UPDATES 16550

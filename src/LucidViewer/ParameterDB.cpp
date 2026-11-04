@@ -336,7 +336,7 @@ CParameterDB& CParameterDB::This() {
 }
 
 CString CParameterDB::GetParamDBName() {
-	return CString(Helpers::JPEGViewAppDataPath()) + PARAM_DB_NAME; 
+	return CString(Helpers::AppDataPath()) + PARAM_DB_NAME; 
 }
 
 	
@@ -607,8 +607,8 @@ bool CParameterDB::SaveToFile(int nIndex, const CParameterDBEntry & dbEntry) {
 	CString sParamDBName = GetParamDBName();
 
 	// Create the directory in the application data path if it does not exist
-	if (::GetFileAttributes(Helpers::JPEGViewAppDataPath()) == INVALID_FILE_ATTRIBUTES) {
-		::CreateDirectory(Helpers::JPEGViewAppDataPath(), NULL);
+	if (::GetFileAttributes(Helpers::AppDataPath()) == INVALID_FILE_ATTRIBUTES) {
+		::CreateDirectory(Helpers::AppDataPath(), NULL);
 	}
 
 	HANDLE hFile = ::CreateFile(sParamDBName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);

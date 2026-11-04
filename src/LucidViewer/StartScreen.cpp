@@ -244,6 +244,7 @@ void CStartScreen::LoadThumbnails() {
 					if (nPass == 0 && !pBitmap) continue;
 					{
 						std::lock_guard<std::mutex> lock(pThumbnails->Lock);
+						if (pThumbnails->Cancel) break; // start screen closed, nothing is kept
 						pThumbnails->Images[sPath] = pBitmap;
 						pThumbnails->Loading.erase(sPath);
 					}
@@ -274,6 +275,11 @@ static UINT_PTR s_nAnimationTimer = 0;
 
 CStartScreen::~CStartScreen() {
 	m_pThumbnails->Cancel = true;
+	{
+		// the GDI+ bitmaps are released here and not by a loading thread that may end after GDI+ was shut down
+		std::lock_guard<std::mutex> lock(m_pThumbnails->Lock);
+		m_pThumbnails->Images.clear();
+	}
 	if (s_pAnimating == this) {
 		::KillTimer(NULL, s_nAnimationTimer);
 		s_pAnimating = NULL;

@@ -21,6 +21,6 @@ namespace SettingsEditor {
 	// UI test: category shown first in the settings window
 	void SetSnapshotCategory(int nCategory);
 
-	// Starts JPEGView again with the file and closes the window hParent
+	// Starts Lucid Viewer again with the file and closes the window hParent
 	void Restart(HWND hParent, LPCTSTR sCurrentFile);
 }

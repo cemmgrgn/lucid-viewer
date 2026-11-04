@@ -132,7 +132,8 @@ LucidViewer.exe /convert:fit1920:webp photo.jpg
 ### Organize
 Star ratings (keys <kbd>0</kbd>–<kbd>5</kbd>) are written into the file, so Explorer and other programs see them too.
 Sort and filter the folder by rating, find similar photos, and view or edit all metadata. One click removes the GPS
-location before you share a photo.
+location before you share a photo. Copy or move the photo to another folder, or copy the file itself to paste it into
+a mail or a chat.
 
 <p align="center"><img src="docs/images/metadata.webp" width="900" alt="Metadata view in the side panel"></p>
 

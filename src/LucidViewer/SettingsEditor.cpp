@@ -971,10 +971,10 @@ static int GetCommandCategory(const CString& sName) {
 	if (Has(_T("SLIDESHOW")) || Has(_T("MOVIE")) || Has(_T("EFFECT"))) return 6;
 	if (Has(_T("PARAM_DB"))) return 3;
 	if (Has(_T("SCREENSHOT")) || Has(_T("SETTINGS")) || Has(_T("SHORTCUTS")) || Has(_T("SIMILAR")) || Has(_T("CONFIG")) || Has(_T("HELP")) ||
-		Has(_T("ABOUT")) || Has(_T("USER_CMD")) || Has(_T("OCR")) || Has(_T("EXPLORER_CONVERT")) || Has(_T("SAVE_PARAMETERS")) || Has(_T("OPENWITH"))) return 5;
+		Has(_T("ABOUT")) || Has(_T("USER_CMD")) || Has(_T("OCR")) || Has(_T("EXPLORER_CONVERT")) || Has(_T("SAVE_PARAMETERS")) || Has(_T("OPENWITH")) || Has(_T("UPDATES"))) return 5;
 	if (Has(_T("OPEN")) || Has(_T("SAVE")) || Has(_T("RELOAD")) || Has(_T("PRINT")) || Has(_T("COPY")) || Has(_T("PASTE")) || Has(_T("EXPLORE")) ||
 		Has(_T("BATCH")) || Has(_T("RENAME")) || Has(_T("RECYCLE")) || Has(_T("DELETE")) || Has(_T("TOUCH")) || Has(_T("WALLPAPER")) || Has(_T("EXPORT")) ||
-		Has(_T("SHARE")) || Has(_T("CONVERT")) || Has(_T("EXIT")) || Has(_T("METADATA"))) return 0;
+		Has(_T("SHARE")) || Has(_T("CONVERT")) || Has(_T("EXIT")) || Has(_T("METADATA")) || Has(_T("TO_FOLDER"))) return 0;
 	if (Has(_T("NEXT")) || Has(_T("PREV")) || Has(_T("FIRST")) || Has(_T("LAST")) || Has(_T("LOOP")) || Has(_T("SORT")) || Has(_T("RATING")) || sName == _T("IDM_TOGGLE")) return 1;
 	if (Has(_T("ZOOM")) || Has(_T("FIT")) || Has(_T("FILL")) || Has(_T("SPAN")) || Has(_T("FULL_SCREEN")) || Has(_T("SHOW_")) || Has(_T("TOGGLE_")) ||
 		Has(_T("HIDE")) || Has(_T("ALWAYS_ON_TOP")) || Has(_T("PAN_")) || Has(_T("MINIMIZE")) || Has(_T("MONITOR"))) return 2;
@@ -1009,6 +1009,8 @@ static struct { LPCTSTR Name; LPCTSTR Text; } s_commandTexts[] = {
 	{ _T("IDM_TOGGLE_SIDEPANEL_COLLAPSED"), _T("Collapse the side panel") }, { _T("IDM_EXPLORER_CONVERT_MENU"), _T("'Convert to' in the Explorer context menu") },
 	{ _T("IDM_HELP"), _T("Keyboard shortcuts...") },
 	{ _T("IDM_START_SCREEN"), _T("Start screen") }, { _T("IDM_PIN_TO_START"), _T("Pin to start screen") },
+	{ _T("IDM_COPY_FILE"), _T("Copy file") }, { _T("IDM_COPY_TO_FOLDER"), _T("Copy to folder...") },
+	{ _T("IDM_MOVE_TO_FOLDER"), _T("Move to folder...") }, { _T("IDM_CHECK_FOR_UPDATES"), _T("Check for updates...") },
 	{ _T("IDM_SAVE_SCREEN"), _T("Save as shown on screen...") },
 	{ _T("IDM_SAVE_ALLOW_NO_PROMPT"), _T("Save") },
 	{ _T("IDM_TOGGLE"), _T("Switch between this and the marked image") },
@@ -1075,7 +1077,7 @@ struct CShortcutEditor {
 static CShortcutEditor* s_pShortcuts = NULL;
 
 static CString GetUserKeyMapFileName() {
-	return CString(Helpers::JPEGViewAppDataPath()) + _T("KeyMap.txt");
+	return CString(Helpers::AppDataPath()) + _T("KeyMap.txt");
 }
 
 static void ReadKeyMapFile(LPCTSTR sFileName, std::vector<std::pair<CString, CString>>& mapping) {

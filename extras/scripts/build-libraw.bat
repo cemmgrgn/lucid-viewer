@@ -1,9 +1,9 @@
 @echo off
 
 setlocal
-REM this builds LibRaw and replaces the dlls/libs in the JPEGView src folder
+REM this builds LibRaw and replaces the dlls/libs in the Lucid Viewer src folder
 
-SET XSRC_DIR=%~dp0..\..\src\JPEGView\libraw
+SET XSRC_DIR=%~dp0..\..\src\LucidViewer\libraw
 SET XLIB_DIR=%~dp0..\third_party\LibRaw
 
 SET XVS_VER=2019
@@ -38,7 +38,7 @@ del "%XMAKEFILE%"
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
 echo;
-echo TO:   src\JPEGView\libraw\include
+echo TO:   src\LucidViewer\libraw\include
 echo FROM: extras\third_party\LibRaw\libraw
 
 exit /b 0

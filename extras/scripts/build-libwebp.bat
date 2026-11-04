@@ -1,9 +1,9 @@
 @echo off
 
 setlocal
-REM this builds libwebp and replaces the libs in the JPEGView src folder
+REM this builds libwebp and replaces the libs in the Lucid Viewer src folder
 
-SET XSRC_DIR=%~dp0..\..\src\JPEGView\libwebp
+SET XSRC_DIR=%~dp0..\..\src\LucidViewer\libwebp
 SET XLIB_DIR=%~dp0..\third_party\libwebp
 SET XOUT_DIR=%~dp0libwebp
 
@@ -20,7 +20,7 @@ IF ERRORLEVEL 1 exit /b 1
 
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo extras\third_party\libwebp\src\webp -to- src\JPEGView\libwebp\include
+echo extras\third_party\libwebp\src\webp -to- src\LucidViewer\libwebp\include
 
 exit /b 0
 

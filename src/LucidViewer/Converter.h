@@ -3,8 +3,8 @@
 #include "ImageProcessingTypes.h"
 #include <vector>
 
-// Fast image format conversion, used by the Explorer context menu ('JPEGView.exe /convert:<preset> <files>')
-// and by the 'Convert to' menus inside JPEGView. Converted files are written next to the source file, existing
+// Fast image format conversion, used by the Explorer context menu ('LucidViewer.exe /convert:<preset> <files>')
+// and by the 'Convert to' menus inside Lucid Viewer. Converted files are written next to the source file, existing
 // files are never overwritten.
 namespace Converter {
 

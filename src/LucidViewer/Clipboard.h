@@ -22,6 +22,10 @@ public:
 	// Copy file path to the clipboard.
 	static void CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR fileName);
 
+	// Copy the file itself to the clipboard (as Explorer does with Ctrl+C), it can be pasted in Explorer, mails and chats.
+	// The path is put on the clipboard as text as well. Returns false on error.
+	static bool CopyFileToClipboard(HWND hWnd, LPCTSTR fileName);
+
 	// Paste image from clipboard. Returns NULL if paste failed. The caller gets ownership of the returned image.
 	static CJPEGImage* PasteImageFromClipboard(HWND hWnd, const CImageProcessingParams& procParams, EProcessingFlags eFlags);
 

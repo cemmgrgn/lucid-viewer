@@ -143,7 +143,7 @@ private:
 	CStatic m_lblCM3;
 	CStatic m_lblScalingMode;
 	CButton m_rbScalingModePrinterDriver;
-	CButton m_rbScalingModeJPEGView;
+	CButton m_rbScalingModeApp;
 	CStatic m_lblAlignment;
 	CButton m_rbAlign00;
 	CButton m_rbAlign01;

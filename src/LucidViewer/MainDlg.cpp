@@ -63,6 +63,7 @@
 #include "BackgroundRemoval.h"
 #include "Metadata.h"
 #include "StartScreen.h"
+#include "UpdateCheck.h"
 #include "StartupTrace.h"
 #include "ScreenCapture.h"
 #include "SettingsEditor.h"
@@ -342,6 +343,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_nRating = -1;
 	m_nRatingGeneration = 0;
 	m_bCropTool = false;
+	m_bUpdateCheckRunning = false;
 	m_bDragOutPending = false;
 	m_bTransparencySaved = false;
 	m_bEditPending = false;
@@ -543,6 +545,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	this->Invalidate(FALSE);
 
 	this->DragAcceptFiles();
+	::SetProp(m_hWnd, MAIN_WINDOW_PROP, (HANDLE)1); // found by a second instance (single instance mode)
 	StartupTrace::Mark("OnInitDialog end");
 
 	return TRUE;
@@ -854,9 +857,14 @@ LRESULT CMainDlg::OnAnotherInstanceStarted(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
 	COPYDATASTRUCT* pData = (COPYDATASTRUCT*)lParam;
 	if (pData != NULL && pData->dwData == KEY_MAGIC && pData->cbData > 0 && 
 		((m_bFullScreenMode && CSettingsProvider::This().SingleFullScreenInstance()) || CSettingsProvider::This().SingleInstance())) {
-		m_sStartupFile = CString((LPCTSTR)pData->lpData, pData->cbData / sizeof(TCHAR) - 1);
-		::PostMessage(m_hWnd, WM_LOAD_FILE_ASYNCH, 0, KEY_MAGIC);
+		CString sFile((LPCTSTR)pData->lpData, pData->cbData / sizeof(TCHAR) - 1);
 		bHandled = TRUE;
+		if (sFile.IsEmpty()) {
+			// started again without a file: the window that is already open is brought to the front, nothing else
+			return KEY_MAGIC;
+		}
+		m_sStartupFile = sFile;
+		::PostMessage(m_hWnd, WM_LOAD_FILE_ASYNCH, 0, KEY_MAGIC);
 		return KEY_MAGIC;
 	}
 	return 0;
@@ -1594,6 +1602,9 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		::InsertMenu(hMenuTrackPopup, nPos + 4, MF_BYPOSITION | MF_POPUP | MF_STRING | (bHasFileImage ? 0 : MF_GRAYED), (UINT_PTR)CreateRatingMenu(), CNLS::GetString(_T("Star rating")));
 		bool bPinned = bHasFileImage && m_pFileList->Current() != NULL && CStartScreen::IsPinned(m_pFileList->Current());
 		InsertString(nPos + 5, IDM_PIN_TO_START, bPinned ? _T("Unpin from start screen") : _T("Pin to start screen"), bHasFileImage);
+		InsertString(nPos + 6, IDM_COPY_FILE, _T("Copy file"), bHasFileImage);
+		InsertString(nPos + 7, IDM_COPY_TO_FOLDER, _T("Copy to folder..."), bHasFileImage);
+		InsertString(nPos + 8, IDM_MOVE_TO_FOLDER, _T("Move to folder..."), bHasFileImage);
 	}
 	nPos = FindPos(IDM_OPEN);
 	if (nPos >= 0 && m_pChrome->IsEnabled()) {
@@ -1944,6 +1955,23 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 		case IDM_COPY_PATH:
 			if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) {
 				CClipboard::CopyPathToClipboard(this->m_hWnd, m_pCurrentImage, m_pFileList->Current());
+			}
+			break;
+		case IDM_COPY_FILE:
+			if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList->Current() != NULL) {
+				m_pChrome->ShowMessage(CNLS::GetString(CClipboard::CopyFileToClipboard(m_hWnd, m_pFileList->Current()) ?
+					_T("The file was copied, it can be pasted in Explorer, a mail or a chat.") : _T("The file could not be copied to the clipboard.")));
+			}
+			break;
+		case IDM_COPY_TO_FOLDER:
+		case IDM_MOVE_TO_FOLDER:
+			CopyOrMoveToFolder(nCommand == IDM_MOVE_TO_FOLDER);
+			break;
+		case IDM_CHECK_FOR_UPDATES:
+			if (!m_bUpdateCheckRunning) {
+				m_bUpdateCheckRunning = true;
+				m_pChrome->ShowMessage(CNLS::GetString(_T("Checking for a new version...")));
+				UpdateCheck::StartCheck(m_hWnd);
 			}
 			break;
 		case IDM_PASTE:
@@ -2517,7 +2545,7 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			break;
 		case IDM_UPDATE_USER_CONFIG:
 			if (::MessageBox(m_hWnd, CString(CNLS::GetString(_T("Update user settings with new settings from settings template file?"))) + _T('\n') +
-				CNLS::GetString(_T("All existing user settings will be preserved.")), _T(JPEGVIEW_TITLE), MB_YESNOCANCEL | MB_ICONQUESTION) == IDYES) {
+				CNLS::GetString(_T("All existing user settings will be preserved.")), _T(APP_TITLE), MB_YESNOCANCEL | MB_ICONQUESTION) == IDYES) {
 				CSettingsProvider::This().UpdateUserSettings();
 			}
 			break;
@@ -2667,7 +2695,7 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 				_stprintf_s(buff1, 128, CNLS::GetString(_T("Number of JPEG files in folder: %d")), result.NumberOfSucceededFiles + result.NumberOfFailedFiles);
 				TCHAR buff2[256];
 				_stprintf_s(buff2, 256, CNLS::GetString(_T("EXIF date successfully set on %d images, failed on %d images")), result.NumberOfSucceededFiles, result.NumberOfFailedFiles);
-				::MessageBox(m_hWnd, CString(buff1) + _T('\n') + buff2, _T(JPEGVIEW_TITLE), MB_OK | MB_ICONINFORMATION);
+				::MessageBox(m_hWnd, CString(buff1) + _T('\n') + buff2, _T(APP_TITLE), MB_OK | MB_ICONINFORMATION);
 				m_pFileList->Reload();
 				if (m_pEXIFDisplayCtl->IsActive()) {
 					this->Invalidate(FALSE);
@@ -3239,7 +3267,7 @@ bool CMainDlg::SaveImage(bool bFullSize) {
 	if (sExtension.IsEmpty()) {
 		sExtension = CSettingsProvider::This().DefaultSaveFormat();
 	}
-	// NOTE: this list is used in the "Edit with" registry entry in JPEGView.Setup, update that when this updates
+	// formats that can be written by "Save as"
 	CString sFilter = CString(_T("JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|BMP (*.bmp)|*.bmp|PNG (*.png)|*.png|TIFF (*.tiff;*.tif)|*.tiff;*.tif|WEBP (*.webp)|*.webp|WEBP lossless (*.webp)|*.webp|QOI (*.qoi)|*.qoi|")) +
 		CNLS::GetString(_T("All Files")) + _T("|*.*|");
 	int nFilterIndex = 1;
@@ -3312,10 +3340,12 @@ void CMainDlg::SetAsDefaultViewer() {
 	MouseOn();
 
 	if (Helpers::GetWindowsVersion() >= 602) {
-		// It is Windows 8 or later, launch the system provided assiciation setting dialog
+		// Windows 8 or later: the default app is chosen in the settings of Windows. A registration of the setup for
+		// all users is used as it is, a second one for the user would list Lucid Viewer twice.
 		CFileExtensionsRegistrationWindows8 registry;
-		if (registry.RegisterJPEGView()) {
-			registry.LaunchApplicationAssociationDialog();
+		bool bForAllUsers = CFileExtensionsRegistrationWindows8::IsRegisteredForAllUsers();
+		if (bForAllUsers || registry.RegisterApp()) {
+			registry.OpenDefaultAppsSettings(bForAllUsers);
 		} else {
 			CString sError = CNLS::GetString(_T("Error while writing the following registry key"));
 			sError += _T(":\n");
@@ -4346,7 +4376,7 @@ void CMainDlg::EditINIFile(bool bGlobalINI) {
 	if (!bGlobalINI) {
 		if (!CSettingsProvider::This().ExistsUserINI()) {
 			// No user INI file, ask if global INI shall be copied
-			if (IDYES == ::MessageBox(m_hWnd, CNLS::GetString(_T("No user INI file exists yet. Create user INI file from INI file template?")), _T(JPEGVIEW_TITLE), MB_YESNO | MB_ICONQUESTION)) {
+			if (IDYES == ::MessageBox(m_hWnd, CNLS::GetString(_T("No user INI file exists yet. Create user INI file from INI file template?")), _T(APP_TITLE), MB_YESNO | MB_ICONQUESTION)) {
 				CSettingsProvider::This().CopyUserINIFromTemplate();
 			} else {
 				return;
@@ -4376,7 +4406,7 @@ void CMainDlg::UpdateWindowTitle() {
 	LPCTSTR sCurrentFileName = CurrentFileName(!bShowFullPathInTitle);
 
 	if (sCurrentFileName == NULL || m_pCurrentImage == NULL) {
-		this->SetWindowText(_T(JPEGVIEW_TITLE));
+		this->SetWindowText(_T(APP_TITLE));
 	} else {
 		CString sWindowText =  sCurrentFileName;
 		sWindowText += Helpers::GetMultiframeIndex(m_pCurrentImage);
@@ -4389,7 +4419,7 @@ void CMainDlg::UpdateWindowTitle() {
 				sWindowText += " - " + Helpers::SystemTimeToString(pRawMetadata->GetAcquisitionTime());
 			}
 		}
-		sWindowText += " - " + CString(JPEGVIEW_TITLE);
+		sWindowText += " - " + CString(APP_TITLE);
 		this->SetWindowText(sWindowText);
 	}
 }
@@ -4426,11 +4456,12 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27, MBAR_RATING = -28, MBAR_START = -29, MBAR_PIN = -30
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27, MBAR_RATING = -28, MBAR_START = -29, MBAR_PIN = -30,
+	MBAR_COPY_FILE = -31, MBAR_COPY_TO_FOLDER = -32, MBAR_MOVE_TO_FOLDER = -33, MBAR_UPDATES = -34
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MBAR_START, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, MBAR_PIN, IDM_RELOAD, MBAR_SEPARATOR,
-	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
+	IDM_EXPLORE, IDM_COPY_PATH, MBAR_COPY_FILE, MBAR_COPY_TO_FOLDER, MBAR_MOVE_TO_FOLDER, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { MBAR_UNDO, MBAR_SEPARATOR, IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
 static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
@@ -4438,7 +4469,7 @@ static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRI
 static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
 	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MBAR_RATING, MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
 static const int s_menuBarTools[] = { MBAR_SCREENSHOT, MBAR_SEPARATOR, MBAR_CONVERT, MBAR_CONVERT_FOLDER, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
-static const int s_menuBarHelp[] = { MBAR_HELP, MBAR_SHORTCUTS, IDM_ABOUT };
+static const int s_menuBarHelp[] = { MBAR_HELP, MBAR_SHORTCUTS, MBAR_SEPARATOR, MBAR_UPDATES, IDM_ABOUT };
 
 // Position of the (non popup) item with the given command, -1 if not found
 static int FindMenuCommandPos(HMENU hMenu, UINT nCommand) {
@@ -4623,6 +4654,18 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 			case MBAR_METADATA:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SHOW_METADATA, _T("Metadata..."), false, bHasFileImage);
 				break;
+			case MBAR_COPY_FILE:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_COPY_FILE, _T("Copy file"), false, bHasFileImage);
+				break;
+			case MBAR_COPY_TO_FOLDER:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_COPY_TO_FOLDER, _T("Copy to folder..."), false, bHasFileImage);
+				break;
+			case MBAR_MOVE_TO_FOLDER:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_MOVE_TO_FOLDER, _T("Move to folder..."), false, bHasFileImage);
+				break;
+			case MBAR_UPDATES:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_CHECK_FOR_UPDATES, _T("Check for updates..."), false, !m_bUpdateCheckRunning);
+				break;
 			case MBAR_SHARE:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SHARE, _T("Share..."), false, bHasFileImage);
 				break;
@@ -4743,7 +4786,7 @@ LRESULT CMainDlg::OnConversionFinished(UINT /*uMsg*/, WPARAM wParam, LPARAM lPar
 		}
 	} else {
 		::MessageBox(m_hWnd, CString(CNLS::GetString(_T("The following files could not be converted:"))) + _T("\n\n") + *pResult,
-			_T(JPEGVIEW_TITLE), MB_OK | MB_ICONWARNING);
+			_T(APP_TITLE), MB_OK | MB_ICONWARNING);
 	}
 	delete pResult;
 	return 0;
@@ -4947,6 +4990,7 @@ void CMainDlg::CleanupAndTerminate() {
 	StopAnimation();
 	delete m_pJPEGProvider; // delete this early to properly shut down the loading threads
 	m_pJPEGProvider = NULL;
+	::RemoveProp(m_hWnd, MAIN_WINDOW_PROP);
 	EndDialog(0);
 }
 	
@@ -5723,6 +5767,15 @@ void CMainDlg::Undo() {
 				sMessage = CNLS::GetString(_T("The value could not be written to the file."));
 			}
 			break;
+		case UNDO_MOVE:
+			if (MoveImageFile(entry.Target, entry.File)) {
+				m_redoStack.push_back(entry);
+				OpenFile(entry.File, false);
+				sMessage = CNLS::GetString(_T("The file was moved back."));
+			} else {
+				sMessage = CNLS::GetString(_T("The file could not be moved back."));
+			}
+			break;
 	}
 	m_bUndoing = false;
 	m_pChrome->ShowMessage(sMessage);
@@ -5765,14 +5818,26 @@ void CMainDlg::HandleStartScreenAction(int nAction, const CString& sFile) {
 	}
 }
 
-void CMainDlg::OpenFolderWithDialog() {
+// Folder dialog, returns the chosen folder without trailing backslash or an empty string if cancelled.
+// sTitle and sInitialFolder can be NULL.
+static CString PickFolder(HWND hWnd, LPCTSTR sTitle, LPCTSTR sInitialFolder) {
 	IFileOpenDialog* pDialog = NULL;
-	if (FAILED(::CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDialog)))) return;
+	if (FAILED(::CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDialog)))) return CString();
 	DWORD nOptions = 0;
 	pDialog->GetOptions(&nOptions);
 	pDialog->SetOptions(nOptions | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+	if (sTitle != NULL) {
+		pDialog->SetTitle(sTitle);
+	}
+	if (sInitialFolder != NULL && sInitialFolder[0] != 0) {
+		IShellItem* pFolder = NULL;
+		if (SUCCEEDED(::SHCreateItemFromParsingName(sInitialFolder, NULL, IID_PPV_ARGS(&pFolder)))) {
+			pDialog->SetFolder(pFolder);
+			pFolder->Release();
+		}
+	}
 	CString sFolder;
-	if (SUCCEEDED(pDialog->Show(m_hWnd))) {
+	if (SUCCEEDED(pDialog->Show(hWnd))) {
 		IShellItem* pItem = NULL;
 		if (SUCCEEDED(pDialog->GetResult(&pItem))) {
 			PWSTR pPath = NULL;
@@ -5784,8 +5849,118 @@ void CMainDlg::OpenFolderWithDialog() {
 		}
 	}
 	pDialog->Release();
+	sFolder.TrimRight(_T('\\'));
+	return sFolder;
+}
+
+// 'name.jpg', 'name (1).jpg', 'name (2).jpg'... in the folder, the first that does not exist
+static CString UniqueFileNameInFolder(const CString& sFolder, const CString& sName) {
+	int nDot = sName.ReverseFind(_T('.'));
+	CString sBase = (nDot > 0) ? sName.Left(nDot) : sName;
+	CString sEnding = (nDot > 0) ? sName.Mid(nDot) : CString();
+	CString sCandidate = sFolder + _T("\\") + sName;
+	for (int i = 1; ::GetFileAttributes(sCandidate) != INVALID_FILE_ATTRIBUTES && i < 10000; i++) {
+		sCandidate.Format(_T("%s\\%s (%d)%s"), (LPCTSTR)sFolder, (LPCTSTR)sBase, i, (LPCTSTR)sEnding);
+	}
+	return sCandidate;
+}
+
+bool CMainDlg::MoveImageFile(const CString& sFrom, const CString& sTo) {
+	if (::GetFileAttributes(sFrom) == INVALID_FILE_ATTRIBUTES || ::GetFileAttributes(sTo) != INVALID_FILE_ATTRIBUTES) {
+		return false;
+	}
+	bool bIsCurrent = m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList != NULL && m_pFileList->Current() != NULL &&
+		sFrom.CompareNoCase(m_pFileList->Current()) == 0;
+	if (!bIsCurrent) {
+		if (!::MoveFileEx(sFrom, sTo, MOVEFILE_COPY_ALLOWED)) return false;
+		if (m_pFileList != NULL) m_pFileList->Reload(NULL, false);
+		Invalidate();
+		return true;
+	}
+	// as for deleting: the next image is shown, back to the moved one if the move fails
+	CFileList* pFileListOfMovedImage = m_pFileList;
+	GotoImage(POS_AwayFromCurrent, NO_REQUEST);
+	if (::MoveFileEx(sFrom, sTo, MOVEFILE_COPY_ALLOWED)) {
+		pFileListOfMovedImage->Reload(NULL, false);
+		m_pFileList->DeleteHistory(true);
+		Invalidate();
+		GotoImage(POS_Current);
+		return true;
+	}
+	Invalidate();
+	if (m_pFileList->Current() == NULL) GotoImage(POS_First);
+	else GotoImage(POS_Previous);
+	return false;
+}
+
+void CMainDlg::CopyOrMoveToFolder(bool bMove) {
+	if (m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage() || m_pFileList == NULL || m_pFileList->Current() == NULL || m_bMovieMode) {
+		return;
+	}
+	MouseOn();
+	CString sSource = m_pFileList->Current();
+	int nSlash = sSource.ReverseFind(_T('\\'));
+	if (nSlash < 0) return;
+	CString sSourceFolder = sSource.Left(nSlash);
+	CString sFolder = PickFolder(m_hWnd, CNLS::GetString(bMove ? _T("Move to folder") : _T("Copy to folder")),
+		m_sLastTargetFolder.IsEmpty() ? (LPCTSTR)sSourceFolder : (LPCTSTR)m_sLastTargetFolder);
+	if (sFolder.IsEmpty()) {
+		return;
+	}
+	if (sFolder.CompareNoCase(sSourceFolder) == 0) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The file is already in this folder.")));
+		return;
+	}
+	m_sLastTargetFolder = sFolder;
+	CString sTarget = UniqueFileNameInFolder(sFolder, sSource.Mid(nSlash + 1));
+	if (bMove) {
+		if (MoveImageFile(sSource, sTarget)) {
+			CUndoEntry entry;
+			entry.Kind = UNDO_MOVE;
+			entry.File = sSource;
+			entry.Target = sTarget;
+			PushUndoEntry(entry);
+			m_pChrome->ShowMessage(CString(CNLS::GetString(_T("Moved to"))) + _T(" ") + sFolder);
+		} else {
+			m_pChrome->ShowMessage(CNLS::GetString(_T("The file could not be moved.")));
+		}
+	} else {
+		HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+		bool bCopied = ::CopyFile(sSource, sTarget, TRUE) != FALSE;
+		::SetCursor(hOldCursor);
+		m_pChrome->ShowMessage(bCopied ? CString(CNLS::GetString(_T("Copied to"))) + _T(" ") + sFolder :
+			CString(CNLS::GetString(_T("The file could not be copied."))));
+	}
+}
+
+LRESULT CMainDlg::OnUpdateChecked(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
+	m_bUpdateCheckRunning = false;
+	CString* pVersion = (CString*)lParam;
+	if (pVersion == NULL) return 0;
+	CString sLatest = *pVersion;
+	delete pVersion;
+	CString sCurrent(APP_VERSION);
+	if (sLatest.IsEmpty()) {
+		::MessageBox(m_hWnd, CNLS::GetString(_T("The latest version could not be found. Please check the internet connection.")),
+			_T(APP_TITLE), MB_OK | MB_ICONWARNING);
+	} else if (UpdateCheck::CompareVersions(sLatest, sCurrent) > 0) {
+		CString sText;
+		sText.Format(CNLS::GetString(_T("Lucid Viewer %s is available, you have version %s. Open the download page?")), (LPCTSTR)sLatest, (LPCTSTR)sCurrent);
+		if (::MessageBox(m_hWnd, sText, _T(APP_TITLE), MB_YESNO | MB_ICONINFORMATION) == IDYES) {
+			::ShellExecute(m_hWnd, _T("open"), UpdateCheck::RELEASES_PAGE, NULL, NULL, SW_SHOWNORMAL);
+		}
+	} else {
+		CString sText;
+		sText.Format(CNLS::GetString(_T("You have the latest version (%s).")), (LPCTSTR)sCurrent);
+		::MessageBox(m_hWnd, sText, _T(APP_TITLE), MB_OK | MB_ICONINFORMATION);
+	}
+	return 0;
+}
+
+void CMainDlg::OpenFolderWithDialog() {
+	CString sFolder = PickFolder(m_hWnd, NULL, NULL);
 	if (!sFolder.IsEmpty()) {
-		if (sFolder.Right(1) != _T("\\")) sFolder += _T("\\");
+		sFolder += _T("\\");
 		OpenFile(sFolder, m_pCurrentImage == NULL);
 	}
 }
@@ -5813,6 +5988,10 @@ void CMainDlg::Redo() {
 		}
 	} else if (entry.Kind == UNDO_FILE) {
 		SwapFileData(entry, true);
+	} else if (entry.Kind == UNDO_MOVE) {
+		if (MoveImageFile(entry.File, entry.Target)) {
+			m_undoStack.push_back(entry);
+		}
 	}
 	m_bUndoing = false;
 	m_pChrome->ShowMessage(CNLS::GetString(_T("Redone")));
@@ -5824,7 +6003,7 @@ void CMainDlg::Redo() {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void CMainDlg::ApplyChangedSettings(const std::vector<CString>& changedKeys, bool bKeyMapChanged) {
-	// settings that are applied at once, the others are read at the start of JPEGView
+	// settings that are applied at once, the others are read at the start of Lucid Viewer
 	static LPCTSTR liveKeys[] = { _T("ShowToolbar"), _T("ShowStatusBar"), _T("ShowSidePanel"), _T("ShowFilmstrip"), _T("SidePanelCollapsed"),
 		_T("SidePanelTab"), _T("ChromeTheme"), _T("SidePanelWidth"), _T("Language"), _T("OcrLanguage"), _T("ScreenshotFolder"), _T("ScreenshotHotkey"),
 		_T("ScreenshotTextHotkey"), _T("ConvertCustomPresets"), _T("ConvertOutputFolder"), _T("JPEGSaveQuality"), _T("WEBPSaveQuality"),

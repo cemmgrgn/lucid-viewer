@@ -20,6 +20,9 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>D</kbd> | Convert to |
 | <kbd>Ctrl</kbd> + <kbd>W</kbd> | Exit |
 | <kbd>Alt</kbd> + <kbd>Return</kbd> | Metadata... |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd> | Copy file |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Copy to folder... |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> | Move to folder... |
 
 ## Navigation
 

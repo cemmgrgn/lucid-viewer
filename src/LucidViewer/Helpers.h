@@ -196,12 +196,12 @@ namespace Helpers {
 	// Get number of cores per physical processor, not counting hyperthreading
 	int NumCoresPerPhysicalProc(void);
 
-	// Gets the path where JPEGView stores its application data, including a trailing backslash
-	LPCTSTR JPEGViewAppDataPath();
+	// Gets the path where Lucid Viewer stores its application data, including a trailing backslash
+	LPCTSTR AppDataPath();
 
-	// Sets the path where JPEGView stores its application data, including a trailing backslash.
-	// Default if not set is CSIDL_APPDATA/JPEGView/
-	void SetJPEGViewAppDataPath(LPCTSTR sPath);
+	// Sets the path where Lucid Viewer stores its application data, including a trailing backslash.
+	// Default if not set is CSIDL_APPDATA/LucidViewer/
+	void SetAppDataPath(LPCTSTR sPath);
 
 	// First start of Lucid Viewer: copies the settings, key map, signature and lists of JPEGView (the program it is
 	// based on) from %APPDATA%\JPEGView to %APPDATA%\LucidViewer. Does nothing when the new folder exists.

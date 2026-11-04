@@ -1,7 +1,7 @@
 @echo off
 
 setlocal
-REM this builds libpng and replaces the libs in the JPEGView src folder
+REM this builds libpng and replaces the libs in the Lucid Viewer src folder
 REM zlib does not need to be built separately, as it is part of the libpng build process
 
 REM FYI: building zlib separately with CMake deletes zconf.h in the source directory
@@ -51,19 +51,19 @@ IF ERRORLEVEL 1 exit /b 1
 
 
 REM copy the libs over
-copy /y "%XOUT_DIR_32%\libpng16.lib" "%XSRC_DIR%\JPEGView\libpng-apng\lib\"
+copy /y "%XOUT_DIR_32%\libpng16.lib" "%XSRC_DIR%\LucidViewer\libpng-apng\lib\"
 IF ERRORLEVEL 1 exit /b 1
-copy /y "%XOUT_DIR_32%\zlib.lib" "%XSRC_DIR%\JPEGView\libpng-apng\lib\"
+copy /y "%XOUT_DIR_32%\zlib.lib" "%XSRC_DIR%\LucidViewer\libpng-apng\lib\"
 IF ERRORLEVEL 1 exit /b 1
-copy /y "%XOUT_DIR_64%\libpng16.lib" "%XSRC_DIR%\JPEGView\libpng-apng\lib64\"
+copy /y "%XOUT_DIR_64%\libpng16.lib" "%XSRC_DIR%\LucidViewer\libpng-apng\lib64\"
 IF ERRORLEVEL 1 exit /b 1
-copy /y "%XOUT_DIR_64%\zlib.lib" "%XSRC_DIR%\JPEGView\libpng-apng\lib64\"
+copy /y "%XOUT_DIR_64%\zlib.lib" "%XSRC_DIR%\LucidViewer\libpng-apng\lib64\"
 IF ERRORLEVEL 1 exit /b 1
 
 
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo TO: src\JPEGView\libpng-apng\include
+echo TO: src\LucidViewer\libpng-apng\include
 echo FROM: extras\third_party\libpng-apng.src-patch\libpng
 
 

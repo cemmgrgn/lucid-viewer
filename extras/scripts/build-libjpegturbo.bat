@@ -1,7 +1,7 @@
 @echo off
 
 setlocal
-REM this builds libjpeg-turbo and replaces the libs in the JPEGView src folder
+REM this builds libjpeg-turbo and replaces the libs in the Lucid Viewer src folder
 
 SET XSRC_DIR=%~dp0..\..\src
 SET XLIB_DIR=%~dp0..\third_party\libjpeg-turbo
@@ -33,7 +33,7 @@ IF ERRORLEVEL 1 exit /b 1
 
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo TO: src\JPEGView\libjpeg-turbo\include
+echo TO: src\LucidViewer\libjpeg-turbo\include
 echo FROM: extras\third_party\libjpeg-turbo
 echo FROM: jconfig.h is in output directory
 
@@ -65,7 +65,7 @@ popd
 
 REM copy the libs over
 REM error checking if a copy fails... throws error to caller
-copy /y "%XBUILD_DIR%\turbojpeg-static.lib" "%XSRC_DIR%\JPEGView\libjpeg-turbo\%~2\"
+copy /y "%XBUILD_DIR%\turbojpeg-static.lib" "%XSRC_DIR%\LucidViewer\libjpeg-turbo\%~2\"
 IF ERRORLEVEL 1 exit /b 1
 
 

@@ -95,10 +95,10 @@ CSettingsProvider::CSettingsProvider(void) {
 	if (!m_bStoreToEXEPath) {
 		Helpers::MigrateLegacyAppData();
 		// User INI file
-		m_sIniNameUser = CString(Helpers::JPEGViewAppDataPath()) + m_sIniFileTitle;
+		m_sIniNameUser = CString(Helpers::AppDataPath()) + m_sIniFileTitle;
 		m_bUserINIExists = (::GetFileAttributes(m_sIniNameUser) != INVALID_FILE_ATTRIBUTES);
 	} else {
-		Helpers::SetJPEGViewAppDataPath(m_sEXEPath);
+		Helpers::SetAppDataPath(m_sEXEPath);
 	}
 
 	// Get "My documents" path
@@ -622,7 +622,7 @@ void CSettingsProvider::CopyUserINIFromTemplate() {
 	}
 
 	LPCTSTR sINIFileName = GetUserINIFileName();
-	::CreateDirectory(Helpers::JPEGViewAppDataPath(), NULL);
+	::CreateDirectory(Helpers::AppDataPath(), NULL);
 	::CopyFile(GetINITemplateName(), sINIFileName, TRUE);
 }
 
@@ -741,8 +741,8 @@ void CSettingsProvider::MakeSureUserINIExists() {
 		return; // no user INI file needed
 	}
 
-	// Create JPEGView appdata directory and copy INI file if it does not exist
-	::CreateDirectory(Helpers::JPEGViewAppDataPath(), NULL);
+	// Create Lucid Viewer appdata directory and copy INI file if it does not exist
+	::CreateDirectory(Helpers::AppDataPath(), NULL);
 	if (::GetFileAttributes(m_sIniNameUser) == INVALID_FILE_ATTRIBUTES) {
 		::CopyFile(GetINITemplateName(), m_sIniNameUser, TRUE);
 	}

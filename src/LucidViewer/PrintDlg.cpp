@@ -112,7 +112,7 @@ LRESULT CPrintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_lblCM3.Attach(GetDlgItem(IDC_PD_CM3));
 	m_lblScalingMode.Attach(GetDlgItem(IDC_PD_SCALING_TITLE));
 	m_rbScalingModePrinterDriver.Attach(GetDlgItem(IDC_PD_RB_SCALING_DRIVER));
-	m_rbScalingModeJPEGView.Attach(GetDlgItem(IDC_PD_RB_SCALING_JPEGVIEW));
+	m_rbScalingModeApp.Attach(GetDlgItem(IDC_PD_RB_SCALING_JPEGVIEW));
 	m_lblAlignment.Attach(GetDlgItem(IDC_PD_ALIGNMENT_TITLE));
 	m_rbAlign00.Attach(GetDlgItem(IDC_PD_RB_00));
 	m_rbAlign01.Attach(GetDlgItem(IDC_PD_RB_01));
@@ -158,7 +158,7 @@ LRESULT CPrintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_lblColor.SetWindowText(CNLS::GetString(_T("Color:")));
 	m_lblPreset.SetWindowText(CNLS::GetString(_T("Photo size:")));
 	m_chkFileName.SetWindowText(CNLS::GetString(_T("Print the file name below the image")));
-	m_rbScalingModeJPEGView.SetWindowText(_T("Lucid Viewer"));
+	m_rbScalingModeApp.SetWindowText(_T("Lucid Viewer"));
 	m_spinCopies.SetRange32(1, 99);
 	m_spinCopies.SetPos32(max(1, min(99, m_pPrintParameters->Copies)));
 	m_cbColor.AddString(CNLS::GetString(_T("Color")));
@@ -201,7 +201,7 @@ LRESULT CPrintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	else m_rbSize.SetCheck(TRUE);
 
 	if (m_pPrintParameters->ScaleByPrinterDriver) m_rbScalingModePrinterDriver.SetCheck(TRUE);
-	else m_rbScalingModeJPEGView.SetCheck(TRUE);
+	else m_rbScalingModeApp.SetCheck(TRUE);
 
 	if (m_pPrintParameters->AlignmentX == CPrintParameters::HA_Left) {
 		switch (m_pPrintParameters->AlignmentY) {

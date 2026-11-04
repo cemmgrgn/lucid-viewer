@@ -175,7 +175,7 @@ namespace HelpersGUI {
 						int nCommand;
 						_stscanf(pTab, _T("%x"), &nCommand);
 						if (nCommand == 0xFFFF) {
-							// Exit JPEGView is special
+							// Exit Lucid Viewer is special
 							CString shortCutExit = pKeyMap->GetKeyStringForCommand(0xFF);
 							if (shortCutExit.IsEmpty()) {
 								shortCutExit = pKeyMap->GetKeyStringForCommand(IDM_EXIT);
@@ -272,7 +272,7 @@ namespace HelpersGUI {
 		const int BUFF_SIZE = 256;
 		TCHAR buff[BUFF_SIZE];
 		CString sText = CString(CNLS::GetString(_T("Do you really want to save the following parameters as default to the INI file"))) + _T('\n') +
-			Helpers::JPEGViewAppDataPath() + CSettingsProvider::This().GetINIFileTitle() + _T(" ?\n\n");
+			Helpers::AppDataPath() + CSettingsProvider::This().GetINIFileTitle() + _T(" ?\n\n");
 		_stprintf_s(buff, BUFF_SIZE, CString(CNLS::GetString(_T("Contrast"))) + _T(": %.2f\n"), procParams.Contrast);
 		sText += buff;
 		_stprintf_s(buff, BUFF_SIZE, CString(CNLS::GetString(_T("Brightness"))) + _T(": %.2f\n"), procParams.Gamma);

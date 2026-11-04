@@ -155,7 +155,7 @@ void CExportDlg::UpdateControls() {
 		sQuality.Format(_T("%d"), (int)::SendMessage(m_hQuality, TBM_GETPOS, 0, 0));
 	}
 	::SetWindowText(m_hQualityText, sQuality);
-	// only JPEG keeps the EXIF data when written by JPEGView
+	// only JPEG keeps the EXIF data when written by Lucid Viewer
 	::EnableWindow(m_hKeepMetadata, format.Format == IF_JPEG);
 	::SetWindowText(m_hEstimate, CNLS::GetString(_T("Estimated size: calculating...")));
 	::SetTimer(m_hWnd, ESTIMATE_TIMER, ESTIMATE_DELAY, NULL);

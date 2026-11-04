@@ -1902,6 +1902,42 @@ static void SetAutostart(bool bEnable) {
 	::RegCloseKey(hKey);
 }
 
+// Versions before the program was renamed to Lucid Viewer started their tray tool with this value and their own
+// window class. The old tool holds the Print Screen key, and the old value would start it again with Windows.
+static const LPCTSTR LEGACY_RUN_VALUE = _T("JPEGView Screenshot");
+static const LPCTSTR LEGACY_TRAY_CLASS = _T("JPEGViewScreenshotTray");
+
+static void RemoveLegacyTray() {
+	bool bLegacyAutostart = false;
+	HKEY hKey;
+	if (::RegOpenKeyEx(HKEY_CURRENT_USER, RUN_KEY, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hKey) == ERROR_SUCCESS) {
+		const int BUFFER_LEN = 1024;
+		TCHAR sCommand[BUFFER_LEN];
+		DWORD nType = 0, nSize = sizeof(sCommand);
+		if (::RegQueryValueEx(hKey, LEGACY_RUN_VALUE, NULL, &nType, (LPBYTE)sCommand, &nSize) == ERROR_SUCCESS &&
+			(nType == REG_SZ || nType == REG_EXPAND_SZ)) {
+			sCommand[min((int)(nSize / sizeof(TCHAR)), BUFFER_LEN - 1)] = 0;
+			// only the value of the tray tool, the original JPEGView has no tray tool
+			if (Helpers::stristr(sCommand, _T("/tray")) != NULL) {
+				::RegDeleteValue(hKey, LEGACY_RUN_VALUE);
+				bLegacyAutostart = true;
+			}
+		}
+		::RegCloseKey(hKey);
+	}
+	if (bLegacyAutostart && !IsAutostartEnabled()) {
+		SetAutostart(true); // the user had the old tool start with Windows
+	}
+	HWND hLegacyTray = ::FindWindow(LEGACY_TRAY_CLASS, NULL);
+	if (hLegacyTray != NULL) {
+		DWORD_PTR nResult = 0;
+		::SendMessageTimeout(hLegacyTray, WM_CLOSE, 0, 0, SMTO_ABORTIFHUNG, 2000, &nResult);
+		for (int i = 0; i < 40 && ::IsWindow(hLegacyTray); i++) {
+			::Sleep(50); // its hotkeys are free once the window is gone
+		}
+	}
+}
+
 // Windows 11 can give the Print Screen key to the Snipping Tool, then it does not reach other applications
 static bool IsPrintScreenTakenBySnippingTool() {
 	DWORD nValue = 0, nSize = sizeof(nValue);
@@ -2014,6 +2050,7 @@ static int RunTray() {
 	s_nTaskbarCreated = ::RegisterWindowMessage(_T("TaskbarCreated"));
 	HWND hWnd = ::CreateWindow(_T("LucidViewerScreenshotTray"), _T("Lucid Viewer screenshot"), WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, hInstance, NULL);
 	if (hWnd == NULL) return 1;
+	RemoveLegacyTray();
 
 	CString sHotkeys[3] = { _T(""), CSettingsProvider::This().ScreenshotHotkey(), CSettingsProvider::This().ScreenshotTextHotkey() };
 	CString sFailed;

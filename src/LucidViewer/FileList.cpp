@@ -7,6 +7,7 @@
 #include <propsys.h>
 #include <propkey.h>
 #include <shobjidl.h>
+#include <vector>
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -339,15 +340,15 @@ bool CFileList::DriveHasRecycleBin(LPCTSTR filePath) {
 
 bool CFileList::DeleteFile(LPCTSTR fileNameWithPath) const {
 	if (fileNameWithPath != NULL) {
-		// append a double null character
-		TCHAR fileName[MAX_PATH + 1];
-		_tcscpy(fileName, fileNameWithPath);
-		fileName[_tcslen(fileName) + 1] = 0;
+		// append a double null character, the path can be longer than MAX_PATH (long paths of Windows 10)
+		size_t nLength = _tcslen(fileNameWithPath);
+		std::vector<TCHAR> fileName(nLength + 2, 0);
+		memcpy(&fileName[0], fileNameWithPath, nLength * sizeof(TCHAR));
 
 		SHFILEOPSTRUCT fileOp{ 0 };
 		fileOp.hwnd = NULL;
 		fileOp.wFunc = FO_DELETE;
-		fileOp.pFrom = fileName;
+		fileOp.pFrom = &fileName[0];
 		fileOp.pTo = NULL;
 		fileOp.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION;
 		fileOp.hNameMappings = NULL;

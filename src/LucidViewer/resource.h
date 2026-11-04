@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by JPEGView.RC
+// Used by LucidViewer.rc
 //
 
 // scripts in the extras directory will search this for strings as to which keys to include in KeyMap
@@ -8,9 +8,9 @@
 // don't worry about the formatting, the script that auto-generates the definition will take care of it
 
 #include "..\Version.h"
-#define JPEGVIEW_VERSION LUCID_VERSION_SHORT
+#define APP_VERSION LUCID_VERSION_SHORT
 // title for main window and msgbox so it can be change via actions
-#define JPEGVIEW_TITLE "Lucid Viewer"
+#define APP_TITLE "Lucid Viewer"
 
 
 #define IDD_ABOUTBOX				100
@@ -275,7 +275,7 @@
 #define IDM_BACKUP_PARAMDB     12620		// :KeyMap: backup parameter DB
 #define IDM_RESTORE_PARAMDB    12630		// :KeyMap: restore parameter DB
 #define IDM_ABOUT			12900		// :KeyMap: show about box
-#define IDM_EXIT			13000		// :KeyMap: exit JPEGView application
+#define IDM_EXIT			13000		// :KeyMap: exit Lucid Viewer application
 #define IDM_HELP			14000
 #define IDM_TOGGLE			14100		// :KeyMap: toggle between marked image and current image
 #define IDM_MARK_FOR_TOGGLE			14101		// :KeyMap: mark current image for toggling
@@ -349,6 +349,10 @@
 #define IDM_RATING_FILTER_5	16495		// :KeyMap: show only images with 5 stars
 #define IDM_START_SCREEN	16500		// :KeyMap: start screen with the last opened and the pinned photos
 #define IDM_PIN_TO_START	16510		// :KeyMap: pin the image to the start screen or remove it
+#define IDM_COPY_FILE		16520		// :KeyMap: copy the file to the clipboard, to paste it in Explorer, a mail or a chat
+#define IDM_COPY_TO_FOLDER	16530		// :KeyMap: copy the file to a folder (folder dialog, the last folder is suggested)
+#define IDM_MOVE_TO_FOLDER	16540		// :KeyMap: move the file to a folder and show the next image (can be undone)
+#define IDM_CHECK_FOR_UPDATES	16550	// :KeyMap: check if a newer version is published on GitHub
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

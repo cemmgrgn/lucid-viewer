@@ -82,12 +82,12 @@ public:
 
 private:
 	struct CShape {
-		ETool Tool;
-		COLORREF Color;
-		float Width; // image pixels
+		ETool Tool = TOOL_PEN;
+		COLORREF Color = 0;
+		float Width = 1.0f; // image pixels
 		std::vector<float> Points; // x, y pairs in image coordinates
 		CString Text;
-		int Group; // shapes of one group are selected together (the strokes of a signature)
+		int Group = -1; // shapes of one group are selected together (the strokes of a signature), -1: no group
 	};
 
 	ETool m_eTool;

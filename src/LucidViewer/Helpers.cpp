@@ -26,7 +26,7 @@ CReplacePipe::CReplacePipe(LPCTSTR sText) {
 
 static TCHAR buffAppPath[MAX_PATH + 32] = _T("");
 
-LPCTSTR JPEGViewAppDataPath() {
+LPCTSTR AppDataPath() {
 	if (buffAppPath[0] == 0) {
 		::SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffAppPath);
 		_tcscat_s(buffAppPath, MAX_PATH + 32, _T("\\LucidViewer\\"));
@@ -34,7 +34,7 @@ LPCTSTR JPEGViewAppDataPath() {
 	return buffAppPath;
 }
 
-void SetJPEGViewAppDataPath(LPCTSTR sPath) {
+void SetAppDataPath(LPCTSTR sPath) {
 	_tcscpy_s(buffAppPath, MAX_PATH + 32, sPath);
 }
 

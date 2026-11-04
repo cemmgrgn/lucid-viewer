@@ -1,5 +1,5 @@
 //! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/cemmgrgn/lucid-viewer> and distributed under the same license.  See <https://github.com/cemmgrgn/lucid-viewer/blob/main/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -924,3 +924,23 @@ Start screen	Başlangıç ekranı
 Pinned to the start screen	Başlangıca sabitlendi
 Removed from the start screen	Başlangıçtan kaldırıldı
 Screenshots	Ekran görüntüleri
+Fast image viewer and light editor.	Hızlı görüntü görüntüleyici ve hafif düzenleyici.
+Copy file	Dosyayı kopyala
+Copy to folder...	Klasöre kopyala...
+Move to folder...	Klasöre taşı...
+Copy to folder	Klasöre kopyala
+Move to folder	Klasöre taşı
+Check for updates...	Güncellemeleri denetle...
+The file was copied, it can be pasted in Explorer, a mail or a chat.	Dosya kopyalandı; Explorer'a, bir e-postaya ya da sohbete yapıştırılabilir.
+The file could not be copied to the clipboard.	Dosya panoya kopyalanamadı.
+Checking for a new version...	Yeni sürüm denetleniyor...
+The file was moved back.	Dosya geri taşındı.
+The file could not be moved back.	Dosya geri taşınamadı.
+The file is already in this folder.	Dosya zaten bu klasörde.
+Moved to	Şuraya taşındı:
+Copied to	Şuraya kopyalandı:
+The file could not be moved.	Dosya taşınamadı.
+The file could not be copied.	Dosya kopyalanamadı.
+The latest version could not be found. Please check the internet connection.	Son sürüm bulunamadı. Lütfen internet bağlantınızı denetleyin.
+Lucid Viewer %s is available, you have version %s. Open the download page?	Lucid Viewer %s yayımlandı, kullandığınız sürüm %s. İndirme sayfası açılsın mı?
+You have the latest version (%s).	En son sürümü kullanıyorsunuz (%s).

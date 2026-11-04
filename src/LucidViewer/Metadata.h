@@ -17,7 +17,7 @@ namespace Metadata {
 		int Order;         // sort order inside the group
 		bool Writable;
 		bool Present;      // the file has a value
-		bool Embedded;     // read by JPEGView from the EXIF block of a PNG or WebP file, Windows does not show it
+		bool Embedded;     // read by Lucid Viewer from the EXIF block of a PNG or WebP file, Windows does not show it
 	};
 
 	// English name of the group, translate with CNLS

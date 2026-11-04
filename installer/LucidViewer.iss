@@ -24,7 +24,8 @@
 #endif
 ; Mutexes the running program holds (main window and screenshot tray)
 #ifndef AppMutexes
-  #define AppMutexes   "LucidViewer.Instance,LucidViewerScreenshotTray"
+  ; JPEGViewScreenshotTray: tray tool of the versions before the rename to Lucid Viewer, it holds the Print Screen key
+  #define AppMutexes   "LucidViewer.Instance,LucidViewerScreenshotTray,JPEGViewScreenshotTray"
 #endif
 ; Name of the HKCU\...\Run value the tray tool writes for "Start with Windows"
 #ifndef AutostartValue
@@ -204,6 +205,15 @@ Name: "{autodesktop}\{#AppName}";  Filename: "{app}\{#AppExe}"; Tasks: desktopic
 ; Uninstall must not leave the tray tool in the Run key
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#AutostartValue}"; ValueData: """{app}\{#AppExe}"" /tray"; Check: PrefOn(2); Flags: uninsdeletevalue
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "{#AutostartValue}"; Flags: uninsdeletevalue dontcreatekey
+; Autostart value of the versions before the rename to Lucid Viewer, it would start the tray tool a second time
+; or although it was switched off on the preferences page
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "JPEGView Screenshot"; Flags: deletevalue dontcreatekey
+
+; Written by the program itself (Settings > Set as default viewer, Open with), removed on uninstall
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Classes\{#ProgId}"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\{#AppId}"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\RegisteredApplications"; ValueType: none; ValueName: "{#AppName}"; Flags: uninsdeletevalue dontcreatekey
 
 ; ProgID used for all image types
 Root: HKA; Subkey: "Software\Classes\{#ProgId}"; ValueType: string; ValueData: "{#AppName}"; Flags: uninsdeletekey; Tasks: fileassoc
