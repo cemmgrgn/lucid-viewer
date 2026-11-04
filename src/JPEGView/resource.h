@@ -325,6 +325,9 @@
 #define IDM_METADATA_COPY	16390		// :KeyMap: copy all metadata of the file as text
 #define IDM_METADATA_REMOVE_LOCATION	16400	// :KeyMap: remove the GPS location from the file
 #define IDM_METADATA_REMOVE_ALL	16410	// :KeyMap: remove all editable metadata from the file
+#define IDM_SCREENSHOT		16420		// :KeyMap: take a screenshot (select area, draw, copy, save, OCR)
+#define IDM_SCREENSHOT_TEXT	16430		// :KeyMap: select an area of the screen and copy its text (OCR)
+#define IDM_SCREENSHOT_TRAY	16440		// :KeyMap: start the screenshot tool in the notification area (global hotkeys)
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

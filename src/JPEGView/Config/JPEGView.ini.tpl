@@ -187,6 +187,23 @@ ConvertCustomPresets=
 ConvertOutputFolder=
 
 ; -----------------------------------------------
+; - SCREENSHOT TOOL (Tools menu or JPEGView.exe /tray, /capture, /capturetext)
+; -----------------------------------------------
+
+; Folder of saved screenshots. Empty: Pictures\Screenshots
+ScreenshotFolder=
+
+; Global shortcuts of the screenshot tool in the notification area, e.g. PrintScreen, Shift+PrintScreen, Ctrl+Alt+S, F12.
+; Empty switches a shortcut off. Windows 11 gives the Print Screen key to the Snipping Tool unless this is switched off in
+; Settings > Accessibility > Keyboard.
+ScreenshotHotkey=PrintScreen
+ScreenshotTextHotkey=Shift+PrintScreen
+
+; Language of the text recognition (OCR), e.g. tr or en-US. The language must be installed in Windows.
+; Empty: the language of a non English keyboard layout, else the Windows display language.
+OcrLanguage=
+
+; -----------------------------------------------
 ; - IMAGE CONTROL PANELS
 ; -----------------------------------------------
 

@@ -7,6 +7,7 @@
 #include "MainDlg.h"
 #include "SettingsProvider.h"
 #include "Converter.h"
+#include "ScreenCapture.h"
 
 #ifdef DEBUG
 #include <dbghelp.h>
@@ -209,6 +210,18 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 		ULONG_PTR gdiplusToken;
 		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 		int nExitCode = Converter::RunCommandLine();
+		Gdiplus::GdiplusShutdown(gdiplusToken);
+		_Module.Term();
+		::CoUninitialize();
+		return nExitCode;
+	}
+
+	// the screenshot tool runs in its own process, also without the single instance handling
+	if (ScreenCapture::IsCommandLine(lpstrCmdLine)) {
+		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+		ULONG_PTR gdiplusToken;
+		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+		int nExitCode = ScreenCapture::RunCommandLine(lpstrCmdLine);
 		Gdiplus::GdiplusShutdown(gdiplusToken);
 		_Module.Term();
 		::CoUninitialize();

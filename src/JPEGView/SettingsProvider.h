@@ -140,6 +140,10 @@ public:
 	bool ChromeDarkTheme() { return m_bChromeDarkTheme; }
 	LPCTSTR ConvertCustomPresets() { return m_sConvertCustomPresets; }
 	LPCTSTR ConvertOutputFolder() { return m_sConvertOutputFolder; }
+	LPCTSTR ScreenshotFolder() { return m_sScreenshotFolder; }
+	LPCTSTR OcrLanguage() { return m_sOcrLanguage; }
+	LPCTSTR ScreenshotHotkey() { return m_sScreenshotHotkey; }
+	LPCTSTR ScreenshotTextHotkey() { return m_sScreenshotTextHotkey; }
 	bool ShowFilmstrip() { return m_bShowFilmstrip; }
 	void SaveShowFilmstrip(bool bShow);
 	int SidePanelTab() { return m_nSidePanelTab; }
@@ -329,6 +333,10 @@ private:
 	bool m_bChromeDarkTheme;
 	CString m_sConvertCustomPresets;
 	CString m_sConvertOutputFolder;
+	CString m_sScreenshotFolder;
+	CString m_sOcrLanguage;
+	CString m_sScreenshotHotkey;
+	CString m_sScreenshotTextHotkey;
 	bool m_bShowFilmstrip;
 	int m_nSidePanelTab;
 

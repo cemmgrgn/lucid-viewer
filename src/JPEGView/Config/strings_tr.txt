@@ -705,3 +705,27 @@ Separate several values with a semicolon (;)	Birden çok değeri noktalı virgü
 Remove	Kaldır
 The value is not valid.	Değer geçerli değil.
 The value could not be written to the file.	Değer dosyaya yazılamadı.
+Screenshot	Ekran görüntüsü
+Take screenshot	Ekran görüntüsü al
+Copy text from screen	Ekrandaki metni kopyala
+Screenshot tool in the notification area	Bildirim alanında ekran görüntüsü aracı
+Recognized text	Tanınan metin
+Copy	Kopyala
+Undo (Ctrl+Z)	Geri al (Ctrl+Z)
+Copy the text in the selection (OCR)	Seçimdeki metni kopyala (OCR)
+Open in JPEGView	JPEGView'da aç
+Save (Ctrl+S)	Kaydet (Ctrl+S)
+Copy (Ctrl+C)	Kopyala (Ctrl+C)
+Close (Esc)	Kapat (Esc)
+Select the area with the text, click for a window. Esc cancels.	Metnin olduğu alanı seçin, pencere için tıklayın. Esc iptal eder.
+Drag to select an area, click for a window. Esc cancels.	Alan seçmek için sürükleyin, pencere için tıklayın. Esc iptal eder.
+The screenshot was copied to the clipboard.	Ekran görüntüsü panoya kopyalandı.
+The screenshot was saved.	Ekran görüntüsü kaydedildi.
+Save screenshot	Ekran görüntüsünü kaydet
+The text could not be recognized.	Metin tanınamadı.
+JPEGView screenshot	JPEGView ekran görüntüsü
+Open screenshot folder	Ekran görüntüleri klasörünü aç
+Start with Windows	Windows ile başlat
+Print Screen key settings of Windows...	Windows Print Screen tuşu ayarları...
+The shortcut %s is used by another program. It can be changed in the INI file (ScreenshotHotkey).	%s kısayolu başka bir program tarafından kullanılıyor. INI dosyasında (ScreenshotHotkey) değiştirilebilir.
+Windows opens the Snipping Tool with the Print Screen key. Switch this off in Settings > Accessibility > Keyboard (right click on this icon).	Windows, Print Screen tuşuyla Ekran Alıntısı Aracı'nı açıyor. Bunu Ayarlar > Erişilebilirlik > Klavye'den kapatın (bu simgeye sağ tıklayın).

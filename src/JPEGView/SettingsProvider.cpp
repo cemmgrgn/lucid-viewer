@@ -193,6 +193,10 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bChromeDarkTheme = GetString(_T("ChromeTheme"), _T("dark")).CompareNoCase(_T("light")) != 0;
 	m_sConvertCustomPresets = GetString(_T("ConvertCustomPresets"), _T(""));
 	m_sConvertOutputFolder = GetString(_T("ConvertOutputFolder"), _T(""));
+	m_sScreenshotFolder = GetString(_T("ScreenshotFolder"), _T(""));
+	m_sOcrLanguage = GetString(_T("OcrLanguage"), _T(""));
+	m_sScreenshotHotkey = GetString(_T("ScreenshotHotkey"), _T("PrintScreen"));
+	m_sScreenshotTextHotkey = GetString(_T("ScreenshotTextHotkey"), _T("Shift+PrintScreen"));
 	m_bShowFilmstrip = GetBool(_T("ShowFilmstrip"), true);
 	m_nSidePanelTab = GetInt(_T("SidePanelTab"), 0, 0, 2);
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
