@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.0.0 (2026-11-05)
 
 First release of Lucid Viewer, based on JPEGView 1.3.46 (with the updated codecs by qbnu).
 
