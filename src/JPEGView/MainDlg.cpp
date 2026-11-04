@@ -2601,6 +2601,11 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			}
 			break;
 		case IDM_SHOW_SHORTCUTS:
+			if (SettingsEditor::EditShortcuts(m_hWnd)) {
+				ApplyChangedSettings(std::vector<CString>(), true);
+			}
+			break;
+		case IDM_SHOW_SHORTCUTS + 100000:
 			{
 				// the shortcuts are read from the key map, changed shortcuts are shown correctly
 				struct { int Command; LPCTSTR Text; } entries[] = {
@@ -2806,8 +2811,9 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 		case IDM_SETTINGS:
 			{
 				MouseOn();
-				if (SettingsEditor::Show(m_hWnd, CurrentFileName(false))) {
-					Invalidate(FALSE);
+				SettingsEditor::CResult result;
+				if (SettingsEditor::Show(m_hWnd, result)) {
+					ApplyChangedSettings(result.ChangedKeys, result.KeyMapChanged);
 				}
 			}
 			break;
@@ -5296,4 +5302,67 @@ void CMainDlg::Redo() {
 	m_bUndoing = false;
 	m_pChrome->ShowMessage(CNLS::GetString(_T("Redone")));
 	m_pChrome->Paint();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Settings changed in the settings window
+///////////////////////////////////////////////////////////////////////////////////
+
+void CMainDlg::ApplyChangedSettings(const std::vector<CString>& changedKeys, bool bKeyMapChanged) {
+	// settings that are applied at once, the others are read at the start of JPEGView
+	static LPCTSTR liveKeys[] = { _T("ShowToolbar"), _T("ShowStatusBar"), _T("ShowSidePanel"), _T("ShowFilmstrip"), _T("SidePanelCollapsed"),
+		_T("SidePanelTab"), _T("ChromeTheme"), _T("SidePanelWidth"), _T("Language"), _T("OcrLanguage"), _T("ScreenshotFolder"), _T("ScreenshotHotkey"),
+		_T("ScreenshotTextHotkey"), _T("ConvertCustomPresets"), _T("ConvertOutputFolder"), _T("JPEGSaveQuality"), _T("WEBPSaveQuality"),
+		_T("DeleteConfirmation"), _T("AllowFileDeletion") };
+	auto Changed = [&](LPCTSTR sKey) {
+		for (const CString& sChanged : changedKeys) if (sChanged.CompareNoCase(sKey) == 0) return true;
+		return false;
+	};
+	CString sOldLanguage = CSettingsProvider::This().Language();
+	CSettingsProvider::Reload();
+	CSettingsProvider& sp = CSettingsProvider::This();
+
+	if (Changed(_T("Language")) || sOldLanguage.CompareNoCase(sp.Language()) != 0) {
+		CNLS::ClearStringTable();
+		CNLS::ReadStringTable(CNLS::GetStringTableFileName(sp.Language()));
+	}
+	Ocr::SetPreferredLanguage(sp.OcrLanguage());
+	if (Changed(_T("ConvertCustomPresets")) || Changed(_T("ConvertOutputFolder"))) {
+		Converter::ReloadPresets();
+		if (Converter::IsExplorerMenuRegistered()) Converter::RegisterExplorerMenu();
+	}
+	if (Changed(_T("ScreenshotHotkey")) || Changed(_T("ScreenshotTextHotkey")) || Changed(_T("ScreenshotFolder")) || Changed(_T("OcrLanguage")) || Changed(_T("Language"))) {
+		// the screenshot tool in the notification area is started again with the new settings
+		HWND hTray = ::FindWindow(_T("JPEGViewScreenshotTray"), NULL);
+		if (hTray != NULL) {
+			::PostMessage(hTray, WM_CLOSE, 0, 0);
+			TCHAR sExe[MAX_PATH];
+			::GetModuleFileName(NULL, sExe, MAX_PATH);
+			CString sParameters;
+			sParameters.Format(_T("/c ping -n 2 127.0.0.1 >nul & start \"\" \"%s\" /tray"), sExe);
+			::ShellExecute(NULL, _T("open"), _T("cmd.exe"), sParameters, NULL, SW_HIDE);
+		}
+	}
+	if (bKeyMapChanged) {
+		delete m_pKeyMap;
+		m_pKeyMap = new CKeyMap();
+	}
+	m_pChrome->ApplySettings();
+	Invalidate(FALSE);
+
+	CString sRestartKeys;
+	for (const CString& sKey : changedKeys) {
+		bool bLive = false;
+		for (LPCTSTR sLive : liveKeys) if (sKey.CompareNoCase(sLive) == 0) bLive = true;
+		if (!bLive) sRestartKeys += (sRestartKeys.IsEmpty() ? _T("") : _T(", ")) + sKey;
+	}
+	if (!sRestartKeys.IsEmpty()) {
+		CString sQuestion;
+		sQuestion.Format(CNLS::GetString(_T("The settings were applied. These take effect after a restart of JPEGView: %s. Restart now?")), (LPCTSTR)sRestartKeys);
+		if (IDYES == ::MessageBox(m_hWnd, sQuestion, CNLS::GetString(_T("Settings")), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2)) {
+			SettingsEditor::Restart(m_hWnd, CurrentFileName(false));
+		}
+	} else {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The settings were applied.")));
+	}
 }

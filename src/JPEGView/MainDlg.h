@@ -446,6 +446,8 @@ private:
 	void Undo();
 	void Redo();
 	void ExecuteCommandInternal(int nCommand);
+	// After the settings window: reads the settings again and applies what can be applied without restart
+	void ApplyChangedSettings(const std::vector<CString>& changedKeys, bool bKeyMapChanged);
 	CString m_sMetadataFile; // file of the cached metadata
 	std::vector<Metadata::CEntry> m_metadata;
 	LPCTSTR GetMetadataFileName(); // current file if metadata can be read from it, else NULL

@@ -30,13 +30,18 @@ CString CNLS::GetStringTableFileName(LPCTSTR sLanguageCode) {
 }
 
 // ignores newlines, ignores invalid lines
+void CNLS::ClearStringTable() {
+	sm_texts.clear(); // the strings are not freed, a language change is rare
+	sm_bTableRead = false;
+}
+
 void CNLS::ReadStringTable(LPCTSTR sFileName) {
 	FILE *fptr = _tfopen(sFileName, _T("r, ccs=UTF-8"));
 	if (fptr == NULL) {
 		return;
 	}
 
-	const int FILE_BUFF_SIZE = 64000;
+	const int FILE_BUFF_SIZE = 512000;
 	// one extra character keeps the buffer zero terminated even if the file fills the whole buffer
 	TCHAR* pLineBuff = new TCHAR[FILE_BUFF_SIZE + 1];
 	memset(pLineBuff, 0, (FILE_BUFF_SIZE + 1) * sizeof(TCHAR));

@@ -26,6 +26,11 @@ static CString ParseCommandLineForIniName(LPCTSTR sCommandLine) {
 	return iniFileName;
 }
 
+void CSettingsProvider::Reload() {
+	// the old instance is not deleted, callers can hold a reference to it for the current function
+	sm_instance = new CSettingsProvider();
+}
+
 CSettingsProvider& CSettingsProvider::This() {
 	if (sm_instance == NULL) {
 		sm_instance = new CSettingsProvider();

@@ -19,6 +19,8 @@ public:
 
 	// Reads the string table mapping strings from English to target language
 	static void ReadStringTable(LPCTSTR sFileName);
+	// Removes all translations (before reading the table of another language)
+	static void ClearStringTable();
 
 	// Translates a string, key is the English string, output the translated string
 	static LPCTSTR GetString(LPCTSTR sString);

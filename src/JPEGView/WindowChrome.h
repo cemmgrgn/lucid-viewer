@@ -45,6 +45,9 @@ public:
 	void SetSidePanelCollapsed(bool bCollapsed);
 	// Shows the side panel expanded with the given tab
 	void ShowSideTab(ESideTab eTab);
+	// Applies the settings of the window parts, the theme and the language after the settings window
+	void ApplySettings();
+	void ApplyTheme(bool bChanged);
 	// Info tab with all metadata of the file instead of the summary
 	void ShowMetadata() { m_bInfoMetadata = true; ShowSideTab(TAB_INFO); }
 

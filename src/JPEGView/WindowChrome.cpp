@@ -81,13 +81,13 @@ static DWORD GetWindowsBuildNumber() {
 }
 
 // Dark title bar and dark popup menus. The menu part uses undocumented uxtheme functions that exist since Windows 10 1903.
-static void ApplyDarkMode(HWND hWnd) {
+static void ApplyDarkMode(HWND hWnd, bool bDarkMode = true) {
 	typedef HRESULT (WINAPI *DwmSetWindowAttributeFn)(HWND, DWORD, LPCVOID, DWORD);
 	HMODULE hDwm = ::LoadLibrary(_T("dwmapi.dll"));
 	if (hDwm != NULL) {
 		DwmSetWindowAttributeFn dwmSetWindowAttribute = (DwmSetWindowAttributeFn)::GetProcAddress(hDwm, "DwmSetWindowAttribute");
 		if (dwmSetWindowAttribute != NULL) {
-			BOOL bDark = TRUE;
+			BOOL bDark = bDarkMode ? TRUE : FALSE;
 			const DWORD DWMWA_USE_IMMERSIVE_DARK_MODE = 20, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD = 19;
 			if (FAILED(dwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &bDark, sizeof(bDark)))) {
 				dwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, &bDark, sizeof(bDark));
@@ -107,9 +107,9 @@ static void ApplyDarkMode(HWND hWnd) {
 		AllowDarkModeForWindowFn allowDarkModeForWindow = (AllowDarkModeForWindowFn)::GetProcAddress(hUxTheme, MAKEINTRESOURCEA(133));
 		FlushMenuThemesFn flushMenuThemes = (FlushMenuThemesFn)::GetProcAddress(hUxTheme, MAKEINTRESOURCEA(136));
 		if (setPreferredAppMode != NULL && allowDarkModeForWindow != NULL && flushMenuThemes != NULL) {
-			const int FORCE_DARK = 2;
-			setPreferredAppMode(FORCE_DARK);
-			allowDarkModeForWindow(hWnd, TRUE);
+			const int FORCE_DARK = 2, DEFAULT_MODE = 0;
+			setPreferredAppMode(bDarkMode ? FORCE_DARK : DEFAULT_MODE);
+			allowDarkModeForWindow(hWnd, bDarkMode ? TRUE : FALSE);
 			flushMenuThemes();
 		}
 	}
@@ -273,16 +273,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_bShowFilmstrip = sp.ShowFilmstrip();
 	m_pThumbnails = new CThumbnailCache(pMainDlg->GetHWND());
 
-	if (sp.ChromeDarkTheme()) {
-		CColors dark = { RGB(32, 32, 32), RGB(26, 26, 26), RGB(58, 58, 58), RGB(232, 232, 232), RGB(150, 150, 150),
-			RGB(62, 62, 62), RGB(82, 82, 82), RGB(42, 66, 96), RGB(96, 165, 250) };
-		m_colors = dark;
-		ApplyDarkMode(pMainDlg->GetHWND());
-	} else {
-		CColors light = { RGB(243, 243, 243), RGB(250, 250, 250), RGB(218, 218, 218), RGB(25, 25, 25), RGB(100, 100, 100),
-			RGB(225, 225, 225), RGB(205, 205, 205), RGB(204, 228, 247), RGB(0, 103, 192) };
-		m_colors = light;
-	}
+	ApplyTheme(false);
 
 	m_hFont = CreateUIFont(_T("Segoe UI"), S(12), FW_NORMAL);
 	m_hBoldFont = CreateUIFont(_T("Segoe UI"), S(13), FW_SEMIBOLD);
@@ -419,6 +410,39 @@ void CWindowChrome::SetSidePanelCollapsed(bool bCollapsed) {
 	HideTooltip();
 	SaveSettings();
 	UpdateFrame();
+}
+
+void CWindowChrome::ApplyTheme(bool bChanged) {
+	if (CSettingsProvider::This().ChromeDarkTheme()) {
+		CColors dark = { RGB(32, 32, 32), RGB(26, 26, 26), RGB(58, 58, 58), RGB(232, 232, 232), RGB(150, 150, 150),
+			RGB(62, 62, 62), RGB(82, 82, 82), RGB(42, 66, 96), RGB(96, 165, 250) };
+		m_colors = dark;
+		ApplyDarkMode(m_pMainDlg->GetHWND(), true);
+	} else {
+		CColors light = { RGB(243, 243, 243), RGB(250, 250, 250), RGB(218, 218, 218), RGB(25, 25, 25), RGB(100, 100, 100),
+			RGB(225, 225, 225), RGB(205, 205, 205), RGB(204, 228, 247), RGB(0, 103, 192) };
+		m_colors = light;
+		if (bChanged) ApplyDarkMode(m_pMainDlg->GetHWND(), false);
+	}
+}
+
+void CWindowChrome::ApplySettings() {
+	CSettingsProvider& sp = CSettingsProvider::This();
+	ApplyTheme(true);
+	// menu titles in the new language
+	LPCTSTR menuTitles[] = { _T("File"), _T("Edit"), _T("View"), _T("Navigate"), _T("Tools"), _T("Help") };
+	for (CToolbarItem& item : m_items) {
+		if (item.Type == IT_Menu && item.Command >= 0 && item.Command < (int)(sizeof(menuTitles) / sizeof(menuTitles[0]))) {
+			item.Text = CNLS::GetString(menuTitles[item.Command]);
+		}
+	}
+	m_bShowToolbar = sp.ShowToolbar();
+	m_bShowStatusBar = sp.ShowStatusBar();
+	m_bShowSidePanel = sp.ShowSidePanel();
+	m_bShowFilmstrip = sp.ShowFilmstrip();
+	m_nSideScroll = 0;
+	UpdateFrame();
+	::RedrawWindow(m_pMainDlg->GetHWND(), NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_NOERASE);
 }
 
 void CWindowChrome::ShowSideTab(ESideTab eTab) {

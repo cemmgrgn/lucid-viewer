@@ -2,6 +2,9 @@
 #include "SettingsEditor.h"
 #include "SettingsProvider.h"
 #include "NLS.h"
+#include "KeyMap.h"
+#include "Helpers.h"
+#include <algorithm>
 #include <commdlg.h>
 #include <commctrl.h>
 #include <windowsx.h>
@@ -130,6 +133,23 @@ static void ParseOptions(CSetting& setting) {
 				if (sValue.Find(_T(' ')) < 0) options.push_back({ sValue, sTrimmed });
 			}
 		}
+		// "...: dark or light" with the default value as one of the two words
+		int nOr = sTrimmed.Find(_T(" or "));
+		if (nOr > 0) {
+			int nStart1 = nOr;
+			while (nStart1 > 0 && (_istalnum(sTrimmed[nStart1 - 1]) || sTrimmed[nStart1 - 1] == _T('-'))) nStart1--;
+			int nEnd2 = nOr + 4;
+			while (nEnd2 < sTrimmed.GetLength() && (_istalnum(sTrimmed[nEnd2]) || sTrimmed[nEnd2] == _T('-'))) nEnd2++;
+			CString sFirst = sTrimmed.Mid(nStart1, nOr - nStart1), sSecond = sTrimmed.Mid(nOr + 4, nEnd2 - nOr - 4);
+			CString sDefaultValue = Trim(setting.Default);
+			if (!sFirst.IsEmpty() && !sSecond.IsEmpty() && (sFirst.CompareNoCase(sDefaultValue) == 0 || sSecond.CompareNoCase(sDefaultValue) == 0)) {
+				for (const CString& sValue : { sFirst, sSecond }) {
+					bool bFound = false;
+					for (auto& option : options) if (option.first.CompareNoCase(sValue) == 0) bFound = true;
+					if (!bFound) options.push_back({ sValue, sValue });
+				}
+			}
+		}
 		// "CPUType can be AutoDetect, Generic, MMX, SSE or AVX2", "Possible values: Never, OnlyWhenNoRecycleBin, Always", "one of 'auto', 'metric' or 'english'"
 		LPCTSTR markers[] = { _T("can be "), _T("Possible values:"), _T("one of ") };
 		for (LPCTSTR sMarker : markers) {
@@ -249,7 +269,7 @@ struct CEditor {
 	std::vector<HWND> ShownControls;
 	std::set<HWND> Descriptions;
 	int Scroll, PageHeight;
-	bool Done, Saved, Updating;
+	bool Done, Saved, Updating, KeyMapChanged;
 	int S(int n) { return ::MulDiv(n, Dpi, 96); }
 };
 
@@ -578,15 +598,9 @@ static LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 				case ID_EDIT_INI:
 					::ShellExecute(hWnd, _T("open"), _T("notepad.exe"), CString(_T("\"")) + CSettingsProvider::This().GetUserINIFileName() + _T("\""), NULL, SW_SHOWNORMAL);
 					return 0;
-				case ID_EDIT_KEYMAP: {
-					CString sKeyMap = CSettingsProvider::This().GetUserINIFileName();
-					sKeyMap = sKeyMap.Left(sKeyMap.ReverseFind(_T('\\')) + 1) + _T("KeyMap.txt");
-					if (::GetFileAttributes(sKeyMap) == INVALID_FILE_ATTRIBUTES) {
-						::CopyFile(CString(CSettingsProvider::This().GetEXEPath()) + _T("KeyMap.txt.default"), sKeyMap, TRUE);
-					}
-					::ShellExecute(hWnd, _T("open"), _T("notepad.exe"), _T("\"") + sKeyMap + _T("\""), NULL, SW_SHOWNORMAL);
+				case ID_EDIT_KEYMAP:
+					if (EditShortcuts(hWnd)) pEditor->KeyMapChanged = true;
 					return 0;
-				}
 				case ID_DEFAULTS:
 					if (IDYES == ::MessageBox(hWnd, CNLS::GetString(_T("Set all settings of this page to the default values?")), CNLS::GetString(_T("Settings")), MB_YESNO | MB_ICONQUESTION)) {
 						for (size_t i = 0; i < pEditor->Shown.size(); i++) {
@@ -627,10 +641,10 @@ static void AddLanguages(CSetting& setting) {
 	}
 }
 
-bool Show(HWND hParent, LPCTSTR sCurrentFile) {
+bool Show(HWND hParent, CResult& result) {
 	CSettingsProvider& sp = CSettingsProvider::This();
 	CEditor editor;
-	editor.Done = editor.Saved = editor.Updating = false;
+	editor.Done = editor.Saved = editor.Updating = editor.KeyMapChanged = false;
 	editor.Scroll = editor.PageHeight = 0;
 	ReadDefinitions(sp.GetGlobalINIFileName(), editor.Settings, editor.CategoryNames);
 	if (editor.Settings.empty()) {
@@ -768,19 +782,392 @@ bool Show(HWND hParent, LPCTSTR sCurrentFile) {
 	::DeleteObject(editor.SmallFont);
 	s_pEditor = NULL;
 
+	result.Saved = editor.Saved;
+	result.KeyMapChanged = editor.KeyMapChanged;
+	result.ChangedKeys.clear();
 	if (editor.Saved) {
-		// most settings are read at the start
-		if (IDYES == ::MessageBox(hParent, CNLS::GetString(_T("The settings were saved. Most of them take effect after a restart of JPEGView. Restart now?")),
-			CNLS::GetString(_T("Settings")), MB_YESNO | MB_ICONQUESTION)) {
-			TCHAR sExe[MAX_PATH];
-			::GetModuleFileName(NULL, sExe, MAX_PATH);
-			// started after a moment so that this instance has ended (single instance mode)
-			CString sParameters;
-			sParameters.Format(_T("/c ping -n 2 127.0.0.1 >nul & start \"\" \"%s\" \"%s\""), sExe, sCurrentFile != NULL ? sCurrentFile : _T(""));
-			::ShellExecute(NULL, _T("open"), _T("cmd.exe"), sParameters, NULL, SW_HIDE);
-			::PostMessage(hParent, WM_CLOSE, 0, 0);
+		for (const CSetting& setting : editor.Settings) {
+			if (setting.Value != setting.Initial) result.ChangedKeys.push_back(setting.Key);
 		}
 	}
+	return editor.Saved || editor.KeyMapChanged;
+}
+
+void Restart(HWND hParent, LPCTSTR sCurrentFile) {
+	TCHAR sExe[MAX_PATH];
+	::GetModuleFileName(NULL, sExe, MAX_PATH);
+	// started after a moment so that this instance has ended (single instance mode)
+	CString sParameters;
+	sParameters.Format(_T("/c ping -n 2 127.0.0.1 >nul & start \"\" \"%s\" \"%s\""), sExe, sCurrentFile != NULL ? sCurrentFile : _T(""));
+	::ShellExecute(NULL, _T("open"), _T("cmd.exe"), sParameters, NULL, SW_HIDE);
+	::PostMessage(hParent, WM_CLOSE, 0, 0);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Keyboard shortcut editor
+///////////////////////////////////////////////////////////////////////////////////
+
+static const int ID_SC_LIST = 200, ID_SC_SEARCH = 201, ID_SC_ADD = 202, ID_SC_REMOVE = 203, ID_SC_DEFAULTS = 204, ID_SC_NOTEPAD = 205, ID_SC_SAVE = 206, ID_SC_CANCEL = 207;
+
+struct CShortcutEditor {
+	HWND Window, List, Search;
+	HFONT Font;
+	int Dpi;
+	std::vector<CString> Commands;                     // IDM names in the order of the symbols file
+	std::vector<std::pair<CString, CString>> Mapping;  // key, IDM name
+	bool Done, Saved;
+	int S(int n) { return ::MulDiv(n, Dpi, 96); }
+};
+
+static CShortcutEditor* s_pShortcuts = NULL;
+
+static CString GetUserKeyMapFileName() {
+	return CString(Helpers::JPEGViewAppDataPath()) + _T("KeyMap.txt");
+}
+
+static void ReadKeyMapFile(LPCTSTR sFileName, std::vector<std::pair<CString, CString>>& mapping) {
+	mapping.clear();
+	FILE* pFile = NULL;
+	if (_tfopen_s(&pFile, sFileName, _T("r")) != 0 || pFile == NULL) return;
+	char line[1024];
+	while (fgets(line, sizeof(line), pFile) != NULL) {
+		CString sLine(line);
+		sLine.Trim();
+		if (sLine.IsEmpty() || sLine.Left(2) == _T("//")) continue;
+		int nSpace = sLine.FindOneOf(_T(" \t"));
+		if (nSpace <= 0) continue;
+		CString sKey = sLine.Left(nSpace), sCommand = Trim(sLine.Mid(nSpace));
+		int nComment = sCommand.Find(_T("//"));
+		if (nComment >= 0) sCommand = Trim(sCommand.Left(nComment));
+		if (sCommand.Left(4) == _T("IDM_")) mapping.push_back({ sKey, sCommand });
+	}
+	fclose(pFile);
+}
+
+// "IDM_TOGGLE_SIDEPANEL" -> "Toggle sidepanel"
+static CString CommandLabel(const CString& sCommand) {
+	CString s = sCommand.Left(4) == _T("IDM_") ? sCommand.Mid(4) : sCommand;
+	s.Replace(_T('_'), _T(' '));
+	s.MakeLower();
+	if (!s.IsEmpty()) s.SetAt(0, _totupper(s[0]));
+	return s;
+}
+
+static CString KeysOfCommand(CShortcutEditor& editor, const CString& sCommand) {
+	CString sKeys;
+	for (auto& entry : editor.Mapping) {
+		if (entry.second == sCommand) sKeys += (sKeys.IsEmpty() ? _T("") : _T(", ")) + entry.first;
+	}
+	return sKeys;
+}
+
+static void FillShortcutList(CShortcutEditor& editor) {
+	TCHAR sSearch[128];
+	::GetWindowText(editor.Search, sSearch, 128);
+	CString sFind = Trim(sSearch);
+	sFind.MakeLower();
+	int nSelected = (int)::SendMessage(editor.List, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+	LPARAM nSelectedCommand = -1;
+	if (nSelected >= 0) {
+		LVITEM item = { LVIF_PARAM };
+		item.iItem = nSelected;
+		ListView_GetItem(editor.List, &item);
+		nSelectedCommand = item.lParam;
+	}
+	::SendMessage(editor.List, WM_SETREDRAW, FALSE, 0);
+	ListView_DeleteAllItems(editor.List);
+	int nRow = 0;
+	for (int i = 0; i < (int)editor.Commands.size(); i++) {
+		CString sLabel = CommandLabel(editor.Commands[i]), sKeys = KeysOfCommand(editor, editor.Commands[i]);
+		CString sText = sLabel + _T(" ") + sKeys + _T(" ") + editor.Commands[i];
+		sText.MakeLower();
+		if (!sFind.IsEmpty() && sText.Find(sFind) < 0) continue;
+		LVITEM item = { LVIF_TEXT | LVIF_PARAM };
+		item.iItem = nRow;
+		item.pszText = (LPTSTR)(LPCTSTR)sLabel;
+		item.lParam = i;
+		int nIndex = ListView_InsertItem(editor.List, &item);
+		ListView_SetItemText(editor.List, nIndex, 1, (LPTSTR)(LPCTSTR)sKeys);
+		ListView_SetItemText(editor.List, nIndex, 2, (LPTSTR)(LPCTSTR)editor.Commands[i]);
+		if (i == nSelectedCommand) {
+			ListView_SetItemState(editor.List, nIndex, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+			ListView_EnsureVisible(editor.List, nIndex, FALSE);
+		}
+		nRow++;
+	}
+	::SendMessage(editor.List, WM_SETREDRAW, TRUE, 0);
+	::InvalidateRect(editor.List, NULL, TRUE);
+}
+
+static int GetSelectedCommand(CShortcutEditor& editor) {
+	int nSelected = (int)::SendMessage(editor.List, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+	if (nSelected < 0) return -1;
+	LVITEM item = { LVIF_PARAM };
+	item.iItem = nSelected;
+	ListView_GetItem(editor.List, &item);
+	return (int)item.lParam;
+}
+
+// Waits for a key combination, returns its name as used in the key map file (e.g. "Ctrl+Shift+K"), empty if cancelled
+static CString CaptureShortcut(HWND hParent, const CString& sCommandLabel, int nDpi) {
+	HINSTANCE hInstance = ::GetModuleHandle(NULL);
+	auto S = [nDpi](int n) { return ::MulDiv(n, nDpi, 96); };
+	RECT parentRect;
+	::GetWindowRect(hParent, &parentRect);
+	int nWidth = S(420), nHeight = S(150);
+	WNDCLASS wndClass = { 0 };
+	wndClass.lpfnWndProc = ::DefWindowProc;
+	wndClass.hInstance = hInstance;
+	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+	wndClass.lpszClassName = _T("JPEGViewShortcutCapture");
+	::RegisterClass(&wndClass);
+	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewShortcutCapture"), CNLS::GetString(_T("New keyboard shortcut")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
+		(parentRect.left + parentRect.right - nWidth) / 2, (parentRect.top + parentRect.bottom - nHeight) / 2, nWidth, nHeight, hParent, NULL, hInstance, NULL);
+	if (hWnd == NULL) return CString();
+	NONCLIENTMETRICS metrics = { 0 };
+	metrics.cbSize = sizeof(metrics);
+	::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0);
+	HFONT hFont = ::CreateFontIndirect(&metrics.lfMessageFont);
+	CString sText = sCommandLabel + _T("\n\n") + CNLS::GetString(_T("Press the new key combination. Click here to cancel."));
+	HWND hText = ::CreateWindow(_T("STATIC"), sText, WS_CHILD | WS_VISIBLE | SS_CENTER | SS_NOTIFY, S(12), S(16), nWidth - S(30), nHeight - S(60), hWnd, (HMENU)1, hInstance, NULL);
+	::SendMessage(hText, WM_SETFONT, (WPARAM)hFont, FALSE);
+	::EnableWindow(hParent, FALSE);
+	::ShowWindow(hWnd, SW_SHOWNORMAL);
+	::SetForegroundWindow(hWnd);
+	::SetFocus(hWnd);
+	CString sResult;
+	bool bDone = false;
+	MSG msg;
+	while (!bDone && ::GetMessage(&msg, NULL, 0, 0) > 0) {
+		if (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN) {
+			int nKey = (int)msg.wParam;
+			if (nKey == VK_SHIFT || nKey == VK_CONTROL || nKey == VK_MENU || nKey == VK_LWIN || nKey == VK_RWIN) continue;
+			bool bAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0, bCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0, bShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+			sResult = CKeyMap::GetShortcutKey(CKeyMap::GetCombinedKeyCode(nKey, bAlt, bCtrl, bShift));
+			sResult.Remove(_T(' '));
+			if (CKeyMap::GetVirtualKeyCode(sResult) == -1) sResult.Empty();
+			bDone = true;
+			continue;
+		}
+		if (msg.message == WM_LBUTTONDOWN || (msg.message == WM_NCLBUTTONDOWN && msg.wParam == HTCLOSE)) {
+			bDone = true;
+			continue;
+		}
+		::TranslateMessage(&msg);
+		::DispatchMessage(&msg);
+	}
+	::EnableWindow(hParent, TRUE);
+	::DestroyWindow(hWnd);
+	::SetActiveWindow(hParent);
+	::DeleteObject(hFont);
+	return sResult;
+}
+
+static bool SaveKeyMap(CShortcutEditor& editor) {
+	CString sFileName = GetUserKeyMapFileName();
+	FILE* pFile = NULL;
+	if (_tfopen_s(&pFile, sFileName, _T("w")) != 0 || pFile == NULL) return false;
+	fputs("// This file defines the key mapping for JPEGView, it was written by the keyboard shortcut editor (Tools > Settings).\n", pFile);
+	fputs("// See KeyMap-README.html for more information on how to customize this file.\n\n", pFile);
+	for (const CString& sCommand : editor.Commands) {
+		for (auto& entry : editor.Mapping) {
+			if (entry.second != sCommand) continue;
+			CStringA sKey(entry.first), sName(entry.second);
+			fprintf(pFile, "%-24s%s\n", (LPCSTR)sKey, (LPCSTR)sName);
+		}
+	}
+	fclose(pFile);
+	return true;
+}
+
+static LRESULT CALLBACK ShortcutWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
+	CShortcutEditor* pEditor = s_pShortcuts;
+	if (pEditor == NULL) return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+	switch (nMsg) {
+		case WM_NOTIFY: {
+			NMHDR* pHeader = (NMHDR*)lParam;
+			if (pHeader->idFrom == ID_SC_LIST && pHeader->code == NM_DBLCLK) {
+				::SendMessage(hWnd, WM_COMMAND, ID_SC_ADD, 0);
+			}
+			return 0;
+		}
+		case WM_COMMAND:
+			switch (LOWORD(wParam)) {
+				case ID_SC_SEARCH:
+					if (HIWORD(wParam) == EN_CHANGE) FillShortcutList(*pEditor);
+					return 0;
+				case ID_SC_ADD: {
+					int nCommand = GetSelectedCommand(*pEditor);
+					if (nCommand < 0) return 0;
+					const CString& sCommand = pEditor->Commands[nCommand];
+					CString sKey = CaptureShortcut(hWnd, CommandLabel(sCommand), pEditor->Dpi);
+					if (sKey.IsEmpty()) return 0;
+					for (size_t i = 0; i < pEditor->Mapping.size(); i++) {
+						if (pEditor->Mapping[i].first.CompareNoCase(sKey) != 0) continue;
+						if (pEditor->Mapping[i].second == sCommand) return 0;
+						CString sQuestion;
+						sQuestion.Format(CNLS::GetString(_T("%s is used for '%s'. Use it for '%s' instead?")), (LPCTSTR)sKey,
+							(LPCTSTR)CommandLabel(pEditor->Mapping[i].second), (LPCTSTR)CommandLabel(sCommand));
+						if (IDYES != ::MessageBox(hWnd, sQuestion, CNLS::GetString(_T("Keyboard shortcuts")), MB_YESNO | MB_ICONQUESTION)) return 0;
+						pEditor->Mapping.erase(pEditor->Mapping.begin() + i);
+						break;
+					}
+					pEditor->Mapping.push_back({ sKey, sCommand });
+					FillShortcutList(*pEditor);
+					return 0;
+				}
+				case ID_SC_REMOVE: {
+					int nCommand = GetSelectedCommand(*pEditor);
+					if (nCommand < 0) return 0;
+					const CString& sCommand = pEditor->Commands[nCommand];
+					pEditor->Mapping.erase(std::remove_if(pEditor->Mapping.begin(), pEditor->Mapping.end(),
+						[&](const std::pair<CString, CString>& entry) { return entry.second == sCommand; }), pEditor->Mapping.end());
+					FillShortcutList(*pEditor);
+					return 0;
+				}
+				case ID_SC_DEFAULTS:
+					if (IDYES == ::MessageBox(hWnd, CNLS::GetString(_T("Restore the default keyboard shortcuts?")), CNLS::GetString(_T("Keyboard shortcuts")), MB_YESNO | MB_ICONQUESTION)) {
+						ReadKeyMapFile(CString(CSettingsProvider::This().GetEXEPath()) + _T("KeyMap.txt.default"), pEditor->Mapping);
+						FillShortcutList(*pEditor);
+					}
+					return 0;
+				case ID_SC_NOTEPAD:
+					if (::GetFileAttributes(GetUserKeyMapFileName()) == INVALID_FILE_ATTRIBUTES) {
+						::CopyFile(CString(CSettingsProvider::This().GetEXEPath()) + _T("KeyMap.txt.default"), GetUserKeyMapFileName(), TRUE);
+					}
+					::ShellExecute(hWnd, _T("open"), _T("notepad.exe"), _T("\"") + GetUserKeyMapFileName() + _T("\""), NULL, SW_SHOWNORMAL);
+					return 0;
+				case ID_SC_SAVE:
+				case IDOK:
+					if (::GetFocus() == pEditor->Search && LOWORD(wParam) == IDOK) return 0;
+					if (!SaveKeyMap(*pEditor)) {
+						::MessageBox(hWnd, CNLS::GetString(_T("The keyboard shortcuts could not be saved.")), CNLS::GetString(_T("Keyboard shortcuts")), MB_OK | MB_ICONERROR);
+						return 0;
+					}
+					pEditor->Saved = true;
+					pEditor->Done = true;
+					::PostMessage(hWnd, WM_NULL, 0, 0);
+					return 0;
+				case ID_SC_CANCEL:
+				case IDCANCEL:
+					pEditor->Done = true;
+					::PostMessage(hWnd, WM_NULL, 0, 0);
+					return 0;
+			}
+			break;
+		case WM_CLOSE:
+			pEditor->Done = true;
+			::PostMessage(hWnd, WM_NULL, 0, 0);
+			return 0;
+	}
+	return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+}
+
+bool EditShortcuts(HWND hParent) {
+	CShortcutEditor editor;
+	editor.Done = editor.Saved = false;
+	// all commands of the symbols file
+	FILE* pFile = NULL;
+	if (_tfopen_s(&pFile, CString(CSettingsProvider::This().GetEXEPath()) + _T("symbols.km"), _T("r")) == 0 && pFile != NULL) {
+		char line[512];
+		while (fgets(line, sizeof(line), pFile) != NULL) {
+			CString sLine(line);
+			sLine.Trim();
+			if (sLine.Left(12) != _T("#define IDM_")) continue;
+			CString sName = sLine.Mid(8);
+			int nSpace = sName.FindOneOf(_T(" \t"));
+			if (nSpace > 0) sName = sName.Left(nSpace);
+			if (sName != _T("IDM_DONOTHING")) editor.Commands.push_back(sName);
+		}
+		fclose(pFile);
+	}
+	CString sUserFile = GetUserKeyMapFileName();
+	ReadKeyMapFile(::GetFileAttributes(sUserFile) != INVALID_FILE_ATTRIBUTES ? sUserFile : CString(CSettingsProvider::This().GetEXEPath()) + _T("KeyMap.txt.default"), editor.Mapping);
+	s_pShortcuts = &editor;
+
+	INITCOMMONCONTROLSEX init = { sizeof(INITCOMMONCONTROLSEX), ICC_LISTVIEW_CLASSES };
+	::InitCommonControlsEx(&init);
+	HINSTANCE hInstance = ::GetModuleHandle(NULL);
+	WNDCLASS wndClass = { 0 };
+	wndClass.lpfnWndProc = ShortcutWndProc;
+	wndClass.hInstance = hInstance;
+	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+	wndClass.lpszClassName = _T("JPEGViewShortcutEditor");
+	::RegisterClass(&wndClass);
+	HDC hDC = ::GetDC(NULL);
+	editor.Dpi = ::GetDeviceCaps(hDC, LOGPIXELSX);
+	::ReleaseDC(NULL, hDC);
+	NONCLIENTMETRICS metrics = { 0 };
+	metrics.cbSize = sizeof(metrics);
+	::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0);
+	editor.Font = ::CreateFontIndirect(&metrics.lfMessageFont);
+
+	int nWidth = editor.S(820), nHeight = editor.S(600);
+	RECT parentRect;
+	::GetWindowRect(hParent, &parentRect);
+	editor.Window = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewShortcutEditor"), CNLS::GetString(_T("Keyboard shortcuts")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
+		max(0, (int)(parentRect.left + parentRect.right - nWidth) / 2), max(0, (int)(parentRect.top + parentRect.bottom - nHeight) / 2), nWidth, nHeight, hParent, NULL, hInstance, NULL);
+	if (editor.Window == NULL) {
+		s_pShortcuts = NULL;
+		return false;
+	}
+	CRect client;
+	::GetClientRect(editor.Window, &client);
+	int nPad = editor.S(10), nButtonHeight = editor.S(30);
+	editor.Search = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+		nPad, nPad, editor.S(300), editor.S(26), editor.Window, (HMENU)(INT_PTR)ID_SC_SEARCH, hInstance, NULL);
+	::SendMessage(editor.Search, EM_SETCUEBANNER, TRUE, (LPARAM)CNLS::GetString(_T("Search command or key")));
+	editor.List = ::CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+		nPad, nPad + editor.S(34), client.Width() - 2 * nPad, client.Height() - 3 * nPad - nButtonHeight - editor.S(34), editor.Window, (HMENU)(INT_PTR)ID_SC_LIST, hInstance, NULL);
+	ListView_SetExtendedListViewStyle(editor.List, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	struct { LPCTSTR Title; int Width; } columns[] = { { _T("Command"), 300 }, { _T("Shortcut"), 200 }, { _T("Name in KeyMap.txt"), 250 } };
+	for (int i = 0; i < 3; i++) {
+		LVCOLUMN column = { LVCF_TEXT | LVCF_WIDTH };
+		column.pszText = (LPTSTR)CNLS::GetString(columns[i].Title);
+		column.cx = editor.S(columns[i].Width);
+		ListView_InsertColumn(editor.List, i, &column);
+	}
+	struct { int Id; LPCTSTR Text; bool Left; } buttons[] = {
+		{ ID_SC_ADD, _T("Add shortcut..."), true }, { ID_SC_REMOVE, _T("Remove shortcuts"), true }, { ID_SC_DEFAULTS, _T("Defaults"), true }, { ID_SC_NOTEPAD, _T("Open file..."), true },
+		{ ID_SC_SAVE, _T("Save"), false }, { ID_SC_CANCEL, _T("Cancel"), false },
+	};
+	int nLeftX = nPad, nRightX = client.Width() - nPad, nButtonY = client.Height() - nPad - nButtonHeight;
+	for (int i = (int)(sizeof(buttons) / sizeof(buttons[0])) - 1; i >= 0; i--) {
+		if (buttons[i].Left) continue;
+		nRightX -= editor.S(100);
+		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(buttons[i].Text), WS_CHILD | WS_VISIBLE | WS_TABSTOP | (buttons[i].Id == ID_SC_SAVE ? BS_DEFPUSHBUTTON : 0),
+			nRightX, nButtonY, editor.S(100), nButtonHeight, editor.Window, (HMENU)(INT_PTR)buttons[i].Id, hInstance, NULL);
+		::SendMessage(hButton, WM_SETFONT, (WPARAM)editor.Font, FALSE);
+		nRightX -= editor.S(8);
+	}
+	for (auto& button : buttons) {
+		if (!button.Left) continue;
+		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(button.Text), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+			nLeftX, nButtonY, editor.S(130), nButtonHeight, editor.Window, (HMENU)(INT_PTR)button.Id, hInstance, NULL);
+		::SendMessage(hButton, WM_SETFONT, (WPARAM)editor.Font, FALSE);
+		nLeftX += editor.S(138);
+	}
+	::SendMessage(editor.Search, WM_SETFONT, (WPARAM)editor.Font, FALSE);
+	::SendMessage(editor.List, WM_SETFONT, (WPARAM)editor.Font, FALSE);
+	FillShortcutList(editor);
+
+	::EnableWindow(hParent, FALSE);
+	::ShowWindow(editor.Window, SW_SHOWNORMAL);
+	::SetFocus(editor.Search);
+	MSG msg;
+	while (!editor.Done && ::GetMessage(&msg, NULL, 0, 0) > 0) {
+		if (!::IsDialogMessage(editor.Window, &msg)) {
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+		}
+	}
+	::EnableWindow(hParent, TRUE);
+	::DestroyWindow(editor.Window);
+	::SetActiveWindow(hParent);
+	::DeleteObject(editor.Font);
+	s_pShortcuts = NULL;
 	return editor.Saved;
 }
 

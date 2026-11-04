@@ -806,3 +806,18 @@ Sorted by star rating	Yıldıza göre sıralandı
 No image of this folder has so many stars.	Bu klasörde bu kadar yıldızlı görüntü yok.
 All %d images are shown	%d görüntünün tümü gösteriliyor
 %d images with %d stars or more are shown	%d görüntü gösteriliyor (%d yıldız ve üstü)
+New keyboard shortcut	Yeni klavye kısayolu
+Press the new key combination. Click here to cancel.	Yeni tuş kombinasyonuna basın. İptal için buraya tıklayın.
+%s is used for '%s'. Use it for '%s' instead?	%s, '%s' için kullanılıyor. Bunun yerine '%s' için kullanılsın mı?
+Restore the default keyboard shortcuts?	Varsayılan klavye kısayolları geri yüklensin mi?
+The keyboard shortcuts could not be saved.	Klavye kısayolları kaydedilemedi.
+Search command or key	Komut veya tuş ara
+Command	Komut
+Shortcut	Kısayol
+Name in KeyMap.txt	KeyMap.txt'deki adı
+Add shortcut...	Kısayol ekle...
+Remove shortcuts	Kısayolları kaldır
+Defaults	Varsayılanlar
+Open file...	Dosyayı aç...
+The settings were applied. These take effect after a restart of JPEGView: %s. Restart now?	Ayarlar uygulandı. Şunlar JPEGView yeniden başlatılınca geçerli olur: %s. Şimdi yeniden başlatılsın mı?
+The settings were applied.	Ayarlar uygulandı.

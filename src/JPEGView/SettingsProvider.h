@@ -18,6 +18,8 @@ class CSettingsProvider
 public:
 	// Singleton instance
 	static CSettingsProvider& This();
+	// Reads all settings again from the INI files (after they were changed in the settings window)
+	static void Reload();
 
 	// The methods correspond to the INI file settings
 	bool StoreToEXEPath() { return m_bStoreToEXEPath; }
