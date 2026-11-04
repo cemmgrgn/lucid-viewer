@@ -395,13 +395,13 @@ static void CALLBACK SnapshotTimerProc(HWND, UINT, UINT_PTR nTimer, DWORD) {
 	::PostMessage(hWnd, WM_COMMAND, s_nCloseCommand, 0);
 }
 
-void ShowSnapshot(HWND hWnd, int nCloseCommand) {
+void ShowSnapshot(HWND hWnd, int nCloseCommand, int nDelayMs) {
 	s_hSnapshotWindow = hWnd;
 	s_nCloseCommand = nCloseCommand;
 	// out of the visible screen, not activated: the user can keep working
 	::SetWindowPos(hWnd, HWND_BOTTOM, -20000, -20000, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
 	::ShowWindow(hWnd, SW_SHOWNOACTIVATE);
-	::SetTimer(NULL, 0, 1200, SnapshotTimerProc);
+	::SetTimer(NULL, 0, nDelayMs, SnapshotTimerProc);
 }
 
 }

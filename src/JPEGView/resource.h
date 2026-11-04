@@ -346,6 +346,8 @@
 #define IDM_RATING_FILTER_3	16493		// :KeyMap: show only images with 3 stars or more
 #define IDM_RATING_FILTER_4	16494		// :KeyMap: show only images with 4 stars or more
 #define IDM_RATING_FILTER_5	16495		// :KeyMap: show only images with 5 stars
+#define IDM_START_SCREEN	16500		// :KeyMap: start screen with the last opened and the pinned photos
+#define IDM_PIN_TO_START	16510		// :KeyMap: pin the image to the start screen or remove it
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

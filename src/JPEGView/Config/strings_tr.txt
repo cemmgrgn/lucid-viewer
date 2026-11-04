@@ -898,3 +898,28 @@ Black and white	Siyah beyaz
 Photo size:	Fotoğraf boyutu:
 Custom size	Özel boyut
 Print the file name below the image	Dosya adını resmin altına yazdır
+Start	Başlangıç
+Your recently opened photos and your picks.	Son açtığın fotoğraflar ve seçtiklerin burada.
+No photo opened yet.	Henüz bir fotoğraf açmadın.
+Open file	Dosya aç
+Open folder	Klasör aç
+Paste	Yapıştır
+Recently opened	Son açılanlar
+Clear list	Listeyi temizle
+Drag a photo here	Bir fotoğrafı buraya sürükle
+JPEG, PNG, WebP, HEIC, AVIF, JPEG XL, RAW and more	JPEG, PNG, WebP, HEIC, AVIF, JPEG XL, RAW ve daha fazlası
+My picks	Seçtiklerim
+%d photos	%d fotoğraf
+Add photos	Fotoğraf ekle
+Pin your favorite photos here. Press %s on an open photo or right click > Pin to start screen.	En sevdiğin fotoğrafları buraya sabitle. Açık bir fotoğrafta %s tuşuna bas ya da sağ tık > Başlangıca sabitle.
+Tip: drag a photo onto this window to open it.	İpucu: bir fotoğrafı bu pencereye sürükleyip bırakarak açabilirsin.
+Today	Bugün
+Yesterday	Dün
+Open	Aç
+Open containing folder	Bulunduğu klasörü aç
+Remove from list	Listeden kaldır
+Pin to start screen	Başlangıca sabitle
+Unpin from start screen	Başlangıçtan kaldır
+Start screen	Başlangıç ekranı
+Pinned to the start screen	Başlangıca sabitlendi
+Removed from the start screen	Başlangıçtan kaldırıldı

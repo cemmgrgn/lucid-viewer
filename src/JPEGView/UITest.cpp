@@ -7,6 +7,7 @@
 #include "JPEGImage.h"
 #include "ProcessParams.h"
 #include <shellapi.h>
+#include "StartScreen.h"
 
 namespace UITest {
 
@@ -60,6 +61,101 @@ static int ShowPrint() {
 	return hDialog != NULL ? 0 : 1;
 }
 
+static CStartScreen* s_pGallery = NULL;
+
+static LRESULT CALLBACK GalleryWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
+	switch (nMsg) {
+		case WM_PAINT:
+			if (s_pGallery != NULL) {
+				PAINTSTRUCT paint;
+				HDC hDC = ::BeginPaint(hWnd, &paint);
+				CRect rect;
+				::GetClientRect(hWnd, &rect);
+				s_pGallery->Paint(hDC, rect);
+				::EndPaint(hWnd, &paint);
+				return 0;
+			}
+			break;
+		case WM_ERASEBKGND:
+			return 1;
+		case WM_COMMAND:
+			if (LOWORD(wParam) == IDCANCEL) ::DestroyWindow(hWnd);
+			return 0;
+	}
+	return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+}
+
+// Start screen with the wallpapers of Windows as photos (page 0) or empty (page 1), page 2: with the mouse over a pinned photo
+static int ShowGallery(int nPage) {
+	std::vector<CString> files;
+	LPCTSTR patterns[] = { _T("C:\\Windows\\Web\\Wallpaper\\ThemeA\\*.jpg"), _T("C:\\Windows\\Web\\Wallpaper\\ThemeB\\*.jpg"),
+		_T("C:\\Windows\\Web\\Screen\\*.jpg"), _T("C:\\Windows\\Web\\Wallpaper\\Spotlight\\*.jpg"), _T("C:\\Windows\\Web\\Wallpaper\\Windows\\*.jpg") };
+	for (LPCTSTR sPattern : patterns) {
+		CString sFolder(sPattern);
+		sFolder = sFolder.Left(sFolder.ReverseFind(_T('\\')) + 1);
+		WIN32_FIND_DATA findData;
+		HANDLE hFind = ::FindFirstFile(sPattern, &findData);
+		if (hFind == INVALID_HANDLE_VALUE) continue;
+		do {
+			files.push_back(sFolder + findData.cFileName);
+		} while (::FindNextFile(hFind, &findData));
+		::FindClose(hFind);
+	}
+	std::vector<CString> recent, pinned;
+	if (nPage != 1) {
+		FILETIME now;
+		::GetSystemTimeAsFileTime(&now);
+		__int64 nNow = ((__int64)now.dwHighDateTime << 32) | now.dwLowDateTime;
+		for (size_t i = 0; i < files.size() && i < 9; i++) {
+			CString sLine;
+			sLine.Format(_T("%I64d\t%s"), nNow - (__int64)i * 7 * 3600 * 10000000LL, (LPCTSTR)files[i]);
+			recent.push_back(sLine);
+		}
+		for (size_t i = 0; i < files.size(); i++) pinned.push_back(files[files.size() - 1 - i]);
+	}
+	CStartScreen::SetTestLists(recent, pinned);
+
+	HINSTANCE hInstance = ::GetModuleHandle(NULL);
+	WNDCLASS wndClass = { 0 };
+	wndClass.lpfnWndProc = GalleryWndProc;
+	wndClass.hInstance = hInstance;
+	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+	wndClass.lpszClassName = _T("JPEGViewGalleryTest");
+	::RegisterClass(&wndClass);
+	HWND hWnd = ::CreateWindowEx(0, _T("JPEGViewGalleryTest"), _T("JPEGView"), WS_OVERLAPPEDWINDOW, 0, 0, 1440, 900, NULL, NULL, hInstance, NULL);
+	if (hWnd == NULL) return 1;
+	CStartScreen screen(hWnd);
+	s_pGallery = &screen;
+	screen.Reload();
+	DarkUI::ApplyToWindow(hWnd);
+	DarkUI::ShowSnapshot(hWnd, IDCANCEL, 3500);
+	if (nPage == 2) {
+		// paint once for the layout, then the mouse over the third pinned photo
+		CRect rect;
+		::GetClientRect(hWnd, &rect);
+		HDC hDC = ::GetDC(hWnd);
+		screen.Paint(hDC, rect);
+		::ReleaseDC(hWnd, hDC);
+		for (int y = rect.bottom - 10; y > rect.top; y -= 20) {
+			for (int x = rect.left + 10; x < rect.right; x += 20) {
+				if (screen.IsOverItem(x, y) && y > rect.Height() / 2 && x > rect.Width() / 2) {
+					screen.OnMouseMove(x, y);
+					y = -1;
+					break;
+				}
+			}
+		}
+		::InvalidateRect(hWnd, NULL, FALSE);
+	}
+	MSG msg;
+	while (::IsWindow(hWnd) && ::GetMessage(&msg, NULL, 0, 0) > 0) {
+		::TranslateMessage(&msg);
+		::DispatchMessage(&msg);
+	}
+	s_pGallery = NULL;
+	return 0;
+}
+
 int Run(LPCTSTR sCommandLine) {
 	int nArgs = 0;
 	LPWSTR* pArgs = ::CommandLineToArgvW(sCommandLine, &nArgs);
@@ -89,6 +185,8 @@ int Run(LPCTSTR sCommandLine) {
 		nResult = 0;
 	} else if (sKind.CompareNoCase(_T("print")) == 0) {
 		nResult = ShowPrint();
+	} else if (sKind.CompareNoCase(_T("gallery")) == 0) {
+		nResult = ShowGallery(nPage);
 	}
 	return ::GetFileAttributes(sOutput) != INVALID_FILE_ATTRIBUTES ? nResult : 2;
 }

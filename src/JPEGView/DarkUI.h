@@ -45,5 +45,5 @@ namespace DarkUI {
 	// activating it, saves it as PNG after a short time and closes it with the given command (WM_COMMAND)
 	void SetSnapshotFile(LPCTSTR sFileName);
 	bool IsSnapshotMode();
-	void ShowSnapshot(HWND hWnd, int nCloseCommand);
+	void ShowSnapshot(HWND hWnd, int nCloseCommand, int nDelayMs = 1200);
 }

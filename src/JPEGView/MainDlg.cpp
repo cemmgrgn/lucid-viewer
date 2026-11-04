@@ -62,6 +62,7 @@
 #include "DuplicatesDlg.h"
 #include "BackgroundRemoval.h"
 #include "Metadata.h"
+#include "StartScreen.h"
 #include "ScreenCapture.h"
 #include "SettingsEditor.h"
 #include <propsys.h>
@@ -326,6 +327,9 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pHelpDlg = NULL;
 	m_pChrome = NULL;
 	m_pAnnotations = new CAnnotations();
+	m_pStartScreen = NULL;
+	m_bStartScreen = false;
+	m_bRecordRecent = false;
 	m_pAnnotations->SetTool(CAnnotations::TOOL_NONE); // the draw tab can be open at the start, clicks must not draw then
 	m_nRating = -1;
 	m_bCropTool = false;
@@ -342,6 +346,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 }
 
 CMainDlg::~CMainDlg() {
+	delete m_pStartScreen;
 	delete m_pChrome;
 	delete m_pAnnotations;
 	delete m_pDirectoryWatcher;
@@ -358,6 +363,7 @@ CMainDlg::~CMainDlg() {
 void CMainDlg::SetStartupInfo(LPCTSTR sStartupFile, int nAutostartSlideShow, Helpers::ESorting eSorting, Helpers::ETransitionEffect eEffect, 
 	int nTransitionTime, bool bAutoExit, int nDisplayMonitor) { 
 	m_sStartupFile = sStartupFile; m_nAutoStartSlideShow = nAutostartSlideShow; m_eForcedSorting = eSorting;
+	m_bRecordRecent = sStartupFile != NULL && sStartupFile[0] != 0;
 	m_bAutoExit = bAutoExit;
 	if ((int)eEffect >= 0) m_eTransitionEffect = eEffect;
 	if (nTransitionTime > 0) m_nTransitionTime = nTransitionTime;
@@ -480,6 +486,11 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 	m_bLockPaint = false;
 	m_isBeforeFileSelected = m_sStartupFile.IsEmpty();
+	if (CSettingsProvider::This().ShowStartScreen() && m_pChrome->IsEnabled()) {
+		m_pStartScreen = new CStartScreen(m_hWnd);
+		m_pStartScreen->SetPinShortcut(m_pKeyMap->GetKeyStringForCommand(IDM_PIN_TO_START));
+		m_pStartScreen->Reload();
+	}
 
 	if (m_nAutoStartSlideShow > 0) {
 		StartMovieMode(1.0 / m_nAutoStartSlideShow);
@@ -508,7 +519,8 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	if (s_bFirst) {
 		s_bFirst = false;
 		if (m_sStartupFile.IsEmpty()) {
-			if (CSettingsProvider::This().SkipFileOpenDialogOnStartup())
+			// the start screen replaces the file open dialog
+			if (CSettingsProvider::This().SkipFileOpenDialogOnStartup() || m_pStartScreen != NULL)
 				m_isBeforeFileSelected = false;
 			else {
 				OpenFileWithDialog(true, true);
@@ -521,6 +533,11 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	m_dRealizedZoom = 1.0;
 
 	this->GetClientRect(&m_clientRect);
+	if (IsStartScreenActive()) {
+		m_pStartScreen->Paint(dc.m_hDC, m_clientRect);
+		m_pChrome->Paint();
+		return 0;
+	}
 	CRect imageProcessingArea = m_pImageProcPanelCtl->PanelRect();
 	CRectF visRectZoomNavigator(0.0f, 0.0f, 1.0f, 1.0f);
 	CBrush backBrush;
@@ -829,6 +846,11 @@ LRESULT CMainDlg::OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL&
 }
 
 LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
+	if (IsStartScreenActive()) {
+		CStartScreen::CResult result = m_pStartScreen->OnClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		HandleStartScreenAction(result.Action, result.File);
+		return 0;
+	}
 	this->SetCapture();
 	bool isCropping = m_pCropCtl->IsCropping();
 	CPoint pointClicked(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
@@ -915,6 +937,9 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
 	m_bDragOutPending = false;
+	if (IsStartScreenActive() && !m_pChrome->IsDragging()) {
+		return 0;
+	}
 	if (m_pChrome->IsDragging()) {
 		// slider of the side panel, the drag was started in the non-client area
 		m_pChrome->EndDrag();
@@ -1052,6 +1077,13 @@ LRESULT CMainDlg::OnNCActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 }
 
 LRESULT CMainDlg::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
+	if (LOWORD(lParam) == HTCLIENT && IsStartScreenActive()) {
+		POINT point;
+		::GetCursorPos(&point);
+		ScreenToClient(&point);
+		::SetCursor(::LoadCursor(NULL, m_pStartScreen->IsOverItem(point.x, point.y) ? IDC_HAND : IDC_ARROW));
+		return TRUE;
+	}
 	// the window class has no cursor, set it for the toolbar and side panel
 	if (LOWORD(lParam) == CWindowChrome::HT_CHROME) {
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
@@ -1087,6 +1119,9 @@ LRESULT CMainDlg::OnMButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 }
 
 LRESULT CMainDlg::OnLButtonDblClk(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
+	if (IsStartScreenActive()) {
+		return 0;
+	}
 	if (!m_bDragging && !m_pCropCtl->IsCropping()) {
 		if (m_pPanelMgr->OnMouseLButton(MouseEvent_BtnDblClk, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam))) {
 			return 0;
@@ -1129,6 +1164,10 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	int nOldMouseX = m_nMouseX;
 	m_nMouseX = GET_X_LPARAM(lParam);
 	m_nMouseY = GET_Y_LPARAM(lParam);
+	if (IsStartScreenActive() && !m_pChrome->IsDragging()) {
+		if (m_pStartScreen->OnMouseMove(m_nMouseX, m_nMouseY)) this->Invalidate(FALSE);
+		return 0;
+	}
 	if (m_pChrome->IsDragging()) {
 		CPoint ptScreen(m_nMouseX, m_nMouseY);
 		ClientToScreen(&ptScreen);
@@ -1212,6 +1251,12 @@ LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	int nDelta = GET_WHEEL_DELTA_WPARAM(wParam);
 	if (m_pChrome->OnMouseWheel(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)), nDelta)) {
 		return 0; // side panel scrolled
+	}
+	if (IsStartScreenActive()) {
+		POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+		ScreenToClient(&point);
+		if (m_pStartScreen->OnMouseWheel(point.x, point.y, nDelta)) this->Invalidate(FALSE);
+		return 0;
 	}
 	if (!bCtrl && CSettingsProvider::This().NavigateWithMouseWheel() && !m_pPanelMgr->IsModalPanelShown()) {
 		if (nDelta < 0) {
@@ -1427,6 +1472,18 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 	MouseOn();
 
+	if (IsStartScreenActive()) {
+		POINT screenPoint = { nX, nY };
+		if (nX == -1 && nY == -1) ::GetCursorPos(&screenPoint);
+		POINT clientPoint = screenPoint;
+		ScreenToClient(&clientPoint);
+		if (m_pStartScreen->IsOverItem(clientPoint.x, clientPoint.y)) {
+			CStartScreen::CResult result = m_pStartScreen->OnContextMenu(m_hWnd, clientPoint.x, clientPoint.y, screenPoint);
+			HandleStartScreenAction(result.Action, result.File);
+			return 1;
+		}
+	}
+
 	if (m_pCropCtl->IsCropping()) {
 		m_pCropCtl->ShowCropContextMenu();
 		return 1;
@@ -1468,6 +1525,12 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		InsertString(nPos + 2, IDM_SHARE, _T("Share..."), bHasFileImage);
 		InsertString(nPos + 3, IDM_SHOW_METADATA, _T("Metadata..."), bHasFileImage);
 		::InsertMenu(hMenuTrackPopup, nPos + 4, MF_BYPOSITION | MF_POPUP | MF_STRING | (bHasFileImage ? 0 : MF_GRAYED), (UINT_PTR)CreateRatingMenu(), CNLS::GetString(_T("Star rating")));
+		bool bPinned = bHasFileImage && m_pFileList->Current() != NULL && CStartScreen::IsPinned(m_pFileList->Current());
+		InsertString(nPos + 5, IDM_PIN_TO_START, bPinned ? _T("Unpin from start screen") : _T("Pin to start screen"), bHasFileImage);
+	}
+	nPos = FindPos(IDM_OPEN);
+	if (nPos >= 0 && m_pChrome->IsEnabled()) {
+		InsertString(nPos + 1, IDM_START_SCREEN, _T("Start screen"), true);
 	}
 	nPos = FindPos(IDM_ABOUT);
 	if (nPos > 0) {
@@ -2421,7 +2484,11 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			}
 			break;
 		case IDM_DEFAULT_ESC:
-			if (m_bMovieMode) {
+			if (m_bStartScreen && m_pCurrentImage != NULL) {
+				// back to the image
+				m_bStartScreen = false;
+				this->Invalidate(FALSE);
+			} else if (m_bMovieMode) {
 				if (m_bAutoExit)
 					CleanupAndTerminate();
 				else
@@ -2713,6 +2780,30 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 					}
 					AfterMetadataChanged();
 				}
+			}
+			break;
+		case IDM_START_SCREEN:
+			if (m_pStartScreen == NULL && m_pChrome->IsEnabled()) {
+				m_pStartScreen = new CStartScreen(m_hWnd);
+				m_pStartScreen->SetPinShortcut(m_pKeyMap->GetKeyStringForCommand(IDM_PIN_TO_START));
+			}
+			if (m_pStartScreen != NULL) {
+				if (IsStartScreenActive() && m_pCurrentImage != NULL) {
+					m_bStartScreen = false;
+				} else {
+					m_bStartScreen = true;
+					StopMovieMode();
+					m_pStartScreen->Reload();
+				}
+				this->Invalidate(FALSE);
+			}
+			break;
+		case IDM_PIN_TO_START:
+			if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList != NULL && m_pFileList->Current() != NULL) {
+				CString sFile = m_pFileList->Current();
+				bool bPin = !CStartScreen::IsPinned(sFile);
+				CStartScreen::SetPinned(sFile, bPin);
+				m_pChrome->ShowMessage(CNLS::GetString(bPin ? _T("Pinned to the start screen") : _T("Removed from the start screen")));
 			}
 			break;
 		case IDM_SHOW_SHORTCUTS:
@@ -3036,6 +3127,8 @@ void CMainDlg::OpenFile(LPCTSTR sFileName, bool bAfterStartup) {
 	bool oOldAscending = m_pFileList->IsSortedAscending();
 	delete m_pFileList;
 	m_sStartupFile = sFileName;
+	m_bStartScreen = false;
+	m_bRecordRecent = true;
 	m_pFileList = new CFileList(m_sStartupFile, *m_pDirectoryWatcher, eOldSorting, oOldAscending, CSettingsProvider::This().WrapAroundFolder());
 	// free current image and all read ahead images
 	InitParametersForNewImage();
@@ -3877,6 +3970,11 @@ void CMainDlg::ExchangeProcessingParams() {
 }
 
 void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow) {
+	m_bStartScreen = false;
+	if (m_bRecordRecent && m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList != NULL && m_pFileList->Current() != NULL) {
+		CStartScreen::AddRecent(m_pFileList->Current());
+		m_bRecordRecent = false;
+	}
 	m_pAnnotations->Clear(); // drawings belong to the image they were made on
 	m_sMetadataFile.Empty(); // the file could have been changed
 	// undo entries of editing belong to the previous image, the file operations stay
@@ -4187,10 +4285,10 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27, MBAR_RATING = -28
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27, MBAR_RATING = -28, MBAR_START = -29, MBAR_PIN = -30
 };
 
-static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, IDM_RELOAD, MBAR_SEPARATOR,
+static const int s_menuBarFile[] = { IDM_OPEN, MBAR_START, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, MBAR_PIN, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { MBAR_UNDO, MBAR_SEPARATOR, IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
@@ -4373,6 +4471,13 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SCREENSHOT, _T("Take screenshot"), false, true);
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SCREENSHOT_TEXT, _T("Copy text from screen"), false, true);
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SCREENSHOT_TRAY, _T("Screenshot tool in the notification area"), false, true);
+				break;
+			case MBAR_START:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_START_SCREEN, _T("Start screen"), IsStartScreenActive(), m_pChrome->IsEnabled());
+				break;
+			case MBAR_PIN:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_PIN_TO_START, _T("Pin to start screen"),
+					bHasFileImage && m_pFileList->Current() != NULL && CStartScreen::IsPinned(m_pFileList->Current()), bHasFileImage);
 				break;
 			case MBAR_METADATA:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_SHOW_METADATA, _T("Metadata..."), false, bHasFileImage);
@@ -4693,6 +4798,10 @@ void CMainDlg::AnimateTransition() {
 }
 
 void CMainDlg::CleanupAndTerminate() {
+	// the image viewed last is the first on the start screen
+	if (m_pStartScreen != NULL && m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList != NULL && m_pFileList->Current() != NULL) {
+		CStartScreen::AddRecent(m_pFileList->Current());
+	}
 	StopMovieMode();
 	StopAnimation();
 	delete m_pJPEGProvider; // delete this early to properly shut down the loading threads
@@ -5418,6 +5527,56 @@ bool CMainDlg::SwapFileData(const CUndoEntry& entry, bool bRedo) {
 	(bRedo ? m_undoStack : m_redoStack).push_back(other);
 	if (entry.File.CompareNoCase(CurrentFileName(false)) == 0) AfterMetadataChanged();
 	return true;
+}
+
+bool CMainDlg::IsStartScreenActive() {
+	if (m_pStartScreen == NULL || m_bMovieMode) return false;
+	return m_bStartScreen || (m_pCurrentImage == NULL && m_sStartupFile.IsEmpty());
+}
+
+void CMainDlg::HandleStartScreenAction(int nAction, const CString& sFile) {
+	switch (nAction) {
+		case CStartScreen::ACTION_OPEN_FILE:
+			OpenFile(sFile, m_pCurrentImage == NULL);
+			break;
+		case CStartScreen::ACTION_OPEN_DIALOG:
+			OpenFileWithDialog(false, m_pCurrentImage == NULL);
+			break;
+		case CStartScreen::ACTION_OPEN_FOLDER:
+			OpenFolderWithDialog();
+			break;
+		case CStartScreen::ACTION_PASTE:
+			ExecuteCommand(IDM_PASTE);
+			break;
+		case CStartScreen::ACTION_SCREENSHOT:
+			ExecuteCommand(IDM_SCREENSHOT);
+			break;
+	}
+}
+
+void CMainDlg::OpenFolderWithDialog() {
+	IFileOpenDialog* pDialog = NULL;
+	if (FAILED(::CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDialog)))) return;
+	DWORD nOptions = 0;
+	pDialog->GetOptions(&nOptions);
+	pDialog->SetOptions(nOptions | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+	CString sFolder;
+	if (SUCCEEDED(pDialog->Show(m_hWnd))) {
+		IShellItem* pItem = NULL;
+		if (SUCCEEDED(pDialog->GetResult(&pItem))) {
+			PWSTR pPath = NULL;
+			if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pPath))) {
+				sFolder = pPath;
+				::CoTaskMemFree(pPath);
+			}
+			pItem->Release();
+		}
+	}
+	pDialog->Release();
+	if (!sFolder.IsEmpty()) {
+		if (sFolder.Right(1) != _T("\\")) sFolder += _T("\\");
+		OpenFile(sFolder, m_pCurrentImage == NULL);
+	}
 }
 
 void CMainDlg::Redo() {

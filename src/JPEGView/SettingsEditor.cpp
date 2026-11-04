@@ -279,7 +279,7 @@ static LPCTSTR s_commonKeys[] = {
 	_T("Language"), _T("ChromeTheme"), _T("ShowToolbar"), _T("ShowStatusBar"), _T("ShowSidePanel"), _T("ShowFilmstrip"), _T("SidePanelWidth"),
 	_T("SingleInstance"), _T("DefaultWindowRect"), _T("NavigateWithMouseWheel"), _T("BackgroundColor"), _T("HighQualityResampling"),
 	_T("JPEGSaveQuality"), _T("WEBPSaveQuality"), _T("DeleteConfirmation"), _T("ScreenshotHotkey"), _T("ScreenshotTextHotkey"),
-	_T("ScreenshotFolder"), _T("OcrLanguage"), _T("ConvertOutputFolder"),
+	_T("ScreenshotFolder"), _T("OcrLanguage"), _T("ConvertOutputFolder"), _T("ShowStartScreen"),
 };
 
 struct CEditor {
@@ -1008,6 +1008,7 @@ static struct { LPCTSTR Name; LPCTSTR Text; } s_commandTexts[] = {
 	{ _T("IDM_CHANGESIZE"), _T("Resize image...") }, { _T("IDM_CONVERT_MENU"), _T("Convert to") },
 	{ _T("IDM_TOGGLE_SIDEPANEL_COLLAPSED"), _T("Collapse the side panel") }, { _T("IDM_EXPLORER_CONVERT_MENU"), _T("'Convert to' in the Explorer context menu") },
 	{ _T("IDM_HELP"), _T("Keyboard shortcuts...") },
+	{ _T("IDM_START_SCREEN"), _T("Start screen") }, { _T("IDM_PIN_TO_START"), _T("Pin to start screen") },
 	{ _T("IDM_SAVE_SCREEN"), _T("Save as shown on screen...") },
 	{ _T("IDM_SAVE_ALLOW_NO_PROMPT"), _T("Save") },
 	{ _T("IDM_TOGGLE"), _T("Switch between this and the marked image") },
@@ -1265,11 +1266,15 @@ static bool SaveKeyMap(CShortcutEditor& editor) {
 	fputs("// This file defines the key mapping for JPEGView, it was written by the keyboard shortcut editor (Tools > Settings).\n", pFile);
 	fputs("// See KeyMap-README.html for more information on how to customize this file.\n\n", pFile);
 	for (const CString& sCommand : editor.Commands) {
+		bool bHasKey = false;
 		for (auto& entry : editor.Mapping) {
 			if (entry.second != sCommand) continue;
 			CStringA sKey(entry.first), sName(entry.second);
 			fprintf(pFile, "%-24s%s\n", (LPCSTR)sKey, (LPCSTR)sName);
+			bHasKey = true;
 		}
+		// named without key, the default key of a new command is not added then
+		if (!bHasKey) fprintf(pFile, "// no shortcut: %s\n", (LPCSTR)CStringA(sCommand));
 	}
 	fclose(pFile);
 	return true;

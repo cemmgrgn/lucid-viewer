@@ -75,6 +75,9 @@
     <ClCompile Include="UITest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StartScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Share.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -366,6 +369,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UITest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StartScreen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Share.h">

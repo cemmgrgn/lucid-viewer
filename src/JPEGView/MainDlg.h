@@ -447,6 +447,13 @@ private:
 	void Undo();
 	void Redo();
 	bool SwapFileData(const CUndoEntry& entry, bool bRedo = false);
+	// Start screen (gallery) shown when no image is open or called with IDM_START_SCREEN
+	class CStartScreen* m_pStartScreen;
+	bool m_bStartScreen;  // shown over the open image
+	bool m_bRecordRecent; // the next loaded image is added to the last opened ones
+	bool IsStartScreenActive();
+	void HandleStartScreenAction(int nAction, const CString& sFile);
+	void OpenFolderWithDialog();
 	void ExecuteCommandInternal(int nCommand);
 	// Sub menu for sorting and filtering by the star rating
 	HMENU CreateRatingMenu();

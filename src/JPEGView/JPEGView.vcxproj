@@ -315,6 +315,7 @@
     <ClCompile Include="Metadata.cpp" />
     <ClCompile Include="DarkUI.cpp" />
     <ClCompile Include="UITest.cpp" />
+    <ClCompile Include="StartScreen.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="SettingsEditor.cpp" />
     <ClCompile Include="Share.cpp">
@@ -426,6 +427,7 @@
     <ClInclude Include="Metadata.h" />
     <ClInclude Include="DarkUI.h" />
     <ClInclude Include="UITest.h" />
+    <ClInclude Include="StartScreen.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="SettingsEditor.h" />
     <ClInclude Include="Share.h" />

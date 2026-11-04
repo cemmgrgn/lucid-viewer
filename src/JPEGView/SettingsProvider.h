@@ -148,6 +148,7 @@ public:
 	LPCTSTR ScreenshotTextHotkey() { return m_sScreenshotTextHotkey; }
 	bool ShowFilmstrip() { return m_bShowFilmstrip; }
 	bool EscapeClosesWindow() { return m_bEscapeClosesWindow; }
+	bool ShowStartScreen() { return m_bShowStartScreen; }
 	void SaveShowFilmstrip(bool bShow);
 	int SidePanelTab() { return m_nSidePanelTab; }
 	void SaveSidePanelTab(int nTab);
@@ -342,6 +343,7 @@ private:
 	CString m_sScreenshotTextHotkey;
 	bool m_bShowFilmstrip;
 	bool m_bEscapeClosesWindow;
+	bool m_bShowStartScreen;
 	int m_nSidePanelTab;
 
 	std::list<CUserCommand*> m_userCommands;

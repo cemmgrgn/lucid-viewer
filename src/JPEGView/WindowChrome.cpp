@@ -297,6 +297,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	struct ButtonDef { wchar_t Glyph; LPCTSTR Text; int Command; LPCTSTR Tooltip; bool Mirror; bool NeedsImage; };
 	const ButtonDef buttons[] = {
 		{ 0, _T(""), 0, NULL, false, false },
+		{ 0xE80F, _T("Home"), IDM_START_SCREEN, _T("Start screen"), false, false },
 		{ 0xE8E5, _T("Open"), IDM_OPEN, _T("Open image..."), false, false },
 		{ 0xE74E, _T("Save"), IDM_SAVE, _T("Save processed image..."), false, true },
 		{ 0xE8AB, _T("Convert"), IDM_CONVERT_MENU, _T("Convert to"), false, true },

@@ -167,11 +167,13 @@ CKeyMap::CKeyMap() {
 	// TODO: ParseCommandLineForKeyMapFile or something... where you can specify a custom full file path name for a keymap you'd like to use instead of the default search order
 
 	// check if the use directory keymap.txt exists
+	bool bUserFile = true;
 	fkm_ptr = _tfopen(CString(Helpers::JPEGViewAppDataPath()) + KEYMAP_USER_FILE_NAME, _T("r"));
 	if (fkm_ptr == NULL) {
 		// the appdata one doesn't exist, try the local directory
 		fkm_ptr = _tfopen(exe_path + KEYMAP_USER_FILE_NAME, _T("r"));
 		if (fkm_ptr == NULL) {
+			bUserFile = false;
 			// the user one doesn't exist either, load the default file (if that doesn't exist either someone messed up)
 			fkm_ptr = _tfopen(exe_path + KEYMAP_DEFAULT_FILE_NAME, _T("r"));
 		}
@@ -196,7 +198,7 @@ CKeyMap::CKeyMap() {
 	const int BUFF_LEN = 256;
 	TCHAR lineBuff[BUFF_LEN];
 
-	const int SYMBOL_TABLE_LEN = 4096;
+	const int SYMBOL_TABLE_LEN = 16384;
 	TCHAR symbolTable[SYMBOL_TABLE_LEN];
 	TCHAR* pSymbolTableEnd = &(symbolTable[SYMBOL_TABLE_LEN - 1]);
 	TCHAR* pSymbolTable = &(symbolTable[0]);
@@ -241,6 +243,33 @@ CKeyMap::CKeyMap() {
 		int nKeyCode = _ParseKeys(sLine);
 		if (nKeyCode == 0) continue;
 		m_keyMap[nKeyCode] = nCommandId;
+	}
+
+	// A user key map is older than new commands: their default keys are added if the user file does not name the command
+	// (the shortcut editor writes the commands without shortcut as comment) and the key is free
+	if (bUserFile) {
+		CString sUserText;
+		rewind(fkm_ptr);
+		while (_fgetts(lineBuff, BUFF_LEN, fkm_ptr) != NULL) sUserText += lineBuff;
+		FILE* fdefault_ptr = _tfopen(exe_path + KEYMAP_DEFAULT_FILE_NAME, _T("r"));
+		if (fdefault_ptr != NULL) {
+			const int FIRST_NEW_COMMAND = 16400;
+			while (_fgetts(lineBuff, BUFF_LEN, fdefault_ptr) != NULL) {
+				LPTSTR sLine = _SkipWhiteSpace(lineBuff);
+				if (*sLine == 0 || _IsComment(sLine) || _tcsncmp(sLine, _T("#define"), 7) == 0) continue;
+				LPTSTR sCommandId = _Parse(sLine);
+				if (*sCommandId == 0) continue;
+				int nCommandId = _FindCommandId(m_symbolMap, sCommandId);
+				if (nCommandId < FIRST_NEW_COMMAND) continue;
+				CString sCommand(sCommandId);
+				sCommand.Trim();
+				if (sUserText.Find(sCommand) >= 0) continue;
+				int nKeyCode = _ParseKeys(sLine);
+				if (nKeyCode == 0 || m_keyMap.find(nKeyCode) != m_keyMap.end()) continue;
+				m_keyMap[nKeyCode] = nCommandId;
+			}
+			fclose(fdefault_ptr);
+		}
 	}
 
 	AddDefaultEscapeHandling();
