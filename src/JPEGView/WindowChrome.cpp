@@ -1898,6 +1898,7 @@ int CWindowChrome::PaintDrawTab(CDC& dc, int nWidth, int nY) {
 		{ _T("Text"), CAnnotations::TOOL_TEXT, _T("Click on the image to write a text") },
 		{ _T("Remove color"), CAnnotations::TOOL_REMOVE_COLOR, _T("Click on a color to make the connected area transparent, the width sets the tolerance") },
 		{ _T("Pixelate"), CAnnotations::TOOL_PIXELATE, _T("Hides an area (faces, names, numbers) with large blocks, drag a rectangle") },
+		{ _T("Select / move"), CAnnotations::TOOL_SELECT, _T("Click a drawing or the signature: drag to move it, drag a corner to resize it, Del removes it") },
 		{ _T("Off"), CAnnotations::TOOL_NONE, _T("No tool, the mouse pans and selects again") },
 	};
 	int nColumnWidth = (nInnerWidth - 2 * S(6)) / 3;

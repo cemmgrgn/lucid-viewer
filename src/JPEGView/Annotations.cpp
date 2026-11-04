@@ -4,6 +4,7 @@
 #include "NLS.h"
 #include <gdiplus.h>
 #include <math.h>
+#include <algorithm>
 
 static Gdiplus::Color ToColor(COLORREF color, BYTE nAlpha) {
 	return Gdiplus::Color(nAlpha, GetRValue(color), GetGValue(color), GetBValue(color));
@@ -14,10 +15,15 @@ CAnnotations::CAnnotations() {
 	m_color = RGB(230, 40, 40);
 	m_nWidth = 4;
 	m_bDrawing = false;
+	m_nNextGroup = 1;
+	m_nTransformHandle = 0;
+	m_fStartX = m_fStartY = m_fStartLeft = m_fStartTop = m_fStartRight = m_fStartBottom = 0;
+	m_fViewScale = 1.0f;
+	m_bRenderSelection = true;
 }
 
 void CAnnotations::BeginShape(float fX, float fY, double dZoom) {
-	if (m_eTool == TOOL_NONE || m_eTool == TOOL_TEXT || m_eTool == TOOL_REMOVE_COLOR) {
+	if (m_eTool == TOOL_NONE || m_eTool == TOOL_TEXT || m_eTool == TOOL_REMOVE_COLOR || m_eTool == TOOL_SELECT) {
 		return;
 	}
 	CShape shape;
@@ -29,7 +35,9 @@ void CAnnotations::BeginShape(float fX, float fY, double dZoom) {
 	shape.Points.push_back(fY);
 	shape.Points.push_back(fX);
 	shape.Points.push_back(fY);
+	shape.Group = m_nNextGroup++;
 	m_shapes.push_back(shape);
+	m_selection.clear();
 	m_bDrawing = true;
 }
 
@@ -68,6 +76,7 @@ void CAnnotations::AddText(float fX, float fY, double dZoom, LPCTSTR sText) {
 	shape.Points.push_back(fX);
 	shape.Points.push_back(fY);
 	shape.Text = sText;
+	shape.Group = m_nNextGroup++;
 	m_shapes.push_back(shape);
 }
 
@@ -76,11 +85,128 @@ void CAnnotations::Undo() {
 		m_shapes.pop_back();
 	}
 	m_bDrawing = false;
+	ClearSelection();
 }
 
 void CAnnotations::Clear() {
 	m_shapes.clear();
 	m_bDrawing = false;
+	ClearSelection();
+}
+
+void CAnnotations::GetShapeBounds(const CShape& shape, float& fLeft, float& fTop, float& fRight, float& fBottom) {
+	const std::vector<float>& p = shape.Points;
+	fLeft = fTop = 1e30f;
+	fRight = fBottom = -1e30f;
+	for (size_t i = 0; i + 1 < p.size(); i += 2) {
+		fLeft = min(fLeft, p[i]); fRight = max(fRight, p[i]);
+		fTop = min(fTop, p[i + 1]); fBottom = max(fBottom, p[i + 1]);
+	}
+	if (shape.Tool == TOOL_TEXT && !p.empty()) {
+		// the text starts at the point, its size is estimated from the font size
+		fRight = p[0] + shape.Text.GetLength() * shape.Width * 0.62f;
+		fBottom = p[1] + shape.Width * 1.3f;
+	} else {
+		float fHalf = shape.Width / 2;
+		fLeft -= fHalf; fTop -= fHalf; fRight += fHalf; fBottom += fHalf;
+	}
+}
+
+bool CAnnotations::GetSelectionBounds(float& fLeft, float& fTop, float& fRight, float& fBottom) {
+	fLeft = fTop = 1e30f;
+	fRight = fBottom = -1e30f;
+	for (int nIndex : m_selection) {
+		if (nIndex < 0 || nIndex >= (int)m_shapes.size()) continue;
+		float l, t, r, b;
+		GetShapeBounds(m_shapes[nIndex], l, t, r, b);
+		fLeft = min(fLeft, l); fTop = min(fTop, t); fRight = max(fRight, r); fBottom = max(fBottom, b);
+	}
+	return fRight >= fLeft;
+}
+
+bool CAnnotations::SelectAt(float fX, float fY) {
+	m_selection.clear();
+	float fTolerance = 6.0f / m_fViewScale;
+	for (int i = (int)m_shapes.size() - 1; i >= 0; i--) {
+		float l, t, r, b;
+		GetShapeBounds(m_shapes[i], l, t, r, b);
+		if (fX >= l - fTolerance && fX <= r + fTolerance && fY >= t - fTolerance && fY <= b + fTolerance) {
+			int nGroup = m_shapes[i].Group;
+			for (int j = 0; j < (int)m_shapes.size(); j++) {
+				if (m_shapes[j].Group == nGroup) m_selection.push_back(j);
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+void CAnnotations::SelectLastGroup() {
+	m_selection.clear();
+	if (m_shapes.empty()) return;
+	int nGroup = m_shapes.back().Group;
+	for (int j = 0; j < (int)m_shapes.size(); j++) {
+		if (m_shapes[j].Group == nGroup) m_selection.push_back(j);
+	}
+}
+
+int CAnnotations::HitTestSelection(float fX, float fY) {
+	float l, t, r, b;
+	if (m_selection.empty() || !GetSelectionBounds(l, t, r, b)) return 0;
+	float fHandle = 8.0f / m_fViewScale;
+	float corners[4][2] = { { l, t }, { r, t }, { r, b }, { l, b } };
+	for (int i = 0; i < 4; i++) {
+		if (fabs(fX - corners[i][0]) <= fHandle && fabs(fY - corners[i][1]) <= fHandle) return i + 1;
+	}
+	return (fX >= l && fX <= r && fY >= t && fY <= b) ? 5 : 0;
+}
+
+void CAnnotations::BeginTransform(int nHandle, float fX, float fY) {
+	if (m_selection.empty() || !GetSelectionBounds(m_fStartLeft, m_fStartTop, m_fStartRight, m_fStartBottom)) return;
+	m_nTransformHandle = nHandle;
+	m_fStartX = fX;
+	m_fStartY = fY;
+	m_transformStart.clear();
+	for (int nIndex : m_selection) m_transformStart.push_back(m_shapes[nIndex]);
+}
+
+void CAnnotations::ContinueTransform(float fX, float fY) {
+	if (m_nTransformHandle == 0 || m_transformStart.size() != m_selection.size()) return;
+	float fDX = fX - m_fStartX, fDY = fY - m_fStartY;
+	float fAnchorX = 0, fAnchorY = 0, fScale = 1.0f;
+	if (m_nTransformHandle >= 1 && m_nTransformHandle <= 4) {
+		// the opposite corner stays, the proportions are kept
+		bool bLeft = m_nTransformHandle == 1 || m_nTransformHandle == 4, bTop = m_nTransformHandle == 1 || m_nTransformHandle == 2;
+		fAnchorX = bLeft ? m_fStartRight : m_fStartLeft;
+		fAnchorY = bTop ? m_fStartBottom : m_fStartTop;
+		float fCornerX = bLeft ? m_fStartLeft : m_fStartRight, fCornerY = bTop ? m_fStartTop : m_fStartBottom;
+		float fScaleX = fabs(fCornerX - fAnchorX) > 0.5f ? fabs(fX - fAnchorX) / fabs(fCornerX - fAnchorX) : 1.0f;
+		float fScaleY = fabs(fCornerY - fAnchorY) > 0.5f ? fabs(fY - fAnchorY) / fabs(fCornerY - fAnchorY) : 1.0f;
+		fScale = max(0.05f, max(fScaleX, fScaleY));
+	}
+	for (size_t n = 0; n < m_selection.size(); n++) {
+		const CShape& start = m_transformStart[n];
+		CShape& shape = m_shapes[m_selection[n]];
+		for (size_t i = 0; i + 1 < start.Points.size(); i += 2) {
+			if (m_nTransformHandle == 5) {
+				shape.Points[i] = start.Points[i] + fDX;
+				shape.Points[i + 1] = start.Points[i + 1] + fDY;
+			} else {
+				shape.Points[i] = fAnchorX + (start.Points[i] - fAnchorX) * fScale;
+				shape.Points[i + 1] = fAnchorY + (start.Points[i + 1] - fAnchorY) * fScale;
+			}
+		}
+		shape.Width = (m_nTransformHandle == 5) ? start.Width : max(0.5f, start.Width * fScale);
+	}
+}
+
+void CAnnotations::DeleteSelection() {
+	std::vector<int> selection = m_selection;
+	std::sort(selection.begin(), selection.end());
+	for (int i = (int)selection.size() - 1; i >= 0; i--) {
+		if (selection[i] >= 0 && selection[i] < (int)m_shapes.size()) m_shapes.erase(m_shapes.begin() + selection[i]);
+	}
+	ClearSelection();
 }
 
 void CAnnotations::Render(Gdiplus::Graphics& graphics) {
@@ -131,6 +257,22 @@ void CAnnotations::Render(Gdiplus::Graphics& graphics) {
 			graphics.DrawLine(&pen, p[0], p[1], p[2], p[3]);
 		}
 	}
+	float l, t, r, b;
+	if (m_bRenderSelection && !m_selection.empty() && GetSelectionBounds(l, t, r, b)) {
+		// dashed frame with corner handles, sizes in screen pixels
+		float fPixel = 1.0f / m_fViewScale;
+		Gdiplus::Pen framePen(Gdiplus::Color(255, 0, 120, 215), 1.5f * fPixel);
+		framePen.SetDashStyle(Gdiplus::DashStyleDash);
+		graphics.DrawRectangle(&framePen, l, t, r - l, b - t);
+		Gdiplus::SolidBrush handleBrush(Gdiplus::Color(255, 255, 255, 255));
+		Gdiplus::Pen handlePen(Gdiplus::Color(255, 0, 120, 215), 1.5f * fPixel);
+		float fHandle = 5.0f * fPixel;
+		float corners[4][2] = { { l, t }, { r, t }, { r, b }, { l, b } };
+		for (auto& corner : corners) {
+			graphics.FillRectangle(&handleBrush, corner[0] - fHandle, corner[1] - fHandle, 2 * fHandle, 2 * fHandle);
+			graphics.DrawRectangle(&handlePen, corner[0] - fHandle, corner[1] - fHandle, 2 * fHandle, 2 * fHandle);
+		}
+	}
 }
 
 bool CAnnotations::BurnInto(void* pPixels, int nWidth, int nHeight) {
@@ -144,7 +286,9 @@ bool CAnnotations::BurnInto(void* pPixels, int nWidth, int nHeight) {
 	}
 	PixelateInto(pPixels, nWidth, nHeight, 0, 0);
 	Gdiplus::Graphics graphics(&bitmap);
+	m_bRenderSelection = false; // the selection frame is not part of the image
 	Render(graphics);
+	m_bRenderSelection = true;
 	graphics.Flush(Gdiplus::FlushIntentionSync);
 	return true;
 }
@@ -284,7 +428,9 @@ bool CAnnotations::InsertSignature(float fCenterX, float fCenterY, float fWidth)
 	}
 	// the stored coordinates have the larger side of the signature as unit
 	float fScale = fWidth / max(0.01f, fMaxX);
+	int nGroup = m_nNextGroup++;
 	for (CShape& stroke : strokes) {
+		stroke.Group = nGroup;
 		stroke.Width = max(1.0f, stroke.Width * fScale);
 		for (size_t i = 0; i + 1 < stroke.Points.size(); i += 2) {
 			stroke.Points[i] = fCenterX + (stroke.Points[i] - fMaxX / 2) * fScale;

@@ -326,6 +326,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pHelpDlg = NULL;
 	m_pChrome = NULL;
 	m_pAnnotations = new CAnnotations();
+	m_pAnnotations->SetTool(CAnnotations::TOOL_NONE); // the draw tab can be open at the start, clicks must not draw then
 	m_nRating = -1;
 	m_bCropTool = false;
 	m_bDragOutPending = false;
@@ -834,6 +835,21 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	if (IsDrawMode() && !isCropping) {
 		float fX = (float)pointClicked.x, fY = (float)pointClicked.y;
 		ScreenToImage(fX, fY);
+		if (m_pAnnotations->GetTool() == CAnnotations::TOOL_SELECT) {
+			int nHandle = m_pAnnotations->HitTestSelection(fX, fY);
+			if (nHandle == 0 && m_pAnnotations->SelectAt(fX, fY)) {
+				nHandle = 5;
+			}
+			if (nHandle != 0) {
+				PushUndo(false);
+				m_pAnnotations->BeginTransform(nHandle, fX, fY);
+			} else {
+				::ReleaseCapture();
+			}
+			Invalidate(FALSE);
+			m_pChrome->Paint();
+			return 0;
+		}
 		if (m_pAnnotations->GetTool() == CAnnotations::TOOL_REMOVE_COLOR) {
 			::ReleaseCapture();
 			RemoveColorAt(fX, fY);
@@ -902,6 +918,10 @@ LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	if (m_pChrome->IsDragging()) {
 		// slider of the side panel, the drag was started in the non-client area
 		m_pChrome->EndDrag();
+	} else if (m_pAnnotations->IsTransforming()) {
+		m_pAnnotations->EndTransform();
+		::ReleaseCapture();
+		m_pChrome->Paint();
 	} else if (m_pAnnotations->IsDrawing()) {
 		m_pAnnotations->EndShape();
 		CRect pixelateRect;
@@ -1126,6 +1146,18 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 		return 0;
 	}
 	m_bDragOutPending = false;
+	if (m_pAnnotations->IsTransforming() || (IsDrawMode() && m_pAnnotations->GetTool() == CAnnotations::TOOL_SELECT)) {
+		float fX = (float)m_nMouseX, fY = (float)m_nMouseY;
+		ScreenToImage(fX, fY);
+		if (m_pAnnotations->IsTransforming()) {
+			m_pAnnotations->ContinueTransform(fX, fY);
+			Invalidate(FALSE);
+		}
+		int nHandle = m_pAnnotations->HitTestSelection(fX, fY);
+		::SetCursor(::LoadCursor(NULL, (nHandle == 1 || nHandle == 3) ? IDC_SIZENWSE : (nHandle == 2 || nHandle == 4) ? IDC_SIZENESW :
+			(nHandle == 5) ? IDC_SIZEALL : IDC_ARROW));
+		if (m_pAnnotations->IsTransforming()) return 0;
+	}
 	if (m_pAnnotations->IsDrawing()) {
 		float fX = (float)m_nMouseX, fY = (float)m_nMouseY;
 		ScreenToImage(fX, fY);
@@ -1201,6 +1233,19 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOO
 		return 1; // a panel has handled the key
 	}
 	bool bHandled = false;
+	if (IsDrawMode() && m_pAnnotations->GetTool() == CAnnotations::TOOL_SELECT && m_pAnnotations->HasSelection() &&
+		(wParam == VK_DELETE || wParam == VK_ESCAPE)) {
+		// Del removes the selected drawing (not the file), Esc ends the selection
+		if (wParam == VK_DELETE) {
+			PushUndo(false);
+			m_pAnnotations->DeleteSelection();
+		} else {
+			m_pAnnotations->ClearSelection();
+		}
+		Invalidate(FALSE);
+		m_pChrome->Paint();
+		return 1;
+	}
 	if (wParam == VK_ESCAPE && CloseHelpDlg()) {
 		bHandled = true;
 	} else if (wParam == VK_ESCAPE && m_pCropCtl->IsCropping()) {
@@ -1402,6 +1447,35 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		}
 	}
 
+	// functions of the new user interface
+	auto FindPos = [&](UINT nCommand) {
+		for (int i = 0; i < ::GetMenuItemCount(hMenuTrackPopup); i++) if (::GetMenuItemID(hMenuTrackPopup, i) == nCommand) return i;
+		return -1;
+	};
+	auto InsertString = [&](int nPos, UINT nCommand, LPCTSTR sEnglish, bool bEnabled) {
+		CString sText = CNLS::GetString(sEnglish);
+		CString sKey = m_pKeyMap->GetKeyStringForCommand(nCommand);
+		if (!sKey.IsEmpty()) sText += _T("\t") + sKey;
+		::InsertMenu(hMenuTrackPopup, nPos, MF_BYPOSITION | MF_STRING | (bEnabled ? 0 : MF_GRAYED), nCommand, sText);
+	};
+	bool bHasFileImage = m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && !m_bMovieMode;
+	InsertString(0, IDM_UNDO, _T("Undo"), CanUndo());
+	InsertString(1, IDM_REDO, _T("Redo"), CanRedo());
+	::InsertMenu(hMenuTrackPopup, 2, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+	int nPos = FindPos(IDM_COPY_PATH);
+	if (nPos >= 0) {
+		InsertString(nPos + 1, IDM_OCR_COPY_TEXT, _T("Copy text from image"), m_pCurrentImage != NULL);
+		InsertString(nPos + 2, IDM_SHARE, _T("Share..."), bHasFileImage);
+		InsertString(nPos + 3, IDM_SHOW_METADATA, _T("Metadata..."), bHasFileImage);
+		::InsertMenu(hMenuTrackPopup, nPos + 4, MF_BYPOSITION | MF_POPUP | MF_STRING | (bHasFileImage ? 0 : MF_GRAYED), (UINT_PTR)CreateRatingMenu(), CNLS::GetString(_T("Star rating")));
+	}
+	nPos = FindPos(IDM_ABOUT);
+	if (nPos > 0) {
+		// the old settings sub menu is before 'About'
+		InsertString(nPos - 1, IDM_SETTINGS, _T("Settings..."), true);
+		InsertString(nPos, IDM_SHOW_SHORTCUTS, _T("Keyboard shortcuts..."), true);
+	}
+
 	int nMenuCmd = TrackPopupMenu(CPoint(nX, nY), hMenuTrackPopup);
 	ExecuteCommand(nMenuCmd);
 
@@ -1542,6 +1616,12 @@ HMENU CMainDlg::LoadPreparedContextMenu(HMENU& hMenuRoot) {
 		::DeleteMenu(hMenuTrackPopup, 0, MF_BYPOSITION);
 	}
 
+	// the file name over the image and the navigation panel are only used without status bar and toolbar (full screen)
+	if (m_pChrome->IsEnabled() && !m_bFullScreenMode && m_pChrome->GetShowStatusBar()) {
+		::DeleteMenu(hMenuTrackPopup, IDM_SHOW_FILENAME, MF_BYCOMMAND);
+	}
+	bool bRemoveNavPanel = m_pChrome->IsEnabled() && !m_bFullScreenMode && m_pChrome->GetShowToolbar();
+
 	// Toolbar, status bar and side panel after 'Show navigation panel', so the toolbar can be switched on again from here.
 	// Inserted last as the code above uses fixed menu positions.
 	for (int i = 0; i < ::GetMenuItemCount(hMenuTrackPopup); i++) {
@@ -1552,6 +1632,7 @@ HMENU CMainDlg::LoadPreparedContextMenu(HMENU& hMenuRoot) {
 				IDM_TOGGLE_STATUSBAR, CNLS::GetString(_T("Status bar")));
 			::InsertMenu(hMenuTrackPopup, i + 1, MF_BYPOSITION | MF_STRING | (m_pChrome->GetShowToolbar() ? MF_CHECKED : 0),
 				IDM_TOGGLE_TOOLBAR, CNLS::GetString(_T("Toolbar")));
+			if (bRemoveNavPanel) ::DeleteMenu(hMenuTrackPopup, i, MF_BYPOSITION);
 			break;
 		}
 	}
@@ -1657,6 +1738,13 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 	InvalidateHelpDlg();
 	switch (nCommand) {
 		case IDM_HELP:
+			// the old help window listed the shortcuts of the old version, the shortcut page shows the current ones
+			MouseOn();
+			if (SettingsEditor::EditShortcuts(m_hWnd)) {
+				ApplyChangedSettings(std::vector<CString>(), true);
+			}
+			break;
+		case IDM_HELP + 100000:
 			if (m_pHelpDlg == NULL || m_pHelpDlg->IsDestroyed()) {
 				delete m_pHelpDlg;
 				m_pHelpDlg = new CHelpDlg(this);
@@ -2291,9 +2379,11 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 				AdjustWindowToImage(false);
 				break;
 			}
-		case IDM_EDIT_GLOBAL_CONFIG:
 		case IDM_EDIT_USER_CONFIG:
-			EditINIFile(nCommand == IDM_EDIT_GLOBAL_CONFIG);
+			ExecuteCommandInternal(IDM_SETTINGS); // the settings window has all settings of the user INI file
+			break;
+		case IDM_EDIT_GLOBAL_CONFIG:
+			EditINIFile(true);
 			break;
 		case IDM_UPDATE_USER_CONFIG:
 			if (::MessageBox(m_hWnd, CString(CNLS::GetString(_T("Update user settings with new settings from settings template file?"))) + _T('\n') +
@@ -2341,7 +2431,16 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 					CleanupAndTerminate();
 				else
 					StopAnimation(); // stop any running animation
-			} else {
+			} else if (m_bCompareMode) {
+				ExecuteCommandInternal(IDM_COMPARE_BEFORE_AFTER); // leaves the comparison
+			} else if (m_bCropTool) {
+				ExecuteCommandInternal(IDM_TOGGLE_CROP_TOOL);
+			} else if (IsDrawMode()) {
+				m_pAnnotations->SetTool(CAnnotations::TOOL_NONE);
+				m_pChrome->Paint();
+			} else if (m_bFullScreenMode && m_pChrome->IsEnabled() && !CSettingsProvider::This().EscapeClosesWindow()) {
+				ExecuteCommandInternal(IDM_FULL_SCREEN_MODE);
+			} else if (!m_pChrome->IsEnabled() || CSettingsProvider::This().EscapeClosesWindow()) {
 				CleanupAndTerminate();
 			}
 			break;
@@ -2767,6 +2866,9 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			break;
 		case IDM_TOGGLE_DRAWPANEL:
 			if (m_pChrome->IsEnabled()) {
+				if (!m_pChrome->IsDrawTabShown() && m_pAnnotations->GetTool() == CAnnotations::TOOL_NONE) {
+					m_pAnnotations->SetTool(CAnnotations::TOOL_PEN); // the draw button starts drawing
+				}
 				m_pChrome->ShowSideTab(m_pChrome->IsDrawTabShown() ? CWindowChrome::TAB_INFO : CWindowChrome::TAB_DRAW);
 				Invalidate(FALSE);
 			}
@@ -2803,6 +2905,11 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			if (m_pCurrentImage != NULL) PushUndo(false);
 			if (m_pCurrentImage != NULL && m_pAnnotations->InsertSignature(m_pCurrentImage->OrigWidth() / 2.0f,
 				m_pCurrentImage->OrigHeight() / 2.0f, m_pCurrentImage->OrigWidth() / 4.0f)) {
+				// the signature is selected: it can be moved and resized at once
+				m_pAnnotations->SetTool(CAnnotations::TOOL_SELECT);
+				m_pAnnotations->SelectLastGroup();
+				if (!m_pChrome->IsDrawTabShown()) m_pChrome->ShowSideTab(CWindowChrome::TAB_DRAW);
+				m_pChrome->ShowMessage(CNLS::GetString(_T("Drag the signature to move it, drag a corner to resize it.")));
 				Invalidate(FALSE);
 				m_pChrome->Paint();
 			}
@@ -4156,6 +4263,18 @@ static void RemoveSurplusSeparators(HMENU hMenu) {
 	}
 }
 
+HMENU CMainDlg::CreateRatingMenu() {
+	HMENU hRatingMenu = ::CreatePopupMenu();
+	bool bHasFolder = m_pFileList != NULL && m_pFileList->Size() > 0;
+	AppendMenuString(m_pKeyMap, hRatingMenu, IDM_SORT_RATING, _T("Sort by star rating"), m_pFileList != NULL && m_pFileList->GetSorting() == Helpers::FS_Rating, bHasFolder);
+	::AppendMenu(hRatingMenu, MF_SEPARATOR, 0, NULL);
+	LPCTSTR filters[6] = { _T("All images"), _T("1 star or more"), _T("2 stars or more"), _T("3 stars or more"), _T("4 stars or more"), _T("Only 5 stars") };
+	for (int i = 0; i <= 5; i++) {
+		AppendMenuString(m_pKeyMap, hRatingMenu, IDM_RATING_FILTER_0 + i, filters[i], CFileList::GetMinRating() == i, bHasFolder);
+	}
+	return hRatingMenu;
+}
+
 HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 	const int* pEntries;
 	int nEntries;
@@ -4227,18 +4346,7 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				AppendMenuString(m_pKeyMap, hMenu, IDM_EXPORT, _T("Export..."), false, m_pCurrentImage != NULL);
 				break;
 			case MBAR_RATING:
-				{
-					// sorting and filtering by the star rating
-					HMENU hRatingMenu = ::CreatePopupMenu();
-					bool bHasFolder = m_pFileList != NULL && m_pFileList->Size() > 0;
-					AppendMenuString(m_pKeyMap, hRatingMenu, IDM_SORT_RATING, _T("Sort by star rating"), m_pFileList != NULL && m_pFileList->GetSorting() == Helpers::FS_Rating, bHasFolder);
-					::AppendMenu(hRatingMenu, MF_SEPARATOR, 0, NULL);
-					LPCTSTR filters[6] = { _T("All images"), _T("1 star or more"), _T("2 stars or more"), _T("3 stars or more"), _T("4 stars or more"), _T("Only 5 stars") };
-					for (int i = 0; i <= 5; i++) {
-						AppendMenuString(m_pKeyMap, hRatingMenu, IDM_RATING_FILTER_0 + i, filters[i], CFileList::GetMinRating() == i, bHasFolder);
-					}
-					::AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)hRatingMenu, CNLS::GetString(_T("Star rating")));
-				}
+				::AppendMenu(hMenu, MF_POPUP | MF_STRING, (UINT_PTR)CreateRatingMenu(), CNLS::GetString(_T("Star rating")));
 				break;
 			case MBAR_UNDO:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_UNDO, _T("Undo"), false, CanUndo());
@@ -4759,6 +4867,7 @@ void CMainDlg::PaintAnnotations(CDC& dc) {
 	graphics.SetClip(Gdiplus::Rect(m_clientRect.left, m_clientRect.top, m_clientRect.Width(), m_clientRect.Height()));
 	graphics.TranslateTransform(fX0, fY0);
 	graphics.ScaleTransform((fX1 - fX0) / 1000.0f, (fY1 - fY0) / 1000.0f);
+	m_pAnnotations->SetViewScale((fX1 - fX0) / 1000.0f);
 	m_pAnnotations->Render(graphics);
 }
 

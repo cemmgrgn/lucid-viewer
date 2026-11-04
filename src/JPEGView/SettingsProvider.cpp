@@ -203,6 +203,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_sScreenshotHotkey = GetString(_T("ScreenshotHotkey"), _T("PrintScreen"));
 	m_sScreenshotTextHotkey = GetString(_T("ScreenshotTextHotkey"), _T("Shift+PrintScreen"));
 	m_bShowFilmstrip = GetBool(_T("ShowFilmstrip"), true);
+	m_bEscapeClosesWindow = GetBool(_T("EscapeClosesWindow"), false);
 	m_nSidePanelTab = GetInt(_T("SidePanelTab"), 0, 0, 2);
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
 	m_bSaveWithoutPrompt = GetBool(_T("OverwriteOriginalFileWithoutSaveDialog"), false);

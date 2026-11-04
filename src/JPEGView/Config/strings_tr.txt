@@ -825,3 +825,24 @@ In JPEG files Windows stores title and subject in the same field, both change.	W
 Line width	Çizgi kalınlığı
 Color copied:	Renk kopyalandı:
 File size:	Dosya boyutu:
+Drag the signature to move it, drag a corner to resize it.	İmzayı taşımak için sürükleyin, boyutunu değiştirmek için köşesini sürükleyin.
+Select / move	Seç / taşı
+Click a drawing or the signature: drag to move it, drag a corner to resize it, Del removes it	Bir çizime veya imzaya tıklayın: sürükleyerek taşıyın, köşesinden boyutlandırın, Del ile silin
+Frequently used	Sık kullanılanlar
+Search results	Arama sonuçları
+View and zoom	Görünüm ve yakınlaştırma
+Editing	Düzenleme
+Drawing	Çizim
+Mouse	Fare
+Only commands with a shortcut	Yalnızca kısayolu olan komutlar
+Next / previous image or zoom (setting NavigateWithMouseWheel)	Sonraki / önceki görüntü veya yakınlaştırma (NavigateWithMouseWheel ayarı)
+Ctrl + mouse wheel	Ctrl + fare tekerleği
+Drag with the left button	Sol tuşla sürükle
+Move the zoomed image, or select an area to crop	Yakınlaştırılmış görüntüyü kaydır veya kırpılacak alanı seç
+Ctrl + drag	Ctrl + sürükle
+Double click	Çift tıklama
+Full screen on / off	Tam ekran aç / kapat
+Forward / back mouse button	İleri / geri fare tuşu
+Next / previous image	Sonraki / önceki görüntü
+Right click	Sağ tıklama
+Menu with all functions	Tüm işlevlerin menüsü

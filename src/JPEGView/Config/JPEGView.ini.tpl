@@ -169,6 +169,10 @@ ShowSidePanel=true
 ; Side panel collapsed to a narrow strip with icons (toggled with its arrow button)
 SidePanelCollapsed=false
 
+; If true, the Esc key closes JPEGView also in window mode (as in older versions).
+; If false, Esc ends the current tool (crop, drawing, compare) and leaves full screen mode.
+EscapeClosesWindow=false
+
 ; Width of the information side panel in pixels (at 96 DPI), 180 to 800
 SidePanelWidth=290
 

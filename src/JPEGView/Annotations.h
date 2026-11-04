@@ -10,7 +10,7 @@ namespace Gdiplus { class Graphics; }
 class CAnnotations
 {
 public:
-	enum ETool { TOOL_NONE, TOOL_PEN, TOOL_HIGHLIGHTER, TOOL_RECTANGLE, TOOL_ARROW, TOOL_TEXT, TOOL_REMOVE_COLOR, TOOL_PIXELATE };
+	enum ETool { TOOL_NONE, TOOL_PEN, TOOL_HIGHLIGHTER, TOOL_RECTANGLE, TOOL_ARROW, TOOL_TEXT, TOOL_REMOVE_COLOR, TOOL_PIXELATE, TOOL_SELECT };
 
 	CAnnotations();
 
@@ -32,6 +32,22 @@ public:
 
 	void Undo();
 	void Clear();
+
+	// Select tool: a click selects a drawing (an inserted signature as a whole), dragging moves it,
+	// the corner handles resize it keeping the proportions. Coordinates are image coordinates.
+	bool SelectAt(float fX, float fY);
+	void SelectLastGroup();
+	void ClearSelection() { m_selection.clear(); m_nTransformHandle = 0; }
+	bool HasSelection() { return !m_selection.empty(); }
+	// 0: outside, 1-4: corner handles (top left, top right, bottom right, bottom left), 5: inside the selection
+	int HitTestSelection(float fX, float fY);
+	void BeginTransform(int nHandle, float fX, float fY);
+	void ContinueTransform(float fX, float fY);
+	void EndTransform() { m_nTransformHandle = 0; }
+	bool IsTransforming() { return m_nTransformHandle != 0; }
+	void DeleteSelection();
+	// Screen pixels per image pixel, for the size of the selection handles
+	void SetViewScale(float fScale) { m_fViewScale = max(0.0001f, fScale); }
 
 	// Pixelate tool: the rectangles hide what is below them with large blocks
 	// Removes the last shape if it is a pixelate rectangle, returns its rectangle (image coordinates)
@@ -71,6 +87,7 @@ private:
 		float Width; // image pixels
 		std::vector<float> Points; // x, y pairs in image coordinates
 		CString Text;
+		int Group; // shapes of one group are selected together (the strokes of a signature)
 	};
 
 	ETool m_eTool;
@@ -78,6 +95,15 @@ private:
 	int m_nWidth;
 	bool m_bDrawing;
 	std::vector<CShape> m_shapes;
+	int m_nNextGroup;
+	std::vector<int> m_selection; // indices into m_shapes
+	int m_nTransformHandle;
+	float m_fStartX, m_fStartY, m_fStartLeft, m_fStartTop, m_fStartRight, m_fStartBottom;
+	std::vector<CShape> m_transformStart;
+	float m_fViewScale;
+	bool m_bRenderSelection;
+	static void GetShapeBounds(const CShape& shape, float& fLeft, float& fTop, float& fRight, float& fBottom);
+	bool GetSelectionBounds(float& fLeft, float& fTop, float& fRight, float& fBottom);
 
 	static CString GetSignatureFileName();
 };
