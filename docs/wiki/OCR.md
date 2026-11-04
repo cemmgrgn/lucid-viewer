@@ -1,5 +1,3 @@
-# OCR
-
 OCR (optical character recognition) finds text in an image and lets you copy it. Lucid Viewer uses the text recognition that is built into Windows (`Windows.Media.Ocr`).
 
 ![Every recognized word is framed, two lines are selected for copying](https://raw.githubusercontent.com/cemmgrgn/lucid-viewer/main/docs/images/ocr.webp)

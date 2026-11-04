@@ -1,5 +1,3 @@
-# Background removal
-
 Lucid Viewer can remove the background of a photo with an AI model. The model runs on your PC. Nothing is uploaded.
 
 ![A person in a spacesuit with the background removed, shown on a checkerboard](https://raw.githubusercontent.com/cemmgrgn/lucid-viewer/main/docs/images/remove-bg.webp)

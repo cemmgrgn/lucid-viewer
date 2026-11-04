@@ -1,5 +1,3 @@
-# Command line
-
 Start Lucid Viewer with options to open a folder as a slideshow, convert files or start the screenshot tool. Put the path first and the options after it. Use quotes when a path has spaces.
 
 ```

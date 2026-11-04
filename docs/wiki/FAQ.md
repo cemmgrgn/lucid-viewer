@@ -1,5 +1,3 @@
-# FAQ
-
 ## Print Screen opens the Snipping Tool, not Lucid Viewer
 
 Windows 11 gives the Print Screen key to the Snipping Tool. Turn this off in **Settings > Accessibility > Keyboard** with **Use the Print screen key to open screen capture**. See [[Screenshot tool|Screenshot-tool]].

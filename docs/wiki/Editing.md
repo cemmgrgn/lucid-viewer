@@ -1,5 +1,3 @@
-# Editing
-
 Lucid Viewer has a side panel with three tabs: **Information**, **Edit** and **Draw**. Open the information panel with <kbd>Ctrl</kbd>+<kbd>I</kbd>. Open the edit tools with <kbd>Ctrl</kbd>+<kbd>E</kbd>. Drawing tools are on the Draw tab, or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>.
 
 ![The Edit tab with sliders and the before and after divider](https://raw.githubusercontent.com/cemmgrgn/lucid-viewer/main/docs/images/edit.webp)

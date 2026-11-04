@@ -1,5 +1,3 @@
-# Code signing and privacy
-
 This page is a summary of the [code signing policy](https://github.com/cemmgrgn/lucid-viewer/blob/main/docs/CODE_SIGNING.md).
 
 Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).

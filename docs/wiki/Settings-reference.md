@@ -1,5 +1,3 @@
-# Settings reference
-
 Most settings are in **Tools → Settings**, a searchable window that explains each option and applies changes right away. This page lists every key of the settings file for those who prefer a text editor.
 
 - **Global defaults:** `LucidViewer.ini` next to `LucidViewer.exe` (do not edit it in *Program Files*, it is replaced by updates).

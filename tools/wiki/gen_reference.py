@@ -111,7 +111,7 @@ def shortcuts_page():
         key, cmd = parts[0], parts[1]
         label = labels.get(cmd) or cmd.replace("IDM_", "").replace("_", " ").capitalize()
         groups[category(cmd)].append((key, label, cmd))
-    out = ["# Keyboard shortcuts", "",
+    out = [
            "These are the default keys. Change them in **Help → Keyboard shortcuts** (also reachable from "
            "**Tools → Settings**): pick a command, press the new key, save. The page warns when a key is already used.",
            ""]
@@ -137,7 +137,7 @@ def shortcuts_page():
 
 def settings_page():
     lines = (SRC / "Config" / "LucidViewer.ini").read_text(encoding="utf-8").splitlines()
-    out = ["# Settings reference", "",
+    out = [
            "Most settings are in **Tools → Settings**, a searchable window that explains each option and applies "
            "changes right away. This page lists every key of the settings file for those who prefer a text editor.", "",
            "- **Global defaults:** `LucidViewer.ini` next to `LucidViewer.exe` (do not edit it in *Program Files*, "

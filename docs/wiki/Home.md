@@ -1,5 +1,3 @@
-# Lucid Viewer
-
 Lucid Viewer is a fast image viewer and light editor for Windows 10 and 11. It is free and open source, and it is based on JPEGView. You can view photos, adjust them, draw on them, convert them, remove the background and copy text from images. The program is licensed under the GNU General Public License, version 2 or later.
 
 <p align="center">

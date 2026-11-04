@@ -1,5 +1,3 @@
-# Converting images
-
 Lucid Viewer can convert photos to another format, make them smaller or remove their metadata. You can do it from Explorer, from the program or from the command line.
 
 ## From Explorer

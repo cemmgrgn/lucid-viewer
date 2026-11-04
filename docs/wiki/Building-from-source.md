@@ -1,5 +1,3 @@
-# Building from source
-
 This page is a short summary. The full instructions are in [docs/BUILDING.md](https://github.com/cemmgrgn/lucid-viewer/blob/main/docs/BUILDING.md).
 
 ## Requirements

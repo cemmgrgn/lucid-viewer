@@ -1,5 +1,3 @@
-# Keyboard shortcuts
-
 These are the default keys. Change them in **Help → Keyboard shortcuts** (also reachable from **Tools → Settings**): pick a command, press the new key, save. The page warns when a key is already used.
 
 ## File

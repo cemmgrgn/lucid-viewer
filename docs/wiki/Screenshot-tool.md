@@ -1,5 +1,3 @@
-# Screenshot tool
-
 The screenshot tool takes screenshots of your screen. It runs in the notification area, next to the clock. When you press <kbd>PrtScn</kbd>, the screen freezes and you can choose what to keep.
 
 ![Screenshot tool with a selected region, an arrow drawn into it and the tool bars](https://raw.githubusercontent.com/cemmgrgn/lucid-viewer/main/docs/images/screenshot-tool.webp)

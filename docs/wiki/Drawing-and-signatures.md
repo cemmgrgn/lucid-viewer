@@ -1,5 +1,3 @@
-# Drawing and signatures
-
 Draw on a photo with the **Draw** tab in the side panel. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> to draw and write on the image.
 
 ![A checklist with a red frame, an arrow, a highlighted line and a signature](https://raw.githubusercontent.com/cemmgrgn/lucid-viewer/main/docs/images/draw.webp)

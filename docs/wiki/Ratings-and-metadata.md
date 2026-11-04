@@ -1,5 +1,3 @@
-# Ratings and metadata
-
 Lucid Viewer helps you sort and clean up photos. You can rate photos with stars, view and edit their metadata, and remove the location before you share them.
 
 ![Metadata view in the side panel](https://raw.githubusercontent.com/cemmgrgn/lucid-viewer/main/docs/images/metadata.webp)

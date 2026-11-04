@@ -1,5 +1,3 @@
-# Installation
-
 Lucid Viewer runs on 64-bit Windows 10 version 1809 or later, and on Windows 11.
 
 ## Download
