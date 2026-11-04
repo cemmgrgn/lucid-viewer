@@ -490,6 +490,18 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 		m_pStartScreen = new CStartScreen(m_hWnd);
 		m_pStartScreen->SetPinShortcut(m_pKeyMap->GetKeyStringForCommand(IDM_PIN_TO_START));
 		m_pStartScreen->Reload();
+		// without an image the window is small, the gallery gets a large window (it adapts to the image when one is opened)
+		if (m_sStartupFile.IsEmpty() && !m_bFullScreenMode && !IsZoomed()) {
+			MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+			::GetMonitorInfo(::MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST), &monitorInfo);
+			CRect work(monitorInfo.rcWork), window;
+			GetWindowRect(&window);
+			int nWidth = max(window.Width(), min(work.Width() * 8 / 10, HelpersGUI::ScaleToScreen(1440)));
+			int nHeight = max(window.Height(), min(work.Height() * 85 / 100, HelpersGUI::ScaleToScreen(940)));
+			if (nWidth != window.Width() || nHeight != window.Height()) {
+				SetWindowPos(NULL, work.left + (work.Width() - nWidth) / 2, work.top + (work.Height() - nHeight) / 2, nWidth, nHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+			}
+		}
 	}
 
 	if (m_nAutoStartSlideShow > 0) {
