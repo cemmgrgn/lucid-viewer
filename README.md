@@ -106,15 +106,19 @@ resize it before it is written into the image.
 One click removes the background with an AI model that runs on your PC (U²-Net, downloaded once when you first use it or
 during setup). Save the result as a transparent PNG. Nothing is uploaded.
 
-<p align="center"><img src="docs/images/remove-bg.webp" width="900" alt="Rocket with the background removed, shown on a checkerboard"></p>
+<p align="center"><img src="docs/images/remove-bg.webp" width="900" alt="A person in a spacesuit with the background removed, shown on a checkerboard"></p>
 
 ### Copy text (OCR)
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> copies all text of the photo. In the screenshot tool every word is marked and you
 select what you need with the mouse. Lucid Viewer uses the text recognition built into Windows, in the language of your keyboard.
 
+<p align="center"><img src="docs/images/ocr.webp" width="800" alt="Every recognized word is framed, two lines are selected for copying"></p>
+
 ### Screenshot tool
 With the screenshot tool switched on (setup or Tools menu), <kbd>PrtScn</kbd> freezes the screen: drag a region or click a window, draw, pixelate, read the text, then copy or save.
 A magnifier shows the exact pixel and its color. <kbd>Shift</kbd>+<kbd>PrtScn</kbd> copies the text of a region directly.
+
+<p align="center"><img src="docs/images/screenshot-tool.webp" width="900" alt="Screenshot tool with a selected region, an arrow drawn into it and the tool bars"></p>
 
 ### Convert anywhere
 Right-click photos in Explorer → **Convert to** → JPG, PNG, WebP, HEIC, PDF, ICO and more, also resized or without metadata.
@@ -191,7 +195,7 @@ Thanks to David Kleiner, who wrote JPEGView, to Kevin M ([sylikc](https://github
 to [qbnu](https://github.com/qbnu/jpegview) for the updated codecs, and to all JPEGView translators and contributors.
 The libraries Lucid Viewer uses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-The photos in this README are by NASA ([images.nasa.gov](https://images.nasa.gov)), not copyrighted.
+The photos in this README are by NASA ([images.nasa.gov](https://images.nasa.gov)), not copyrighted. NASA does not endorse Lucid Viewer.
 
 ## License
 
