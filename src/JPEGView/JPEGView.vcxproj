@@ -305,7 +305,6 @@
     <ClCompile Include="Clipboard.cpp" />
     <ClCompile Include="Converter.cpp" />
     <ClCompile Include="WindowChrome.cpp" />
-    <ClCompile Include="SettingsDlg.cpp" />
     <ClCompile Include="DuplicatesDlg.cpp" />
     <ClCompile Include="ExportDlg.cpp" />
     <ClCompile Include="Annotations.cpp" />
@@ -418,7 +417,6 @@
     <ClInclude Include="Converter.h" />
     <ClInclude Include="HashMapCompat.h" />
     <ClInclude Include="WindowChrome.h" />
-    <ClInclude Include="SettingsDlg.h" />
     <ClInclude Include="DuplicatesDlg.h" />
     <ClInclude Include="ExportDlg.h" />
     <ClInclude Include="Annotations.h" />

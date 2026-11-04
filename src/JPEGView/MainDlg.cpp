@@ -55,7 +55,6 @@
 #include "PrintImage.h"
 #include "WindowChrome.h"
 #include "Converter.h"
-#include "SettingsDlg.h"
 #include "Annotations.h"
 #include "Ocr.h"
 #include "Share.h"

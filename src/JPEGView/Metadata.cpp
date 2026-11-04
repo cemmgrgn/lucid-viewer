@@ -511,6 +511,9 @@ static int ShowEditWindow(HWND hParent, const CEntry& entry, VARTYPE vt, CString
 	auto S = [nDPI](int n) { return ::MulDiv(n, nDPI, 96); };
 
 	CString sHint = CNLS::GetString(_T("An empty value removes it from the file."));
+	if (IsEqualPropertyKey(entry.Key, PKEY_Title) || IsEqualPropertyKey(entry.Key, PKEY_Subject)) {
+		sHint = CString(CNLS::GetString(_T("In JPEG files Windows stores title and subject in the same field, both change."))) + _T("\n") + sHint;
+	}
 	if (vt == VT_FILETIME) {
 		sHint = CString(CNLS::GetString(_T("Format: year-month-day hour:minute:second, for example 2024-05-31 14:30:00"))) + _T("\n") + sHint;
 	} else if ((vt & VT_VECTOR) != 0) {
