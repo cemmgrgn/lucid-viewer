@@ -2608,6 +2608,19 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			}
 			break;
 	}
+	if (nCommand >= IDM_FIRST_FOLDER_CONVERT_CMD && nCommand <= IDM_LAST_FOLDER_CONVERT_CMD && m_pFileList != NULL) {
+		// a separate converter process shows the progress, the viewer stays usable
+		size_t nPreset = nCommand - IDM_FIRST_FOLDER_CONVERT_CMD;
+		if (nPreset < Converter::GetPresets().size()) {
+			TCHAR sExe[MAX_PATH];
+			::GetModuleFileName(NULL, sExe, MAX_PATH);
+			CString sFolder = m_pFileList->CurrentDirectory();
+			sFolder.TrimRight(_T('\\'));
+			CString sParameters;
+			sParameters.Format(_T("/convert:%s \"%s\""), (LPCTSTR)Converter::GetPresets()[nPreset].Id, (LPCTSTR)sFolder);
+			::ShellExecute(m_hWnd, _T("open"), sExe, sParameters, NULL, SW_SHOWNORMAL);
+		}
+	}
 	if (nCommand >= IDM_FIRST_CONVERT_CMD && nCommand <= IDM_LAST_CONVERT_CMD) {
 		StartConversion(nCommand - IDM_FIRST_CONVERT_CMD);
 	}
@@ -3811,7 +3824,7 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, IDM_RELOAD, MBAR_SEPARATOR,
@@ -3822,7 +3835,7 @@ static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRI
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
 static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
 	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
-static const int s_menuBarTools[] = { MBAR_CONVERT, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
+static const int s_menuBarTools[] = { MBAR_CONVERT, MBAR_CONVERT_FOLDER, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
 static const int s_menuBarHelp[] = { MBAR_HELP, IDM_ABOUT };
 
 // Position of the (non popup) item with the given command, -1 if not found
@@ -3949,6 +3962,10 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_REMOVE_BACKGROUND:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_REMOVE_BACKGROUND, _T("Remove background"), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_CONVERT_FOLDER:
+				::AppendMenu(hMenu, MF_POPUP | MF_STRING | ((m_pFileList != NULL && m_pFileList->Size() > 0) ? 0 : MF_GRAYED),
+					(UINT_PTR)Converter::CreatePresetMenu(IDM_FIRST_FOLDER_CONVERT_CMD), CNLS::GetString(_T("Convert all images of this folder")));
 				break;
 			case MBAR_SIMILAR:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_FIND_SIMILAR, _T("Find similar photos..."), false, m_pFileList != NULL && m_pFileList->Size() > 1);

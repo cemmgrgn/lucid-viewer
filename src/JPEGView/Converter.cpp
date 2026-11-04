@@ -688,7 +688,30 @@ namespace Converter {
 			} else if (_tcsicmp(pArgs[i], COMMAND_UNREGISTER) == 0) {
 				bUnregister = true;
 			} else if (pArgs[i][0] != _T('/')) {
-				files.push_back(CString(pArgs[i]));
+				CString sArgument(pArgs[i]);
+				DWORD nAttributes = ::GetFileAttributes(sArgument);
+				if (nAttributes != INVALID_FILE_ATTRIBUTES && (nAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+					// a folder: all images in it (not in sub folders) with the endings of the Explorer menu
+					sArgument.TrimRight(_T('\\'));
+					WIN32_FIND_DATA findData;
+					HANDLE hFind = ::FindFirstFile(sArgument + _T("\\*.*"), &findData);
+					if (hFind != INVALID_HANDLE_VALUE) {
+						do {
+							if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) continue;
+							LPCTSTR sEnding = _tcsrchr(findData.cFileName, _T('.'));
+							if (sEnding == NULL) continue;
+							for (LPCTSTR sKnown : s_explorerFileEndings) {
+								if (_tcsicmp(sEnding + 1, sKnown) == 0) {
+									files.push_back(sArgument + _T("\\") + findData.cFileName);
+									break;
+								}
+							}
+						} while (::FindNextFile(hFind, &findData));
+						::FindClose(hFind);
+					}
+				} else {
+					files.push_back(sArgument);
+				}
 			}
 		}
 		::LocalFree(pArgs);

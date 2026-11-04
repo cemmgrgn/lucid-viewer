@@ -347,6 +347,8 @@
 #define IDM_LAST_OPENWITH_CMD   22199
 
 #define IDM_FIRST_CONVERT_CMD  22200
+#define IDM_FIRST_FOLDER_CONVERT_CMD	22300	// convert all images of the folder with a preset
+#define IDM_LAST_FOLDER_CONVERT_CMD		22399
 #define IDM_LAST_CONVERT_CMD   22299
 
 // in the main menu
