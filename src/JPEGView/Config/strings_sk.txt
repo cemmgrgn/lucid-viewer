@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s obrázkov
 %s images (processed by Window Imaging Component - WIC)	%s obrázkov (spracovaných súčasťou Window Imaging Component - WIC)
 'My Pictures' folder	Priečinok 'Moje obrázky'
-About JPEGView (32-bit version)...	O programe JPEGView (32-bitovej verzii)...
-About JPEGView (64-bit version)...	O programe JPEGView (64-bitovej verzii)...
+About Lucid Viewer (32-bit version)...	O programe Lucid Viewer (32-bitovej verzii)...
+About Lucid Viewer (64-bit version)...	O programe Lucid Viewer (64-bitovej verzii)...
 Acquisition date:	Dátum získania:
 Actual size of image	Aktuálna veľkosť obrázka
 Align image to horizontal or vertical line	Zarovnať obrázok na horizontálnu alebo vertikálnu líniu
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Nemožno zapisovať do súboru DB s para
 Click and drag the mouse vertically to correct image tilt.	Náklon obrázka upravíte kliknutím a ťahaním myšou vertikálne.
 Clipboard Image	Obrázok v schránke
 Close	Zavrieť
-Close help text display / Close JPEGView	Zavrieť zobrazenie pomocného textu / Zavrieť JPEGView
+Close help text display / Close Lucid Viewer	Zavrieť zobrazenie pomocného textu / Zavrieť Lucid Viewer
 Color Correction	Korekcia farby
 Combine keys with '+'	Klávesy môžete kombinovať pomocou '+'
 Confirm	Potvrdiť
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Zvýšiť/znížiť i
 Increase/decrease lightening of shadows (LDC must be on)	Zvýšiť/znížiť zosvetlenie tieňov (LDC musí byť zapnuté)
 Increase/decrease sharpness	Zvýšiť/znížiť ostrosť
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Nedostatočné oprávnenia na zmenu výhradného práva (DACL) pri zázname registra. Chcete pokračovať?
-JPEGView Help	Pomocník JPEGView
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView je malý, rýchly a veľmi dobre konfigurovateľný prehliadač/editor obrázkových súborov vo formáte JPEG, MBP, PNG, WEBP, TGA, GIF a TIFF, s minimalistickým používateľským rozhraním.
-JPEGView is registered as default viewer for the selected file formats.	JPEGView je zaregistrovaný ako predvolený prehliadač pre vybrané formáty súborov.
+Lucid Viewer Help	Pomocník Lucid Viewer
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer je malý, rýchly a veľmi dobre konfigurovateľný prehliadač/editor obrázkových súborov vo formáte JPEG, MBP, PNG, WEBP, TGA, GIF a TIFF, s minimalistickým používateľským rozhraním.
+Lucid Viewer is registered as default viewer for the selected file formats.	Lucid Viewer je zaregistrovaný ako predvolený prehliadač pre vybrané formáty súborov.
 Keep aspect ratio on crop	Zachovať pomer strán pri orezaní
 Keep parameters	Zachovať parametre
 Keep processing parameters between images	Zachovať parametre spracovávania medzi obrázkami
@@ -264,7 +264,7 @@ Radius	Polomer
 Random	Náhodne
 Reading the JPEG file from disk failed	Čítanie súboru JPEG z disku bolo neúspešné
 Reason:	Dôvod:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Zaregistrovanie alebo zrušenie registrácie koncoviek v tejto oblasti registrov si vyžaduje administrátorské oprávnenia a nemožno ho vykonať v programe JPEGView.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Zaregistrovanie alebo zrušenie registrácie koncoviek v tejto oblasti registrov si vyžaduje administrátorské oprávnenia a nemožno ho vykonať v programe Lucid Viewer.
 Registration applies to the current user only.	Registrácia bude použitá iba pre aktuálneho používateľa.
 Remove from	Odstrániť z
 Rename	Premenovať
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Vyberte súbor na zobrazenie v dial
 Select none	Nevybrať nič
 Select parameter DB to restore	Vybrať DB s parametrami na obnovenie
 Set Fixed Crop Size	Nastaviť veľkosť fixného orezania
-Set JPEGView as default image viewer	Nastaviť JPEGView ako predvolený prehliadač obrázkov
+Set Lucid Viewer as default image viewer	Nastaviť Lucid Viewer ako predvolený prehliadač obrázkov
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Nastaviť časový limit na n/10 sek. resp. n/100 sek. (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Chcete zachovať existujúce záznamy (Áno), alebo ich prepísať importovanými záznamami (Nie)?
 Sharpen	Zaostriť
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	Impor
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Nová veľkosť je príliš veľká - šírka alebo výška je väčšia ako 65535 alebo celkový počet pixelov je príliš veľký!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	Pôvodný súbor DB s parametrami '%s' nebolo možné premenovať počas konverzie do nového formátu!
 The operation failed because not enough memory is available!	Operácia bola neúspešná, pretože nie je dostupný dostatok pamäte!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Súbor DB s parametrami '%s' bol vytvorený novšou verziou programu JPEGView!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Súbor DB s parametrami '%s' bol vytvorený novšou verziou programu Lucid Viewer!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Transformáciu je možné aplikovať, ak je obrázok orezaný na najbližšiu zodpovedajúcu veľkosť, ale týmto úkonom sa odstránia niektoré pixely z okrajov.
-These values will override the values from the INI file located in the program folder of JPEGView!	Tieto hodnoty prepíšu hodnoty prevzaté zo súboru INI umiestneného v priečinku programu JPEGView!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Tieto hodnoty prepíšu hodnoty prevzaté zo súboru INI umiestneného v priečinku programu Lucid Viewer!
 Threshold	Hranica
 Title:	Názov:
 Toggle between screens (only for multi-monitor systems)	Prepnúť medzi obrazovkami (len pre systémy s viacerými monitormi)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Nakreslite my
 Warning	Výstraha
 Width	Šírka
 Window mode	Režim okna
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8 (a novší) bráni programu JPEGView v zmene predvoleného programu pre tieto koncovky súborov.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows 8 (a novší) bráni programu Lucid Viewer v zmene predvoleného programu pre tieto koncovky súborov.
 Writing the resulting JPEG file to disk failed	Zápis výsledného súboru JPEG na disk bol neúspešný
 Y - B	Žltá - Modrá
 Year short form (2 digits)	Rok v krátkej forme (2 číslice)
@@ -463,7 +463,7 @@ Set as default viewer...	Nastaviť ako predvolený prehliadač...
 Backup parameter DB...	Zálohovať DB s parametrami...
 Restore parameter DB...	Obnoviť DB s parametrami...
 User commands	Používateľské príkazy
-About JPEGView...	O programe JPEGView...
+About Lucid Viewer...	O programe Lucid Viewer...
 Exit	Ukončiť
 Crop Selection	Orezať výber
 Crop Selection Lossless...	Orezať výber bezstratovo...

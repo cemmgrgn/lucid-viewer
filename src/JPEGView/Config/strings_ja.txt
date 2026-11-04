@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -49,8 +49,8 @@
 %s images	%s 個の画像
 %s images (processed by Window Imaging Component - WIC)	%s 個の画像 (Windows Imaging - WIC で処理)
 'My Pictures' folder	「ピクチャ」フォルダ
-About JPEGView (32-bit version)...	JPEGView (32bit版)について...
-About JPEGView (64-bit version)...	JPEGView (64bit版)について...
+About Lucid Viewer (32-bit version)...	Lucid Viewer (32bit版)について...
+About Lucid Viewer (64-bit version)...	Lucid Viewer (64bit版)について...
 Acquisition date:	撮影日時:
 Actual size of image	実際の画像サイズ
 Align image to horizontal or vertical line	縦/横の線に揃える
@@ -87,7 +87,7 @@ Cannot write to parameter DB file '%s'!	パラメーターファイルに書き�
 Click and drag the mouse vertically to correct image tilt.	縦方向にマウスでドラッグし画像の傾きを調整します、
 Clipboard Image	クリップボード画像
 Close	閉じる
-Close help text display / Close JPEGView	ヘルプを閉じる / JPEGView の終了
+Close help text display / Close Lucid Viewer	ヘルプを閉じる / Lucid Viewer の終了
 Color Correction	色補正
 Combine keys with '+'	'+'でキーの組み合わせ
 Confirm	確認
@@ -178,9 +178,9 @@ Increase/decrease darkening of highlights (LDC must be on)	ハイライトを暗
 Increase/decrease lightening of shadows (LDC must be on)	影を明るく/暗く (LDC がオンの場合)
 Increase/decrease sharpness	シャープの増減
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	レジストリの項目を変更するの権限 (DACL) が十分ではありません。続行しますか？
-JPEGView Help	JPEGView ヘルプ
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView は、JPEG、BMP、PNG、WEBP、TGA、GIF、TIFF に対応し、軽快・高速かつ広くカスタマイズできる余分な装飾を抑えた画像ビューア/エディターです。
-JPEGView is registered as default viewer for the selected file formats.	指定の画像形式で、JPEGView を既定のビューアに設定しました。
+Lucid Viewer Help	Lucid Viewer ヘルプ
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer は、JPEG、BMP、PNG、WEBP、TGA、GIF、TIFF に対応し、軽快・高速かつ広くカスタマイズできる余分な装飾を抑えた画像ビューア/エディターです。
+Lucid Viewer is registered as default viewer for the selected file formats.	指定の画像形式で、Lucid Viewer を既定のビューアに設定しました。
 Keep aspect ratio on crop	切り取りで縦横比を維持
 Keep parameters	パラメーターを保持
 Keep processing parameters between images	他の画像にも加工パラメーターを適用
@@ -267,7 +267,7 @@ Radius	半径
 Random	ランダム
 Reading the JPEG file from disk failed	JPEGファイル読み込み失敗
 Reason:	原因:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	この拡張子の関連付け/解除には管理者権限が必要なので、JPEGViewでは変更できません。
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	この拡張子の関連付け/解除には管理者権限が必要なので、Lucid Viewerでは変更できません。
 Registration applies to the current user only.	関連付けは現在のユーザーのみに有効です。
 Remove from	削除
 Rename	変更を実行
@@ -313,7 +313,7 @@ Select file to display in 'File Open' dialog	画像ファイルを「開く」�
 Select none	すべて選択解除
 Select parameter DB to restore	復元するパラメーターファイルを選択
 Set Fixed Crop Size	切り取りサイズの固定
-Set JPEGView as default image viewer	JPEGView を規定の画像ビューアに設定
+Set Lucid Viewer as default image viewer	Lucid Viewer を規定の画像ビューアに設定
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	秒間隔を 1/10秒で設定、Ctrl+Shift で 1/100秒
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	現在のパラメーターを維持(Yes)、インポートを有効化(No)
 Sharpen	シャープ
@@ -357,9 +357,9 @@ The imported param DB contains entries already present in active param DB.	イ�
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	指定サイズが大きすぎます。 縦か横が65535以上、または、ピクセルの総数が多すぎます。
 The old parameter DB file '%s' could not be renamed during conversion to new format!	古い形式のパラメーターファイル %s を新しい形式に変換できません。
 The operation failed because not enough memory is available!	メモリー不足で操作に失敗
-The parameter DB file '%s' has been created by a newer version of JPEGView!	パラメーターファイル %s が新しいバージョンの JPEGView で作成されています。
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	パラメーターファイル %s が新しいバージョンの Lucid Viewer で作成されています。
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	変形は次のサイズの場合に可能です。ただし境界のピクセルはトリミングされます。
-These values will override the values from the INI file located in the program folder of JPEGView!	このパラメーターはJPEGViewフォルダ内のINIファイルの設定よりも優先されます
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	このパラメーターはLucid Viewerフォルダ内のINIファイルの設定よりも優先されます
 Threshold	閾値
 Title:	タイトル:
 Toggle between screens (only for multi-monitor systems)	マルチモニターで別画面に表示
@@ -375,7 +375,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	マウスで�
 Warning	注意
 Width	幅
 Window mode	ウィンドウ表示
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8（またそれ以降）では、これらのファイル拡張子の既定のプログラムを JPEGView が変更することを阻止されます。
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows 8（またそれ以降）では、これらのファイル拡張子の既定のプログラムを Lucid Viewer が変更することを阻止されます。
 Writing the resulting JPEG file to disk failed	JPEGファイル保存失敗
 Y - B	A - A
 Year short form (2 digits)	年数2桁
@@ -466,7 +466,7 @@ Set as default viewer...	規定の画像ビューアとして設定...
 Backup parameter DB...	パラメーターのバックアップ...
 Restore parameter DB...	バックアップしたパラメーターの復元...
 User commands	ユーザーコマンド
-About JPEGView...	JPEGViewについて...
+About Lucid Viewer...	Lucid Viewerについて...
 Exit	終了
 Crop Selection	選択範囲を切り取り
 Crop Selection Lossless...	選択範囲をロスレスで切り取り...
@@ -486,8 +486,8 @@ Zoom to Selection	選択範囲を拡大
 //Rotate the following file lossless by 270 deg?\n%filename%	画像をロスレスで270度回転しますか？ \n%filename%
 //Rotate the following file lossless by 90 deg?\n%filename%	画像をロスレスで90度回転しますか？ \n%filename%
 //The file '%s' could not be %s.	%s ファイルは %s できません。
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	JPEGView を使うには、JPG、JPEG、BMPファイルを JPEGViewに 関連付けしてください
-//Windows 8 blocks JPEGView from changing the default program for these file endings.	Windows 8 では、これらのファイルの既定のビューアに JPEGView を指定できません。
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	Lucid Viewer を使うには、JPG、JPEG、BMPファイルを Lucid Viewerに 関連付けしてください
+//Windows 8 blocks Lucid Viewer from changing the default program for these file endings.	Windows 8 では、これらのファイルの既定のビューアに Lucid Viewer を指定できません。
 //[new entry]	[新しい項目]
 //copied	コピー
 //renamed	改名

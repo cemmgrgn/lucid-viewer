@@ -1,8 +1,8 @@
-// This file defines the key mapping for JPEGView
+// This file defines the key mapping for Lucid Viewer
 // Make sure not to corrupt it - or else no keys will work anymore!
 // See KeyMap-README.html for more information on how to customize this file.
 
-// Uncomment the following line if you want to exit JPEGView with the Esc key immediately when playing an animation or a slideshow (default behavior: stops animation/slideshow)
+// Uncomment the following line if you want to exit Lucid Viewer with the Esc key immediately when playing an animation or a slideshow (default behavior: stops animation/slideshow)
 //Esc                     IDM_EXIT
 PgDn                    IDM_NEXT
 Right                   IDM_NEXT

@@ -1,5 +1,5 @@
 //! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s görsel
 %s images (processed by Window Imaging Component - WIC)	%s görsel (Window Imaging Component - WIC tarafından işlenmiş)
 'My Pictures' folder	'Resimlerim' klasörü
-About JPEGView (32-bit version)...	JPEGView hakkında (32-bit sürümü)...
-About JPEGView (64-bit version)...	JPEGView hakkında (64-bit sürümü)...
+About Lucid Viewer (32-bit version)...	Lucid Viewer hakkında (32-bit sürümü)...
+About Lucid Viewer (64-bit version)...	Lucid Viewer hakkında (64-bit sürümü)...
 Acquisition date:	Oluşturulma tarihi:
 Actual size of image	Gerçek boyuta dön
 Align image to horizontal or vertical line	Görseli yatay ya da dikey çizgiye hizala
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Parametre '%s' veri tabanı dosyasına y
 Click and drag the mouse vertically to correct image tilt.	Fareyi sol tuşa basılı tutup dikey yönde hareket ettirerek görsel doğrultusunu düzeltin.
 Clipboard Image	Panodaki görsel
 Close	Kapat
-Close help text display / Close JPEGView	Yardım metnini kapat / JPEGView kapat
+Close help text display / Close Lucid Viewer	Yardım metnini kapat / Lucid Viewer kapat
 Color Correction	Rengi düzelt
 Combine keys with '+'	Tuşlar '+' ile birleştirilsin
 Confirm	Onayla
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Vurguların koyuluğu
 Increase/decrease lightening of shadows (LDC must be on)	Gölgelerin açıklığını artır/azalt (LDC açık olmalı)
 Increase/decrease sharpness	Keskinliği artır/azalt
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Kayıt defteri kaydında izni değiştirme izni (DACL) yok.
-JPEGView Help	JPEGView yardımı
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView sade bir kullanıcı arayüzü ile JPEG, BMP, PNG, WEBP, TGA, GIF ve TIFF görselleri için küçük, hızlı ve geniş yapılandırma özellikleri olan bir görüntüleme ve düzenleme uygulamasıdır.
-JPEGView is registered as default viewer for the selected file formats.	JPEGView seçilmiş dosya biçimleri için varsayılan görüntüleyici olarak ayarlanmış.
+Lucid Viewer Help	Lucid Viewer yardımı
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer sade bir kullanıcı arayüzü ile JPEG, BMP, PNG, WEBP, TGA, GIF ve TIFF görselleri için küçük, hızlı ve geniş yapılandırma özellikleri olan bir görüntüleme ve düzenleme uygulamasıdır.
+Lucid Viewer is registered as default viewer for the selected file formats.	Lucid Viewer seçilmiş dosya biçimleri için varsayılan görüntüleyici olarak ayarlanmış.
 Keep aspect ratio on crop	Kırpma sırasında en/boy oranı korumasını aç/kapat
 Keep parameters	Parametreleri koru
 Keep processing parameters between images	Görseller arasında geçerken işlem parametrelerini koru
@@ -264,7 +264,7 @@ Radius	Çap
 Random	Rastgele
 Reading the JPEG file from disk failed	JPEG dosyası diskten okunamadı
 Reason:	Nedeni:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Kayıt defterinin bu bölümündeki dosya uzantılarını kaydetmek ya da kaldırmak için yönetici izinleri gerekli olduğundan bu işlem JPEGView içinden yapılamaz.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Kayıt defterinin bu bölümündeki dosya uzantılarını kaydetmek ya da kaldırmak için yönetici izinleri gerekli olduğundan bu işlem Lucid Viewer içinden yapılamaz.
 Registration applies to the current user only.	Kayıt yalnızca geçerli kullanıcı için geçerli olur.
 Remove from	Kaldır
 Rename	Yeniden adlandır
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	'Dosya aç' penceresinde görüntü
 Select none	Tümünü bırak
 Select parameter DB to restore	Geri yüklenecek parametre veri tabanını seçin
 Set Fixed Crop Size	Sabit kırpma boyutunu seçin
-Set JPEGView as default image viewer	JPEGView varsayılan görsel görüntüleyici olsun
+Set Lucid Viewer as default image viewer	Lucid Viewer varsayılan görsel görüntüleyici olsun
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Zaman aşımını n/10, n/100 saniye olarak değiştir (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Var olan kayıtlar korunsun mu (Evet) ya da içe aktarılan kayıtlar ile değiştirilsin mi (Hayır)?
 Sharpen	Keskinleştir
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	İçe
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Yeni boyut çok büyük. Genişlik ya da yükseklik 65535 değerinden büyük ya da toplam piksel sayısı çok büyük!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	'%s' eski parametre veri tabanı dosyası yeni biçime dönüştürülürken yeniden adlandırılamadı!
 The operation failed because not enough memory is available!	Yeterli bellek olmadığından işlem tamamlanamadı!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	'%s' parametre veri tabanı dosyası daha yeni bir JPEGView sürümü tarafından oluşturulmuş!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	'%s' parametre veri tabanı dosyası daha yeni bir Lucid Viewer sürümü tarafından oluşturulmuş!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Görsel bir sonraki eşleşen boyuta kırpılırsa dönüşüm yapılabilir. Ancak bu durumda bazı kenar pikselleri silinir.
-These values will override the values from the INI file located in the program folder of JPEGView!	Bu değerler JPEGView uygulamasının klasöründe bulunan INI dosyası tarafından değiştirilecek!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Bu değerler Lucid Viewer uygulamasının klasöründe bulunan INI dosyası tarafından değiştirilecek!
 Threshold	Eşik
 Title:	Başlık:
 Toggle between screens (only for multi-monitor systems)	Ekran değiştir (yalnızca birden fazla ekran varsa)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Fareyi sol tu
 Warning	Uyarı
 Width	Genişlik
 Window mode	Pencereye küçült
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8 (ve üzeri) sürümünde JPEGView uygulamasının şu dosya uzantıları için  varsayılan uygulamayı değiştirmesine izin verilmiyor.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows 8 (ve üzeri) sürümünde Lucid Viewer uygulamasının şu dosya uzantıları için  varsayılan uygulamayı değiştirmesine izin verilmiyor.
 Writing the resulting JPEG file to disk failed	Sonuç JPEG dosyası diske yazılamadı
 Y - B	S - M
 Year short form (2 digits)	Kısa yıl biçimi (2 hane)
@@ -463,7 +463,7 @@ Set as default viewer...	Varsayılan görüntüleyici olarak ayarla...
 Backup parameter DB...	Parametre veri tabanını yedekle...
 Restore parameter DB...	Parametre veri tabanını geri yükle...
 User commands	Kullanıcı komutları
-About JPEGView...	JPEGView hakkında...
+About Lucid Viewer...	Lucid Viewer hakkında...
 Exit	Çık
 Crop Selection	Seçimi kırp
 Crop Selection Lossless...	Seçimi kayıpsız kırp...
@@ -541,7 +541,7 @@ Expand the side panel	Yan paneli genişlet
 Fit long edge to 1280 px	Uzun kenarı 1280 piksele sığdır
 Fit long edge to 1920 px	Uzun kenarı 1920 piksele sığdır
 Forget the values of this image	Bu görüntünün değerlerini unut
-JPEGView shows this image with these values the next time (parameter DB)	JPEGView bu görüntüyü bir dahaki sefere bu değerlerle gösterir (parametre veritabanı)
+Lucid Viewer shows this image with these values the next time (parameter DB)	Lucid Viewer bu görüntüyü bir dahaki sefere bu değerlerle gösterir (parametre veritabanı)
 Remove metadata (EXIF, GPS)	Meta verileri kaldır (EXIF, GPS)
 Removes this image from the parameter DB	Bu görüntüyü parametre veritabanından kaldırır
 Reset all values to the defaults	Tüm değerleri varsayılana döndür
@@ -578,7 +578,7 @@ Example: fit2560:webp;scale30:jpg;rot180:png	Örnek: fit2560:webp;scale30:jpg;ro
 Output folder:	Çıktı klasörü:
 Empty: next to the source file. A name: sub folder.	Boş: kaynak dosyanın yanına. Bir ad: alt klasör.
 Edit INI file...	INI dosyasını düzenle...
-The theme and the language are changed when JPEGView is started the next time.	Tema ve dil, JPEGView bir sonraki açılışında değişir.
+The theme and the language are changed when Lucid Viewer is started the next time.	Tema ve dil, Lucid Viewer bir sonraki açılışında değişir.
 Draw	Çiz
 Draw and write on the image	Görüntünün üzerine çiz ve yaz
 Tool	Araç
@@ -713,7 +713,7 @@ Recognized text	Tanınan metin
 Copy	Kopyala
 Undo (Ctrl+Z)	Geri al (Ctrl+Z)
 Copy the text in the selection (OCR)	Seçimdeki metni kopyala (OCR)
-Open in JPEGView	JPEGView'da aç
+Open in Lucid Viewer	Lucid Viewer'da aç
 Save (Ctrl+S)	Kaydet (Ctrl+S)
 Copy (Ctrl+C)	Kopyala (Ctrl+C)
 Close (Esc)	Kapat (Esc)
@@ -723,7 +723,7 @@ The screenshot was copied to the clipboard.	Ekran görüntüsü panoya kopyaland
 The screenshot was saved.	Ekran görüntüsü kaydedildi.
 Save screenshot	Ekran görüntüsünü kaydet
 The text could not be recognized.	Metin tanınamadı.
-JPEGView screenshot	JPEGView ekran görüntüsü
+Lucid Viewer screenshot	Lucid Viewer ekran görüntüsü
 Open screenshot folder	Ekran görüntüleri klasörünü aç
 Start with Windows	Windows ile başlat
 Print Screen key settings of Windows...	Windows Print Screen tuşu ayarları...
@@ -790,7 +790,7 @@ Set all settings of this page to the default values?	Bu sayfadaki tüm ayarlar v
 The settings could not be written to the user INI file.	Ayarlar kullanıcı INI dosyasına yazılamadı.
 Automatic (Windows language)	Otomatik (Windows dili)
 The INI file with the settings was not found.	Ayarların bulunduğu INI dosyası bulunamadı.
-The settings were saved. Most of them take effect after a restart of JPEGView. Restart now?	Ayarlar kaydedildi. Çoğu JPEGView yeniden başlatılınca geçerli olur. Şimdi yeniden başlatılsın mı?
+The settings were saved. Most of them take effect after a restart of Lucid Viewer. Restart now?	Ayarlar kaydedildi. Çoğu Lucid Viewer yeniden başlatılınca geçerli olur. Şimdi yeniden başlatılsın mı?
 Pixelate	Pikselleştir
 Hides an area (faces, names, numbers) with large blocks, drag a rectangle	Bir alanı (yüz, isim, numara) büyük bloklarla gizler; dikdörtgen sürükleyin
 Pixelate (hide an area)	Pikselleştir (alanı gizle)
@@ -819,7 +819,7 @@ Add shortcut...	Kısayol ekle...
 Remove shortcuts	Kısayolları kaldır
 Defaults	Varsayılanlar
 Open file...	Dosyayı aç...
-The settings were applied. These take effect after a restart of JPEGView: %s. Restart now?	Ayarlar uygulandı. Şunlar JPEGView yeniden başlatılınca geçerli olur: %s. Şimdi yeniden başlatılsın mı?
+The settings were applied. These take effect after a restart of Lucid Viewer: %s. Restart now?	Ayarlar uygulandı. Şunlar Lucid Viewer yeniden başlatılınca geçerli olur: %s. Şimdi yeniden başlatılsın mı?
 The settings were applied.	Ayarlar uygulandı.
 In JPEG files Windows stores title and subject in the same field, both change.	Windows JPEG dosyalarında başlık ve konuyu aynı alana yazar, ikisi birlikte değişir.
 Line width	Çizgi kalınlığı

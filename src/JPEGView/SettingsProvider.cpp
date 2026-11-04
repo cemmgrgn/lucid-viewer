@@ -5,8 +5,8 @@
 #include <shlobj.h>
 #include <algorithm>
 
-static const TCHAR* DEFAULT_INI_FILE_NAME = _T("JPEGView.ini");
-static const TCHAR* SECTION_NAME = _T("JPEGView");
+static const TCHAR* DEFAULT_INI_FILE_NAME = _T("LucidViewer.ini");
+static const TCHAR* SECTION_NAME = _T("LucidViewer");
 
 static float COLOR_CORR_DEFAULT_FACTORS[6] = {0.2f, 0.1f, 0.3f, 0.3f, 0.3f, 0.15f};
 
@@ -93,6 +93,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bStoreToEXEPath = GetBool(_T("StoreToEXEPath"), false);
 
 	if (!m_bStoreToEXEPath) {
+		Helpers::MigrateLegacyAppData();
 		// User INI file
 		m_sIniNameUser = CString(Helpers::JPEGViewAppDataPath()) + m_sIniFileTitle;
 		m_bUserINIExists = (::GetFileAttributes(m_sIniNameUser) != INVALID_FILE_ATTRIBUTES);

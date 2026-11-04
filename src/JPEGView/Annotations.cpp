@@ -356,7 +356,7 @@ CString CAnnotations::GetSignatureFileName() {
 	if (!::SHGetSpecialFolderPath(NULL, sAppData, CSIDL_APPDATA, TRUE)) {
 		return CString();
 	}
-	return CString(sAppData) + _T("\\JPEGView\\signature.txt");
+	return CString(sAppData) + _T("\\LucidViewer\\signature.txt");
 }
 
 bool CAnnotations::SaveSignature() {
@@ -471,7 +471,7 @@ bool CAnnotations::AskForText(HWND hParent, LPCTSTR sTitle, LPCTSTR sOK, LPCTSTR
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-	wndClass.lpszClassName = _T("JPEGViewTextInput");
+	wndClass.lpszClassName = _T("LucidViewerTextInput");
 	::RegisterClass(&wndClass);
 
 	HDC hDC = ::GetDC(NULL);
@@ -481,7 +481,7 @@ bool CAnnotations::AskForText(HWND hParent, LPCTSTR sTitle, LPCTSTR sOK, LPCTSTR
 	POINT cursor;
 	::GetCursorPos(&cursor);
 	CTextInput input = { NULL, false, false };
-	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewTextInput"), sTitle, WS_POPUP | WS_CAPTION | WS_SYSMENU,
+	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("LucidViewerTextInput"), sTitle, WS_POPUP | WS_CAPTION | WS_SYSMENU,
 		cursor.x, cursor.y, S(420), S(130), hParent, NULL, hInstance, &input);
 	if (hWnd == NULL) {
 		return false;
@@ -661,7 +661,7 @@ bool CAnnotations::DrawSignature(HWND hParent) {
 	wndClass.lpfnWndProc = SignatureWndProc;
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_CROSS);
-	wndClass.lpszClassName = _T("JPEGViewSignaturePad");
+	wndClass.lpszClassName = _T("LucidViewerSignaturePad");
 	::RegisterClass(&wndClass);
 	HDC hDC = ::GetDC(NULL);
 	int nDPI = ::GetDeviceCaps(hDC, LOGPIXELSX);
@@ -681,7 +681,7 @@ bool CAnnotations::DrawSignature(HWND hParent) {
 	RECT parentRect;
 	::GetWindowRect(hParent, &parentRect);
 	int nWindowWidth = windowRect.right - windowRect.left, nWindowHeight = windowRect.bottom - windowRect.top;
-	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewSignaturePad"), CNLS::GetString(_T("Draw your signature")), nStyle,
+	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("LucidViewerSignaturePad"), CNLS::GetString(_T("Draw your signature")), nStyle,
 		(parentRect.left + parentRect.right - nWindowWidth) / 2, (parentRect.top + parentRect.bottom - nWindowHeight) / 2,
 		nWindowWidth, nWindowHeight, hParent, NULL, hInstance, &pad);
 	if (hWnd == NULL) return false;

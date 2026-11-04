@@ -1948,7 +1948,7 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 		{ _T("Resize image..."), IDM_CHANGESIZE, true, _T("Change the size in pixels or percent, save afterwards") },
 		{ _T("Copy text from image"), IDM_OCR_COPY_TEXT, true, _T("Recognizes the text in the image and copies it to the clipboard") },
 		{ _T("Unsharp mask..."), IDM_UNSHARP_MASK, true, _T("Sharpen with radius, amount and threshold") },
-		{ _T("Save these values for this image"), IDM_SAVE_PARAM_DB, bCanUseParamDB, _T("JPEGView shows this image with these values the next time (parameter DB)") },
+		{ _T("Save these values for this image"), IDM_SAVE_PARAM_DB, bCanUseParamDB, _T("Lucid Viewer shows this image with these values the next time (parameter DB)") },
 		{ _T("Forget the values of this image"), IDM_CLEAR_PARAM_DB, bCanUseParamDB && pImage->IsInParamDB(), _T("Removes this image from the parameter DB") },
 		{ _T("Save processed image..."), IDM_SAVE, true, NULL },
 	};

@@ -38,8 +38,15 @@ namespace BackgroundRemoval {
 		wchar_t* sLocalAppData = NULL;
 		std::wstring sPath;
 		if (SUCCEEDED(::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &sLocalAppData))) {
-			sPath = std::wstring(sLocalAppData) + L"\\JPEGView\\models\\u2net.onnx";
+			sPath = std::wstring(sLocalAppData) + L"\\LucidViewer\\models\\u2net.onnx";
+			// a model downloaded by JPEGView, the program Lucid Viewer is based on, is used instead of downloading it again
+			std::wstring sLegacy = std::wstring(sLocalAppData) + L"\\JPEGView\\models\\u2net.onnx";
 			::CoTaskMemFree(sLocalAppData);
+			WIN32_FILE_ATTRIBUTE_DATA data;
+			if (!::GetFileAttributesExW(sPath.c_str(), GetFileExInfoStandard, &data) &&
+				::GetFileAttributesExW(sLegacy.c_str(), GetFileExInfoStandard, &data) && (data.nFileSizeLow > 1000000 || data.nFileSizeHigh > 0)) {
+				return sLegacy;
+			}
 		}
 		return sPath;
 	}
@@ -100,7 +107,7 @@ namespace BackgroundRemoval {
 		wndClass.hInstance = hInstance;
 		wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 		wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-		wndClass.lpszClassName = L"JPEGViewModelDownload";
+		wndClass.lpszClassName = L"LucidViewerModelDownload";
 		::RegisterClassW(&wndClass);
 		INITCOMMONCONTROLSEX initControls = { sizeof(INITCOMMONCONTROLSEX), ICC_PROGRESS_CLASS };
 		::InitCommonControlsEx(&initControls);
@@ -113,7 +120,7 @@ namespace BackgroundRemoval {
 		RECT parentRect;
 		::GetWindowRect(hParent, &parentRect);
 		int nW = S(420), nH = S(150);
-		HWND hWnd = ::CreateWindowExW(WS_EX_DLGMODALFRAME, L"JPEGViewModelDownload", sTitle, WS_POPUP | WS_CAPTION | WS_SYSMENU,
+		HWND hWnd = ::CreateWindowExW(WS_EX_DLGMODALFRAME, L"LucidViewerModelDownload", sTitle, WS_POPUP | WS_CAPTION | WS_SYSMENU,
 			(parentRect.left + parentRect.right - nW) / 2, (parentRect.top + parentRect.bottom - nH) / 2, nW, nH, hParent, NULL, hInstance, &callback);
 		NONCLIENTMETRICSW metrics{ 0 };
 		metrics.cbSize = sizeof(metrics);

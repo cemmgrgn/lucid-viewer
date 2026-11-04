@@ -158,7 +158,7 @@ LRESULT CPrintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_lblColor.SetWindowText(CNLS::GetString(_T("Color:")));
 	m_lblPreset.SetWindowText(CNLS::GetString(_T("Photo size:")));
 	m_chkFileName.SetWindowText(CNLS::GetString(_T("Print the file name below the image")));
-	m_rbScalingModeJPEGView.SetWindowText(_T("JPEGView"));
+	m_rbScalingModeJPEGView.SetWindowText(_T("Lucid Viewer"));
 	m_spinCopies.SetRange32(1, 99);
 	m_spinCopies.SetPos32(max(1, min(99, m_pPrintParameters->Copies)));
 	m_cbColor.AddString(CNLS::GetString(_T("Color")));

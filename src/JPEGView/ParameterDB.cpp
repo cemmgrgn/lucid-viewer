@@ -52,7 +52,7 @@ static void HandleErrorAndCloseHandle(EFileError eError, LPCTSTR sParamDBName, H
 			bLastError = false;
 			break;
 		case errorVersion:
-			sError.Format(CNLS::GetString(_T("The parameter DB file '%s' has been created by a newer version of JPEGView!")), sParamDBName);
+			sError.Format(CNLS::GetString(_T("The parameter DB file '%s' has been created by a newer version of Lucid Viewer!")), sParamDBName);
 			bLastError = false;
 			break;
 		case errorRenameFailed:
@@ -454,7 +454,7 @@ void CParameterDB::BackupParamDB(HWND hWnd) {
 			::FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, ::GetLastError(),
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL);
 			CString sMsg; sMsg.Format(CNLS::GetString(_T("Copying parameter DB to file '%s' failed. Reason: %s")), fileDlg.m_szFileName, lpMsgBuf);
-			::MessageBox(hWnd, sMsg, _T("JPEGView"), MB_OK | MB_ICONERROR);
+			::MessageBox(hWnd, sMsg, _T("Lucid Viewer"), MB_OK | MB_ICONERROR);
 			::LocalFree(lpMsgBuf);
 		}
 	}

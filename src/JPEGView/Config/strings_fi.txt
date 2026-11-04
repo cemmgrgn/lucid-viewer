@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s kuvia
 %s images (processed by Window Imaging Component - WIC)	%s kuvia (käsitelty Window Imaging -komponentilla)
 'My Pictures' folder	'Kuvat' -kansio
-About JPEGView (32-bit version)...	Tietoja JPEGViewista (32-bittinen versio)...
-About JPEGView (64-bit version)...	Tietoja JPEGViewista (64-bittinen versio)...
+About Lucid Viewer (32-bit version)...	Tietoja LucidViewerista (32-bittinen versio)...
+About Lucid Viewer (64-bit version)...	Tietoja LucidViewerista (64-bittinen versio)...
 Acquisition date:	Kuvauspäivämäärä:
 Actual size of image	Kuvan todellinen koko
 Align image to horizontal or vertical line	Kohdista kuva vaaka- tai pystylinjan mukaan
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Parametritietokantatiedostoon '%s' ei vo
 Click and drag the mouse vertically to correct image tilt.	Vedä hiirellä pystysuoraan kuvan keskeltä kallistuskulman korjaamiseksi.
 Clipboard Image	Leikepöydän kuva
 Close	Sulje
-Close help text display / Close JPEGView	Sulje ohjetekstinäyttö / Sulje JPEGView
+Close help text display / Close Lucid Viewer	Sulje ohjetekstinäyttö / Sulje Lucid Viewer
 Color Correction	Värien korjaus
 Combine keys with '+'	Yhdistä avainsanat '+' -merkillä
 Confirm	Vahvista
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Lisää/vähennä kor
 Increase/decrease lightening of shadows (LDC must be on)	Lisää/vähennä varjojen vaalennusta (kun paikallistiheyden korjaus on päällä)
 Increase/decrease sharpness	Lisää/vähennä terävyyttä
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Oikeudet eivät riitä rekisterimerkinnän DACL-oikeuksien muuttamiseen. Jatketaanko?
-JPEGView Help	JPEGViewin ohje
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView on kevyt, nopea ja eri käyttötarkoituksiin sopiva JPEG-, BMP-, PNG-, WEBP-, TGA-, GIF- ja TIFF-kuvien katselin/muokkain yksinkertaisella käyttöliittymällä.
-JPEGView is registered as default viewer for the selected file formats.	JPEGView on rekisteröity oletuskatselimeksi tässä valituille tiedostomuodoille.
+Lucid Viewer Help	LucidViewerin ohje
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer on kevyt, nopea ja eri käyttötarkoituksiin sopiva JPEG-, BMP-, PNG-, WEBP-, TGA-, GIF- ja TIFF-kuvien katselin/muokkain yksinkertaisella käyttöliittymällä.
+Lucid Viewer is registered as default viewer for the selected file formats.	Lucid Viewer on rekisteröity oletuskatselimeksi tässä valituille tiedostomuodoille.
 Keep aspect ratio on crop	Säilytä kuvasuhde rajattaessa
 Keep parameters	Säilytä parametrit
 Keep processing parameters between images	Älä muuta käsittelyparametrejä kuvasta toiseen siirryttäessä
@@ -264,7 +264,7 @@ Radius	Säde
 Random	Satunnainen
 Reading the JPEG file from disk failed	JPEG-tiedoston lukeminen levyltä epäonnistui
 Reason:	Syy:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Tiedostopäätteiden rekisteröinti tai sen poisto tällä rekisterialueella edellyttää järjestelmänvalvojan oikeuksia, eikä sitä voi tehdä JPEGView:ssa.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Tiedostopäätteiden rekisteröinti tai sen poisto tällä rekisterialueella edellyttää järjestelmänvalvojan oikeuksia, eikä sitä voi tehdä Lucid Viewer:ssa.
 Registration applies to the current user only.	Rekisteröinti koskee vain nykyistä käyttäjää.
 Remove from	Poista tietokannasta
 Rename	Nimeä uudelleen
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Valitse tiedosto, joka näytetään
 Select none	Älä valitse mitään
 Select parameter DB to restore	Valitse palautettava parametritietokanta
 Set Fixed Crop Size	Aseta kiinteä rajauskoko
-Set JPEGView as default image viewer	Aseta JPEGView oletuskuvankatseluohjelmaksi
+Set Lucid Viewer as default image viewer	Aseta Lucid Viewer oletuskuvankatseluohjelmaksi
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Aseta aikakatkaisu n/10 sekunniksi tai n/100 sekunniksi (Ctrl+Shift).
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Säilytetäänkö nykyiset tietueet (Kyllä) vai korvataanko ne tuoduilla tietueilla (Ei)?
 Sharpen	Terävöitä
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	Tuodu
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Uusi koko on liian suuri - leveys tai korkeus on suurempi kuin 65535 tai pikselien kokonaismäärä on liian suuri!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	Vanhaa parametritietokantatiedostoa '%s' ei voitu nimetä uudelleen uuteen muotoon muunnettaessa!
 The operation failed because not enough memory is available!	Toimenpide epäonnistui, koska käytettävissä ei ole riittävästi muistia!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Parametrintietokantatiedosto '%s' on luotu JPEGView:n uudemmalla versiolla!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Parametrintietokantatiedosto '%s' on luotu Lucid Viewer:n uudemmalla versiolla!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Muunnos voidaan toteuttaa, jos kuvaa pienennetään seuraavaan vastaavaan kokoon, mutta silloin joitakin reunapikseleitä jää pois.
-These values will override the values from the INI file located in the program folder of JPEGView!	Nämä arvot syrjäyttävät JPEGView:n ohjelmakansiossa olevan INI-tiedoston arvot!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Nämä arvot syrjäyttävät Lucid Viewer:n ohjelmakansiossa olevan INI-tiedoston arvot!
 Threshold	Kynnysarvo
 Title:	Otsikko:
 Toggle between screens (only for multi-monitor systems)	Vaihda näyttöjen välillä (vain moninäyttöjärjestelmissä).
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Piirrä hiire
 Warning	Varoitus
 Width	Leveys
 Window mode	Ikkunatila
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	JPEGView ei voi vaihtaa näiden tiedostopäätteiden oletusohjelmaa Windows 8:ssa (ja uudemmissa).
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Lucid Viewer ei voi vaihtaa näiden tiedostopäätteiden oletusohjelmaa Windows 8:ssa (ja uudemmissa).
 Writing the resulting JPEG file to disk failed	Tuloksena syntyneen JPEG-tiedoston kirjoittaminen levylle epäonnistui
 Y - B	K - S
 Year short form (2 digits)	vuoden lyhyt muoto (2 numeroa)
@@ -463,7 +463,7 @@ Set as default viewer...	Aseta oletuskatselinsovellukseksi...
 Backup parameter DB...	Varmuuskopioi parametritietokanta...
 Restore parameter DB...	Palauta parametritietokanta...
 User commands	Käyttäjän komennot
-About JPEGView...	Tietoja JPEGViewista...
+About Lucid Viewer...	Tietoja LucidViewerista...
 Exit	Sulje
 Crop Selection	Rajausvalinta
 Crop Selection Lossless...	Häviötön rajausvalinta...

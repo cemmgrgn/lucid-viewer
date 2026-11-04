@@ -121,9 +121,9 @@ static int ShowGallery(int nPage) {
 	wndClass.lpfnWndProc = GalleryWndProc;
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	wndClass.lpszClassName = _T("JPEGViewGalleryTest");
+	wndClass.lpszClassName = _T("LucidViewerGalleryTest");
 	::RegisterClass(&wndClass);
-	HWND hWnd = ::CreateWindowEx(0, _T("JPEGViewGalleryTest"), _T("JPEGView"), WS_OVERLAPPEDWINDOW, 0, 0, 1440, 900, NULL, NULL, hInstance, NULL);
+	HWND hWnd = ::CreateWindowEx(0, _T("LucidViewerGalleryTest"), _T("Lucid Viewer"), WS_OVERLAPPEDWINDOW, 0, 0, 1440, 900, NULL, NULL, hInstance, NULL);
 	if (hWnd == NULL) return 1;
 	CStartScreen screen(hWnd);
 	s_pGallery = &screen;

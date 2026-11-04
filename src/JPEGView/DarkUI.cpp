@@ -13,7 +13,7 @@ namespace DarkUI {
 
 static int s_nForcedTheme = -1;
 static std::map<COLORREF, HBRUSH> s_brushes;
-static const TCHAR* BACKGROUND_PROPERTY = _T("JPEGView.DarkUI.Background");
+static const TCHAR* BACKGROUND_PROPERTY = _T("LucidViewer.DarkUI.Background");
 
 static const CPalette s_dark = {
 	RGB(32, 32, 32), RGB(39, 39, 39), RGB(55, 55, 55), RGB(66, 66, 66), RGB(235, 235, 235), RGB(160, 160, 160),

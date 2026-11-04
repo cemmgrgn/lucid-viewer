@@ -9,7 +9,7 @@
 #include <process.h>
 #include <intrin.h>
 
-static const LPCTSTR DUPLICATES_CLASS = _T("JPEGViewDuplicates");
+static const LPCTSTR DUPLICATES_CLASS = _T("LucidViewerDuplicates");
 static const UINT WM_SCAN_PROGRESS = WM_APP + 1;
 static const UINT WM_SCAN_DONE = WM_APP + 2;
 static const int ID_SHOW = 201, ID_RECYCLE = 202, ID_LIST = 203;

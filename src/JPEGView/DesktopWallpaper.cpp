@@ -48,7 +48,7 @@ namespace SetDesktopWallpaper {
 		LPCTSTR path = CSettingsProvider::This().WallpaperPath();
 		if (path[0] == 0) return;
 
-		CString fileName = CString(path) + _T("\\JPEGViewWallpaper.bmp");
+		CString fileName = CString(path) + _T("\\LucidViewerWallpaper.bmp");
 
 		if (!CSaveImage::SaveImage(fileName, &image, false)) return;
 

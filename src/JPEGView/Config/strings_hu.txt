@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s kép
 %s images (processed by Window Imaging Component - WIC)	%s kép (a Window Imaging Component által feldolgozva – WIC)
 'My Pictures' folder	Saját képek' mappa
-About JPEGView (32-bit version)...	A JPEGView-ról (32 bites verzió)...
-About JPEGView (64-bit version)...	A JPEGView-ról (64 bites verzió)...
+About Lucid Viewer (32-bit version)...	A Lucid Viewer-ról (32 bites verzió)...
+About Lucid Viewer (64-bit version)...	A Lucid Viewer-ról (64 bites verzió)...
 Acquisition date:	Beszerzés dátuma:
 Actual size of image	A kép tényleges mérete
 Align image to horizontal or vertical line	A kép igazítása vízszintes vagy függőleges vonalhoz
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Nem lehet írni a '%s' paraméteradatbá
 Click and drag the mouse vertically to correct image tilt.	Kattintson és húzza az egeret függőlegesen a kép dőlésszögének javításához.
 Clipboard Image	Vágólap kép
 Close	Bezárás
-Close help text display / Close JPEGView	Súgószöveg megjelenítésének bezárása / JPEGView bezárása
+Close help text display / Close Lucid Viewer	Súgószöveg megjelenítésének bezárása / Lucid Viewer bezárása
 Color Correction	Színkorrekció
 Combine keys with '+'	A billentyűk kombinálása a „+” jellel
 Confirm	Megerősít
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	A kiemelések sötét
 Increase/decrease lightening of shadows (LDC must be on)	Az árnyékok világosságának növelése/csökkentése (az LDC-nek bekapcsolva kell lennie)
 Increase/decrease sharpness	Élesség növelése/csökkentése
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Nincs elegendő jogosultság a beállításjegyzék-bejegyzés jogosultságának (DACL) módosításához. Folytassam?
-JPEGView Help	JPEGView súgó
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	A JPEGView egy karcsú, gyors és jól konfigurálható megjelenítő/szerkesztő JPEG, BMP, PNG, WEBP, TGA, GIF és TIFF képekhez minimális grafikus felhasználói felülettel.
-JPEGView is registered as default viewer for the selected file formats.	A JPEGView alapértelmezett megjelenítőként van regisztrálva a kiválasztott fájlformátumokhoz.
+Lucid Viewer Help	Lucid Viewer súgó
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	A Lucid Viewer egy karcsú, gyors és jól konfigurálható megjelenítő/szerkesztő JPEG, BMP, PNG, WEBP, TGA, GIF és TIFF képekhez minimális grafikus felhasználói felülettel.
+Lucid Viewer is registered as default viewer for the selected file formats.	A Lucid Viewer alapértelmezett megjelenítőként van regisztrálva a kiválasztott fájlformátumokhoz.
 Keep aspect ratio on crop	Tartsa meg a képarányt a kivágásnál
 Keep parameters	Tartsa meg a paramétereket
 Keep processing parameters between images	A feldolgozási paraméterek megtartása a képek között
@@ -264,7 +264,7 @@ Radius	Sugár
 Random	Véletlen
 Reading the JPEG file from disk failed	A JPEG fájl olvasása a lemezről nem sikerült
 Reason:	Ok:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	A fájlkiterjesztések regisztrálásához vagy regisztrációjának törléséhez a rendszerleíró adatbázisban rendszergazdai jogosultságokra van szükség, és ez nem végezhető el JPEGView-ban.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	A fájlkiterjesztések regisztrálásához vagy regisztrációjának törléséhez a rendszerleíró adatbázisban rendszergazdai jogosultságokra van szükség, és ez nem végezhető el Lucid Viewer-ban.
 Registration applies to the current user only.	A regisztráció csak a jelenlegi felhasználóra vonatkozik.
 Remove from	Eltávolitani
 Rename	Átnevezés
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Válassza ki a megjelenítendő fá
 Select none	Kiválasztás törlése
 Select parameter DB to restore	Válassza ki a visszaállítandó paraméteradatbázist
 Set Fixed Crop Size	Állítsa be a rögzített vágásméretet
-Set JPEGView as default image viewer	Állítsa be a JPEGView-t alapértelmezett képnézegetőként
+Set Lucid Viewer as default image viewer	Állítsa be a Lucid Viewer-t alapértelmezett képnézegetőként
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Állítsa be az kép vetítési idjét n/10 mp-re, illetve n/100 mp-re (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	A meglévő bejegyzéseket meg kell őrizni (Igen), vagy felül kell írni az importált bejegyzéseket (Nem)?
 Sharpen	Élesítés
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	Az im
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Az új méret túl nagy – a szélesség vagy magasság nagyobb, mint 65535, vagy a képpontok teljes száma túl nagy!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	A régi '%s' paraméteradatbázis-fájlt nem sikerült átnevezni az új formátumra való átalakítás során!
 The operation failed because not enough memory is available!	A művelet meghiúsult, mert nincs elég memória!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	A '%s' paraméteradatbázis-fájlt a JPEGView újabb verziója hozta létre!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	A '%s' paraméteradatbázis-fájlt a Lucid Viewer újabb verziója hozta létre!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Az átalakítás akkor alkalmazható, ha a képet a legközelebbi egyező méretre vágja, de ez eltávolít néhány csíkot a széléről.
-These values will override the values from the INI file located in the program folder of JPEGView!	Ezek az értékek felülírják a JPEGView program mappájában található INI fájl értékeit!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Ezek az értékek felülírják a Lucid Viewer program mappájában található INI fájl értékeit!
 Threshold	Küszöb
 Title:	Cím:
 Toggle between screens (only for multi-monitor systems)	Váltás a képernyők között (csak többmonitoros rendszereknél)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Az egérrel h
 Warning	Figyelem
 Width	Szélesség
 Window mode	Ablak mód
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	A Windows 8 (és újabb) megakadályozza, hogy a JPEGView módosítsa az alapértelmezett programot ezekhez a fájlkiterjesztésekhez.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	A Windows 8 (és újabb) megakadályozza, hogy a Lucid Viewer módosítsa az alapértelmezett programot ezekhez a fájlkiterjesztésekhez.
 Writing the resulting JPEG file to disk failed	Az eredményül kapott JPEG fájl lemezre írása nem sikerült
 Y - B	Y-B
 Year short form (2 digits)	Évszám (2 számjegy)
@@ -463,7 +463,7 @@ Set as default viewer...	Beállítás alapértelmezett megjelenítőnek...
 Backup parameter DB...	Paraméteradatbázis biztonsági mentése...
 Restore parameter DB...	Paraméteradatbázis visszaállítása…
 User commands	Felhasználói parancsok
-About JPEGView...	A JPEGView-ról...
+About Lucid Viewer...	A Lucid Viewer-ról...
 Exit	Kilépés
 Crop Selection	Kivágás kiválasztása
 Crop Selection Lossless...	Veszteségmentes kivágás...

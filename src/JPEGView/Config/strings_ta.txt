@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images		%s படங்கள்
 %s images (processed by Window Imaging Component - WIC)		%s படங்கள் (சாளர இமேஜிங் உபகரணத்தால் செயலாக்கப்பட்டது - WIC)
 'My Pictures' folder		'எனது படங்கள்' கோப்புறை
-About JPEGView (32-bit version)...		JPEGView (32-பிட் பதிப்பு) பற்றி...
-About JPEGView (64-bit version)...		JPEGView (64-பிட் பதிப்பு) பற்றி...
+About Lucid Viewer (32-bit version)...		Lucid Viewer (32-பிட் பதிப்பு) பற்றி...
+About Lucid Viewer (64-bit version)...		Lucid Viewer (64-பிட் பதிப்பு) பற்றி...
 Acquisition date:		கையகப்படுத்தும் தேதி:
 Actual size of image		படத்தின் உண்மையான அளவு
 Align image to horizontal or vertical line		படத்தை கிடைமட்ட அல்லது செங்குத்து கோட்டிற்கு சீரமைக்கவும்
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!		'%s' அளவுரு DB கோப்
 Click and drag the mouse vertically to correct image tilt.		படத்தின் சாய்வை சரிசெய்ய, சுட்டியை செங்குத்தாக கிளிக் செய்து இழுக்கவும்.
 Clipboard Image		கிளிப்போர்டு படம்
 Close		நெருக்கமான
-Close help text display / Close JPEGView		உதவி உரை காட்சியை மூடவும் / JPEGView ஐ மூடவும்
+Close help text display / Close Lucid Viewer		உதவி உரை காட்சியை மூடவும் / Lucid Viewer ஐ மூடவும்
 Color Correction		வண்ண திருத்தம்
 Combine keys with '+'		விசைகளை '+' உடன் இணைக்கவும்
 Confirm		உறுதிப்படுத்தவும்
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)		சிறப்ப�
 Increase/decrease lightening of shadows (LDC must be on)		நிழல்களின் மின்னலை அதிகரிக்கவும்/குறைக்கவும் (எல்.டி.சி இயக்கத்தில் இருக்க வேண்டும்)
 Increase/decrease sharpness		கூர்மையை அதிகரிக்கவும்/குறைக்கவும்
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?		பதிவேட்டில் உள்ள சிறப்புரிமையை (DACL) மாற்ற போதுமான உரிமைகள் இல்லை. தொடரவா?
-JPEGView Help		JPEGView உதவி
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.		JPEGView என்பது குறைந்த GUI உடன் JPEG, BMP, PNG, WEBP, TGA, GIF மற்றும் TIFF படங்களுக்கான மெலிந்த, வேகமான மற்றும் மிகவும் உள்ளமைக்கக்கூடிய பார்வையாளர்/எடிட்டர் ஆகும்.
-JPEGView is registered as default viewer for the selected file formats.		தேர்ந்தெடுக்கப்பட்ட கோப்பு வடிவங்களுக்கான இயல்புநிலை பார்வையாளராக JPEGView பதிவுசெய்யப்பட்டுள்ளது.
+Lucid Viewer Help		Lucid Viewer உதவி
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.		Lucid Viewer என்பது குறைந்த GUI உடன் JPEG, BMP, PNG, WEBP, TGA, GIF மற்றும் TIFF படங்களுக்கான மெலிந்த, வேகமான மற்றும் மிகவும் உள்ளமைக்கக்கூடிய பார்வையாளர்/எடிட்டர் ஆகும்.
+Lucid Viewer is registered as default viewer for the selected file formats.		தேர்ந்தெடுக்கப்பட்ட கோப்பு வடிவங்களுக்கான இயல்புநிலை பார்வையாளராக Lucid Viewer பதிவுசெய்யப்பட்டுள்ளது.
 Keep aspect ratio on crop		பயிர் மீது விகிதத்தை வைத்திருங்கள்
 Keep parameters		அளவுருக்களை வைத்திருங்கள்
 Keep processing parameters between images		படங்களுக்கிடையில் அளவுருக்களை செயலாக்கவும்
@@ -264,7 +264,7 @@ Radius		ஆரம்
 Random		சீரற்ற
 Reading the JPEG file from disk failed		JPEG கோப்பை வட்டில் இருந்து படிக்க முடியவில்லை
 Reason:		காரணம்:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.		இந்த ரெஜிஸ்ட்ரி பகுதியில் கோப்பு நீட்டிப்புகளைப் பதிவுசெய்வதற்கு அல்லது பதிவுநீக்குவதற்கு நிர்வாகி உரிமைகள் தேவை மற்றும் JPEGView இல் செய்ய முடியாது.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.		இந்த ரெஜிஸ்ட்ரி பகுதியில் கோப்பு நீட்டிப்புகளைப் பதிவுசெய்வதற்கு அல்லது பதிவுநீக்குவதற்கு நிர்வாகி உரிமைகள் தேவை மற்றும் Lucid Viewer இல் செய்ய முடியாது.
 Registration applies to the current user only.		தற்போதைய பயனருக்கு மட்டுமே பதிவு பொருந்தும்.
 Remove from		இருந்து அகற்று
 Rename		மறுபெயரிடவும்
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog		'கோப்பு திற' உ
 Select none		எதையும் தேர்ந்தெடுக்கவும்
 Select parameter DB to restore		மீட்டமைக்க DB அளவுருவைத் தேர்ந்தெடுக்கவும்
 Set Fixed Crop Size		நிலையான பயிர் அளவை அமைக்கவும்
-Set JPEGView as default image viewer		JPEGView ஐ இயல்புநிலை பட பார்வையாளராக அமைக்கவும்
+Set Lucid Viewer as default image viewer		Lucid Viewer ஐ இயல்புநிலை பட பார்வையாளராக அமைக்கவும்
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)		காலக்கெடுவை முறையே n/10 நொடி என அமைக்கவும், முறையே n/100 நொடி (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?		ஏற்கனவே உள்ள பதிவுகள் பாதுகாக்கப்படுமா (ஆம்) அல்லது இறக்குமதி செய்யப்பட்ட உள்ளீடுகளால் (இல்லை) மேலெழுதப்படுமா?
 Sharpen		கூர்மைப்படுத்து
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.		இ�
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!		புதிய அளவு மிகவும் பெரியது - அகலம் அல்லது உயரம் 65535 ஐ விட பெரியது அல்லது மொத்த பிக்சல்களின் எண்ணிக்கை மிகப் பெரியது!
 The old parameter DB file '%s' could not be renamed during conversion to new format!		பழைய அளவுரு DB கோப்பு '%s' புதிய வடிவத்திற்கு மாற்றும் போது மறுபெயரிட முடியாது!
 The operation failed because not enough memory is available!		போதிய நினைவகம் இல்லாததால் அறுவை சிகிச்சை தோல்வியடைந்தது!
-The parameter DB file '%s' has been created by a newer version of JPEGView!		அளவுரு DB கோப்பு '%s' JPEGView இன் புதிய பதிப்பால் உருவாக்கப்பட்டது!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!		அளவுரு DB கோப்பு '%s' Lucid Viewer இன் புதிய பதிப்பால் உருவாக்கப்பட்டது!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.		படத்தை அடுத்த பொருந்தும் அளவுக்கு செதுக்கினால் மாற்றம் பயன்படுத்தப்படலாம் ஆனால் இது சில பார்டர் பிக்சல்களை அகற்றும்.
-These values will override the values from the INI file located in the program folder of JPEGView!		இந்த மதிப்புகள் JPEGView இன் நிரல் கோப்புறையில் உள்ள INI கோப்பிலிருந்து மதிப்புகளை மீறும்!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!		இந்த மதிப்புகள் Lucid Viewer இன் நிரல் கோப்புறையில் உள்ள INI கோப்பிலிருந்து மதிப்புகளை மீறும்!
 Threshold		வாசல்
 Title:		தலைப்பு:
 Toggle between screens (only for multi-monitor systems)		திரைகளுக்கு இடையில் மாறு (பல கண்காணிப்பு அமைப்புகளுக்கு மட்டும்)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.		கிடை
 Warning		எச்சரிக்கை
 Width		அகலம்
 Window mode		சாளர முறை
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.		இந்த கோப்பு நீட்டிப்புகளுக்கான இயல்புநிலை நிரலை மாற்றுவதிலிருந்து Windows 8 (மற்றும் மேலே) JPEGViewஐத் தடுக்கிறது.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.		இந்த கோப்பு நீட்டிப்புகளுக்கான இயல்புநிலை நிரலை மாற்றுவதிலிருந்து Windows 8 (மற்றும் மேலே) Lucid Viewerஐத் தடுக்கிறது.
 Writing the resulting JPEG file to disk failed		இதன் விளைவாக வரும் JPEG கோப்பை வட்டில் எழுதுவது தோல்வியடைந்தது
 Y - B		ஒய் - பி
 Year short form (2 digits)		ஆண்டு குறுகிய வடிவம் (2 இலக்கங்கள்)
@@ -463,7 +463,7 @@ Set as default viewer...		இயல்பு பார்வையாளரா�
 Backup parameter DB...		காப்பு அளவுரு DB...
 Restore parameter DB...		DB அளவுருவை மீட்டமை...
 User commands		பயனர் கட்டளைகள்
-About JPEGView...		JPEGView பற்றி...
+About Lucid Viewer...		Lucid Viewer பற்றி...
 Exit		வெளியேறு
 Crop Selection		பயிர் தேர்வு
 Crop Selection Lossless...		பயிர் தேர்வு இழப்பற்றது...

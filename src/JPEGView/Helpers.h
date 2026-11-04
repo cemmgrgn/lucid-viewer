@@ -203,6 +203,10 @@ namespace Helpers {
 	// Default if not set is CSIDL_APPDATA/JPEGView/
 	void SetJPEGViewAppDataPath(LPCTSTR sPath);
 
+	// First start of Lucid Viewer: copies the settings, key map, signature and lists of JPEGView (the program it is
+	// based on) from %APPDATA%\JPEGView to %APPDATA%\LucidViewer. Does nothing when the new folder exists.
+	void MigrateLegacyAppData();
+
 	// Checks if the given string matches the pattern definition given.
 	// Pattern: * - will be matched by any number of characters
 	//          ; - separates patterns

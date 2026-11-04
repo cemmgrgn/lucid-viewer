@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s slik
 %s images (processed by Window Imaging Component - WIC)	%s slik (obdelanih z Window Imaging Component - WIC)
 'My Pictures' folder	Mapa 'Moje slike'
-About JPEGView (32-bit version)...	Vizitka JPEGView (32-bitna različica)...
-About JPEGView (64-bit version)...	Vizitka JPEGView (64-bitna različica)...
+About Lucid Viewer (32-bit version)...	Vizitka Lucid Viewer (32-bitna različica)...
+About Lucid Viewer (64-bit version)...	Vizitka Lucid Viewer (64-bitna različica)...
 Acquisition date:	Datum pridobitve:
 Actual size of image	Dejanska velikost slike
 Align image to horizontal or vertical line	Poravnaj sliko z vodoravno ali navpično črto
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Ni mogoče pisati v datoteko zbirke poda
 Click and drag the mouse vertically to correct image tilt.	Kliknite in povlecite miško navpično, da popravite nagib slike.
 Clipboard Image	Slika odložišča
 Close	Zapri
-Close help text display / Close JPEGView	Zapri prikaz besedila pomoči/Zapri JPEGView
+Close help text display / Close Lucid Viewer	Zapri prikaz besedila pomoči/Zapri Lucid Viewer
 Color Correction	Popravek barv
 Combine keys with '+'	Kombinirajte tipke z '+'
 Confirm	Potrdi
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Povečaj/zmanjšaj po
 Increase/decrease lightening of shadows (LDC must be on)	Povečaj/zmanjšaj osvetlitev senc (LDC mora biti vklopljen)
 Increase/decrease sharpness	Povečaj/zmanjšaj ostrino
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Nezadostne pravice za spreminjanje pravic (DACL) za vnos v register. Želite nadaljevati?
-JPEGView Help	JPEGView Pomoč
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView je tanek, hiter in zelo nastavljiv pregledovalnik/urejevalnik slik JPEG, BMP, PNG, WEBP, TGA, GIF in TIFF z najmanjšim grafičnim vmesnikom.
-JPEGView is registered as default viewer for the selected file formats.	JPEGView je registriran kot privzeti pregledovalnik izbranih formatov datotek.
+Lucid Viewer Help	Lucid Viewer Pomoč
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer je tanek, hiter in zelo nastavljiv pregledovalnik/urejevalnik slik JPEG, BMP, PNG, WEBP, TGA, GIF in TIFF z najmanjšim grafičnim vmesnikom.
+Lucid Viewer is registered as default viewer for the selected file formats.	Lucid Viewer je registriran kot privzeti pregledovalnik izbranih formatov datotek.
 Keep aspect ratio on crop	Ohrani razmerje stranic pri obrezovanju
 Keep parameters	Ohrani parametre
 Keep processing parameters between images	Ohrani parametre obdelave med slikami
@@ -264,7 +264,7 @@ Radius	Polmer
 Random	Naključno
 Reading the JPEG file from disk failed	Branje datoteke JPEG z diska ni uspelo
 Reason:	Razlog:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Registracija ali odjava končnic datotek v tem območju registra zahteva skrbniške pravice in je ni mogoče izvesti v JPEGView.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Registracija ali odjava končnic datotek v tem območju registra zahteva skrbniške pravice in je ni mogoče izvesti v Lucid Viewer.
 Registration applies to the current user only.	Registracija velja samo za trenutnega uporabnika.
 Remove from	Odstrani iz
 Rename	Preimenuj
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Izberi datoteko za prikaz v pogovor
 Select none	Nič ne izberi
 Select parameter DB to restore	Izberi zbirko podatkov parametrov za obnovitev
 Set Fixed Crop Size	Nastavi fiksno velikost obrezovanja
-Set JPEGView as default image viewer	Nastavi JPEGView kot privzeti pregledovalnik slik
+Set Lucid Viewer as default image viewer	Nastavi Lucid Viewer kot privzeti pregledovalnik slik
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Nastavi časovno omejitev na n/10 sek. oz. n/100 sek. (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Ali naj bodo ohranjeni obstoječi vnosi (Da) ali naj bodo preglašeni z uvoženimi vnosi (Ne)?
 Sharpen	Ostrina
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	Uvož
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Nova velikost je prevelika - širina ali višina je večja od 65535 ali skupno število zaslonskih pik je preveliko!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	Stare datoteke zbirke podatkov parametrov '%s' ni bilo mogoče preimenovati med pretvorbo v novi format!
 The operation failed because not enough memory is available!	Operacija ni uspela, ker ni na voljo dovolj pomnilnika!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Datoteka zbirke podatkov parametrov '%s' je bila ustvarjena z novejšo različico JPEGView!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Datoteka zbirke podatkov parametrov '%s' je bila ustvarjena z novejšo različico Lucid Viewer!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Preoblikovanje je mogoče uporabiti, če je slika obrezana na naslednjo ujemajočo se velikost, vendar bo to odstranilo nekaj robnih zaslonskih pik.
-These values will override the values from the INI file located in the program folder of JPEGView!	Te vrednosti bodo preglasile vrednosti iz datoteke INI, ki se nahaja v programski mapi JPEGView!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Te vrednosti bodo preglasile vrednosti iz datoteke INI, ki se nahaja v programski mapi Lucid Viewer!
 Threshold	Prag
 Title:	Naslov:
 Toggle between screens (only for multi-monitor systems)	Preklapljanje med zasloni (samo za sisteme z več monitorji)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Z miško nari
 Warning	Opozorilo
 Width	Širina
 Window mode	Način okna
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8 (in novejši) onemogoča JPEGView pri spreminjanju privzetega programa za te končnice datotek.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows 8 (in novejši) onemogoča Lucid Viewer pri spreminjanju privzetega programa za te končnice datotek.
 Writing the resulting JPEG file to disk failed	Zapisovanje nastale datoteke JPEG na disk ni uspelo
 Y - B	Ru - M
 Year short form (2 digits)	Kratka oblika leta (2 števki)
@@ -463,7 +463,7 @@ Set as default viewer...	Nastavi kot privzeti pregledovalnik...
 Backup parameter DB...	Varnostno kopiraj zbirko podatkov parametrov...
 Restore parameter DB...	Obnovi zbirko podatkov parametrov...
 User commands	Uporabniški ukazi
-About JPEGView...	Vizitka JPEGView...
+About Lucid Viewer...	Vizitka Lucid Viewer...
 Exit	Izhod
 Crop Selection	Obreži izbiro
 Crop Selection Lossless...	Obreži izbiro brez  izgub...

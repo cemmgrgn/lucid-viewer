@@ -319,7 +319,7 @@ static void ShowToast(LPCTSTR sText, bool bWait) {
 	wndClass.lpfnWndProc = ToastWndProc;
 	wndClass.hInstance = ::GetModuleHandle(NULL);
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	wndClass.lpszClassName = _T("JPEGViewToast");
+	wndClass.lpszClassName = _T("LucidViewerToast");
 	::RegisterClass(&wndClass);
 	POINT cursor;
 	::GetCursorPos(&cursor);
@@ -338,7 +338,7 @@ static void ShowToast(LPCTSTR sText, bool bWait) {
 	int nHeight = ::MulDiv(44, nDpi, 96);
 	int nX = (info.rcWork.left + info.rcWork.right - nWidth) / 2;
 	int nY = info.rcWork.bottom - nHeight - ::MulDiv(40, nDpi, 96);
-	HWND hWnd = ::CreateWindowEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_LAYERED, _T("JPEGViewToast"), sText,
+	HWND hWnd = ::CreateWindowEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_LAYERED, _T("LucidViewerToast"), sText,
 		WS_POPUP, nX, nY, nWidth, nHeight, NULL, NULL, wndClass.hInstance, NULL);
 	if (hWnd == NULL) {
 		::DeleteObject(hFont);
@@ -420,7 +420,7 @@ static void ShowTextWindow(const CString& sText) {
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
 	wndClass.hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(IDR_MAINFRAME));
-	wndClass.lpszClassName = _T("JPEGViewOcrText");
+	wndClass.lpszClassName = _T("LucidViewerOcrText");
 	::RegisterClass(&wndClass);
 	POINT cursor;
 	::GetCursorPos(&cursor);
@@ -430,7 +430,7 @@ static void ShowTextWindow(const CString& sText) {
 	UINT nDpi = GetMonitorDpi(hMonitor);
 	int nWidth = ::MulDiv(560, nDpi, 96), nHeight = ::MulDiv(420, nDpi, 96);
 	CTextWindow window = { NULL, false };
-	HWND hWnd = ::CreateWindowEx(WS_EX_TOPMOST, _T("JPEGViewOcrText"), CNLS::GetString(_T("Recognized text")), WS_OVERLAPPEDWINDOW,
+	HWND hWnd = ::CreateWindowEx(WS_EX_TOPMOST, _T("LucidViewerOcrText"), CNLS::GetString(_T("Recognized text")), WS_OVERLAPPEDWINDOW,
 		(info.rcWork.left + info.rcWork.right - nWidth) / 2, (info.rcWork.top + info.rcWork.bottom - nHeight) / 2, nWidth, nHeight,
 		NULL, NULL, hInstance, &window);
 	if (hWnd == NULL) return;
@@ -707,7 +707,7 @@ COverlay::EResult COverlay::Run(std::vector<DWORD>& cropPixels, int& nCropWidth,
 	wndClass.lpfnWndProc = WndProc;
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = NULL; // set in WM_SETCURSOR
-	wndClass.lpszClassName = _T("JPEGViewScreenCapture");
+	wndClass.lpszClassName = _T("LucidViewerScreenCapture");
 	::RegisterClass(&wndClass);
 
 	HDC hScreenDC = ::GetDC(NULL);
@@ -724,7 +724,7 @@ COverlay::EResult COverlay::Run(std::vector<DWORD>& cropPixels, int& nCropWidth,
 	m_mouse.Offset(-m_screen.Left, -m_screen.Top);
 	UpdateDpi();
 
-	m_hWnd = ::CreateWindowEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW, _T("JPEGViewScreenCapture"), CNLS::GetString(_T("Screenshot")), WS_POPUP,
+	m_hWnd = ::CreateWindowEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW, _T("LucidViewerScreenCapture"), CNLS::GetString(_T("Screenshot")), WS_POPUP,
 		m_screen.Left, m_screen.Top, m_screen.Width, m_screen.Height, NULL, NULL, hInstance, this);
 	if (m_hWnd == NULL) {
 		return RESULT_NONE;
@@ -874,7 +874,7 @@ void COverlay::Layout() {
 		actions.push_back({ BTN_COPY_TEXT, 0, _T("Copy all text"), _T("Copies all recognized text") });
 	}
 	if (m_eMode == MODE_CAPTURE) {
-		actions.push_back({ BTN_OPEN, 0xE8E5, _T("O"), _T("Open in JPEGView") });
+		actions.push_back({ BTN_OPEN, 0xE8E5, _T("O"), _T("Open in Lucid Viewer") });
 		actions.push_back({ BTN_SAVE, 0xE74E, _T("S"), _T("Save (Ctrl+S)") });
 		actions.push_back({ BTN_COPY, 0xE8C8, _T("C"), _T("Copy (Ctrl+C)") });
 	}
@@ -1833,7 +1833,7 @@ static void RunCapture(EMode eMode, bool bWaitForToast) {
 				}
 			} else if (bWaitForToast) {
 				// a toast of copy or save is still shown
-				HWND hToast = ::FindWindow(_T("JPEGViewToast"), NULL);
+				HWND hToast = ::FindWindow(_T("LucidViewerToast"), NULL);
 				MSG msg;
 				while (hToast != NULL && ::IsWindow(hToast) && ::GetMessage(&msg, NULL, 0, 0) > 0) {
 					::TranslateMessage(&msg);
@@ -1854,7 +1854,7 @@ static const UINT WM_TRAY_CAPTURE = WM_APP + 2;
 static const int HOTKEY_CAPTURE = 1, HOTKEY_TEXT = 2;
 static const int TRAY_CAPTURE = 1, TRAY_TEXT = 2, TRAY_FOLDER = 3, TRAY_AUTOSTART = 4, TRAY_KEYBOARD_SETTINGS = 5, TRAY_EXIT = 6;
 static const LPCTSTR RUN_KEY = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run");
-static const LPCTSTR RUN_VALUE = _T("JPEGView Screenshot");
+static const LPCTSTR RUN_VALUE = _T("Lucid Viewer Screenshot");
 static UINT s_nTaskbarCreated = 0;
 static CString s_sHotkeyText[3];
 
@@ -1917,7 +1917,7 @@ static void AddTrayIcon(HWND hWnd, bool bAdd) {
 	data.uCallbackMessage = WM_TRAY_NOTIFY;
 	data.hIcon = (HICON)::LoadImage(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON,
 		::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), 0);
-	CString sTip = CString(CNLS::GetString(_T("JPEGView screenshot"))) + _T(" (") + s_sHotkeyText[HOTKEY_CAPTURE] + _T(")");
+	CString sTip = CString(CNLS::GetString(_T("Lucid Viewer screenshot"))) + _T(" (") + s_sHotkeyText[HOTKEY_CAPTURE] + _T(")");
 	_tcsncpy_s(data.szTip, sTip, _TRUNCATE);
 	::Shell_NotifyIcon(bAdd ? NIM_ADD : NIM_DELETE, &data);
 	if (data.hIcon != NULL) ::DestroyIcon(data.hIcon);
@@ -1997,10 +1997,10 @@ static LRESULT CALLBACK TrayWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM 
 }
 
 static int RunTray() {
-	HANDLE hMutex = ::CreateMutex(NULL, FALSE, _T("JPEGViewScreenshotTray"));
+	HANDLE hMutex = ::CreateMutex(NULL, FALSE, _T("LucidViewerScreenshotTray"));
 	if (::GetLastError() == ERROR_ALREADY_EXISTS) {
 		// already running: a second start takes a screenshot
-		HWND hTray = ::FindWindow(_T("JPEGViewScreenshotTray"), NULL);
+		HWND hTray = ::FindWindow(_T("LucidViewerScreenshotTray"), NULL);
 		if (hTray != NULL) ::PostMessage(hTray, WM_TRAY_CAPTURE, MODE_CAPTURE, 0);
 		if (hMutex != NULL) ::CloseHandle(hMutex);
 		return 0;
@@ -2009,10 +2009,10 @@ static int RunTray() {
 	WNDCLASS wndClass = { 0 };
 	wndClass.lpfnWndProc = TrayWndProc;
 	wndClass.hInstance = hInstance;
-	wndClass.lpszClassName = _T("JPEGViewScreenshotTray");
+	wndClass.lpszClassName = _T("LucidViewerScreenshotTray");
 	::RegisterClass(&wndClass);
 	s_nTaskbarCreated = ::RegisterWindowMessage(_T("TaskbarCreated"));
-	HWND hWnd = ::CreateWindow(_T("JPEGViewScreenshotTray"), _T("JPEGView screenshot"), WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, hInstance, NULL);
+	HWND hWnd = ::CreateWindow(_T("LucidViewerScreenshotTray"), _T("Lucid Viewer screenshot"), WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, hInstance, NULL);
 	if (hWnd == NULL) return 1;
 
 	CString sHotkeys[3] = { _T(""), CSettingsProvider::This().ScreenshotHotkey(), CSettingsProvider::This().ScreenshotTextHotkey() };
@@ -2030,9 +2030,9 @@ static int RunTray() {
 	if (!sFailed.IsEmpty()) {
 		CString sMessage;
 		sMessage.Format(CNLS::GetString(_T("The shortcut %s is used by another program. It can be changed in the INI file (ScreenshotHotkey).")), (LPCTSTR)sFailed);
-		ShowBalloon(hWnd, CNLS::GetString(_T("JPEGView screenshot")), sMessage);
+		ShowBalloon(hWnd, CNLS::GetString(_T("Lucid Viewer screenshot")), sMessage);
 	} else if (IsPrintScreenTakenBySnippingTool() && (sHotkeys[HOTKEY_CAPTURE].Find(_T("PrintScreen")) >= 0 || sHotkeys[HOTKEY_TEXT].Find(_T("PrintScreen")) >= 0)) {
-		ShowBalloon(hWnd, CNLS::GetString(_T("JPEGView screenshot")),
+		ShowBalloon(hWnd, CNLS::GetString(_T("Lucid Viewer screenshot")),
 			CNLS::GetString(_T("Windows opens the Snipping Tool with the Print Screen key. Switch this off in Settings > Accessibility > Keyboard (right click on this icon).")));
 	}
 

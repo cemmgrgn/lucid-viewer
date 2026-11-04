@@ -1,20 +1,20 @@
-[JPEGView]
+[LucidViewer]
 
-; This user INI file has been created from template JPEGView.ini.tpl
+; This user INI file has been created from template LucidViewer.ini.tpl
 ; Settings in this file override the setting in the global INI file located in the EXE path
 
 
 ; *****************************************************************************
 ; * PROGRAM OPTIONS
 ; *
-; * These options control how JPEGView operates
+; * These options control how Lucid Viewer operates
 ; *****************************************************************************
 
-; If set to true, only one single instance of JPEGView runs at any time, if false multiple instances are allowed
-; Set to true to open all images in the same JPEGView window.
+; If set to true, only one single instance of Lucid Viewer runs at any time, if false multiple instances are allowed
+; Set to true to open all images in the same Lucid Viewer window.
 SingleInstance=false
 
-; Set to true to skip the 'File Open' dialog when starting JPEGView without providing a file name as parameter
+; Set to true to skip the 'File Open' dialog when starting Lucid Viewer without providing a file name as parameter
 SkipFileOpenDialogOnStartup=false
 
 ; File endings of files to be decoded by WIC (Windows Image Converter)
@@ -63,7 +63,7 @@ IniEditor=notepad
 ; This INI setting sets the path to save the file. Default is %temp%, the system TEMP directory. You must have write access to the specified directory!
 WallpaperPath=%temp%
 
-; Set to false to disallow deletion of images in JPEGView. This hides the 'x' button on the navigation panel
+; Set to false to disallow deletion of images in Lucid Viewer. This hides the 'x' button on the navigation panel
 ; and disables the commands for deletion (IDM_MOVE_TO_RECYCLE_BIN etc.)
 AllowFileDeletion=true
 
@@ -72,7 +72,7 @@ AllowFileDeletion=true
 ; *****************************************************************************
 ; * USER INTERFACE OPTIONS
 ; *
-; * These options control how JPEGView looks
+; * These options control how Lucid Viewer looks
 ; *****************************************************************************
 
 ; Language used in the user interface. Set to 'auto' to use the language of the operating system.
@@ -129,7 +129,7 @@ AllowEditGlobalSettings=false
 ; 'auto' to choose best mode depending on image size of first image - windowed when it is small, full screen when it is large
 ShowFullScreen=auto
 
-; If set to true, only one single instance of JPEGView runs in full screen mode, if false multiple instances are allowed
+; If set to true, only one single instance of Lucid Viewer runs in full screen mode, if false multiple instances are allowed
 ; The value is ignored if SingleInstance=true
 SingleFullScreenInstance=true
 
@@ -169,12 +169,12 @@ ShowSidePanel=true
 ; Side panel collapsed to a narrow strip with icons (toggled with its arrow button)
 SidePanelCollapsed=false
 
-; If true, the Esc key closes JPEGView also in window mode (as in older versions).
+; If true, the Esc key closes Lucid Viewer also in window mode (as in older versions).
 ; If false, Esc ends the current tool (crop, drawing, compare) and leaves full screen mode.
 EscapeClosesWindow=false
 
 ; Start screen with the last opened photos and the photos pinned by the user, shown when no image is open (Alt+Home).
-; If false, the file open dialog is shown when JPEGView is started without an image.
+; If false, the file open dialog is shown when Lucid Viewer is started without an image.
 ShowStartScreen=true
 
 ; Remember the recently opened photos and show them on the start screen. If false, nothing is written to
@@ -198,7 +198,7 @@ ChromeTheme=dark
 ; with the formats jpg, png, webp, webpll (lossless), bmp, tiff, gif, ico, pdf and same (format of the source file)
 ; and the operations scaleN (N percent), fitN (long edge at most N pixels), rotl, rotr, rot180 and nometa (no EXIF/GPS).
 ; Example: ConvertCustomPresets=fit2560:webp;scale30:jpg
-; Run JPEGView.exe /registerconvertmenu (or Tools menu) again after changing this to update the Explorer menu.
+; Run LucidViewer.exe /registerconvertmenu (or Tools menu) again after changing this to update the Explorer menu.
 ConvertCustomPresets=
 
 ; Folder for converted files. Empty: next to the source file. A relative name such as 'converted' is a sub folder
@@ -206,7 +206,7 @@ ConvertCustomPresets=
 ConvertOutputFolder=
 
 ; -----------------------------------------------
-; - SCREENSHOT TOOL (Tools menu or JPEGView.exe /tray, /capture, /capturetext)
+; - SCREENSHOT TOOL (Tools menu or LucidViewer.exe /tray, /capture, /capturetext)
 ; -----------------------------------------------
 
 ; Folder of saved screenshots. Empty: Pictures\Screenshots
@@ -252,7 +252,7 @@ ScaleFactorNavPanel=1.0
 ; *****************************************************************************
 ; * FILE NAVIGATION OPTIONS
 ; *
-; * These options are related how JPEGView navigates and finds image files to display
+; * These options are related how Lucid Viewer navigates and finds image files to display
 ; *****************************************************************************
 
 ; Sorting order of the files when displaying the image files in a folder
@@ -292,7 +292,7 @@ NavigateWithMouseWheel=false
 
 ; If true, the extended mouse buttons (Forward and backward) are reversed compared to Internet explorer
 ; This is useful to put the 'go to next image' functionality to the button that is better reachable
-; e.g. Hitting Backwards button goes Forward in JPEGView
+; e.g. Hitting Backwards button goes Forward in Lucid Viewer
 ExchangeXButtons=true
 
 
@@ -300,7 +300,7 @@ ExchangeXButtons=true
 ; *****************************************************************************
 ; * USER INPUT CONFIG
 ; *
-; * These options control interactions with JPEGView
+; * These options control interactions with Lucid Viewer
 ; *****************************************************************************
 
 ; By default, Left-click and drag enables selection mode whenever pan is not available.  CTRL+Left-click and drag enables selection mode when zoomed in.
@@ -315,7 +315,7 @@ MouseWheelZoomSpeed=1.0
 ; *****************************************************************************
 ; * IMAGE DISPLAY OPTIONS
 ; *
-; * These options are related to how JPEGView displays images
+; * These options are related to how Lucid Viewer displays images
 ; *****************************************************************************
 
 ; If true, reloads the currently displayed image automatically when it is changed by an external program on disk.
@@ -399,7 +399,7 @@ Sharpen=0.3
 ; *****************************************************************************
 ; * DEFAULT IMAGE EDITING OPTIONS
 ; *
-; * These options are related to JPEGView defaults for image editing
+; * These options are related to Lucid Viewer defaults for image editing
 ; *****************************************************************************
 
 ; Default parameters for unsharp masking: Radius Amount Threshold
@@ -627,7 +627,7 @@ JPEGSaveQuality=85
 ; Quality when saving WEBP files with lossy compression (in 0..100 where 100 is the highest quality)
 WEBPSaveQuality=85
 
-; Set to true to create a parameter DB entry when saving an image with JPEGView to avoid processing it again
+; Set to true to create a parameter DB entry when saving an image with Lucid Viewer to avoid processing it again
 CreateParamDBEntryOnSave=true
 
 
@@ -654,12 +654,12 @@ Units=auto
 ; *****************************************************************************
 ; * CUSTOM USER COMMANDS
 ; *
-; * These are custom user commands that can easily extend the functionality in JPEGView
+; * These are custom user commands that can easily extend the functionality in Lucid Viewer
 ; *****************************************************************************
 
 ; User command must have the following form:
 ; UserCmd#="KeyCode: %Key% Cmd: '%Cmd%' [Menuitem: '%menu%'] [Confirm: '%confirm%'] [HelpText: '%help%'] [Flags: '%flags%']"
-; %Key% :   Key that invokes the command. Do not define keys already used by JPEGView.
+; %Key% :   Key that invokes the command. Do not define keys already used by Lucid Viewer.
 ;           The following keys are known: Alt, Ctrl, Shift, Esc, Return, Space, End, Home, Back, Tab, PgDn, PgUp,
 ;           Left, Right, Up, Down, Insert, Del, Plus, Minus, Mul, Div, Comma, Period, A .. Z  F1 .. F12
 ;           Combine modifier keys with +, e.g. 'Alt+Ctrl+P'
@@ -671,10 +671,10 @@ Units=auto
 ;           %directory%  : Directory or current image, without trailing backslash
 ;           %mydocuments%: The 'My Documents' folder without trailing backslash
 ;           %mypictures% : The 'My Pictures' folder without trailing backslash
-;           %exepath%    : Path to EXE folder where JPEGView is running
+;           %exepath%    : Path to EXE folder where Lucid Viewer is running
 ;           %exedrive%   : Drive letter of the EXE path, e.g. "c:"
-;           The resulting names are enclosed with double quotes automatically by JPEGView when no backslash is before or after the placeholder.
-; %menu% :  The menu item text in the 'User Commands' sub-menu shown in the JPEGView context menu. If missing the command is not contained in the menu.
+;           The resulting names are enclosed with double quotes automatically by Lucid Viewer when no backslash is before or after the placeholder.
+; %menu% :  The menu item text in the 'User Commands' sub-menu shown in the Lucid Viewer context menu. If missing the command is not contained in the menu.
 ; %confirm% : Message text that is shown and must be confirmed before the command is executed.
 ;           This is an optional argument, if not used, no confirmation is needed for the command.
 ; %help% :  Help string that is displayed in JPEG view when F1 is pressed.
@@ -685,9 +685,9 @@ Units=auto
 ;           ShortFilename :    If set, the short (8.3) file name (and path) is passed to the executing application.
 ;                              Set this flag if the executing application cannot handle long file names or files and path
 ;                              names containing spaces.
-;           WaitForTerminate : If set, JPEGView is blocked until the command has finished execution. If not set, the command is
-;                              started and JPEGView continues.
-;           MoveToNext :       If set, JPEGView moves to the next image in the folder after the command has been executed.
+;           WaitForTerminate : If set, Lucid Viewer is blocked until the command has finished execution. If not set, the command is
+;                              started and Lucid Viewer continues.
+;           MoveToNext :       If set, Lucid Viewer moves to the next image in the folder after the command has been executed.
 ;                              Cannot be combined with the ReloadCurrent flag.
 ;           ReloadFileList :   If set, the file-list of the current folder is reloaded after execution of the command. Set this
 ;                              flag when the command modifies the content of the folder (e.g. moves, renames or deletes files).
@@ -719,7 +719,7 @@ Units=auto
 ; - OPEN WITH COMMANDS
 ; -----------------------------------------------
 
-; Open with menu commands, shown in the 'Open with..' submenu of the JPEGView context menu.
+; Open with menu commands, shown in the 'Open with..' submenu of the Lucid Viewer context menu.
 ;
 ; These commands must be named OpenWith# where # stands for a number. The first open with command has the number zero (OpenWith0)
 ; and the numbering of the commands must be continuous.

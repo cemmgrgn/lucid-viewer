@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	Изображения %s
 %s images (processed by Window Imaging Component - WIC)	Изображения %s (обработка Window Imaging Component — WIC)
 'My Pictures' folder	папка 'Мои рисунки'
-About JPEGView (32-bit version)...	О программе JPEGView (32-разрядная версия)...
-About JPEGView (64-bit version)...	О программе JPEGView (64-разрядная версия)...
+About Lucid Viewer (32-bit version)...	О программе Lucid Viewer (32-разрядная версия)...
+About Lucid Viewer (64-bit version)...	О программе Lucid Viewer (64-разрядная версия)...
 Acquisition date:	Дата съёмки:
 Actual size of image	Настоящий размер изображения
 Align image to horizontal or vertical line	Выравнивание изображения по горизонтальной или вертикальной линии
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Невозможно записать ф
 Click and drag the mouse vertically to correct image tilt.	Перетаскивайте мышь вертикально, чтобы устранить/изменить наклон изображения.
 Clipboard Image	Изображение в буфере обмена
 Close	Закрыть
-Close help text display / Close JPEGView	Закрыть справку/JPEGView
+Close help text display / Close Lucid Viewer	Закрыть справку/Lucid Viewer
 Color Correction	Коррекция цвета
 Combine keys with '+'	Сочетайте клавиши плюсом ('+')
 Confirm	Подтвердите
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Регулировк�
 Increase/decrease lightening of shadows (LDC must be on)	Регулировка высветления теней (нужно включить ЛПЯ)
 Increase/decrease sharpness	Регулировка резкости
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Недостаточно прав для изменения привилегии (DACL) в записи реестра. Продолжить?
-JPEGView Help	Справка JPEGView
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView — это компактная и быстрая программа для просмотра/редактирования JPEG, JPEG XR (HD Photo), BMP, PNG, WebP, TGA, GIF, TIFF и RAW с богатыми возможностями настройки и лаконичным интерфейсом.
-JPEGView is registered as default viewer for the selected file formats.	Установите/снимите отметки у типов файлов для регистрации/дерегистрации JPEGView как стандартной программы их просмотра.
+Lucid Viewer Help	Справка Lucid Viewer
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer — это компактная и быстрая программа для просмотра/редактирования JPEG, JPEG XR (HD Photo), BMP, PNG, WebP, TGA, GIF, TIFF и RAW с богатыми возможностями настройки и лаконичным интерфейсом.
+Lucid Viewer is registered as default viewer for the selected file formats.	Установите/снимите отметки у типов файлов для регистрации/дерегистрации Lucid Viewer как стандартной программы их просмотра.
 Keep aspect ratio on crop	Соблюдать пропорции при обрезке
 Keep parameters	Запоминать параметры
 Keep processing parameters between images	Помнить параметры обработки при смене изображений
@@ -264,7 +264,7 @@ Radius	Радиус
 Random	Случайно
 Reading the JPEG file from disk failed	Ошибка чтения файла JPEG
 Reason:	Причина:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Регистрация/дерегистрация расширений в этой области реестра требует прав администратора и не может быть выполнена в JPEGView.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Регистрация/дерегистрация расширений в этой области реестра требует прав администратора и не может быть выполнена в Lucid Viewer.
 Registration applies to the current user only.	Регистрация действует только для текущего пользователя.
 Remove from	Удалить из БД
 Rename	Переименовать
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Выберите в окне отк
 Select none	Отменить весь выбор
 Select parameter DB to restore	Выберите базу параметров для восстановления
 Set Fixed Crop Size	Выбрать размер обрезки
-Set JPEGView as default image viewer	Назначить JPEGView стандартной программой просмотра графики
+Set Lucid Viewer as default image viewer	Назначить Lucid Viewer стандартной программой просмотра графики
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Задать интервал N/10 сек или N/100 сек (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Сохранить имеющиеся записи ('Да') или перезаписать их импортированными ('Нет')?
 Sharpen	Резкость
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	В и
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Новый размер слишком велик — ширина или высота превышают 65 535 пикселов, либо слишком много пикселов всего!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	Не удалось переименовать старый файл '%s' с базой параметров при преобразовании в новый формат.
 The operation failed because not enough memory is available!	Операция не выполнена: недостаточно памяти.
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Файл '%s' с базой параметров создан в более новой версии JPEGView.
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Файл '%s' с базой параметров создан в более новой версии Lucid Viewer.
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Преобразование возможно, если обрезать изображение до ближайшего кратного блоку значения (и потерять некоторое количество пикселов с краёв).
-These values will override the values from the INI file located in the program folder of JPEGView!	Эти значения будут иметь приоритет перед установками в INI-файле в папке с JPEGView.
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Эти значения будут иметь приоритет перед установками в INI-файле в папке с Lucid Viewer.
 Threshold	Порог
 Title:	Название:
 Toggle between screens (only for multi-monitor systems)	Переключиться между экранами (в мультимониторных системах)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Провед�
 Warning	Внимание
 Width	Ширина
 Window mode	Оконный режим
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8 (и новее) не позволяет JPEGView изменять стандартную программу для файлов с этими расширениями.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows 8 (и новее) не позволяет Lucid Viewer изменять стандартную программу для файлов с этими расширениями.
 Writing the resulting JPEG file to disk failed	Ошибка записи результирующего файла JPEG
 Y - B	Y - B
 Year short form (2 digits)	год коротко (две цифры)
@@ -463,7 +463,7 @@ Set as default viewer...	Назначить программой просмот�
 Backup parameter DB...	Сделать резервную копию базы параметров...
 Restore parameter DB...	Восстановить базу параметров из копии...
 User commands	Пользовательские команды
-About JPEGView...	О программе JPEGView...
+About Lucid Viewer...	О программе Lucid Viewer...
 Exit	Выход
 Crop Selection	Обрезать выделенное
 Crop Selection Lossless...	Обрезать выделенное без потерь...
@@ -487,7 +487,7 @@ Zoom to Selection	Масштабировать до выделенного
 //PgDn or Right	PgDn или стрелка вправо
 //PgUp or Left	PgUp или стрелка влево
 //Press 'OK' to continue with registration or 'Cancel' to not modify any registrations.	OK — зарегистрировать, 'Отмена' — не изменять никаких регистраций файлов.
-//Registering or unregistering file extensions in this registry area requires administration privileges and cannot be done in JPEGView.	Регистрация/дерегистрация расширений в этой области реестра требует прав администратора и не может быть выполнена в JPEGView.
+//Registering or unregistering file extensions in this registry area requires administration privileges and cannot be done in Lucid Viewer.	Регистрация/дерегистрация расширений в этой области реестра требует прав администратора и не может быть выполнена в Lucid Viewer.
 //Rename:	Переименовать:
 //Rotate the following file lossless by 270 deg?\n%filename%	Повернуть без потерь на 90° влево и сохранить в файле?\n%filename%
 //Rotate the following file lossless by 90 deg?\n%filename%	Повернуть без потерь на 90° вправо и сохранить в файле?\n%filename%
@@ -495,9 +495,9 @@ Zoom to Selection	Масштабировать до выделенного
 //Slide show with timeout of n seconds (ESC to stop)	Запустить слайдшоу с интервалом N сек (Esc — стоп)
 //Target folders that are not yet existing are created as needed.	Несуществующие папки назначения создаются по необходимости.
 //The file '%s' could not be %s.	Для файла '%s' невозможно выполнить операцию '%s'.
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	Для удобства ассоциируйте файлы JPG, JPEG и BMP с JPEGView.
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	Для удобства ассоциируйте файлы JPG, JPEG и BMP с Lucid Viewer.
 //Upcounting	По возрастанию
-//Windows 8 blocks JPEGView from changing the default program for these file endings.	Windows 8 не позволяет JPEGView изменять стандартную программу для файлов с этими расширениями.
+//Windows 8 blocks Lucid Viewer from changing the default program for these file endings.	Windows 8 не позволяет Lucid Viewer изменять стандартную программу для файлов с этими расширениями.
 //[new entry]	[новый элемент]
 //copied	скопировано
 //renamed	переименовано

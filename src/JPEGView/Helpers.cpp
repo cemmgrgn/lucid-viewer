@@ -29,13 +29,58 @@ static TCHAR buffAppPath[MAX_PATH + 32] = _T("");
 LPCTSTR JPEGViewAppDataPath() {
 	if (buffAppPath[0] == 0) {
 		::SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffAppPath);
-		_tcscat_s(buffAppPath, MAX_PATH + 32, _T("\\JPEGView\\"));
+		_tcscat_s(buffAppPath, MAX_PATH + 32, _T("\\LucidViewer\\"));
 	}
 	return buffAppPath;
 }
 
 void SetJPEGViewAppDataPath(LPCTSTR sPath) {
 	_tcscpy_s(buffAppPath, MAX_PATH + 32, sPath);
+}
+
+// Replaces all occurrences of a byte sequence in a file
+static void ReplaceInFile(LPCTSTR sFile, const std::string& sOld, const std::string& sNew) {
+	FILE* pFile = NULL;
+	if (_tfopen_s(&pFile, sFile, _T("rb")) != 0 || pFile == NULL) return;
+	std::string content;
+	char buffer[4096];
+	size_t nRead;
+	while ((nRead = fread(buffer, 1, sizeof(buffer), pFile)) > 0) content.append(buffer, nRead);
+	fclose(pFile);
+	bool bChanged = false;
+	size_t nPos = 0;
+	while ((nPos = content.find(sOld, nPos)) != std::string::npos) {
+		content.replace(nPos, sOld.size(), sNew);
+		nPos += sNew.size();
+		bChanged = true;
+	}
+	if (bChanged && _tfopen_s(&pFile, sFile, _T("wb")) == 0 && pFile != NULL) {
+		fwrite(content.data(), 1, content.size(), pFile);
+		fclose(pFile);
+	}
+}
+
+void MigrateLegacyAppData() {
+	TCHAR sAppData[MAX_PATH];
+	if (FAILED(::SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, sAppData))) return;
+	CString sNewDir = CString(sAppData) + _T("\\LucidViewer");
+	CString sOldDir = CString(sAppData) + _T("\\JPEGView");
+	if (::GetFileAttributes(sNewDir) != INVALID_FILE_ATTRIBUTES || ::GetFileAttributes(sOldDir) == INVALID_FILE_ATTRIBUTES) return;
+	if (!::CreateDirectory(sNewDir, NULL)) return;
+	WIN32_FIND_DATA findData;
+	HANDLE hFind = ::FindFirstFile(sOldDir + _T("\\*"), &findData);
+	if (hFind == INVALID_HANDLE_VALUE) return;
+	do {
+		if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+		CString sName = findData.cFileName;
+		CString sTarget = (sName.CompareNoCase(_T("JPEGView.ini")) == 0) ? CString(_T("LucidViewer.ini")) : sName;
+		::CopyFile(sOldDir + _T("\\") + sName, sNewDir + _T("\\") + sTarget, TRUE);
+	} while (::FindNextFile(hFind, &findData));
+	::FindClose(hFind);
+	// the settings file has a section named after the program, ANSI/UTF-8 and UTF-16 files
+	CString sIni = sNewDir + _T("\\LucidViewer.ini");
+	ReplaceInFile(sIni, "[JPEGView]", "[LucidViewer]");
+	ReplaceInFile(sIni, std::string((const char*)L"[JPEGView]", 20), std::string((const char*)L"[LucidViewer]", 26));
 }
 
 CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight, 

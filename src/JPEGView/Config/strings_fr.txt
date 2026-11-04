@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -47,8 +47,8 @@
 %s images	%s images
 %s images (processed by Window Imaging Component - WIC)	%s images (traitées avec Windows Imaging Component - WIC)
 'My Pictures' folder	Dossier 'Images'
-About JPEGView (32-bit version)...	À propos de JPEGView (version 32 bits)...
-About JPEGView (64-bit version)...	À propos de JPEGView (version 64 bits)...
+About Lucid Viewer (32-bit version)...	À propos de Lucid Viewer (version 32 bits)...
+About Lucid Viewer (64-bit version)...	À propos de Lucid Viewer (version 64 bits)...
 Acquisition date:	Date d'acquisition :
 Actual size of image	Taille réelle de l'image
 Align image to horizontal or vertical line	Aligner l'image avec une ligne horizontale ou verticale
@@ -85,7 +85,7 @@ Cannot write to parameter DB file '%s'!	Impossible d'écrire dans le fichier '%s
 Click and drag the mouse vertically to correct image tilt.	Cliquez et faites glisser la souris verticalement pour corriger l'inclinaison de l'image.
 Clipboard Image	Image du presse-papiers
 Close	Fermer
-Close help text display / Close JPEGView	Fermer l'aide / Fermer JPEGView
+Close help text display / Close Lucid Viewer	Fermer l'aide / Fermer Lucid Viewer
 Color Correction	Correction des couleurs
 Combine keys with '+'	Combiner les touches avec '+'
 Confirm	Confirmer
@@ -176,9 +176,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Augmenter/diminuer l'
 Increase/decrease lightening of shadows (LDC must be on)	Augmenter/diminuer l'éclaircissement des ombres (LDC doit être actif)
 Increase/decrease sharpness	Augmenter/diminuer la netteté
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Droits insuffisants pour changer le contrôle d'accès (DACL) dans la base de registres. Continuer ?
-JPEGView Help	Aide JPEGView
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView est une visionneuse/éditeur d'images léger, rapide, très configurable et avec une interface graphique minimale pour JPEG, BMP, PNG, WEBP, TGA, GIF et TIFF.
-JPEGView is registered as default viewer for the selected file formats.	JPEGView sera la visionneuse par défaut pour les formats de fichier sélectionnés.
+Lucid Viewer Help	Aide Lucid Viewer
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer est une visionneuse/éditeur d'images léger, rapide, très configurable et avec une interface graphique minimale pour JPEG, BMP, PNG, WEBP, TGA, GIF et TIFF.
+Lucid Viewer is registered as default viewer for the selected file formats.	Lucid Viewer sera la visionneuse par défaut pour les formats de fichier sélectionnés.
 Keep aspect ratio on crop	Maintenir le ratio largeur / hauteur lors du rognage
 Keep parameters	Garder le traitement entre les images
 Keep processing parameters between images	Garder les traitements lors du changement d‘image
@@ -265,7 +265,7 @@ Radius	Rayon
 Random	Aléatoire
 Reading the JPEG file from disk failed	Echec de lecture depuis le disque du fichier JPEG
 Reason:	Raison:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Intervenir dans cette zone de la base de registre demande des droits d'administrateur et ne peut pas être effectué depuis JPEGView.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Intervenir dans cette zone de la base de registre demande des droits d'administrateur et ne peut pas être effectué depuis Lucid Viewer.
 Registration applies to the current user only.	Ceci s'applique seulement à l'utilisateur en cours.
 Remove from	Supprimer
 Rename	Renommer
@@ -311,7 +311,7 @@ Select file to display in 'File Open' dialog	Sélectionnez le fichier à affiche
 Select none	Aucune sélection
 Select parameter DB to restore	Sélectionner la BdD de paramètres à restaurer
 Set Fixed Crop Size	Définir la taille fixe du rognage
-Set JPEGView as default image viewer	Définir JPEGView comme visionneuse d'images par défaut
+Set Lucid Viewer as default image viewer	Définir Lucid Viewer comme visionneuse d'images par défaut
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Configurer le délai respectivement à n/10 s, n/100 s (Ctrl+Maj)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Souhaitez-vous conserver les entrées existantes (Oui) ou les écraser avec les entrées importées (Non) ?
 Sharpen	Netteté
@@ -355,9 +355,9 @@ The imported param DB contains entries already present in active param DB.	La Bd
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	La nouvelle taille est trop grande - la largeur ou la hauteur est supérieure à 65535 ou le nombre total de pixels est trop élevé !
 The old parameter DB file '%s' could not be renamed during conversion to new format!	L'ancien fichier BdD de paramètres '%s' n'a pas pu être renommé lors de la conversion au nouveau format !
 The operation failed because not enough memory is available!	Mémoire insuffisante pour effectuer l'opération !
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Le fichier BdD de paramètres '%s' a été créé par une version plus récente de JPEGView !
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Le fichier BdD de paramètres '%s' a été créé par une version plus récente de Lucid Viewer !
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	La transformation peut être effectuée en redécoupant l'image à la taille convenable la plus proche, mais quelques pixels de bord vont être perdus.
-These values will override the values from the INI file located in the program folder of JPEGView!	Ce fichier INI utilisateur aura priorité sur le fichier INI du dossier programme de JPEGView !
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Ce fichier INI utilisateur aura priorité sur le fichier INI du dossier programme de Lucid Viewer !
 Threshold	Seuil
 Title:	Titre :
 Toggle between screens (only for multi-monitor systems)	Basculer entre les écrans (seulement si plusieurs écrans)
@@ -373,7 +373,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Utilisez la s
 Warning	Attention
 Width	Largeur
 Window mode	Mode fenêtré
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8 (et suivant) empêche JPEGView de changer le programme par défaut pour ces extensions.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows 8 (et suivant) empêche Lucid Viewer de changer le programme par défaut pour ces extensions.
 Writing the resulting JPEG file to disk failed	Echec d'écriture du fichier JPEG sur le disque
 Y - B	J - B
 Year short form (2 digits)	Année forme courte (2 chiffres)
@@ -464,7 +464,7 @@ Set as default viewer...	Définir comme visionneuse par défaut...
 Backup parameter DB...	Sauvegarder la BdD de paramètres
 Restore parameter DB...	Restaurer une BdD de paramètres
 User commands	Commandes utilisateur
-About JPEGView...	À propos de JPEGView...
+About Lucid Viewer...	À propos de Lucid Viewer...
 Exit	Quitter
 Crop Selection	Rogner la sélection
 Crop Selection Lossless...	Rogner la sélection sans pertes...
@@ -482,8 +482,8 @@ Zoom to Selection	Zoom sur la sélection
 //Rotate the following file lossless by 270 deg?\n%filename%	Pivoter de 270° et enregistrer le fichier ?\n%filename%
 //Rotate the following file lossless by 90 deg?\n%filename%	Pivoter de 90° et enregistrer le fichier ?\n%filename%
 //The file '%s' could not be %s.	Le fichier '%s' n'a pas pu être %s.
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	Pour utiliser JPEGView, associez les formats JPG, JPEG et BMP avec JPEGView.
-//Windows 8 blocks JPEGView from changing the default program for these file endings.	Windows 8 empêche JPEGView de changer le programme par défaut pour ces extensions.
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	Pour utiliser Lucid Viewer, associez les formats JPG, JPEG et BMP avec Lucid Viewer.
+//Windows 8 blocks Lucid Viewer from changing the default program for these file endings.	Windows 8 empêche Lucid Viewer de changer le programme par défaut pour ces extensions.
 //[new entry]	[nouvelle entrée]
 //copied	copié
 //renamed	renommé

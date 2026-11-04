@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	Imagens %s
 %s images (processed by Window Imaging Component - WIC)	Imagens %s (processadas pelo Windows Imaging - WIC)
 'My Pictures' folder	Pasta "Minhas imagens"
-About JPEGView (32-bit version)...	
-About JPEGView (64-bit version)...	
+About Lucid Viewer (32-bit version)...	
+About Lucid Viewer (64-bit version)...	
 Acquisition date:	Data de aquisição:
 Actual size of image	Tamanho real da imagem
 Align image to horizontal or vertical line	Alinhar imagem à linha horizontal ou vertical
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Não foi possível escrever no ficheiro 
 Click and drag the mouse vertically to correct image tilt.	Clique e arraste o rato na vertical para corrigir a inclinação
 Clipboard Image	
 Close	Sair
-Close help text display / Close JPEGView	Fechar texto de ajuda/Fechar o JPEGView
+Close help text display / Close Lucid Viewer	Fechar texto de ajuda/Fechar o Lucid Viewer
 Color Correction	Correção de cores
 Combine keys with '+'	Combinar teclas com '+'
 Confirm	Confirmação
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Aumentar/diminuir int
 Increase/decrease lightening of shadows (LDC must be on)	Aumentar/diminuir luz das sombras (LDC tem que estar ativo)
 Increase/decrease sharpness	Aumentar/diminuir nitidez
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	
-JPEGView Help	Ajuda do JPEGView
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	O JPEGView é um editor e visualizador de imagens JPEG, BMP, PNG, WEBP, TGA, GIF e TIFF rápido, bastante configurável e com uma interface muito simples.
-JPEGView is registered as default viewer for the selected file formats.	O JPEGView será registado como o visualizador padrão para os formatos de ficheiro selecionados.
+Lucid Viewer Help	Ajuda do Lucid Viewer
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	O Lucid Viewer é um editor e visualizador de imagens JPEG, BMP, PNG, WEBP, TGA, GIF e TIFF rápido, bastante configurável e com uma interface muito simples.
+Lucid Viewer is registered as default viewer for the selected file formats.	O Lucid Viewer será registado como o visualizador padrão para os formatos de ficheiro selecionados.
 Keep aspect ratio on crop	Manter tamanho ao recortar
 Keep parameters	Manter parâmetros
 Keep processing parameters between images	Manter parâmetros de processamento entre imagens
@@ -264,7 +264,7 @@ Radius	Raio
 Random	Aleatório
 Reading the JPEG file from disk failed	Ocorreu um erro ao carregar o ficheiro JPEG!
 Reason:	Motivo:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	A associação ou cancelamento da associação nesta área do registo requer privilégios de administrador e não pode ser efetuada no JPEGView.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	A associação ou cancelamento da associação nesta área do registo requer privilégios de administrador e não pode ser efetuada no Lucid Viewer.
 Registration applies to the current user only.	Esta associação só será aplicável ao utilizador atual.
 Remove from	Remover de
 Rename	Mudar nome
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Selecione o ficheiro na caixa de di
 Select none	Desmarcar todas
 Select parameter DB to restore	Selecione o ficheiro de parâmetros de BD a restaurar
 Set Fixed Crop Size	Definir tamanho fixo de recorte
-Set JPEGView as default image viewer	Definir o JPEGView como visualizador padrão
+Set Lucid Viewer as default image viewer	Definir o Lucid Viewer como visualizador padrão
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Definir tempo limite para n/10 seg., respetivamente n/100 seg. (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Manter entradas existentes (Sim) ou substituir pelas importadas (Não)?
 Sharpen	Nitidez
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	O fic
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	O novo tamanho é muito grande. A largura ou a altura é superior a 65535 ou o número total de pixeis é muito grande!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	O nome do ficheiro de parâmetros da BD "%s" não foi alterado ao converter para o novo formato!
 The operation failed because not enough memory is available!	A operação falhou porque a memória disponível não é suficiente!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	O ficheiro de parâmetros da BD "%s" foi  criado por uma versão mais recente do JPEGView!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	O ficheiro de parâmetros da BD "%s" foi  criado por uma versão mais recente do Lucid Viewer!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	A transformação pode ser aplicada de ajustar a imagem ao tamanho mais próximo mas alguns pixeis serão removidos.
-These values will override the values from the INI file located in the program folder of JPEGView!	Estes valores vão substituir os valores do ficheiro INI, existente na pasta do JPEGView!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Estes valores vão substituir os valores do ficheiro INI, existente na pasta do Lucid Viewer!
 Threshold	Limite
 Title:	Título:
 Toggle between screens (only for multi-monitor systems)	Alternar entre ecrãs (só para sistemas com vários monitores)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Utilize o rat
 Warning	Aviso
 Width	Largura
 Window mode	Modo de janela
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	
 Writing the resulting JPEG file to disk failed	Ocorreu um erro ao gravar o ficheiro JPEG!
 Y - B	A - A
 Year short form (2 digits)	Ano em forma curta (2 dígitos)
@@ -463,7 +463,7 @@ Set as default viewer...	Definir como visualizador padrão...
 Backup parameter DB...	Criar cópia de segurança dos parâmetros da BD...
 Restore parameter DB...	Restaurar cópia de segurança dos parâmetros da BD...
 User commands	Comandos do utilizador
-About JPEGView...	Sobre o JPEGView...
+About Lucid Viewer...	Sobre o Lucid Viewer...
 Exit	Sair
 Crop Selection	Recortar seleção
 Crop Selection Lossless...	Recortar seleção, mas sem perdas...
@@ -477,7 +477,7 @@ Zoom to Selection	Ampliar seleção
 //Delete current file on disk	Eliminar ficheiro do disco
 //However this will fail if the current user has no administration privileges.	No entanto, se o utilizador não possuir privilégios de administrador a operação não é possível.
 //Insufficient rights to remove the restrictions. Continue?	Não possui privilégios para remover as restrições. Continuar?
-//JPEGView can try to remove the restrictions automatically.	O JPEGView pode tentar remover as restrições automaticamente.
+//Lucid Viewer can try to remove the restrictions automatically.	O Lucid Viewer pode tentar remover as restrições automaticamente.
 //No file or folder name was provided as command line parameter!	Não indicou o nome do ficheiro ou pasta como parâmetro da linha de comandos!
 //PgDn or Right	PgDown ou Seta para direita
 //PgUp or Left	PgUp ou Seta para esquerda
@@ -485,16 +485,16 @@ Zoom to Selection	Ampliar seleção
 //Rotate the following file lossless by 270 deg?\n%filename%	Rodar o ficheiro \n%filename% em 270º, mas sem perda de qualidade?
 //Rotate the following file lossless by 90 deg?\n%filename%	Rodar o ficheiro \n%filename% em 90º, mas sem perda de qualidade?
 //The file '%s' could not be %s.	O ficheiro "%s" não pode ser %s
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	Para utilizar o JPEGView, associe as extensões JPG, JPEG e BMP ao JPEGView.
-//Windows 8 blocks JPEGView from changing the default program for these file endings.	O Windows 8 não permite que o JPEGView modifique o programa pré-definido para este tipo de ficheiros.
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	Para utilizar o Lucid Viewer, associe as extensões JPG, JPEG e BMP ao Lucid Viewer.
+//Windows 8 blocks Lucid Viewer from changing the default program for these file endings.	O Windows 8 não permite que o Lucid Viewer modifique o programa pré-definido para este tipo de ficheiros.
 //[new entry]	[nova entrada]
 //copied	copiado
 //renamed	renomeado
 //up/down	Seta para cima/Seta para baixo
 
 // ::: INFO: Missing Translations [48] ::: (Summary to assist translators: All missing strings which require translation) - Auto-generated by script //
-//! About JPEGView (32-bit version)...
-//! About JPEGView (64-bit version)...
+//! About Lucid Viewer (32-bit version)...
+//! About Lucid Viewer (64-bit version)...
 //! All existing user settings will be preserved.
 //! Altitude (m):
 //! Clipboard Image
@@ -515,7 +515,7 @@ Zoom to Selection	Ampliar seleção
 //! Toggle window always on top mode
 //! Toggle window title bar hidden mode
 //! Update user settings with new settings from settings template file?
-//! Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.
+//! Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.
 //! cm
 //! in
 //! new menu entry

@@ -50,9 +50,9 @@ LRESULT CFileExtensionsDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARA
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_SHARED);
 	SetIcon(hIconSmall, FALSE);
 
-	this->SetWindowText(CNLS::GetString(_T("Set JPEGView as default image viewer")));
+	this->SetWindowText(CNLS::GetString(_T("Set Lucid Viewer as default image viewer")));
 
-	CString s1 = CNLS::GetString(_T("JPEGView is registered as default viewer for the selected file formats."));
+	CString s1 = CNLS::GetString(_T("Lucid Viewer is registered as default viewer for the selected file formats."));
 	CString s2 = CNLS::GetString(_T("Registration applies to the current user only."));
 	m_lblMessage.SetWindowText(s1 + _T("\n") + s2);
 	m_btnOk.SetWindowText(CNLS::GetString(_T("OK")));
@@ -130,7 +130,7 @@ LRESULT CFileExtensionsDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*
 	if (endingsCantUnregister.size() > 0) {
 		CString sText = CNLS::GetString(_T("The following file extensions cannot be unregistered because they have been registered in the 'local machine' registry area."));
 		sText += _T("\n");
-		sText += CNLS::GetString(_T("Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView."));
+		sText += CNLS::GetString(_T("Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer."));
 		for (std::list<CString>::const_iterator it = endingsCantUnregister.begin(); it != endingsCantUnregister.end(); ++it) {
 			sText += _T("\n");
 			sText += *it;
@@ -144,7 +144,7 @@ LRESULT CFileExtensionsDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*
 
 	// make sure JPEGView is registered in HKEY_CURRENT_USER\Software\Classes\Applications
 	if (!m_pRegistry->RegisterJPEGView()) {
-		if (!ShowRegistryError(m_hWnd, _T("HKCU\\Software\\Classes\\Applications\\JPEGView.exe\\shell\\open\\command"), NULL)) {
+		if (!ShowRegistryError(m_hWnd, _T("HKCU\\Software\\Classes\\Applications\\LucidViewer.exe\\shell\\open\\command"), NULL)) {
 			return 0;
 		}
 	}
@@ -218,7 +218,7 @@ LRESULT CFileExtensionsDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*
 		msg += _T("\n");
 		msg += sProtectedByWindowsEndings;
 		msg += _T("\n\n");
-		msg += CNLS::GetString(_T("Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions."));
+		msg += CNLS::GetString(_T("Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions."));
 		msg += _T("\n");
 		msg += CNLS::GetString(_T("Use the 'Default Programs' configuration dialog from the operating system instead."));
 		msg += _T("\n");

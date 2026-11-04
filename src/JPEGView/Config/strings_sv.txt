@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s bilder
 %s images (processed by Window Imaging Component - WIC)	%s bilder (bearbetade av Window Imaging Component - WIC)
 'My Pictures' folder	'Mina bilder'
-About JPEGView (32-bit version)...	
-About JPEGView (64-bit version)...	
+About Lucid Viewer (32-bit version)...	
+About Lucid Viewer (64-bit version)...	
 Acquisition date:	Anskaffningsdatum:
 Actual size of image	Verklig bildstorlek
 Align image to horizontal or vertical line	Justera bildposition efter horisontell eller vertikal linje
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	 Kan inte skriva till databasfilen '%s'!
 Click and drag the mouse vertically to correct image tilt.	Klicka och dra vertikalt med musen, för att korrigera bildens lutning
 Clipboard Image	
 Close	Stäng
-Close help text display / Close JPEGView	Stäng hjälpfilen/Stäng JPEGView
+Close help text display / Close Lucid Viewer	Stäng hjälpfilen/Stäng Lucid Viewer
 Color Correction	Färger
 Combine keys with '+'	Kombinera tangenter med '+'
 Confirm	  Bekräfta
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Öka/Minska nedtoning
 Increase/decrease lightening of shadows (LDC must be on)	Öka/Minska ljussättning av skuggor (LDC måste vara aktiverat)
 Increase/decrease sharpness	 Justera skärpa
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	
-JPEGView Help	JPEGView hjälp
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView är en lätt, snabb och mycket konfigurerbar visare/redigerare för JPEG, BMP, PNG, WEBP, TGA, GIF och TIFF-filer med ett minimalt användargränssnitt.
-JPEGView is registered as default viewer for the selected file formats.	JPEGView är registrerad som standardvisare för de valda filtilläggen.
+Lucid Viewer Help	Lucid Viewer hjälp
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer är en lätt, snabb och mycket konfigurerbar visare/redigerare för JPEG, BMP, PNG, WEBP, TGA, GIF och TIFF-filer med ett minimalt användargränssnitt.
+Lucid Viewer is registered as default viewer for the selected file formats.	Lucid Viewer är registrerad som standardvisare för de valda filtilläggen.
 Keep aspect ratio on crop	Bevara proportioner vid beskärning
 Keep parameters	Bevara parametrar
 Keep processing parameters between images	Behåll berbetningsparametrar mellan bilder
@@ -222,7 +222,7 @@ No image loaded!	Ingen bild inläst
 No user INI file exists yet. Create user INI file from INI file template?	Det finns ännu ingen INI-fil för användarinställningar. Vill du skapa en med hjälp av standardmallen?
 None	Ingen
 Not enough memory available	För lite tillgängligt minne
-Note: Set the key 'CropWithoutPromptLosslessJPEG=true' in the INI file to always crop without showing this message.	Notera! Du kan ändra värdet i nyckeln 'CropWithoutPromptLosslessJPEG=true' i inställningsfilen 'JPEGView.ini' för att alltid beskära, utan att visa detta meddelande.
+Note: Set the key 'CropWithoutPromptLosslessJPEG=true' in the INI file to always crop without showing this message.	Notera! Du kan ändra värdet i nyckeln 'CropWithoutPromptLosslessJPEG=true' i inställningsfilen 'LucidViewer.ini' för att alltid beskära, utan att visa detta meddelande.
 Number (consecutively numbered)	Nummer (löpande numrering)
 Number of CPU cores used	Antal processorkärnor
 Number of JPEG files in folder: %d	Antal JPEG-filer i mappen: %d
@@ -264,7 +264,7 @@ Radius	Radie
 Random	Slumpmässig
 Reading the JPEG file from disk failed	Kunde inte läsa in JPEG-filen
 Reason:	Orsak:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Registrering eller avregistrering av filtillägg i den här registersektionen kräver administratörsbehörighet och kan inte utföras i JPEGView.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Registrering eller avregistrering av filtillägg i den här registersektionen kräver administratörsbehörighet och kan inte utföras i Lucid Viewer.
 Registration applies to the current user only.	Inställningen gäller endast aktuellt användarkonto
 Remove from	Ta bort från
 Rename	Byt namn
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Välj fil att visa med 'Öppna fil'
 Select none	  Avmarkera alla
 Select parameter DB to restore	Välj databas att återställa
 Set Fixed Crop Size	Bestäm fixerad beskärningsstorlek
-Set JPEGView as default image viewer	Ange JPEGView som standardbildvisare
+Set Lucid Viewer as default image viewer	Ange Lucid Viewer som standardbildvisare
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Bestäm timeout till n/10 sek, respektive n/100 sek (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Skall dom nuvarande posterna bevaras (Ja) eller skrivas över av importerade poster (Nej)?
 Sharpen	Skärpa
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	Den i
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Den nya storleken är för stor - Bredd eller höjd är större än 65535, eller totala pixelantalet är för stort!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	Den gamla databasfilen '%s' kunde inte döpas om under konvertering till nytt format!
 The operation failed because not enough memory is available!	Åtgärden misslyckades, eftersom det inte finns tillräckligt med ledigt minne tillgängligt.
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Databasfilen '%s' har skapats av en nyare version av JPEGView!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Databasfilen '%s' har skapats av en nyare version av Lucid Viewer!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Transformering kan utföras om bilden beskärs till närmast matchande storlek, men bilden blir alltså något beskuren.
-These values will override the values from the INI file located in the program folder of JPEGView!	Dessa värden kommer att åsidosätta värdena från ini-filen i JPEGView-programmappen!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Dessa värden kommer att åsidosätta värdena från ini-filen i Lucid Viewer-programmappen!
 Threshold	Tröskelvärde
 Title:	Namn:
 Toggle between screens (only for multi-monitor systems)	Växla mellan skärmar (endast flerskärmssystem)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Rita en horis
 Warning	Varning
 Width	Bredd
 Window mode	Fönsterläge
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	
 Writing the resulting JPEG file to disk failed	Kunde inte skriva utdatafilen till disk
 Y - B	G - B
 Year short form (2 digits)	År/kortform (2 siffror)
@@ -463,7 +463,7 @@ Set as default viewer...	Ange som standardvisare...
 Backup parameter DB...	Säkerhetskopiera databas...
 Restore parameter DB...	Återställ databas...
 User commands	Användarkommandon
-About JPEGView...	Om JPEGView...
+About Lucid Viewer...	Om Lucid Viewer...
 Exit	Avsluta
 Crop Selection	Beskär
 Crop Selection Lossless...	Beskär förlustfritt...
@@ -476,7 +476,7 @@ Zoom to Selection	Zooma in markerat område
 // ::: INFO: Out-of-date Translations [16] ::: (Not in use anymore, safe to delete) //
 //However this will fail if the current user has no administration privileges.	Det kommer dock att misslyckas om aktuellt användarkonto saknar administratörsrättigheter.
 //Insufficient rights to remove the restrictions. Continue?	Otillräckliga rättigheter för att ta bort restriktionerna. Vill du fortsätta?
-//JPEGView can try to remove the restrictions automatically.	JPEGView kan försöka ta bort restriktionerna automatiskt.
+//Lucid Viewer can try to remove the restrictions automatically.	Lucid Viewer kan försöka ta bort restriktionerna automatiskt.
 //No file or folder name was provided as command line parameter!	Ingen fil eller mapp angavs som kommandoradsparameter!
 //PgDn or Right	PgDn eller höger
 //PgUp or Left	PgUp eller vänster
@@ -484,16 +484,16 @@ Zoom to Selection	Zooma in markerat område
 //Rotate the following file lossless by 270 deg?\n%filename%	Rotera följande bild förlustfritt 270 grader?\n%filename%
 //Rotate the following file lossless by 90 deg?\n%filename%	Rotera följande bild förlustfritt 90 grader?\n%filename%
 //The file '%s' could not be %s.	Filen '%s' kan inte vara %s
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	För att använda JPEGView, associera JPG-, JPEG- och BMP-filer med JPEGView.
-//Windows 8 blocks JPEGView from changing the default program for these file endings.	Windows 8 blockerar JPEGViews försök att ändra standardprogram för dessa filändelser.
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	För att använda Lucid Viewer, associera JPG-, JPEG- och BMP-filer med Lucid Viewer.
+//Windows 8 blocks Lucid Viewer from changing the default program for these file endings.	Windows 8 blockerar LucidViewers försök att ändra standardprogram för dessa filändelser.
 //[new entry]	[ny post]
 //copied	kopierad
 //renamed	omdöpt
 //up/down	upp/ner
 
 // ::: INFO: Missing Translations [55] ::: (Summary to assist translators: All missing strings which require translation) - Auto-generated by script //
-//! About JPEGView (32-bit version)...
-//! About JPEGView (64-bit version)...
+//! About Lucid Viewer (32-bit version)...
+//! About Lucid Viewer (64-bit version)...
 //! All existing user settings will be preserved.
 //! Altitude (m):
 //! Box
@@ -519,7 +519,7 @@ Zoom to Selection	Zooma in markerat område
 //! Toggle window always on top mode
 //! Toggle window title bar hidden mode
 //! Update user settings with new settings from settings template file?
-//! Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.
+//! Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.
 //! Zoom 1:1 (100 %)
 //! cm
 //! in

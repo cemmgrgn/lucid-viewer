@@ -261,7 +261,7 @@ static void ReadDefinitions(LPCTSTR sFileName, std::vector<CSetting>& settings, 
 static CString ReadValue(LPCTSTR sFileName, LPCTSTR sKey, bool& bFound) {
 	TCHAR buffer[2048];
 	const TCHAR* MISSING = _T("\x01\x02missing");
-	::GetPrivateProfileString(_T("JPEGView"), sKey, MISSING, buffer, 2048, sFileName);
+	::GetPrivateProfileString(_T("LucidViewer"), sKey, MISSING, buffer, 2048, sFileName);
 	bFound = _tcscmp(buffer, MISSING) != 0;
 	return bFound ? CString(buffer) : CString();
 }
@@ -413,7 +413,7 @@ static void LayoutPage(CEditor& editor) {
 		sDescription.Replace(_T("\n"), _T(" "));
 		if (setting.Kind == KIND_LANGUAGE) {
 			// the language list is in the dropdown, the file name rules are not needed here
-			int nCut = sDescription.Find(_T("JPEGView will"));
+			int nCut = sDescription.Find(_T("Lucid Viewer will"));
 			if (nCut > 0) sDescription = sDescription.Left(nCut);
 		}
 		sDescription.Trim();
@@ -621,14 +621,14 @@ static bool SaveSettings(CEditor& editor) {
 		// a new user INI file in UTF-16 keeps non ASCII values
 		FILE* pFile = NULL;
 		if (_tfopen_s(&pFile, sUserINI, _T("w, ccs=UTF-16LE")) == 0 && pFile != NULL) {
-			fputws(L"[JPEGView]\n", pFile);
+			fputws(L"[LucidViewer]\n", pFile);
 			fclose(pFile);
 		}
 	}
 	bool bOK = true;
 	for (CSetting& setting : editor.Settings) {
 		if (setting.Value != setting.Initial) {
-			if (!::WritePrivateProfileString(_T("JPEGView"), setting.Key, setting.Value, sUserINI)) bOK = false;
+			if (!::WritePrivateProfileString(_T("LucidViewer"), setting.Key, setting.Value, sUserINI)) bOK = false;
 		}
 	}
 	return bOK;
@@ -805,14 +805,14 @@ bool Show(HWND hParent, CResult& result) {
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wndClass.hbrBackground = NULL; // WM_ERASEBKGND, light or dark
 	wndClass.hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(128));
-	wndClass.lpszClassName = _T("JPEGViewSettingsEditor");
+	wndClass.lpszClassName = _T("LucidViewerSettingsEditor");
 	::RegisterClass(&wndClass);
 	WNDCLASS pageClass = { 0 };
 	pageClass.lpfnWndProc = PageWndProc;
 	pageClass.hInstance = hInstance;
 	pageClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	pageClass.hbrBackground = NULL;
-	pageClass.lpszClassName = _T("JPEGViewSettingsPage");
+	pageClass.lpszClassName = _T("LucidViewerSettingsPage");
 	::RegisterClass(&pageClass);
 
 	HDC hDC = ::GetDC(NULL);
@@ -843,7 +843,7 @@ bool Show(HWND hParent, CResult& result) {
 	nHeight = min(nHeight, (int)(monitorInfo.rcWork.bottom - monitorInfo.rcWork.top) - 20);
 	int nX = max((int)monitorInfo.rcWork.left, (int)(parentRect.left + parentRect.right - nWidth) / 2);
 	int nY = max((int)monitorInfo.rcWork.top, (int)(parentRect.top + parentRect.bottom - nHeight) / 2);
-	editor.Window = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewSettingsEditor"), CNLS::GetString(_T("Settings")),
+	editor.Window = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("LucidViewerSettingsEditor"), CNLS::GetString(_T("Settings")),
 		WS_POPUP | WS_CAPTION | WS_SYSMENU, nX, nY, nWidth, nHeight, hParent, NULL, hInstance, NULL);
 	if (editor.Window == NULL) {
 		s_pEditor = NULL;
@@ -862,7 +862,7 @@ bool Show(HWND hParent, CResult& result) {
 		::SendMessage(editor.Categories, LB_ADDSTRING, 0, (LPARAM)CNLS::GetString(sCategory));
 	}
 
-	editor.Page = ::CreateWindowEx(0, _T("JPEGViewSettingsPage"), _T(""), WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | WS_CLIPCHILDREN,
+	editor.Page = ::CreateWindowEx(0, _T("LucidViewerSettingsPage"), _T(""), WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | WS_CLIPCHILDREN,
 		2 * nPad + nListWidth, nPad, client.Width() - 3 * nPad - nListWidth, client.Height() - 3 * nPad - nButtonHeight, editor.Window, NULL, hInstance, NULL);
 
 	struct { int Id; LPCTSTR Text; bool Left; } buttons[] = {
@@ -1214,9 +1214,9 @@ static CString CaptureShortcut(HWND hParent, const CString& sCommandLabel, int n
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wndClass.hbrBackground = NULL;
-	wndClass.lpszClassName = _T("JPEGViewShortcutCapture");
+	wndClass.lpszClassName = _T("LucidViewerShortcutCapture");
 	::RegisterClass(&wndClass);
-	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewShortcutCapture"), CNLS::GetString(_T("New keyboard shortcut")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
+	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("LucidViewerShortcutCapture"), CNLS::GetString(_T("New keyboard shortcut")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
 		(parentRect.left + parentRect.right - nWidth) / 2, (parentRect.top + parentRect.bottom - nHeight) / 2, nWidth, nHeight, hParent, NULL, hInstance, NULL);
 	if (hWnd == NULL) return CString();
 	NONCLIENTMETRICS metrics = { 0 };
@@ -1263,7 +1263,7 @@ static bool SaveKeyMap(CShortcutEditor& editor) {
 	CString sFileName = GetUserKeyMapFileName();
 	FILE* pFile = NULL;
 	if (_tfopen_s(&pFile, sFileName, _T("w")) != 0 || pFile == NULL) return false;
-	fputs("// This file defines the key mapping for JPEGView, it was written by the keyboard shortcut editor (Tools > Settings).\n", pFile);
+	fputs("// This file defines the key mapping for Lucid Viewer, it was written by the keyboard shortcut editor (Tools > Settings).\n", pFile);
 	fputs("// See KeyMap-README.html for more information on how to customize this file.\n\n", pFile);
 	for (const CString& sCommand : editor.Commands) {
 		bool bHasKey = false;
@@ -1509,7 +1509,7 @@ bool EditShortcuts(HWND hParent) {
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wndClass.hbrBackground = NULL;
-	wndClass.lpszClassName = _T("JPEGViewShortcutEditor");
+	wndClass.lpszClassName = _T("LucidViewerShortcutEditor");
 	::RegisterClass(&wndClass);
 	HDC hDC = ::GetDC(NULL);
 	editor.Dpi = ::GetDeviceCaps(hDC, LOGPIXELSX);
@@ -1522,7 +1522,7 @@ bool EditShortcuts(HWND hParent) {
 	int nWidth = editor.S(900), nHeight = editor.S(680);
 	RECT parentRect = { 0, 0, nWidth, nHeight };
 	if (hParent != NULL) ::GetWindowRect(hParent, &parentRect);
-	editor.Window = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewShortcutEditor"), CNLS::GetString(_T("Keyboard shortcuts")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
+	editor.Window = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("LucidViewerShortcutEditor"), CNLS::GetString(_T("Keyboard shortcuts")), WS_POPUP | WS_CAPTION | WS_SYSMENU,
 		max(0, (int)(parentRect.left + parentRect.right - nWidth) / 2), max(0, (int)(parentRect.top + parentRect.bottom - nHeight) / 2), nWidth, nHeight, hParent, NULL, hInstance, NULL);
 	if (editor.Window == NULL) {
 		s_pShortcuts = NULL;

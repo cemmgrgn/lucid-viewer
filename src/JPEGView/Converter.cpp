@@ -64,7 +64,7 @@ namespace Converter {
 		_T("heic"), _T("heif"), _T("hif"), _T("avif"), _T("jxl"), _T("qoi"), _T("psd"), _T("tga")
 	};
 
-	static const LPCTSTR EXPLORER_VERB_NAME = _T("JPEGView.Convert");
+	static const LPCTSTR EXPLORER_VERB_NAME = _T("LucidViewer.Convert");
 	static const LPCTSTR COMMAND_CONVERT = _T("/convert:");
 	static const LPCTSTR COMMAND_REGISTER = _T("/registerconvertmenu");
 	static const LPCTSTR COMMAND_UNREGISTER = _T("/unregisterconvertmenu");
@@ -331,8 +331,8 @@ namespace Converter {
 	// the other and shows the progress. The other processes end immediately.
 	//////////////////////////////////////////////////////////////////////////////////////////////
 
-	static const LPCTSTR COLLECTOR_CLASS = _T("JPEGViewConvertCollector");
-	static const LPCTSTR PROGRESS_CLASS_NAME = _T("JPEGViewConvertProgress");
+	static const LPCTSTR COLLECTOR_CLASS = _T("LucidViewerConvertCollector");
+	static const LPCTSTR PROGRESS_CLASS_NAME = _T("LucidViewerConvertProgress");
 	static const ULONG_PTR COPYDATA_FILE = 0x4A56434E;
 	static const UINT_PTR COLLECT_TIMER = 1;
 	static const int COLLECT_IDLE_TIME = 500; // ms without new files until the conversion starts
@@ -481,7 +481,7 @@ namespace Converter {
 
 	// Converts the files, collecting the files of the other processes started for the same conversion. Returns the exit code.
 	static int RunBatch(const CPreset& preset, const std::list<CString>& files) {
-		CString sBatchName = CString(_T("JPEGViewConvert_")) + preset.Id;
+		CString sBatchName = CString(_T("LucidViewerConvert_")) + preset.Id;
 		sBatchName.Replace(_T(':'), _T('_'));
 		HANDLE hMutex = ::CreateMutex(NULL, TRUE, sBatchName);
 		bool bLeader = ::GetLastError() != ERROR_ALREADY_EXISTS;

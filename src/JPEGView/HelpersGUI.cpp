@@ -395,7 +395,7 @@ namespace HelpersGUI {
 		}
 
 		sText += _T("\n\n");
-		sText += CNLS::GetString(_T("These values will override the values from the INI file located in the program folder of JPEGView!"));
+		sText += CNLS::GetString(_T("These values will override the values from the INI file located in the program folder of Lucid Viewer!"));
 
 		return sText;
 	}

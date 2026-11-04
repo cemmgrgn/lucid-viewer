@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s εικόνες
 %s images (processed by Window Imaging Component - WIC)	%s εικόνες (επεξεργασία από το Window Imaging Component - WIC)
 'My Pictures' folder	Φάκελος 'Οι εικόνες μου'
-About JPEGView (32-bit version)...	Σχετικά με το JPEGView (έκδοση 32-bit)...
-About JPEGView (64-bit version)...	Σχετικά με το JPEGView (έκδοση 64-bit)...
+About Lucid Viewer (32-bit version)...	Σχετικά με το Lucid Viewer (έκδοση 32-bit)...
+About Lucid Viewer (64-bit version)...	Σχετικά με το Lucid Viewer (έκδοση 64-bit)...
 Acquisition date:	Ημερομηνία λήψης:
 Actual size of image	Πραγματικό μέγεθος
 Align image to horizontal or vertical line	Ευθυγράμμιση εικόνας σε οριζόντια ή κάθετη γραμμή
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Η ΒΔ παραμέτρων '%s' δεν
 Click and drag the mouse vertically to correct image tilt.	Κάντε κλικ και σύρετε το ποντίκι κάθετα για να διορθώσετε την κλίση της εικόνας.
 Clipboard Image	Εικόνα προχείρου
 Close	Κλείσιμο
-Close help text display / Close JPEGView	Κλείσιμο του κειμένου βοήθειας / Κλείσιμο του JPEGView
+Close help text display / Close Lucid Viewer	Κλείσιμο του κειμένου βοήθειας / Κλείσιμο του Lucid Viewer
 Color Correction	Διόρθωση χρώματος
 Combine keys with '+'	Συνδυασμός πλήκτρων με '+'
 Confirm	Επιβεβαίωση
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Αύξηση/μείω
 Increase/decrease lightening of shadows (LDC must be on)	Αύξηση/μείωση της φωτεινότητας των σκιών (το LDC πρέπει να είναι ενεργοποιημένο)
 Increase/decrease sharpness	Αύξηση/μείωση οξύτητας
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Ανεπαρκή δικαιώματα για την αλλαγή του δικαιώματος (DACL) στο μητρώο. Συνέχεια;
-JPEGView Help	Βοήθεια για το JPEGView
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Το JPEGView είναι ένας λιτό, γρήγορο και εξαιρετικά παραμετροποιήσιμο πρόγραμμα προβολής/επεξεργασίας για εικόνες JPEG, BMP, PNG, WEBP, TGA, GIF και TIFF με απλό γραφικό περιβάλλον.
-JPEGView is registered as default viewer for the selected file formats.	Το JPEGVIEW έχει οριστεί ως προεπιλεγμένος προβολέας για τις επιλεγμένες μορφές αρχείων.
+Lucid Viewer Help	Βοήθεια για το Lucid Viewer
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Το Lucid Viewer είναι ένας λιτό, γρήγορο και εξαιρετικά παραμετροποιήσιμο πρόγραμμα προβολής/επεξεργασίας για εικόνες JPEG, BMP, PNG, WEBP, TGA, GIF και TIFF με απλό γραφικό περιβάλλον.
+Lucid Viewer is registered as default viewer for the selected file formats.	Το JPEGVIEW έχει οριστεί ως προεπιλεγμένος προβολέας για τις επιλεγμένες μορφές αρχείων.
 Keep aspect ratio on crop	Διατήρηση της αναλογίας διαστάσεων στην περικοπή
 Keep parameters	Διατήρηση παραμέτρων
 Keep processing parameters between images	Διατήρηση παραμέτρων επεξεργασίας μεταξύ εικόνων
@@ -264,7 +264,7 @@ Radius	Ακτίνα
 Random	Τυχαία
 Reading the JPEG file from disk failed	Η ανάγνωση του αρχείου JPEG από το δίσκο απέτυχε
 Reason:	Αιτία:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Η καταχώρηση/αποκαταχώρηση επεκτάσεων αρχείων σε αυτή την περιοχή μητρώου απαιτεί προνόμια διαχειριστή και δεν μπορεί να γίνει στο JPEGView.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Η καταχώρηση/αποκαταχώρηση επεκτάσεων αρχείων σε αυτή την περιοχή μητρώου απαιτεί προνόμια διαχειριστή και δεν μπορεί να γίνει στο Lucid Viewer.
 Registration applies to the current user only.	Η καταχώρηση ισχύει μόνο για τον τρέχοντα χρήστη.
 Remove from	Απομάκρυνση από
 Rename	Μετονομασία
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Επιλέξτε αρχείο γι�
 Select none	Αποεπιλογή όλων
 Select parameter DB to restore	Επιλέξτε ΒΔ παραμέτρων για επαναφορά
 Set Fixed Crop Size	Ορισμός σταθερού μεγέθους περικοπής
-Set JPEGView as default image viewer	Ορισμός του JPEGView ως προεπιλεγμένου προβολέα εικόνων
+Set Lucid Viewer as default image viewer	Ορισμός του Lucid Viewer ως προεπιλεγμένου προβολέα εικόνων
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Ορισμός χρονικού ορίου σε n/10 δευτερόλεπτα, αντίστοιχα n/100 δευτερόλεπτα (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Να διατηρηθούν οι υπάρχουσες εγγραφές (Ναι) ή να αντικατασταθούν από τις νέες (Όχι)?
 Sharpen	Όξυνση
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	Η ε
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Το νέο μέγεθος είναι πολύ μεγάλο - το πλάτος ή το ύψος είναι μεγαλύτερο από 65535 ή ο συνολικός αριθμός των εικονοστοιχείων είναι πολύ μεγάλος!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	Η παλιά ΒΔ παραμέτρων '%s' δεν μετονομάστηκε κατά τη μετατροπή στη νέα μορφή!
 The operation failed because not enough memory is available!	Η λειτουργία απέτυχε επειδή δεν υπάρχει αρκετή διαθέσιμη μνήμη!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Η ΒΔ παραμέτρων '%s' δημιουργήθηκε με νεότερη έκδοση του JPEGView!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Η ΒΔ παραμέτρων '%s' δημιουργήθηκε με νεότερη έκδοση του Lucid Viewer!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Ο μετασχηματισμός μπορεί να εφαρμοστεί εάν η εικόνα περικοπεί στο επόμενο μέγεθος που ταιριάζει, αλλά αυτό θα αφαιρέσει ορισμένα εικονοστοιχεία στο περιθώριο.
-These values will override the values from the INI file located in the program folder of JPEGView!	Αυτές οι τιμές θα αντικαταστήσουν τις τιμές στο αρχείο INI που βρίσκεται στο φάκελο του JPEGView!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Αυτές οι τιμές θα αντικαταστήσουν τις τιμές στο αρχείο INI που βρίσκεται στο φάκελο του Lucid Viewer!
 Threshold	Κατώφλι
 Title:	Τίτλος:
 Toggle between screens (only for multi-monitor systems)	Εναλλαγή οθονών (μόνο για συστήματα με πολλές οθόνες)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Χρησιμ�
 Warning	Προειδοποίηση
 Width	Πλάτος
 Window mode	Προβολη σε παράθυρο
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Τα Windows 8 (και άνω) εμποδίζουν το JPEGView να αλλάξει το προεπιλεγμένο πρόγραμμα για αυτές τις επεκτάσεις αρχείων.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Τα Windows 8 (και άνω) εμποδίζουν το Lucid Viewer να αλλάξει το προεπιλεγμένο πρόγραμμα για αυτές τις επεκτάσεις αρχείων.
 Writing the resulting JPEG file to disk failed	Η εγγραφή του αρχείου JPEG στο δίσκο απέτυχε
 Y - B	Y - B
 Year short form (2 digits)	Έτος / Σύντομη μορφή (2 ψηφία)
@@ -463,7 +463,7 @@ Set as default viewer...	Ορισμός ως προεπιλεγμένου προ
 Backup parameter DB...	Αντίγραφο ασφαλείας ΒΔ παραμέτρων...
 Restore parameter DB...	Επαναφορά αντιγράφου ΒΔ παραμέτρων...
 User commands	Εντολές χρήστη
-About JPEGView...	Περί του JPEGView...
+About Lucid Viewer...	Περί του Lucid Viewer...
 Exit	Έξοδος
 Crop Selection	Περικοπή επιλογής
 Crop Selection Lossless...	Περικοπή επιλογής χωρίς απώλεια...
@@ -476,7 +476,7 @@ Zoom to Selection	Ζουμ στην επιλογή
 // ::: INFO: Out-of-date Translations [14] ::: (Not in use anymore, safe to delete) //
 //However this will fail if the current user has no administration privileges.	Ωστόσο αυτό θα αποτύχει εάν ο παρών χρήστης δεν έχει Δικαιώματα Διαχειριστή.
 //Insufficient rights to remove the restrictions. Continue?	Ανεπαρκή δικαιώματα για αφαίρεση περιορισμών. Να συνεχίσω;
-//JPEGView can try to remove the restrictions automatically.	Το JPEGVIEW μπορεί να προσπαθήσει να αφαιρέσει τους περιορισμούς αυτόματα.
+//Lucid Viewer can try to remove the restrictions automatically.	Το JPEGVIEW μπορεί να προσπαθήσει να αφαιρέσει τους περιορισμούς αυτόματα.
 //No file or folder name was provided as command line parameter!	Δεν δόθηκε όνομα αρχείου ή φακέλου ως παράμετρος γραμμής εντολών!
 //PgDn or Right	Πλήκτρο PgDn ή δεξί βέλος
 //PgUp or Left	Πλήκτρο PgUp ή αριστερό βέλος
@@ -484,7 +484,7 @@ Zoom to Selection	Ζουμ στην επιλογή
 //Rotate the following file lossless by 270 deg?\n%filename%	Να περιστραφεί το αρχείο χωρίς απώλεια 270 μοίρες; \n%filename%
 //Rotate the following file lossless by 90 deg?\n%filename%	Να περιστραφεί το αρχείο χωρίς απώλεια 90 μοίρες; \n%filename%
 //The file '%s' could not be %s.	Το αρχείο '%s' δεν μπόρεσε να %s.
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	Για να χρησιμοποιήσετε το JPEGView, συσχετίστε τα αρχεία JPG, JPEG και BMP με το JPEGView.
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	Για να χρησιμοποιήσετε το Lucid Viewer, συσχετίστε τα αρχεία JPG, JPEG και BMP με το Lucid Viewer.
 //copied	αντιγραφεί
 //renamed	μετονομαστεί
 //up/down	επάνω/κάτω

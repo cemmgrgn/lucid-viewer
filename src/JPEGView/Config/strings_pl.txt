@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	%s obrazy(ów)
 %s images (processed by Window Imaging Component - WIC)	%s obrazy (ów) (przetworzone przez Windows Imaging Component - WIC)
 'My Pictures' folder	Folder 'Moje obrazy'
-About JPEGView (32-bit version)...	O JPEGView (wersja 32-bitowa)...
-About JPEGView (64-bit version)...	O JPEGView (wersja 64-bitowa)...
+About Lucid Viewer (32-bit version)...	O Lucid Viewer (wersja 32-bitowa)...
+About Lucid Viewer (64-bit version)...	O Lucid Viewer (wersja 64-bitowa)...
 Acquisition date:	Data wykonania:
 Actual size of image	Rzeczywisty rozmiar obrazu
 Align image to horizontal or vertical line	Wyrównaj obraz do linii poziomej lub pionowej
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Nie można zapisać do pliku parametrów
 Click and drag the mouse vertically to correct image tilt.	Chwyć i przesuń myszką w pionie aby skorygować pochylenie.
 Clipboard Image	Obraz ze schowka
 Close	Zamknij
-Close help text display / Close JPEGView	Zamknij Pomoc / Zamknij JPEGView
+Close help text display / Close Lucid Viewer	Zamknij Pomoc / Zamknij Lucid Viewer
 Color Correction	Korekcja kolorów
 Combine keys with '+'	Połącz klawisze znakiem '+'
 Confirm	Potwierdź
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Zwiększenie/zmniejsz
 Increase/decrease lightening of shadows (LDC must be on)	Zwiększenie/zmniejszenie podświetlenia cieni (LDC musi być włączone)
 Increase/decrease sharpness	Zwiększ/Zmniejsz ostrość
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	Niewystarczające prawa do zmiany uprawnień (DACL) we wpisach rejestru. Kontynuować?
-JPEGView Help	Pomoc JPEGView
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView jest lekkim, szybkim i wysoce konfigurowalnym konwertorem i edytorem plików obrazów JPEG, BMP, PNG, WEBP, TGA, GIF und TIFF, z minimalistycznym interfejsem użytkownika.
-JPEGView is registered as default viewer for the selected file formats.	JPEGView jest zarejestrowany jako domyślna przeglądarka dla zaznaczonych formatów plików.
+Lucid Viewer Help	Pomoc Lucid Viewer
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer jest lekkim, szybkim i wysoce konfigurowalnym konwertorem i edytorem plików obrazów JPEG, BMP, PNG, WEBP, TGA, GIF und TIFF, z minimalistycznym interfejsem użytkownika.
+Lucid Viewer is registered as default viewer for the selected file formats.	Lucid Viewer jest zarejestrowany jako domyślna przeglądarka dla zaznaczonych formatów plików.
 Keep aspect ratio on crop	Utrzymuj proporcje przy kadrowaniu
 Keep parameters	Pamiętaj parametry
 Keep processing parameters between images	Zachowuj parametry przetwarzania pomiędzy obrazami
@@ -264,7 +264,7 @@ Radius	Promień
 Random	Losowo
 Reading the JPEG file from disk failed	Niepowodzenie odczytu pliku z dysku
 Reason:	Powód:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	Zarejestrowanie/wyrejestrowanie rozszerzeń plików w tej sekcji rejestru wymaga uprawnień administratora i nie może być teraz wykonane.
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	Zarejestrowanie/wyrejestrowanie rozszerzeń plików w tej sekcji rejestru wymaga uprawnień administratora i nie może być teraz wykonane.
 Registration applies to the current user only.	To ustawienie stosuje się tylko dla bieżącego użytkownika!
 Remove from	Usuń z
 Rename	Zmień nazwę
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Wybierz plik do wyświetlenia w okn
 Select none	Odznacz wszystko
 Select parameter DB to restore	Wybierz parameter DB do odtworzenia
 Set Fixed Crop Size	Ustaw stały rozmiar kadrowania
-Set JPEGView as default image viewer	Ustaw JPEGView jako domyślną przeglądarkę obrazów
+Set Lucid Viewer as default image viewer	Ustaw Lucid Viewer jako domyślną przeglądarkę obrazów
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Ustaw czas na n/10 sekund, lub n/100 sekund (Ctrl+Shift)
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Zachować istniejące wpisy (Tak) Czy zastąpić je importowanymi (Nie)?
 Sharpen	Ostrość
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	Zaimp
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	Nowy wymiar jest zbyt duży - szerokość lub wysokość jest większa od 65535 lub całkowita liczna pikseli jest zbyt duża!
 The old parameter DB file '%s' could not be renamed during conversion to new format!	Stary parameter w pliku DB '%s' nie może być zmieniony w czasie konwersji na nowy format!
 The operation failed because not enough memory is available!	Operacja nie powiodła się - zbyt mała ilość dostępnej pamięci!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Plik parametrów DB '%s' został utworzony przez nowszą wersję JPEGView!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Plik parametrów DB '%s' został utworzony przez nowszą wersję Lucid Viewer!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	Transformacja może być wykonana jeśli obrazek zostanie przycięty do najbliższego pasującego wymiaru, ale to usunie niektóre piksele z brzegów obrazu.
-These values will override the values from the INI file located in the program folder of JPEGView!	Te ustawienia będą miały pierwszeństwo nad ustawieniami w pliku INI w folderze programu JPEGView!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Te ustawienia będą miały pierwszeństwo nad ustawieniami w pliku INI w folderze programu Lucid Viewer!
 Threshold	Próg
 Title:	Tytuł:
 Toggle between screens (only for multi-monitor systems)	Przełącz między ekranami (tylko systemy wielo-monitorowe)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Użyj myszki 
 Warning	Ostrzeżenie
 Width	Szerokość
 Window mode	Tryb okienkowy
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8 (i nowsze) nie pozwala ustawić JPEGView jako domyślnego programu dla danych typów plików.
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows 8 (i nowsze) nie pozwala ustawić Lucid Viewer jako domyślnego programu dla danych typów plików.
 Writing the resulting JPEG file to disk failed	Niepowodzenie zapisu pliku na dysk
 Y - B	Żółty-Niebieski
 Year short form (2 digits)	Rok skrótowo (2 cyfry)
@@ -463,7 +463,7 @@ Set as default viewer...	Ustaw jako domyślną przeglądarkę...
 Backup parameter DB...	Zapisz parametry w bazie danych...
 Restore parameter DB...	Odtwórz parametry z bazie danych...
 User commands	Komendy użytkownika
-About JPEGView...	O JPEGView...
+About Lucid Viewer...	O Lucid Viewer...
 Exit	Zakończ
 Crop Selection	Kadruj do zaznaczenia
 Crop Selection Lossless...	Kadruj bezstratnie...

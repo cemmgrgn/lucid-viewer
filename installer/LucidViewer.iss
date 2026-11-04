@@ -20,27 +20,33 @@
 #endif
 ; Folder name the program uses under %APPDATA% and %LOCALAPPDATA%
 #ifndef AppDataName
-  #define AppDataName  "Lucid Viewer"
+  #define AppDataName  "LucidViewer"
 #endif
 ; Mutexes the running program holds (main window and screenshot tray)
 #ifndef AppMutexes
-  #define AppMutexes   "JPVMtX2869,JPEGViewScreenshotTray"
+  #define AppMutexes   "LucidViewer.Instance,LucidViewerScreenshotTray"
 #endif
 ; Name of the HKCU\...\Run value the tray tool writes for "Start with Windows"
 #ifndef AutostartValue
-  #define AutostartValue "JPEGView Screenshot"
+  #define AutostartValue "Lucid Viewer Screenshot"
 #endif
 #ifndef AppVersion
-  #define AppVersion   GetVersionNumbersString(AddBackslash(SourceDir) + AppExe)
+  ; major.minor.patch from the version resource of the program
+  #define VerMajor
+  #define VerMinor
+  #define VerPatch
+  #define VerBuild
+  #expr ParseVersion(AddBackslash(SourceDir) + AppExe, VerMajor, VerMinor, VerPatch, VerBuild)
+  #define AppVersion   Str(VerMajor) + "." + Str(VerMinor) + "." + Str(VerPatch)
 #endif
 
 #define ProgId         "LucidViewer.Image"
 ; Settings file next to the program (defaults for all users) and its section
 #ifndef IniName
-  #define IniName      "JPEGView.ini"
+  #define IniName      "LucidViewer.ini"
 #endif
 #ifndef IniSection
-  #define IniSection   "JPEGView"
+  #define IniSection   "LucidViewer"
 #endif
 
 ; AI models downloaded during setup

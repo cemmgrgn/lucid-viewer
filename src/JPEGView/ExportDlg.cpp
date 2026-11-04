@@ -12,7 +12,7 @@
 #include <commctrl.h>
 #include <math.h>
 
-static const LPCTSTR EXPORT_CLASS = _T("JPEGViewExport");
+static const LPCTSTR EXPORT_CLASS = _T("LucidViewerExport");
 static const UINT_PTR ESTIMATE_TIMER = 1;
 static const int ESTIMATE_DELAY = 300; // ms after the last change
 static const int ESTIMATE_LONG_EDGE = 2048; // the estimate encodes smaller copies and extrapolates the size
@@ -66,7 +66,7 @@ bool CExportDlg::DoModal() {
 
 	TCHAR sTempPath[MAX_PATH];
 	::GetTempPath(MAX_PATH, sTempPath);
-	m_sEstimateFile = CString(sTempPath) + _T("JPEGViewExportEstimate.tmp");
+	m_sEstimateFile = CString(sTempPath) + _T("LucidViewerExportEstimate.tmp");
 
 	HWND hParent = m_pMainDlg->GetHWND();
 	int nW = HelpersGUI::ScaleToScreen(440), nH = HelpersGUI::ScaleToScreen(300);

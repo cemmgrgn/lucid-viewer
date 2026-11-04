@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -46,8 +46,8 @@
 %s images	
 %s images (processed by Window Imaging Component - WIC)	
 'My Pictures' folder	тэчка "My Pictures"
-About JPEGView (32-bit version)...	
-About JPEGView (64-bit version)...	
+About Lucid Viewer (32-bit version)...	
+About Lucid Viewer (64-bit version)...	
 Acquisition date:	Дата:
 Actual size of image	Сапраўдны памер выявы
 Align image to horizontal or vertical line	Выраўнаць адносна лініі
@@ -84,7 +84,7 @@ Cannot write to parameter DB file '%s'!	Файл параметраў '%s' не 
 Click and drag the mouse vertically to correct image tilt.	Клік і вертыкальны рух мышкі для карэкцыі персьпектывы
 Clipboard Image	
 Close	Закрыць
-Close help text display / Close JPEGView	Закрыць даведку/JPEGView
+Close help text display / Close Lucid Viewer	Закрыць даведку/Lucid Viewer
 Color Correction	Карэкцыя колеру
 Combine keys with '+'	
 Confirm	Пацьвердзіць
@@ -175,9 +175,9 @@ Increase/decrease darkening of highlights (LDC must be on)	Мацней/слаб
 Increase/decrease lightening of shadows (LDC must be on)	Мацней/слабей высьвятляць цень (пры аўтакарэкцыі шчыльнасьці)
 Increase/decrease sharpness	Павялічыць/зьменьшыць вострасьць
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	
-JPEGView Help	Даведка JPEGView
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	
-JPEGView is registered as default viewer for the selected file formats.	
+Lucid Viewer Help	Даведка Lucid Viewer
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	
+Lucid Viewer is registered as default viewer for the selected file formats.	
 Keep aspect ratio on crop	Захаваць прапорцыі пры абрэзцы
 Keep parameters	Ужываць параметры апрацоўкі надалей
 Keep processing parameters between images	Прагляд наступных выяваў з абранымі параметрамі апрацоўкі
@@ -264,7 +264,7 @@ Radius	Радыюс
 Random	выпадкова
 Reading the JPEG file from disk failed	
 Reason:	Прычына:
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	
 Registration applies to the current user only.	
 Remove from	выдаліць з
 Rename	Выканаць
@@ -310,7 +310,7 @@ Select file to display in 'File Open' dialog	Абраць файл для пак
 Select none	Скасаваць выбар
 Select parameter DB to restore	Выбраць з базы зьвестак параметр для аднаўленьня
 Set Fixed Crop Size	Памеры поля
-Set JPEGView as default image viewer	
+Set Lucid Viewer as default image viewer	
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	Слайдшоў з затрымкай ад n/10 сек. да n/100 сек. (n - Ctrl+Shift+кнопка ад 1 да 9). Esc - стоп
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	Захаваць прысутныя запісы (Так) ці замяніць імпартаванымі (Не)?
 Sharpen	Вострасьць
@@ -354,9 +354,9 @@ The imported param DB contains entries already present in active param DB.	У і
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	
 The old parameter DB file '%s' could not be renamed during conversion to new format!	У базе зьвестак немагчыма перайменаваць стары файл параметраў '%s' падчас канвертацыі ў новы фармат!
 The operation failed because not enough memory is available!	Памылка аперацыі з-за недахопу памяці!
-The parameter DB file '%s' has been created by a newer version of JPEGView!	Файл параметраў у базе зьвестак '%s' створаны навейшай версіяй JPEGView!
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	Файл параметраў у базе зьвестак '%s' створаны навейшай версіяй Lucid Viewer!
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	
-These values will override the values from the INI file located in the program folder of JPEGView!	Гэтыя наладкі будуць захаваныя ў INI-файле JPEGView!
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	Гэтыя наладкі будуць захаваныя ў INI-файле Lucid Viewer!
 Threshold	Парог
 Title:	
 Toggle between screens (only for multi-monitor systems)	Пераключыцца між экранамі (у шматманіторнай сістэме)
@@ -372,7 +372,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Клік і �
 Warning	
 Width	Шырыня
 Window mode	ваконны рэжым
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	
 Writing the resulting JPEG file to disk failed	
 Y - B	
 Year short form (2 digits)	год скарочана (2 лічбы)
@@ -463,7 +463,7 @@ Set as default viewer...
 Backup parameter DB...	зрабіць запасную копію базы зьвестак...
 Restore parameter DB...	аднавіць базу зьвестак з запасной копіі...
 User commands	
-About JPEGView...	Пра JPEGView...
+About Lucid Viewer...	Пра Lucid Viewer...
 Exit	Выхад
 Crop Selection	Абрэзаць вылучанае
 Crop Selection Lossless...	Абрэзаць вылучанае, захаваўшы якасьць...
@@ -481,7 +481,7 @@ Zoom to Selection	На ўвесь экран
 //Rotate the following file lossless by 270 deg?\n%filename%	Павярнуць гэты файл, захаваўшы якасьць, на -90°?\n%filename%
 //Rotate the following file lossless by 90 deg?\n%filename%	Павярнуць гэты файл, захаваўшы якасьць, на 90°?\n%filename%
 //The file '%s' could not be %s.	Файл '%s' ня можа быць %s.
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	JPEGView трэба асацыяваць з файламі JPG, JPEG і BMP.
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	Lucid Viewer трэба асацыяваць з файламі JPG, JPEG і BMP.
 //copied	скапіраваны
 //renamed	перайменаваны
 //up/down	стрэлка ўверх/уніз
@@ -490,8 +490,8 @@ Zoom to Selection	На ўвесь экран
 //! %s camera raw images (embedded JPEGs only)
 //! %s images
 //! %s images (processed by Window Imaging Component - WIC)
-//! About JPEGView (32-bit version)...
-//! About JPEGView (64-bit version)...
+//! About Lucid Viewer (32-bit version)...
+//! About Lucid Viewer (64-bit version)...
 //! Alignment:
 //! All existing user settings will be preserved.
 //! Alternatively, right-click an image file of the given type in Windows Explorer and select 'Open with... > Choose default program'
@@ -528,8 +528,8 @@ Zoom to Selection	На ўвесь экран
 //! Hour / Minute (as numbers)
 //! Image width and height must be dividable by the JPEG block size (8 or 16) for lossless transformations!
 //! Insufficient rights to change the privilege (DACL) on the registry entry. Continue?
-//! JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.
-//! JPEGView is registered as default viewer for the selected file formats.
+//! Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.
+//! Lucid Viewer is registered as default viewer for the selected file formats.
 //! Known keys:
 //! Lanczos/Bicubic
 //! Landscape
@@ -560,7 +560,7 @@ Zoom to Selection	На ўвесь экран
 //! Printer driver
 //! Printer:
 //! Reading the JPEG file from disk failed
-//! Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.
+//! Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.
 //! Registration applies to the current user only.
 //! Reset
 //! Resize Image
@@ -578,7 +578,7 @@ Zoom to Selection	На ўвесь экран
 //! Scroll from top
 //! Select Printer...
 //! Select application
-//! Set JPEGView as default image viewer
+//! Set Lucid Viewer as default image viewer
 //! Sharpen low
 //! Sharpen medium
 //! Shortcut Help
@@ -605,7 +605,7 @@ Zoom to Selection	На ўвесь экран
 //! Update user settings with new settings from settings template file?
 //! Use the 'Default Programs' configuration dialog from the operating system instead.
 //! Warning
-//! Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.
+//! Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.
 //! Writing the resulting JPEG file to disk failed
 //! Y - B
 //! cm

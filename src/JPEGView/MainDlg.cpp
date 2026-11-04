@@ -5848,7 +5848,7 @@ void CMainDlg::ApplyChangedSettings(const std::vector<CString>& changedKeys, boo
 	}
 	if (Changed(_T("ScreenshotHotkey")) || Changed(_T("ScreenshotTextHotkey")) || Changed(_T("ScreenshotFolder")) || Changed(_T("OcrLanguage")) || Changed(_T("Language"))) {
 		// the screenshot tool in the notification area is started again with the new settings
-		HWND hTray = ::FindWindow(_T("JPEGViewScreenshotTray"), NULL);
+		HWND hTray = ::FindWindow(_T("LucidViewerScreenshotTray"), NULL);
 		if (hTray != NULL) {
 			::PostMessage(hTray, WM_CLOSE, 0, 0);
 			TCHAR sExe[MAX_PATH];
@@ -5873,7 +5873,7 @@ void CMainDlg::ApplyChangedSettings(const std::vector<CString>& changedKeys, boo
 	}
 	if (!sRestartKeys.IsEmpty()) {
 		CString sQuestion;
-		sQuestion.Format(CNLS::GetString(_T("The settings were applied. These take effect after a restart of JPEGView: %s. Restart now?")), (LPCTSTR)sRestartKeys);
+		sQuestion.Format(CNLS::GetString(_T("The settings were applied. These take effect after a restart of Lucid Viewer: %s. Restart now?")), (LPCTSTR)sRestartKeys);
 		if (IDYES == ::MessageBox(m_hWnd, sQuestion, CNLS::GetString(_T("Settings")), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2)) {
 			SettingsEditor::Restart(m_hWnd, CurrentFileName(false));
 		}

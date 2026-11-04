@@ -830,7 +830,7 @@ static int ShowEditWindow(HWND hParent, const CEntry& entry, VARTYPE vt, CString
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-	wndClass.lpszClassName = _T("JPEGViewMetadataEdit");
+	wndClass.lpszClassName = _T("LucidViewerMetadataEdit");
 	::RegisterClass(&wndClass);
 
 	HDC hDC = ::GetDC(NULL);
@@ -856,7 +856,7 @@ static int ShowEditWindow(HWND hParent, const CEntry& entry, VARTYPE vt, CString
 	::GetWindowRect(hParent, &parentRect);
 	int nWindowWidth = clientRect.right - clientRect.left, nWindowHeight = clientRect.bottom - clientRect.top;
 	CEditWindow window = { NULL, 0, false };
-	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("JPEGViewMetadataEdit"), entry.Name, nStyle,
+	HWND hWnd = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("LucidViewerMetadataEdit"), entry.Name, nStyle,
 		(parentRect.left + parentRect.right - nWindowWidth) / 2, (parentRect.top + parentRect.bottom - nWindowHeight) / 2,
 		nWindowWidth, nWindowHeight, hParent, NULL, hInstance, &window);
 	if (hWnd == NULL) {

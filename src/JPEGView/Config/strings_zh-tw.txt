@@ -1,5 +1,5 @@
 ﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of JPEGView <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -47,8 +47,8 @@
 %s images	%s 圖片
 %s images (processed by Window Imaging Component - WIC)	%s 圖片（由Windows映像組件-WIC處理）
 'My Pictures' folder	“圖片”文件夾
-About JPEGView (32-bit version)...	關於JPEGView（32位版本）...
-About JPEGView (64-bit version)...	關於JPEGView（64位版本）...
+About Lucid Viewer (32-bit version)...	關於Lucid Viewer（32位版本）...
+About Lucid Viewer (64-bit version)...	關於Lucid Viewer（64位版本）...
 Acquisition date:	獲取日期：
 Actual size of image	圖片實際大小
 Align image to horizontal or vertical line	圖片水平或垂直對齊
@@ -85,7 +85,7 @@ Cannot write to parameter DB file '%s'!	無法寫入到參數數據庫文件 '%s
 Click and drag the mouse vertically to correct image tilt.	點選並垂直拖動鼠標來校正圖片傾斜。
 Clipboard Image	剪貼板的圖片
 Close	關閉
-Close help text display / Close JPEGView	關閉幫助文字顯示/關閉JPEGView
+Close help text display / Close Lucid Viewer	關閉幫助文字顯示/關閉Lucid Viewer
 Color Correction	色彩校正
 Combine keys with '+'	與 '+' 組合鍵
 Confirm	確認
@@ -176,9 +176,9 @@ Increase/decrease darkening of highlights (LDC must be on)	增加/減少亮點�
 Increase/decrease lightening of shadows (LDC must be on)	增加/減少陰影的亮度（局部密度補償必須打開）
 Increase/decrease sharpness	增加/減小銳度
 Insufficient rights to change the privilege (DACL) on the registry entry. Continue?	權限不足，無法更改註冊表項的權限（DACL）。繼續？
-JPEGView Help	JPEGView 幫助
-JPEGView is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	JPEGView是一款實用、快速及具有高度組態性的查看器/編輯器，使用最小的圖形用戶界面，適用於JPEG、BMP、PNG、WEBP、TGA、GIF和TIFF圖片。
-JPEGView is registered as default viewer for the selected file formats.	註冊JPEGView為選擇的文件格式的默認圖片查看器。
+Lucid Viewer Help	Lucid Viewer 幫助
+Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.	Lucid Viewer是一款實用、快速及具有高度組態性的查看器/編輯器，使用最小的圖形用戶界面，適用於JPEG、BMP、PNG、WEBP、TGA、GIF和TIFF圖片。
+Lucid Viewer is registered as default viewer for the selected file formats.	註冊Lucid Viewer為選擇的文件格式的默認圖片查看器。
 Keep aspect ratio on crop	保持畫面比例裁剪
 Keep parameters	保持參數
 Keep processing parameters between images	保持相鄰的兩圖片間的處理參數
@@ -265,7 +265,7 @@ Radius	半徑
 Random	隨機
 Reading the JPEG file from disk failed	從硬盤讀取JPEG文件失敗
 Reason:	原因：
-Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in JPEGView.	在註冊表區域註冊或取消註冊文件擴展名需要管理員權限，無法在JPEGView中完成。
+Registering or unregistering file extensions in this registry area requires administrator privileges and cannot be done in Lucid Viewer.	在註冊表區域註冊或取消註冊文件擴展名需要管理員權限，無法在Lucid Viewer中完成。
 Registration applies to the current user only.	註冊僅應用到當前用戶。
 Remove from	刪除
 Rename	重命名
@@ -311,7 +311,7 @@ Select file to display in 'File Open' dialog	選擇要在“打開文件”對�
 Select none	取消選擇
 Select parameter DB to restore	選擇要還原的參數數據庫
 Set Fixed Crop Size	設定固定裁剪尺寸
-Set JPEGView as default image viewer	將JPEGView設為默認圖片查看器
+Set Lucid Viewer as default image viewer	將Lucid Viewer設為默認圖片查看器
 Set timeout to n/10 sec, respectively n/100 sec (Ctrl+Shift)	設定逾時為n/10秒，分別為n/100秒（Ctrl+Shift）
 Shall existing entries be preserved (Yes) or be overwritten by the imported entries (No)?	您想要保留現有項目（是）或是以導入的項目覆蓋現有項目（否）？
 Sharpen	銳化
@@ -355,9 +355,9 @@ The imported param DB contains entries already present in active param DB.	導�
 The new size is too large - width or height is larger than 65535 or total number of pixels is too large!	新的圖片大小太大-寬度或高度大於65536或是總像素數太大！
 The old parameter DB file '%s' could not be renamed during conversion to new format!	在轉換為新的格式的過程中無法重命名舊的參數數據庫文件'%s'！
 The operation failed because not enough memory is available!	操作失敗，沒有足夠的可用內存！
-The parameter DB file '%s' has been created by a newer version of JPEGView!	較新版本的JPEGView已創建參數數據庫文件'%s'！
+The parameter DB file '%s' has been created by a newer version of Lucid Viewer!	較新版本的Lucid Viewer已創建參數數據庫文件'%s'！
 The transformation can be applied if the image is cropped to the next matching size but this will remove some border pixels.	假如圖片被裁剪，可以應用到下一個符合的大小，但是這將消除一些邊框像素的轉換。
-These values will override the values from the INI file located in the program folder of JPEGView!	這些值將覆蓋JPEGView程序文件夾中INI文件的值！
+These values will override the values from the INI file located in the program folder of Lucid Viewer!	這些值將覆蓋Lucid Viewer程序文件夾中INI文件的值！
 Threshold	閾值
 Title:	標題：
 Toggle between screens (only for multi-monitor systems)	屏幕之間切換（僅適用於多顯示器）
@@ -373,7 +373,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	使用鼠標�
 Warning	警告
 Width	寬度
 Window mode	窗口模式
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows8(及更高版本)阻止JPEGView更改這些文件擴展名的默認程序。
+Windows 8 (and above) blocks Lucid Viewer from changing the default program for these file extensions.	Windows8(及更高版本)阻止Lucid Viewer更改這些文件擴展名的默認程序。
 Writing the resulting JPEG file to disk failed	創建的JPEG文件寫入到硬盤時失敗
 Y - B	黃-藍
 Year short form (2 digits)	年份短格式（2位數）
@@ -464,7 +464,7 @@ Set as default viewer...	設為默認圖片查看器...
 Backup parameter DB...	備份參數數據庫...
 Restore parameter DB...	還原參數數據庫...
 User commands	用戶命令
-About JPEGView...	關於JPEGView...
+About Lucid Viewer...	關於Lucid Viewer...
 Exit	退出
 Crop Selection	裁剪選擇內容
 Crop Selection Lossless...	無損裁剪選擇內容...
@@ -478,7 +478,7 @@ Zoom to Selection	縮放到選擇內容
 //Actual size of image (Space)	圖片的實際大小
 //However this will fail if the current user has no administration privileges.	但是，如果當前用戶沒有管理員權限，本操作將失敗。
 //Insufficient rights to remove the restrictions. Continue?	權限不足以移除限制。是否繼續？
-//JPEGView can try to remove the restrictions automatically.	JPEGView可以自動嘗試移除限制。
+//Lucid Viewer can try to remove the restrictions automatically.	Lucid Viewer可以自動嘗試移除限制。
 //No file or folder name was provided as command line parameter!	沒有提供文件或文件夾名作為命令行參數！
 //PgDn or Right	PgDn或Right
 //PgUp or Left	PgUp或Left
@@ -486,8 +486,8 @@ Zoom to Selection	縮放到選擇內容
 //Rotate the following file lossless by 270 deg?\n%filename%	您想要以下文件無損旋轉270度嗎?\n%filename%
 //Rotate the following file lossless by 90 deg?\n%filename%	您想要以下文件無損旋轉90度嗎?\n%filename%
 //The file '%s' could not be %s.	文件 '%s' 無法是 %s。
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	要使用JPEGView請將JPG, JPEG, BMP文件與JPEGView關聯。
-//Windows 8 blocks JPEGView from changing the default program for these file endings.	Windows8限制JPEGView對這些文件擴展名變更為默認程序。
+//To use Lucid Viewer, associate JPG, JPEG and BMP files with Lucid Viewer.	要使用Lucid Viewer請將JPG, JPEG, BMP文件與Lucid Viewer關聯。
+//Windows 8 blocks Lucid Viewer from changing the default program for these file endings.	Windows8限制Lucid Viewer對這些文件擴展名變更為默認程序。
 //[new entry]	[新增項目]
 //copied	已復制
 //renamed	已重命名

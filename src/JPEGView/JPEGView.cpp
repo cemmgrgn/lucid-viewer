@@ -26,7 +26,7 @@ static BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
 	TCHAR buff[BUF_LEN + 1];
 	buff[BUF_LEN] = 0;
 	::GetWindowText(hwnd, (LPTSTR)&buff, BUF_LEN);
-	if (_tcsstr(buff, _T(" - JPEGView")) != NULL) {
+	if (_tcsstr(buff, _T(" - Lucid Viewer")) != NULL) {
 		_HWNDOtherInstance = hwnd;
 		return FALSE;
 	}
@@ -139,7 +139,7 @@ static CRITICAL_SECTION s_lock;
 
 static BOOL GenerateDump(EXCEPTION_POINTERS* pExceptionPointers)
 {
-	WCHAR* szAppName = L"JPEGView";
+	WCHAR* szAppName = L"Lucid Viewer";
 	DWORD dwBufferSize = MAX_PATH;
 	HANDLE hDumpFile;
 	SYSTEMTIME stLocalTime;
@@ -254,7 +254,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 
 	// Searches for other instances and terminates them
 	bool bFileLoadedByExistingInstance = false;
-	HANDLE hMutex = ::CreateMutex(NULL, FALSE, _T("JPVMtX2869"));
+	HANDLE hMutex = ::CreateMutex(NULL, FALSE, _T("LucidViewer.Instance"));
 	if (::GetLastError() == ERROR_ALREADY_EXISTS) {
 		::EnumWindows((WNDENUMPROC)EnumWindowsProc, 0);
 		if (_HWNDOtherInstance != NULL) {

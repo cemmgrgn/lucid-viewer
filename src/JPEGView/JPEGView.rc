@@ -51,7 +51,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\JPEGView.ico"
+IDR_MAINFRAME           ICON                    "res\\LucidViewer.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -228,7 +228,7 @@ BEGIN
     CONTROL         "",IDC_PD_RB_22,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,440,310,19,16
     LTEXT           "_Scaling mode:",IDC_PD_SCALING_TITLE,474,278,116,8
     CONTROL         "_Printer driver",IDC_PD_RB_SCALING_DRIVER,"Button",BS_AUTORADIOBUTTON | WS_GROUP,474,292,116,11
-    CONTROL         "JPEGView",IDC_PD_RB_SCALING_JPEGVIEW,"Button",BS_AUTORADIOBUTTON,474,306,116,11
+    CONTROL         "Lucid Viewer",IDC_PD_RB_SCALING_JPEGVIEW,"Button",BS_AUTORADIOBUTTON,474,306,116,11
     CONTROL         "_Print the file name below the image",IDC_PD_CHK_FILENAME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,334,338,256,14
     DEFPUSHBUTTON   "Print",IDOK,462,366,62,17
     PUSHBUTTON      "Cancel",IDCANCEL,528,366,62,17
@@ -457,7 +457,7 @@ BEGIN
             MENUITEM "_empty_",                     IDM_ABOUT
         END
         MENUITEM SEPARATOR
-        MENUITEM "About JPEGView...",           IDM_ABOUT
+        MENUITEM "About Lucid Viewer...",           IDM_ABOUT
         MENUITEM SEPARATOR
         MENUITEM "Exit\t0xffff",                IDM_EXIT
     END
@@ -505,8 +505,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,46,0
- PRODUCTVERSION 1,3,46,0
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -521,14 +521,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "Kevin M (sylikc)"
-            VALUE "FileDescription", "JPEGView"
-            VALUE "FileVersion", "1.3.46.0"
-            VALUE "InternalName", "JPEGView"
-            VALUE "LegalCopyright", "Copyright 2020-2023 Kevin M (sylikc), 2006-2018 David Kleiner"
-            VALUE "OriginalFilename", "JPEGView.exe"
-            VALUE "ProductName", "JPEGView Application"
-            VALUE "ProductVersion", "1.3.46.0"
+            VALUE "CompanyName", "Cem Girgin"
+            VALUE "FileDescription", "Lucid Viewer"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "LucidViewer"
+            VALUE "LegalCopyright", "Copyright 2026 Cem Girgin. Based on JPEGView, 2020-2023 Kevin M (sylikc), 2006-2018 David Kleiner. GPL v2"
+            VALUE "OriginalFilename", "LucidViewer.exe"
+            VALUE "ProductName", "Lucid Viewer"
+            VALUE "ProductVersion", "1.0.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -545,7 +545,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDR_MAINFRAME           "JPEGView"
+    IDR_MAINFRAME           "Lucid Viewer"
 END
 
 #endif    // English (United States) resources
