@@ -15,6 +15,7 @@
 #include "NLS.h"
 #include "Converter.h"
 #include "TimerEventIDs.h"
+#include "Annotations.h"
 #include <shellapi.h>
 #include <math.h>
 
@@ -233,6 +234,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 		{ 0xE7AD, _T("L"), IDM_ROTATE_270, _T("Rotate -90"), true, true },
 		{ 0xE7AD, _T("R"), IDM_ROTATE_90, _T("Rotate +90"), false, true },
 		{ 0xE70F, _T("Edit"), IDM_TOGGLE_EDITPANEL, _T("Edit image (brightness, contrast, colors)"), false, true },
+		{ 0xE76D, _T("Draw"), IDM_TOGGLE_DRAWPANEL, _T("Draw and write on the image"), false, true },
 		{ 0, _T("A|B"), IDM_COMPARE_BEFORE_AFTER, _T("Compare before and after editing"), false, true },
 		{ 0, _T(""), 0, NULL, false, false },
 		{ 0xE74D, _T("Del"), IDM_MOVE_TO_RECYCLE_BIN_CONFIRM, _T("Move to recycle bin"), false, true },
@@ -786,6 +788,7 @@ bool CWindowChrome::IsItemChecked(const CToolbarItem& item) {
 	switch (item.Command) {
 		case IDM_TOGGLE_SIDEPANEL: return m_bShowSidePanel;
 		case IDM_TOGGLE_EDITPANEL: return IsEditTabShown();
+		case IDM_TOGGLE_DRAWPANEL: return IsDrawTabShown();
 		case IDM_COMPARE_BEFORE_AFTER: return m_pMainDlg->IsCompareMode();
 	}
 	return false;
@@ -872,6 +875,18 @@ void CWindowChrome::ExecuteSideHit(const CSideHit& hit, CPoint ptWindow, bool bD
 			break;
 		case SH_Button:
 			m_pMainDlg->ExecuteCommand(hit.Value);
+			Paint();
+			break;
+		case SH_Tool:
+			m_pMainDlg->GetAnnotations()->SetTool((CAnnotations::ETool)hit.Value);
+			Paint();
+			break;
+		case SH_Color:
+			m_pMainDlg->GetAnnotations()->SetColor((COLORREF)hit.Value);
+			Paint();
+			break;
+		case SH_Width:
+			m_pMainDlg->GetAnnotations()->SetWidth(hit.Value);
 			Paint();
 			break;
 	}
@@ -1080,10 +1095,11 @@ void CWindowChrome::PaintCollapsedSidePanel(CDC& dc) {
 		{ 0xE76B, _T("<"), SH_Expand, 0, _T("Expand the side panel") },
 		{ 0xE946, _T("i"), SH_Tab, TAB_INFO, _T("Information") },
 		{ 0xE70F, _T("E"), SH_Tab, TAB_EDIT, _T("Edit image (brightness, contrast, colors)") },
+		{ 0xE76D, _T("D"), SH_Tab, TAB_DRAW, _T("Draw and write on the image") },
 	};
 	int nSize = rect.Width() - S(6);
 	int nY = S(6);
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
 		CRect buttonRect(S(3), nY, S(3) + nSize, nY + nSize);
 		AddSideHit(buttons[i].Type, buttons[i].Value, buttonRect, buttons[i].Tooltip);
 		buttonRect.OffsetRect(rect.TopLeft());
@@ -1111,8 +1127,8 @@ void CWindowChrome::PaintSidePanel(CDC& dc) {
 	m_hitOrigin = rect.TopLeft();
 	HFONT hOldFont = dc.SelectFont(m_hBoldFont);
 	int nX = S(SIDE_PADDING) - S(6);
-	LPCTSTR tabs[2] = { _T("Information"), _T("Edit") };
-	for (int nTab = 0; nTab < 2; nTab++) {
+	LPCTSTR tabs[3] = { _T("Information"), _T("Edit"), _T("Draw") };
+	for (int nTab = 0; nTab < 3; nTab++) {
 		CRect measureRect(0, 0, 0, 0);
 		LPCTSTR sTab = CNLS::GetString(tabs[nTab]);
 		dc.DrawText(sTab, -1, &measureRect, DT_CALCRECT | DT_SINGLELINE | DT_NOPREFIX);
@@ -1157,7 +1173,8 @@ void CWindowChrome::PaintSidePanel(CDC& dc) {
 	HRGN hClip = ::CreateRectRgn(0, 0, rect.Width(), nVisibleHeight);
 	::OffsetRgn(hClip, oldOrigin.x + rect.left, oldOrigin.y + rect.top + nHeader);
 	::SelectClipRgn(dc, hClip);
-	m_nSideContentHeight = (m_eSideTab == TAB_INFO) ? PaintInfoTab(dc, rect.Width(), S(10)) : PaintEditTab(dc, rect.Width(), S(10));
+	m_nSideContentHeight = (m_eSideTab == TAB_INFO) ? PaintInfoTab(dc, rect.Width(), S(10)) :
+		(m_eSideTab == TAB_EDIT) ? PaintEditTab(dc, rect.Width(), S(10)) : PaintDrawTab(dc, rect.Width(), S(10));
 	::SelectClipRgn(dc, NULL);
 	::DeleteObject(hClip);
 	dc.SetViewportOrg(oldOrigin);
@@ -1384,6 +1401,99 @@ int CWindowChrome::PaintEditTab(CDC& dc, int nWidth, int nY) {
 		{ _T("Save these values for this image"), IDM_SAVE_PARAM_DB, bCanUseParamDB, _T("JPEGView shows this image with these values the next time (parameter DB)") },
 		{ _T("Forget the values of this image"), IDM_CLEAR_PARAM_DB, bCanUseParamDB && pImage->IsInParamDB(), _T("Removes this image from the parameter DB") },
 		{ _T("Save processed image..."), IDM_SAVE, true, NULL },
+	};
+	for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
+		CRect buttonRect(nPad, nY, nPad + nInnerWidth, nY + nButtonHeight);
+		if (buttons[i].Enabled) {
+			AddSideHit(SH_Button, buttons[i].Command, buttonRect, buttons[i].Tooltip);
+		}
+		bool bHover = buttons[i].Enabled && m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, buttonRect, CNLS::GetString(buttons[i].Text), false, bHover, buttons[i].Enabled);
+		nY += nButtonHeight + S(6);
+	}
+
+	dc.SelectFont(hOldFont);
+	return nY + nPad;
+}
+
+int CWindowChrome::PaintDrawTab(CDC& dc, int nWidth, int nY) {
+	int nPad = S(SIDE_PADDING);
+	int nInnerWidth = nWidth - 2 * nPad;
+	int nButtonHeight = S(SIDE_BUTTON_HEIGHT);
+	CAnnotations* pAnnotations = m_pMainDlg->GetAnnotations();
+	bool bHasImage = m_pMainDlg->GetCurrentImage() != NULL;
+	HFONT hOldFont = dc.SelectFont(m_hFont);
+
+	auto SectionTitle = [&](LPCTSTR sTitle) {
+		dc.SelectFont(m_hBoldFont);
+		dc.SetTextColor(m_colors.DimText);
+		CRect titleRect(nPad, nY, nPad + nInnerWidth, nY + S(18));
+		dc.DrawText(CNLS::GetString(sTitle), -1, &titleRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+		dc.SelectFont(m_hFont);
+		nY += S(24);
+	};
+
+	// tools, three per row
+	SectionTitle(_T("Tool"));
+	struct { LPCTSTR Text; CAnnotations::ETool Tool; LPCTSTR Tooltip; } tools[] = {
+		{ _T("Pen"), CAnnotations::TOOL_PEN, _T("Draw freehand") },
+		{ _T("Highlighter"), CAnnotations::TOOL_HIGHLIGHTER, _T("Mark with a transparent wide pen") },
+		{ _T("Rectangle"), CAnnotations::TOOL_RECTANGLE, _T("Draw a rectangle") },
+		{ _T("Arrow"), CAnnotations::TOOL_ARROW, _T("Draw an arrow") },
+		{ _T("Text"), CAnnotations::TOOL_TEXT, _T("Click on the image to write a text") },
+		{ _T("Off"), CAnnotations::TOOL_NONE, _T("No tool, the mouse pans and selects again") },
+	};
+	int nColumnWidth = (nInnerWidth - 2 * S(6)) / 3;
+	for (int i = 0; i < sizeof(tools) / sizeof(tools[0]); i++) {
+		int nX = nPad + (i % 3) * (nColumnWidth + S(6));
+		CRect buttonRect(nX, nY, nX + nColumnWidth, nY + nButtonHeight);
+		AddSideHit(SH_Tool, tools[i].Tool, buttonRect, tools[i].Tooltip);
+		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, buttonRect, CNLS::GetString(tools[i].Text), pAnnotations->GetTool() == tools[i].Tool, bHover, true);
+		if (i % 3 == 2) nY += nButtonHeight + S(6);
+	}
+	nY += S(6);
+
+	// colors
+	SectionTitle(_T("Color"));
+	const COLORREF colors[] = { RGB(230, 40, 40), RGB(255, 140, 0), RGB(255, 214, 0), RGB(40, 180, 70),
+		RGB(30, 120, 230), RGB(150, 70, 200), RGB(0, 0, 0), RGB(255, 255, 255) };
+	int nSwatch = (nInnerWidth - 7 * S(6)) / 8;
+	for (int i = 0; i < 8; i++) {
+		int nX = nPad + i * (nSwatch + S(6));
+		CRect swatchRect(nX, nY, nX + nSwatch, nY + nSwatch);
+		AddSideHit(SH_Color, (int)colors[i], swatchRect, NULL);
+		if (pAnnotations->GetColor() == colors[i]) {
+			FillRoundRect(dc, CRect(swatchRect.left - S(3), swatchRect.top - S(3), swatchRect.right + S(3), swatchRect.bottom + S(3)), m_colors.Accent, S(8));
+		}
+		FillRoundRect(dc, swatchRect, colors[i], S(6));
+	}
+	nY += nSwatch + S(14);
+
+	// line width
+	SectionTitle(_T("Width"));
+	const int widths[] = { 2, 4, 8, 16 };
+	int nWidthButton = (nInnerWidth - 3 * S(6)) / 4;
+	for (int i = 0; i < 4; i++) {
+		int nX = nPad + i * (nWidthButton + S(6));
+		CRect buttonRect(nX, nY, nX + nWidthButton, nY + nButtonHeight);
+		AddSideHit(SH_Width, widths[i], buttonRect, NULL);
+		bool bHover = m_nHoverSide == (int)m_sideHits.size() - 1;
+		PaintSideButton(dc, buttonRect, _T(""), pAnnotations->GetWidth() == widths[i], bHover, true);
+		int nLine = max(1, S(widths[i]) / 2);
+		dc.FillSolidRect(buttonRect.left + S(10), buttonRect.CenterPoint().y - nLine / 2, buttonRect.Width() - S(20), nLine, m_colors.Text);
+	}
+	nY += nButtonHeight + S(14);
+
+	// actions
+	bool bHasDrawing = !pAnnotations->IsEmpty();
+	struct { LPCTSTR Text; int Command; bool Enabled; LPCTSTR Tooltip; } buttons[] = {
+		{ _T("Undo"), IDM_ANNOTATION_UNDO, bHasDrawing, _T("Remove the last drawing") },
+		{ _T("Remove all drawings"), IDM_ANNOTATION_CLEAR, bHasDrawing, NULL },
+		{ _T("Save pen strokes as signature"), IDM_SIGNATURE_SAVE, bHasDrawing, _T("Write your signature with the pen first") },
+		{ _T("Insert signature"), IDM_SIGNATURE_INSERT, bHasImage && pAnnotations->HasSignature(), NULL },
+		{ _T("Draw into the image"), IDM_ANNOTATION_APPLY, bHasDrawing, _T("Saving the image does this too") },
+		{ _T("Save processed image..."), IDM_SAVE, bHasImage, NULL },
 	};
 	for (int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++) {
 		CRect buttonRect(nPad, nY, nPad + nInnerWidth, nY + nButtonHeight);

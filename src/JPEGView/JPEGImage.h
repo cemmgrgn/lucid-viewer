@@ -200,6 +200,9 @@ public:
 	// raw access to original pixels - do not delete or store the returned pointer
 	void* OriginalPixels() { return  m_pOrigPixels; }
 	const void* OriginalPixels() const { return m_pOrigPixels; }
+	// Write access to the original pixels as 32 bpp BGRA (converted if needed). Marks the image as changed and
+	// invalidates all cached DIBs. Returns NULL on error.
+	void* GetOriginalPixelsForWriting();
 	// remove original pixels from class - OriginalPixels() will return NULL afterwards
 	void DetachOriginalPixels() { m_pOrigPixels = NULL; }
 

@@ -579,3 +579,29 @@ Output folder:	Çıktı klasörü:
 Empty: next to the source file. A name: sub folder.	Boş: kaynak dosyanın yanına. Bir ad: alt klasör.
 Edit INI file...	INI dosyasını düzenle...
 The theme and the language are changed when JPEGView is started the next time.	Tema ve dil, JPEGView bir sonraki açılışında değişir.
+Draw	Çiz
+Draw and write on the image	Görüntünün üzerine çiz ve yaz
+Tool	Araç
+Pen	Kalem
+Highlighter	Fosforlu
+Rectangle	Dikdörtgen
+Arrow	Ok
+Text	Metin
+Off	Kapalı
+Draw freehand	Serbest çiz
+Mark with a transparent wide pen	Saydam geniş kalemle işaretle
+Draw a rectangle	Dikdörtgen çiz
+Draw an arrow	Ok çiz
+Click on the image to write a text	Yazı eklemek için görüntüye tıkla
+No tool, the mouse pans and selects again	Araç yok, fare yeniden kaydırır ve seçer
+Color	Renk
+Undo	Geri al
+Remove the last drawing	Son çizimi kaldır
+Remove all drawings	Tüm çizimleri kaldır
+Save pen strokes as signature	Kalem çizgilerini imza olarak kaydet
+Write your signature with the pen first	Önce imzanı kalemle yaz
+Write your signature with the pen first.	Önce imzanı kalemle yaz.
+Insert signature	İmza ekle
+Draw into the image	Görüntüye işle
+Saving the image does this too	Görüntüyü kaydetmek de bunu yapar
+The pen strokes were saved as signature.	Kalem çizgileri imza olarak kaydedildi.

@@ -32,6 +32,7 @@ class CUserCommand;
 class CPrintImage;
 class CHelpDlg;
 class CWindowChrome;
+class CAnnotations;
 
 enum EMouseEvent;
 
@@ -184,6 +185,11 @@ public:
 	CWindowChrome* GetWindowChrome() { return m_pChrome; }
 	// Before/after comparison: the left part of the image is shown unedited, the split can be dragged
 	bool IsCompareMode() { return m_bCompareMode; }
+	CAnnotations* GetAnnotations() { return m_pAnnotations; }
+	// True if the drawing tools are shown and a tool is selected, the mouse draws on the image then
+	bool IsDrawMode();
+	// Draws the drawings into the original pixels of the image
+	void ApplyAnnotations();
 	void SetCompareMode(bool bCompare);
 	// Called when the image processing parameters were changed from outside, e.g. by the side panel sliders
 	void OnImageProcessingChanged();
@@ -371,6 +377,8 @@ private:
 	CWindowChrome* m_pChrome; // toolbar, status bar and side panel
 	volatile LONG m_nRunningConversions;
 	bool m_bCompareMode;
+	CAnnotations* m_pAnnotations; // drawings over the current image
+	void PaintAnnotations(CDC& dc);
 	double m_dCompareSplit; // position of the split line relative to the client width
 	bool m_bDraggingCompareSplit;
 	std::vector<uint8> m_compareBuffer; // composed before/after DIB

@@ -16,7 +16,7 @@ public:
 	enum { HT_CHROME = HTOBJECT };
 
 	// Tabs of the side panel
-	enum ESideTab { TAB_INFO = 0, TAB_EDIT = 1 };
+	enum ESideTab { TAB_INFO = 0, TAB_EDIT = 1, TAB_DRAW = 2 };
 
 	CWindowChrome(CMainDlg* pMainDlg);
 	~CWindowChrome();
@@ -30,6 +30,7 @@ public:
 	// True if the side panel shows its content (shown and not collapsed)
 	bool IsSidePanelExpanded() { return IsSidePanelShown() && !m_bSideCollapsed; }
 	bool IsEditTabShown() { return IsSidePanelExpanded() && m_eSideTab == TAB_EDIT; }
+	bool IsDrawTabShown() { return IsSidePanelExpanded() && m_eSideTab == TAB_DRAW; }
 
 	// The settings independent of the window mode, as used for check marks in the menu
 	bool GetShowToolbar() { return m_bShowToolbar; }
@@ -104,7 +105,7 @@ private:
 	};
 
 	// Clickable element of the side panel, rectangles in window coordinates
-	enum ESideHitType { SH_Collapse, SH_Expand, SH_Tab, SH_Location, SH_Slider, SH_GroupCheck, SH_Button };
+	enum ESideHitType { SH_Collapse, SH_Expand, SH_Tab, SH_Location, SH_Slider, SH_GroupCheck, SH_Button, SH_Tool, SH_Color, SH_Width };
 	struct CSideHit {
 		ESideHitType Type;
 		int Value; // tab, slider index, group or command
@@ -170,6 +171,7 @@ private:
 	void PaintCollapsedSidePanel(CDC& dc);
 	int PaintInfoTab(CDC& dc, int nWidth, int nY); // returns the content height
 	int PaintEditTab(CDC& dc, int nWidth, int nY); // returns the content height
+	int PaintDrawTab(CDC& dc, int nWidth, int nY); // returns the content height
 	void PaintHistogram(CDC& dc, const CRect& rect);
 	void PaintItem(CDC& dc, const CToolbarItem& item, int nIndex);
 	void PaintSideButton(CDC& dc, const CRect& rect, LPCTSTR sText, bool bChecked, bool bHover, bool bEnabled);

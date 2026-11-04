@@ -706,6 +706,16 @@ bool CJPEGImage::Rotate(int nRotation) {
 	return true;
 }
 
+void* CJPEGImage::GetOriginalPixelsForWriting() {
+	if (!ConvertSrcTo4Channels()) {
+		return NULL;
+	}
+	InvalidateAllCachedPixelData();
+	MarkAsDestructivelyProcessed();
+	m_bIsProcessedNoParamDB = true;
+	return m_pOrigPixels;
+}
+
 bool CJPEGImage::Mirror(bool bHorizontally) {
 	double dStartTickCount = Helpers::GetExactTickCount();
 

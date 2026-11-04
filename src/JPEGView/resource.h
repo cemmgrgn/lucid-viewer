@@ -304,6 +304,12 @@
 #define IDM_UNSHARP_MASK	16180		// :KeyMap: open the unsharp mask panel
 #define IDM_TOGGLE_SIDEPANEL_COLLAPSED	16190	// :KeyMap: collapse or expand the side panel
 #define IDM_SETTINGS	16200			// :KeyMap: show the settings window
+#define IDM_TOGGLE_DRAWPANEL	16210	// :KeyMap: show the drawing tools (pen, highlighter, shapes, text, signature)
+#define IDM_ANNOTATION_UNDO	16220		// :KeyMap: undo the last drawing
+#define IDM_ANNOTATION_CLEAR	16230	// :KeyMap: remove all drawings
+#define IDM_ANNOTATION_APPLY	16240	// :KeyMap: draw the drawings into the image
+#define IDM_SIGNATURE_SAVE	16250		// :KeyMap: save the pen strokes as signature
+#define IDM_SIGNATURE_INSERT	16260	// :KeyMap: insert the saved signature
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

@@ -56,6 +56,8 @@
 #include "WindowChrome.h"
 #include "Converter.h"
 #include "SettingsDlg.h"
+#include "Annotations.h"
+#include <gdiplus.h>
 #include <process.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -313,6 +315,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pPrintImage = new CPrintImage(CSettingsProvider::This().PrintMargin(), CSettingsProvider::This().DefaultPrintWidth());
 	m_pHelpDlg = NULL;
 	m_pChrome = NULL;
+	m_pAnnotations = new CAnnotations();
 	m_nRunningConversions = 0;
 	m_bCompareMode = false;
 	m_dCompareSplit = 0.5;
@@ -321,6 +324,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 
 CMainDlg::~CMainDlg() {
 	delete m_pChrome;
+	delete m_pAnnotations;
 	delete m_pDirectoryWatcher;
 	delete m_pFileList;
 	if (m_pJPEGProvider != NULL) delete m_pJPEGProvider;
@@ -621,6 +625,9 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 
 	// let crop controller and panels paint its stuff
 	m_pCropCtl->OnPaint(dc);
+	if (m_pCurrentImage != NULL && !m_pAnnotations->IsEmpty()) {
+		PaintAnnotations(dc);
+	}
 	if (m_bCompareMode && m_pCurrentImage != NULL) {
 		PaintCompareSplit(dc);
 	}
@@ -802,6 +809,22 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	this->SetCapture();
 	bool isCropping = m_pCropCtl->IsCropping();
 	CPoint pointClicked(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+	if (IsDrawMode() && !isCropping) {
+		float fX = (float)pointClicked.x, fY = (float)pointClicked.y;
+		ScreenToImage(fX, fY);
+		if (m_pAnnotations->GetTool() == CAnnotations::TOOL_TEXT) {
+			::ReleaseCapture();
+			CString sText;
+			if (CAnnotations::AskForText(m_hWnd, CNLS::GetString(_T("Text")), CNLS::GetString(_T("OK")), CNLS::GetString(_T("Cancel")), sText)) {
+				m_pAnnotations->AddText(fX, fY, m_dRealizedZoom, sText);
+			}
+		} else {
+			m_pAnnotations->BeginShape(fX, fY, m_dRealizedZoom);
+		}
+		Invalidate(FALSE);
+		m_pChrome->Paint();
+		return 0;
+	}
 	if (m_bCompareMode && !isCropping && IsOnCompareSplit(pointClicked.x)) {
 		m_bDraggingCompareSplit = true;
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
@@ -844,6 +867,9 @@ LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	if (m_pChrome->IsDragging()) {
 		// slider of the side panel, the drag was started in the non-client area
 		m_pChrome->EndDrag();
+	} else if (m_pAnnotations->IsDrawing()) {
+		m_pAnnotations->EndShape();
+		m_pChrome->Paint();
 	} else if (m_bDraggingCompareSplit) {
 		m_bDraggingCompareSplit = false;
 	} else if (m_bZoomMode) {
@@ -1044,6 +1070,14 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 		m_pChrome->OnDragMove(ptScreen);
 		return 0;
 	}
+	if (m_pAnnotations->IsDrawing()) {
+		float fX = (float)m_nMouseX, fY = (float)m_nMouseY;
+		ScreenToImage(fX, fY);
+		m_pAnnotations->ContinueShape(fX, fY);
+		::SetCursor(::LoadCursor(NULL, IDC_CROSS));
+		Invalidate(FALSE);
+		return 0;
+	}
 	if (m_bDraggingCompareSplit) {
 		m_dCompareSplit = max(0.0, min(1.0, (double)m_nMouseX / max(1, m_clientRect.Width())));
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
@@ -1078,7 +1112,7 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	if (!m_bPanMouseCursorSet && !bMouseCursorSet) {
 		if (!m_pPanelMgr->MouseCursorCaptured()) {
 			bool bOnSplit = m_bCompareMode && !m_bDragging && !m_pCropCtl->IsCropping() && IsOnCompareSplit(m_nMouseX);
-			::SetCursor(::LoadCursor(NULL, bOnSplit ? IDC_SIZEWE : IDC_ARROW));
+			::SetCursor(::LoadCursor(NULL, IsDrawMode() ? IDC_CROSS : bOnSplit ? IDC_SIZEWE : IDC_ARROW));
 		}
 	}
 
@@ -2344,6 +2378,36 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_TOGGLE_DRAWPANEL:
+			if (m_pChrome->IsEnabled()) {
+				m_pChrome->ShowSideTab(m_pChrome->IsDrawTabShown() ? CWindowChrome::TAB_INFO : CWindowChrome::TAB_DRAW);
+				Invalidate(FALSE);
+			}
+			break;
+		case IDM_ANNOTATION_UNDO:
+			m_pAnnotations->Undo();
+			Invalidate(FALSE);
+			m_pChrome->Paint();
+			break;
+		case IDM_ANNOTATION_CLEAR:
+			m_pAnnotations->Clear();
+			Invalidate(FALSE);
+			m_pChrome->Paint();
+			break;
+		case IDM_ANNOTATION_APPLY:
+			ApplyAnnotations();
+			break;
+		case IDM_SIGNATURE_SAVE:
+			m_pChrome->ShowMessage(CNLS::GetString(m_pAnnotations->SaveSignature() ? _T("The pen strokes were saved as signature.") :
+				_T("Write your signature with the pen first.")));
+			break;
+		case IDM_SIGNATURE_INSERT:
+			if (m_pCurrentImage != NULL && m_pAnnotations->InsertSignature(m_pCurrentImage->OrigWidth() / 2.0f,
+				m_pCurrentImage->OrigHeight() / 2.0f, m_pCurrentImage->OrigWidth() / 4.0f)) {
+				Invalidate(FALSE);
+				m_pChrome->Paint();
+			}
+			break;
 		case IDM_SETTINGS:
 			{
 				MouseOn();
@@ -2506,6 +2570,11 @@ bool CMainDlg::SaveImage(bool bFullSize) {
 bool CMainDlg::SaveImageNoPrompt(LPCTSTR sFileName, bool bFullSize) {
 	if (m_bMovieMode) {
 		return false;
+	}
+	// the drawings become part of the saved image
+	if (!m_pAnnotations->IsEmpty()) {
+		ApplyAnnotations();
+		UpdateWindow(); // creates the DIB with the drawings for saving in screen size
 	}
 
 	MouseOn();
@@ -3266,6 +3335,7 @@ void CMainDlg::ExchangeProcessingParams() {
 }
 
 void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow) {
+	m_pAnnotations->Clear(); // drawings belong to the image they were made on
 	UpdateWindowTitle();
 	InvalidateHelpDlg();
 	m_pDirectoryWatcher->SetCurrentFile(CurrentFileName(false));
@@ -4179,4 +4249,39 @@ void CMainDlg::PaintCompareSplit(CDC& dc) {
 	int nHeight = HelpersGUI::ScaleToScreen(30);
 	HelpersGUI::DrawTextBordered(dc, CNLS::GetString(_T("Before")), CRect(m_clientRect.left, nTop, nX - nMargin, nTop + nHeight), DT_RIGHT);
 	HelpersGUI::DrawTextBordered(dc, CNLS::GetString(_T("After")), CRect(nX + nMargin, nTop, m_clientRect.right, nTop + nHeight), DT_LEFT);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Drawing on the image
+///////////////////////////////////////////////////////////////////////////////////
+
+bool CMainDlg::IsDrawMode() {
+	return m_pCurrentImage != NULL && m_pChrome->IsDrawTabShown() && m_pAnnotations->GetTool() != CAnnotations::TOOL_NONE &&
+		!m_pCropCtl->IsCropping() && !m_pPanelMgr->IsModalPanelShown();
+}
+
+void CMainDlg::PaintAnnotations(CDC& dc) {
+	// the image is shown scaled and moved, the mapping is derived from two converted points
+	float fX0 = 0.0f, fY0 = 0.0f, fX1 = 1000.0f, fY1 = 1000.0f;
+	if (!ImageToScreen(fX0, fY0) || !ImageToScreen(fX1, fY1)) {
+		return;
+	}
+	Gdiplus::Graphics graphics(dc.m_hDC);
+	graphics.SetClip(Gdiplus::Rect(m_clientRect.left, m_clientRect.top, m_clientRect.Width(), m_clientRect.Height()));
+	graphics.TranslateTransform(fX0, fY0);
+	graphics.ScaleTransform((fX1 - fX0) / 1000.0f, (fY1 - fY0) / 1000.0f);
+	m_pAnnotations->Render(graphics);
+}
+
+void CMainDlg::ApplyAnnotations() {
+	if (m_pCurrentImage == NULL || m_pAnnotations->IsEmpty()) {
+		return;
+	}
+	void* pPixels = m_pCurrentImage->GetOriginalPixelsForWriting();
+	if (pPixels != NULL && m_pAnnotations->BurnInto(pPixels, m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight())) {
+		m_pAnnotations->Clear();
+	}
+	m_pImageProcPanelCtl->ShowHideSaveDBButtons();
+	Invalidate(FALSE);
+	m_pChrome->Paint();
 }

@@ -89,3 +89,5 @@ Ctrl+E                  IDM_TOGGLE_EDITPANEL
 Ctrl+D                  IDM_CONVERT_MENU
 Ctrl+W                  IDM_EXIT
 Ctrl+K                  IDM_COMPARE_BEFORE_AFTER
+Ctrl+Z                  IDM_ANNOTATION_UNDO
+Ctrl+Shift+D            IDM_TOGGLE_DRAWPANEL
