@@ -58,6 +58,7 @@
 #include "SettingsDlg.h"
 #include "Annotations.h"
 #include "Ocr.h"
+#include "Share.h"
 #include <propsys.h>
 #include <propkey.h>
 #include <gdiplus.h>
@@ -321,6 +322,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pAnnotations = new CAnnotations();
 	m_nRating = -1;
 	m_bCropTool = false;
+	m_bDragOutPending = false;
 	m_nCropModeCommand = IDM_CROPMODE_FREE;
 	m_nRunningConversions = 0;
 	m_bCompareMode = false;
@@ -860,6 +862,10 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 				m_pCropCtl->StartCropping(pointClicked.x, pointClicked.y);
 			} else if (bDraggingRequired && !bTransformPanelShown) {
 				StartDragging(pointClicked.x, pointClicked.y, false);
+			} else if (!bTransformPanelShown && m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) {
+				// the image fits the window, dragging moves the file to other applications as in Windows Photos
+				m_bDragOutPending = true;
+				m_dragOutStart = pointClicked;
 			} 
 		}
 		SetCursorForMoveSection();
@@ -870,6 +876,7 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 }
 
 LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
+	m_bDragOutPending = false;
 	if (m_pChrome->IsDragging()) {
 		// slider of the side panel, the drag was started in the non-client area
 		m_pChrome->EndDrag();
@@ -1076,6 +1083,17 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 		m_pChrome->OnDragMove(ptScreen);
 		return 0;
 	}
+	if (m_bDragOutPending && (::GetKeyState(VK_LBUTTON) & 0x8000) != 0) {
+		if (abs(m_nMouseX - m_dragOutStart.x) > ::GetSystemMetrics(SM_CXDRAG) || abs(m_nMouseY - m_dragOutStart.y) > ::GetSystemMetrics(SM_CYDRAG)) {
+			m_bDragOutPending = false;
+			::ReleaseCapture();
+			if (m_pFileList->Current() != NULL) {
+				Share::DragFile(m_hWnd, m_pFileList->Current());
+			}
+		}
+		return 0;
+	}
+	m_bDragOutPending = false;
 	if (m_pAnnotations->IsDrawing()) {
 		float fX = (float)m_nMouseX, fY = (float)m_nMouseY;
 		ScreenToImage(fX, fY);
@@ -2391,6 +2409,13 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_COMPARE_BEFORE_AFTER:
 			SetCompareMode(!m_bCompareMode);
 			break;
+		case IDM_SHARE:
+			if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList->Current() != NULL) {
+				if (!Share::ShareFile(m_hWnd, m_pFileList->Current())) {
+					m_pChrome->ShowMessage(CNLS::GetString(_T("The share window of Windows is not available.")));
+				}
+			}
+			break;
 		case IDM_TOGGLE_CROP_TOOL:
 			m_bCropTool = !m_bCropTool;
 			if (m_bCropTool) {
@@ -3682,10 +3707,10 @@ bool CMainDlg::IsSidePanelShown() { return m_pChrome != NULL && m_pChrome->IsSid
 enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
-	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17
+	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18
 };
 
-static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_CONVERT, IDM_RELOAD, MBAR_SEPARATOR,
+static const int s_menuBarFile[] = { IDM_OPEN, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_CONVERT, MBAR_SHARE, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
@@ -3817,6 +3842,9 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_RESET:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_RESET_PROCESSING, _T("Reset all values to the defaults"), false, m_pCurrentImage != NULL);
+				break;
+			case MBAR_SHARE:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_SHARE, _T("Share..."), false, bHasFileImage);
 				break;
 			case MBAR_OCR:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_OCR_COPY_TEXT, _T("Copy text from image"), false, m_pCurrentImage != NULL);

@@ -16,6 +16,7 @@
 #include "Converter.h"
 #include "TimerEventIDs.h"
 #include "Annotations.h"
+#include "Share.h"
 #include <shellapi.h>
 #include <math.h>
 
@@ -185,6 +186,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	m_nSideContentHeight = 0;
 	m_nDragSlider = -1;
 	m_hitOrigin = CPoint(0, 0);
+	m_bHoverFileDrag = false;
 
 	if (sp.ChromeDarkTheme()) {
 		CColors dark = { RGB(32, 32, 32), RGB(26, 26, 26), RGB(58, 58, 58), RGB(232, 232, 232), RGB(150, 150, 150),
@@ -222,6 +224,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 		{ 0xE8E5, _T("Open"), IDM_OPEN, _T("Open image..."), false, false },
 		{ 0xE74E, _T("Save"), IDM_SAVE, _T("Save processed image..."), false, true },
 		{ 0xE8AB, _T("Convert"), IDM_CONVERT_MENU, _T("Convert to"), false, true },
+		{ 0xE72D, _T("Share"), IDM_SHARE, _T("Share..."), false, true },
 		{ 0, _T(""), 0, NULL, false, false },
 		{ 0xE76B, _T("<"), IDM_PREV, _T("Previous image"), false, true },
 		{ 0xE76C, _T(">"), IDM_NEXT, _T("Next image"), false, true },
@@ -425,7 +428,7 @@ LRESULT CWindowChrome::HitTest(CPoint ptScreen) {
 		return (FindItem(pt) >= 0) ? HT_CHROME : HTCAPTION; // empty toolbar area moves the window
 	}
 	if (m_statusBarRect.PtInRect(pt)) {
-		return HTCAPTION;
+		return IsInFileDragArea(pt) ? HT_CHROME : HTCAPTION;
 	}
 	if (m_sidePanelRect.PtInRect(pt)) {
 		return HT_CHROME;
@@ -448,6 +451,16 @@ void CWindowChrome::OnNCMouseMove(CPoint ptScreen) {
 		nItem = -1;
 	}
 	int nSide = (nItem < 0 && m_sidePanelRect.PtInRect(pt)) ? FindSideHit(pt) : -1;
+	bool bFileDrag = IsInFileDragArea(pt);
+	if (bFileDrag != m_bHoverFileDrag) {
+		m_bHoverFileDrag = bFileDrag;
+		if (bFileDrag) {
+			CRect dragRect(m_statusBarRect.left, m_statusBarRect.top - S(30), m_statusBarRect.left + m_statusBarRect.Width() * 2 / 5, m_statusBarRect.top - S(30));
+			ScheduleTooltip(CNLS::GetString(_T("Drag the file name to copy the file to other applications")), dragRect);
+		} else {
+			HideTooltip();
+		}
+	}
 	if (nItem != m_nHoverItem || nSide != m_nHoverSide) {
 		m_nHoverItem = nItem;
 		m_nHoverSide = nSide;
@@ -462,8 +475,15 @@ void CWindowChrome::OnNCMouseMove(CPoint ptScreen) {
 	}
 }
 
+bool CWindowChrome::IsInFileDragArea(CPoint ptWindow) {
+	CJPEGImage* pImage = m_pMainDlg->GetCurrentImage();
+	return m_statusBarRect.PtInRect(ptWindow) && ptWindow.x < m_statusBarRect.left + m_statusBarRect.Width() * 2 / 5 &&
+		pImage != NULL && !pImage->IsClipboardImage() && m_pMainDlg->GetFileList() != NULL && m_pMainDlg->GetFileList()->Current() != NULL;
+}
+
 void CWindowChrome::OnNCMouseLeave() {
 	m_bTrackingMouse = false;
+	m_bHoverFileDrag = false;
 	HideTooltip();
 	if (m_nHoverItem >= 0 || m_nPressedItem >= 0 || m_nHoverSide >= 0) {
 		m_nHoverItem = m_nPressedItem = m_nHoverSide = -1;
@@ -481,6 +501,11 @@ void CWindowChrome::OnNCLButtonDown(CPoint ptScreen, bool bDoubleClick) {
 			CSideHit hit = m_sideHits[nHit]; // copy, painting rebuilds the list
 			ExecuteSideHit(hit, pt, bDoubleClick);
 		}
+		return;
+	}
+	if (IsInFileDragArea(pt)) {
+		m_bHoverFileDrag = false;
+		Share::DragFile(m_pMainDlg->GetHWND(), m_pMainDlg->GetFileList()->Current());
 		return;
 	}
 	int nItem = FindItem(pt);
@@ -778,7 +803,7 @@ bool CWindowChrome::IsItemEnabled(const CToolbarItem& item) {
 	if (m_pMainDlg->GetCurrentImage() == NULL) {
 		return false;
 	}
-	if (item.Command == IDM_CONVERT_MENU || item.Command == IDM_MOVE_TO_RECYCLE_BIN_CONFIRM) {
+	if (item.Command == IDM_CONVERT_MENU || item.Command == IDM_SHARE || item.Command == IDM_MOVE_TO_RECYCLE_BIN_CONFIRM) {
 		return !m_pMainDlg->GetCurrentImage()->IsClipboardImage();
 	}
 	return true;

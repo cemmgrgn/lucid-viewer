@@ -141,6 +141,10 @@ private:
 
 	// rectangles of the chrome parts in window coordinates
 	CRect m_windowRect, m_toolbarRect, m_statusBarRect, m_sidePanelRect;
+	bool m_bHoverFileDrag; // mouse over the file name of the status bar, it can be dragged to other applications
+
+	// The file name part of the status bar, dragging it drags the file
+	bool IsInFileDragArea(CPoint ptWindow);
 
 	int ToolbarHeight();
 	int StatusBarHeight();

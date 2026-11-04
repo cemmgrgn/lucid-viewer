@@ -311,6 +311,10 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
+    <ClCompile Include="Share.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
     <ClCompile Include="dcraw_mod.cpp" />
     <ClCompile Include="DesktopWallpaper.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
@@ -408,6 +412,7 @@
     <ClInclude Include="SettingsDlg.h" />
     <ClInclude Include="Annotations.h" />
     <ClInclude Include="Ocr.h" />
+    <ClInclude Include="Share.h" />
     <ClInclude Include="dcraw_mod.h" />
     <ClInclude Include="DesktopWallpaper.h" />
     <ClInclude Include="DirectoryWatcher.h" />

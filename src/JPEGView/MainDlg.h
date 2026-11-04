@@ -388,6 +388,8 @@ private:
 	CAnnotations* m_pAnnotations; // drawings over the current image
 	CString m_sRatingFile; // file of the cached rating
 	bool m_bCropTool;
+	bool m_bDragOutPending; // left button pressed on an image fitting the window, moving drags the file out
+	CPoint m_dragOutStart;
 	int m_nCropModeCommand;
 	int m_nRating;
 	void PaintAnnotations(CDC& dc);
