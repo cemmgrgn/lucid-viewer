@@ -151,6 +151,7 @@ public:
 	bool ShowStartScreen() { return m_bShowStartScreen; }
 	bool ScreenshotHistory() { return m_bScreenshotHistory; }
 	bool RememberRecentFiles() { return m_bRememberRecentFiles; }
+	bool OpenLastImage() { return m_bOpenLastImage; }
 	int MinDisplaySize() { return m_nMinDisplaySize; }
 	bool SmoothAnimations() { return m_bSmoothAnimations; }
 	void SaveShowFilmstrip(bool bShow);
@@ -354,6 +355,7 @@ private:
 	bool m_bShowStartScreen;
 	bool m_bScreenshotHistory;
 	bool m_bRememberRecentFiles;
+	bool m_bOpenLastImage;
 	int m_nMinDisplaySize;
 	bool m_bSmoothAnimations;
 	int m_nSidePanelTab;

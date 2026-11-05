@@ -109,6 +109,15 @@ void CStartScreen::SetPinned(LPCTSTR sFile, bool bPinned) {
 	WriteLines(_T("StartPinned.txt"), lines);
 }
 
+CString CStartScreen::GetLastOpened() {
+	if (s_bTestLists) return CString();
+	for (const CString& sLine : ReadLines(_T("StartRecent.txt"))) {
+		CString sPath = RecentPath(sLine);
+		if (::GetFileAttributes(sPath) != INVALID_FILE_ATTRIBUTES) return sPath;
+	}
+	return CString();
+}
+
 void CStartScreen::FileMoved(LPCTSTR sOldFile, LPCTSTR sNewFile) {
 	if (s_bTestLists || sOldFile == NULL || sNewFile == NULL || sOldFile[0] == 0 || sNewFile[0] == 0) return;
 	std::vector<CString> pinned = ReadLines(_T("StartPinned.txt"));

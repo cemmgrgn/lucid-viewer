@@ -500,3 +500,37 @@ The image was copied with transparency.
 The image could not be copied to the clipboard.	
 Background removed. Save it with 'Save as transparent PNG' or copy it with %s.	
 Open in new window	
+Copied	
+copy	
+Copy made:	
+Go to image number (1 - %d)	
+There is no image with this number.	
+The image could not be read.	
+The file is too large for a data URI (more than 20 MB).	
+Data URI copied (%d KB of text).	
+Tags, separated by semicolons	
+The tags were removed.	
+Tags saved:	
+Show only images with this tag (empty: all images)	
+No image of this folder has the tag %s.	
+All %d images are shown	
+%d images with the tag %s are shown	
+This photo has no location (GPS).	
+The image is the picture of the lock screen now.	
+Windows did not accept the image for the lock screen. Open the lock screen settings?	
+Color picker off	
+Click on the image to copy the color, Esc cancels.	
+Color %s (RGB %d, %d, %d) copied	
+Sorted by date taken	
+Date taken	
+Copy file name	
+Duplicate file	
+Copy as data URI (base64)	
+Edit tags...	
+Show on map	
+Go to image number...	
+Filter by tag...	
+Pick color	
+Set as lock screen	
+Sort by date taken	
+%d dropped images, the arrow keys go through them	

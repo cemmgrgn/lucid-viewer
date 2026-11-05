@@ -103,3 +103,12 @@ Ctrl+Shift+X            IDM_MOVE_TO_FOLDER
 Alt+Shift+Return        IDM_FILE_PROPERTIES
 Ctrl+Shift+O            IDM_OPEN_WITH_OTHER_APP
 Ctrl+Shift+N            IDM_OPEN_IN_NEW_WINDOW
+Ctrl+Alt+D              IDM_DUPLICATE_FILE
+Ctrl+Alt+N              IDM_COPY_FILE_NAME
+Ctrl+G                  IDM_GOTO_IMAGE
+Ctrl+Alt+P              IDM_PICK_COLOR
+Ctrl+Alt+T              IDM_SORT_DATE_TAKEN
+Ctrl+Shift+G            IDM_EDIT_TAGS
+Ctrl+Alt+G              IDM_FILTER_BY_TAG
+Ctrl+Alt+L              IDM_SHOW_ON_MAP
+Ctrl+Shift+R            IDM_ROTATE_180_LOSSLESS

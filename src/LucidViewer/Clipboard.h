@@ -19,6 +19,9 @@ public:
 	static void CopyFullImageToClipboard(HWND hWnd, CJPEGImage * pImage, const CImageProcessingParams& procParams,
 		EProcessingFlags eFlags, CRect clipRect, LPCTSTR fileName);
 
+	// Copy a text to the clipboard, returns false on error
+	static bool CopyTextToClipboard(HWND hWnd, LPCTSTR sText);
+
 	// Copy file path to the clipboard.
 	static void CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR fileName);
 

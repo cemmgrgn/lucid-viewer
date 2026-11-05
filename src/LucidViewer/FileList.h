@@ -42,6 +42,15 @@ public:
 	int GetRating() const;
 	void SetRating(int nRating) { m_nRating = nRating; }
 
+	// Date the photo was taken (System.Photo.DateTaken) as FILETIME value, the modification date if the file has none. Read once.
+	__int64 GetDateTaken() const;
+
+	// Tags of the file (System.Keywords) separated by "; ", read once
+	const CString& GetKeywords() const;
+	void SetKeywords(LPCTSTR sKeywords) { m_sKeywords = sKeywords; m_bKeywordsRead = true; }
+	// True if one of the tags is the given tag (case is ignored)
+	bool HasKeyword(LPCTSTR sTag) const;
+
 private:
 	static Helpers::ESorting sm_eSorting;
 	static bool sm_bSortAscending;
@@ -53,6 +62,9 @@ private:
 	int m_nRandomOrderNumber;
 	__int64 m_fileSize;
 	mutable int m_nRating; // -2: not read yet
+	mutable __int64 m_nDateTaken; // -2: not read yet
+	mutable CString m_sKeywords;
+	mutable bool m_bKeywordsRead;
 };
 
 
@@ -158,8 +170,16 @@ public:
 	static void SetMinRating(int nMinRating) { sm_nMinRating = nMinRating; }
 	// Updates the cached rating of the file after it was changed
 	void UpdateRating(LPCTSTR sFileName, int nRating);
+	// Only files with this tag are in the list (empty: all files)
+	static LPCTSTR GetTagFilter() { return sm_sTagFilter; }
+	static void SetTagFilter(LPCTSTR sTag) { sm_sTagFilter = sTag; sm_sTagFilter.Trim(); }
+	// Updates the cached tags of the file after they were changed
+	void UpdateKeywords(LPCTSTR sFileName, LPCTSTR sKeywords);
+	// Makes the n-th file (zero based) of the list the current one, returns false if out of range
+	bool GotoIndex(int nIndex);
 private:
 	static int sm_nMinRating;
+	static CString sm_sTagFilter;
 
 	bool m_bDeleteHistory;
 	bool m_bIsSlideShowList;

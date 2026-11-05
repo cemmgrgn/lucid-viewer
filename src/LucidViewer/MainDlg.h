@@ -81,6 +81,7 @@ public:
 		MESSAGE_HANDLER(WM_CONVERSION_FINISHED, OnConversionFinished)
 		MESSAGE_HANDLER(WM_RATING_READ, OnRatingRead)
 		MESSAGE_HANDLER(WM_UPDATE_CHECKED, OnUpdateChecked)
+		MESSAGE_HANDLER(WM_GESTURE, OnGesture)
 		MESSAGE_HANDLER(WM_EXECUTE_COMMAND, OnExecuteCommand)
 		MESSAGE_HANDLER(WM_LBUTTONDOWN, OnLButtonDown)
 		MESSAGE_HANDLER(WM_LBUTTONUP, OnLButtonUp)
@@ -137,6 +138,7 @@ public:
 	LRESULT OnConversionFinished(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRatingRead(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnUpdateChecked(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	LRESULT OnGesture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnExecuteCommand(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/) { ExecuteCommand((int)wParam); return 0; }
 	LRESULT OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnRButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -483,6 +485,20 @@ private:
 	// Explorer properties of the current file, and the Windows 'Open with' window
 	void ShowFileProperties();
 	void OpenWithOtherApp();
+	// organizing and small helpers (File, Navigate and Tools menus)
+	bool HasFileImage();
+	void DuplicateFile();
+	void GotoImageNumber();
+	void CopyAsDataUri();
+	void EditTags();
+	void FilterByTag();
+	void ShowOnMap();
+	void SetAsLockScreen();
+	void PickColorAt(int nX, int nY);
+	bool m_bPickColor; // the next click copies the color of the pixel
+	// pinch zoom on touch screens: finger distance and zoom when the gesture started
+	DWORD m_nGestureStartDistance;
+	double m_dGestureStartZoom;
 	// Moves a file, the current image is left first if it is the moved file. Returns false on error.
 	bool MoveImageFile(const CString& sFrom, const CString& sTo);
 	bool m_bUpdateCheckRunning;

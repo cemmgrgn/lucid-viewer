@@ -74,6 +74,27 @@ void CClipboard::CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR file
 	pImage->EnableDimming(true);
 }
 
+bool CClipboard::CopyTextToClipboard(HWND hWnd, LPCTSTR sText) {
+	if (sText == NULL || !::OpenClipboard(hWnd)) {
+		return false;
+	}
+	::EmptyClipboard();
+	size_t nBytes = (_tcslen(sText) + 1) * sizeof(TCHAR);
+	HGLOBAL hMem = ::GlobalAlloc(GMEM_MOVEABLE, nBytes);
+	bool bOk = false;
+	if (hMem != NULL) {
+		void* pMem = ::GlobalLock(hMem);
+		if (pMem != NULL) {
+			memcpy(pMem, sText, nBytes);
+			::GlobalUnlock(hMem);
+			bOk = ::SetClipboardData(sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT, hMem) != NULL;
+		}
+		if (!bOk) ::GlobalFree(hMem);
+	}
+	::CloseClipboard();
+	return bOk;
+}
+
 bool CClipboard::CopyFileToClipboard(HWND hWnd, LPCTSTR fileName) {
 	if (fileName == NULL || fileName[0] == 0) {
 		return false;

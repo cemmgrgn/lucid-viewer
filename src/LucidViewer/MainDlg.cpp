@@ -64,6 +64,10 @@
 #include "Metadata.h"
 #include "StartScreen.h"
 #include "UpdateCheck.h"
+#include <propkey.h>
+#include <propvarutil.h>
+#include <wincrypt.h>
+#pragma comment(lib, "crypt32.lib")
 #include "StartupTrace.h"
 #include "ScreenCapture.h"
 #include "SettingsEditor.h"
@@ -344,6 +348,9 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_nRatingGeneration = 0;
 	m_bCropTool = false;
 	m_bUpdateCheckRunning = false;
+	m_bPickColor = false;
+	m_nGestureStartDistance = 0;
+	m_dGestureStartZoom = 1.0;
 	m_bDragOutPending = false;
 	m_bTransparencySaved = false;
 	m_bEditPending = false;
@@ -374,7 +381,10 @@ CMainDlg::~CMainDlg() {
 void CMainDlg::SetStartupInfo(LPCTSTR sStartupFile, int nAutostartSlideShow, Helpers::ESorting eSorting, Helpers::ETransitionEffect eEffect, 
 	int nTransitionTime, bool bAutoExit, int nDisplayMonitor) { 
 	m_sStartupFile = sStartupFile; m_nAutoStartSlideShow = nAutostartSlideShow; m_eForcedSorting = eSorting;
-	m_bRecordRecent = sStartupFile != NULL && sStartupFile[0] != 0;
+	if (m_sStartupFile.IsEmpty() && CSettingsProvider::This().OpenLastImage() && CSettingsProvider::This().RememberRecentFiles()) {
+		m_sStartupFile = CStartScreen::GetLastOpened(); // OpenLastImage: the photo viewed last instead of the start screen
+	}
+	m_bRecordRecent = !m_sStartupFile.IsEmpty();
 	m_bAutoExit = bAutoExit;
 	if ((int)eEffect >= 0) m_eTransitionEffect = eEffect;
 	if (nTransitionTime > 0) m_nTransitionTime = nTransitionTime;
@@ -907,6 +917,10 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		HandleStartScreenAction(result.Action, result.File);
 		return 0;
 	}
+	if (m_bPickColor) {
+		PickColorAt(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return 0;
+	}
 	this->SetCapture();
 	bool isCropping = m_pCropCtl->IsCropping();
 	CPoint pointClicked(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
@@ -1137,6 +1151,10 @@ LRESULT CMainDlg::OnNCActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 }
 
 LRESULT CMainDlg::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
+	if (LOWORD(lParam) == HTCLIENT && m_bPickColor && !IsStartScreenActive()) {
+		::SetCursor(::LoadCursor(NULL, IDC_CROSS));
+		return TRUE;
+	}
 	if (LOWORD(lParam) == HTCLIENT && IsStartScreenActive()) {
 		POINT point;
 		::GetCursorPos(&point);
@@ -1465,6 +1483,39 @@ LRESULT CMainDlg::OnDropFiles(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
 		return 0;
 	}
 	if (!m_pPanelMgr->IsModalPanelShown()) {
+		// several files: they are shown as a list of their own (a slideshow list file in the temp folder)
+		UINT nFiles = ::DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
+		std::vector<CString> droppedFiles;
+		for (UINT i = 0; i < nFiles && nFiles > 1; i++) {
+			UINT nChars = ::DragQueryFile(hDrop, i, NULL, 0);
+			if (nChars == 0) continue;
+			CString sDropped;
+			UINT nCopied = ::DragQueryFile(hDrop, i, sDropped.GetBuffer(nChars + 1), nChars + 1);
+			sDropped.ReleaseBuffer(nCopied);
+			DWORD nAttributes = ::GetFileAttributes(sDropped);
+			if (nAttributes != INVALID_FILE_ATTRIBUTES && (nAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) droppedFiles.push_back(sDropped);
+		}
+		if (droppedFiles.size() > 1) {
+			TCHAR sTempPath[MAX_PATH + 1] = { 0 };
+			::GetTempPath(MAX_PATH, sTempPath);
+			CString sListFile = CString(sTempPath) + _T("LucidViewer dropped files.txt");
+			FILE* pFile = NULL;
+			if (_tfopen_s(&pFile, sListFile, _T("wb")) == 0 && pFile != NULL) {
+				const wchar_t bom = 0xFEFF;
+				fwrite(&bom, sizeof(wchar_t), 1, pFile);
+				for (const CString& sDropped : droppedFiles) {
+					fwrite((LPCWSTR)sDropped, sizeof(wchar_t), sDropped.GetLength(), pFile);
+					fwrite(L"\r\n", sizeof(wchar_t), 2, pFile);
+				}
+				fclose(pFile);
+				OpenFile(sListFile, false);
+				CString sMessage;
+				sMessage.Format(CNLS::GetString(_T("%d dropped images, the arrow keys go through them")), (int)droppedFiles.size());
+				m_pChrome->ShowMessage(sMessage);
+				::DragFinish(hDrop);
+				return 0;
+			}
+		}
 		// the length is asked first, the path can be longer than MAX_PATH
 		UINT nLength = ::DragQueryFile(hDrop, 0, NULL, 0);
 		if (nLength > 0) {
@@ -1616,6 +1667,8 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		InsertString(nPos + 8, IDM_MOVE_TO_FOLDER, _T("Move to folder..."), bHasFileImage);
 		InsertString(nPos + 9, IDM_OPEN_WITH_OTHER_APP, _T("Open with another app..."), bHasFileImage);
 		InsertString(nPos + 10, IDM_FILE_PROPERTIES, _T("File properties..."), bHasFileImage);
+		InsertString(nPos + 11, IDM_EDIT_TAGS, _T("Edit tags..."), bHasFileImage);
+		InsertString(nPos + 12, IDM_SHOW_ON_MAP, _T("Show on map"), bHasFileImage);
 	}
 	nPos = FindPos(IDM_OPEN);
 	if (nPos >= 0 && m_pChrome->IsEnabled()) {
@@ -1660,6 +1713,18 @@ HMENU CMainDlg::LoadPreparedContextMenu(HMENU& hMenuRoot) {
 		(m_pFileList->GetSorting() == Helpers::FS_Rating) ? IDM_SORT_RATING : IDM_SORT_SIZE
 		, MF_CHECKED);
 	::CheckMenuItem(hMenuOrdering, m_pFileList->IsSortedAscending() ? IDM_SORT_ASCENDING : IDM_SORT_DESCENDING, MF_CHECKED);
+	{
+		// sorting by the EXIF date, before 'File name'
+		CString sText = CNLS::GetString(_T("Date taken"));
+		CString sKey = m_pKeyMap->GetKeyStringForCommand(IDM_SORT_DATE_TAKEN);
+		if (!sKey.IsEmpty()) sText += _T("\t") + sKey;
+		bool bDateTaken = m_pFileList->GetSorting() == Helpers::FS_DateTaken;
+		if (bDateTaken) {
+			// the check mark set above went to another entry
+			for (UINT nId : { IDM_SORT_MOD_DATE, IDM_SORT_CREATION_DATE, IDM_SORT_NAME, IDM_SORT_RANDOM, IDM_SORT_SIZE }) ::CheckMenuItem(hMenuOrdering, nId, MF_UNCHECKED);
+		}
+		::InsertMenu(hMenuOrdering, IDM_SORT_NAME, MF_BYCOMMAND | MF_STRING | (bDateTaken ? MF_CHECKED : 0), IDM_SORT_DATE_TAKEN, sText);
+	}
 	if (m_pFileList->GetSorting() == Helpers::FS_Random) {
 		::EnableMenuItem(hMenuOrdering, IDM_SORT_ASCENDING, MF_BYCOMMAND | MF_GRAYED);
 		::EnableMenuItem(hMenuOrdering, IDM_SORT_DESCENDING, MF_BYCOMMAND | MF_GRAYED);
@@ -1679,6 +1744,10 @@ HMENU CMainDlg::LoadPreparedContextMenu(HMENU& hMenuRoot) {
 	HMENU hMenuUserCommands = ::GetSubMenu(hMenuTrackPopup, SUBMENU_POS_USER_COMMANDS);
 	HMENU hMenuOpenWithCommands = ::GetSubMenu(hMenuTrackPopup, SUBMENU_POS_OPENWITH);
 	HMENU hMenuWallpaper = ::GetSubMenu(hMenuTrackPopup, SUBMENU_POS_WALLPAPER);
+	if (hMenuWallpaper != NULL) {
+		::AppendMenu(hMenuWallpaper, MF_SEPARATOR, 0, NULL);
+		::AppendMenu(hMenuWallpaper, MF_STRING, IDM_SET_LOCK_SCREEN, CNLS::GetString(_T("Set as lock screen")));
+	}
 
 	if (!HelpersGUI::CreateUserCommandsMenu(hMenuUserCommands)) {
 		::DeleteMenu(hMenuTrackPopup, SUBMENU_POS_USER_COMMANDS + 1, MF_BYPOSITION);
@@ -1992,6 +2061,51 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			break;
 		case IDM_OPEN_WITH_OTHER_APP:
 			OpenWithOtherApp();
+			break;
+		case IDM_DUPLICATE_FILE:
+			DuplicateFile();
+			break;
+		case IDM_COPY_FILE_NAME:
+			if (HasFileImage()) {
+				LPCTSTR sTitle = m_pFileList->CurrentFileTitle();
+				if (sTitle != NULL && CClipboard::CopyTextToClipboard(m_hWnd, sTitle)) {
+					m_pChrome->ShowMessage(CString(CNLS::GetString(_T("Copied"))) + _T(": ") + sTitle);
+				}
+			}
+			break;
+		case IDM_GOTO_IMAGE:
+			GotoImageNumber();
+			break;
+		case IDM_COPY_BASE64:
+			CopyAsDataUri();
+			break;
+		case IDM_SET_LOCK_SCREEN:
+			SetAsLockScreen();
+			break;
+		case IDM_PICK_COLOR:
+			if (m_pCurrentImage != NULL) {
+				m_bPickColor = !m_bPickColor;
+				m_pChrome->ShowMessage(CNLS::GetString(m_bPickColor ? _T("Click on the image to copy the color, Esc cancels.") : _T("Color picker off")));
+			}
+			break;
+		case IDM_SORT_DATE_TAKEN:
+			if (m_pFileList != NULL) {
+				HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+				m_pFileList->SetSorting(Helpers::FS_DateTaken, true); // oldest first, as in a photo album
+				::SetCursor(hOldCursor);
+				m_pChrome->ShowMessage(CNLS::GetString(_T("Sorted by date taken")));
+				Invalidate(FALSE);
+				m_pChrome->Paint();
+			}
+			break;
+		case IDM_EDIT_TAGS:
+			EditTags();
+			break;
+		case IDM_FILTER_BY_TAG:
+			FilterByTag();
+			break;
+		case IDM_SHOW_ON_MAP:
+			ShowOnMap();
 			break;
 		case IDM_OPEN_IN_NEW_WINDOW:
 			if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && m_pFileList->Current() != NULL) {
@@ -2613,7 +2727,10 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			}
 			break;
 		case IDM_DEFAULT_ESC:
-			if (m_bStartScreen && m_pCurrentImage != NULL) {
+			if (m_bPickColor) {
+				m_bPickColor = false;
+				m_pChrome->ShowMessage(CNLS::GetString(_T("Color picker off")));
+			} else if (m_bStartScreen && m_pCurrentImage != NULL) {
 				// back to the image
 				m_bStartScreen = false;
 				this->Invalidate(FALSE);
@@ -4496,18 +4613,20 @@ enum {
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
 	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27, MBAR_RATING = -28, MBAR_START = -29, MBAR_PIN = -30,
 	MBAR_COPY_FILE = -31, MBAR_COPY_TO_FOLDER = -32, MBAR_MOVE_TO_FOLDER = -33, MBAR_UPDATES = -34,
-	MBAR_PROPERTIES = -35, MBAR_OPEN_WITH_OTHER = -36, MBAR_NEW_WINDOW = -37
+	MBAR_PROPERTIES = -35, MBAR_OPEN_WITH_OTHER = -36, MBAR_NEW_WINDOW = -37,
+	MBAR_COPY_NAME = -38, MBAR_DUPLICATE = -39, MBAR_DATA_URI = -40, MBAR_TAGS = -41, MBAR_MAP = -42, MBAR_GOTO = -43,
+	MBAR_TAG_FILTER = -44, MBAR_PICK_COLOR = -45
 };
 
-static const int s_menuBarFile[] = { IDM_OPEN, MBAR_START, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), MBAR_OPEN_WITH_OTHER, MBAR_NEW_WINDOW, IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, MBAR_PIN, IDM_RELOAD, MBAR_SEPARATOR,
-	IDM_EXPLORE, IDM_COPY_PATH, MBAR_COPY_FILE, MBAR_COPY_TO_FOLDER, MBAR_MOVE_TO_FOLDER, MBAR_PROPERTIES, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
+static const int s_menuBarFile[] = { IDM_OPEN, MBAR_START, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), MBAR_OPEN_WITH_OTHER, MBAR_NEW_WINDOW, IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, MBAR_TAGS, MBAR_MAP, MBAR_PIN, IDM_RELOAD, MBAR_SEPARATOR,
+	IDM_EXPLORE, IDM_COPY_PATH, MBAR_COPY_FILE, MBAR_COPY_NAME, MBAR_DATA_URI, MBAR_DUPLICATE, MBAR_COPY_TO_FOLDER, MBAR_MOVE_TO_FOLDER, MBAR_PROPERTIES, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { MBAR_UNDO, MBAR_SEPARATOR, IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
 static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
-static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
-	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MBAR_RATING, MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
-static const int s_menuBarTools[] = { MBAR_SCREENSHOT, MBAR_SEPARATOR, MBAR_CONVERT, MBAR_CONVERT_FOLDER, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
+static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_GOTO, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
+	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MBAR_RATING, MBAR_TAG_FILTER, MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
+static const int s_menuBarTools[] = { MBAR_SCREENSHOT, MBAR_SEPARATOR, MBAR_CONVERT, MBAR_CONVERT_FOLDER, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_PICK_COLOR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
 static const int s_menuBarHelp[] = { MBAR_HELP, MBAR_SHORTCUTS, MBAR_SEPARATOR, MBAR_UPDATES, IDM_ABOUT };
 
 // Position of the (non popup) item with the given command, -1 if not found
@@ -4701,6 +4820,30 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_MOVE_TO_FOLDER:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_MOVE_TO_FOLDER, _T("Move to folder..."), false, bHasFileImage);
+				break;
+			case MBAR_COPY_NAME:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_COPY_FILE_NAME, _T("Copy file name"), false, bHasFileImage);
+				break;
+			case MBAR_DUPLICATE:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_DUPLICATE_FILE, _T("Duplicate file"), false, bHasFileImage);
+				break;
+			case MBAR_DATA_URI:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_COPY_BASE64, _T("Copy as data URI (base64)"), false, bHasFileImage);
+				break;
+			case MBAR_TAGS:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_EDIT_TAGS, _T("Edit tags..."), false, bHasFileImage);
+				break;
+			case MBAR_MAP:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_SHOW_ON_MAP, _T("Show on map"), false, bHasFileImage);
+				break;
+			case MBAR_GOTO:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_GOTO_IMAGE, _T("Go to image number..."), false, m_pFileList != NULL && m_pFileList->Size() > 1);
+				break;
+			case MBAR_TAG_FILTER:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_FILTER_BY_TAG, _T("Filter by tag..."), !CString(CFileList::GetTagFilter()).IsEmpty(), m_pFileList != NULL && m_pFileList->Size() > 0);
+				break;
+			case MBAR_PICK_COLOR:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_PICK_COLOR, _T("Pick color"), m_bPickColor, m_pCurrentImage != NULL);
 				break;
 			case MBAR_PROPERTIES:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_FILE_PROPERTIES, _T("File properties..."), false, bHasFileImage);
@@ -5787,6 +5930,9 @@ void CMainDlg::Undo() {
 			break;
 		case UNDO_METADATA:
 			if (Metadata::WriteTexts(entry.File, entry.Metadata)) {
+				for (const auto& value : entry.Metadata) {
+					if (IsEqualPropertyKey(value.first, PKEY_Keywords) && m_pFileList != NULL) m_pFileList->UpdateKeywords(entry.File, value.second);
+				}
 				if (entry.File.CompareNoCase(CurrentFileName(false)) == 0) AfterMetadataChanged();
 				sMessage = CNLS::GetString(_T("The metadata was restored."));
 			} else {
@@ -6034,6 +6180,274 @@ void CMainDlg::OpenWithOtherApp() {
 		execInfo.nShow = SW_SHOWNORMAL;
 		::ShellExecuteEx(&execInfo);
 	}
+}
+
+bool CMainDlg::HasFileImage() {
+	return m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage() && !m_bMovieMode && m_pFileList != NULL && m_pFileList->Current() != NULL;
+}
+
+void CMainDlg::DuplicateFile() {
+	if (!HasFileImage()) return;
+	CString sSource = m_pFileList->Current();
+	int nSlash = sSource.ReverseFind(_T('\\'));
+	int nDot = sSource.ReverseFind(_T('.'));
+	if (nSlash < 0) return;
+	CString sName = sSource.Mid(nSlash + 1);
+	CString sCopyName = (nDot > nSlash) ? sSource.Mid(nSlash + 1, nDot - nSlash - 1) + _T(" (") + CNLS::GetString(_T("copy")) + _T(")") + sSource.Mid(nDot) :
+		sName + _T(" (") + CNLS::GetString(_T("copy")) + _T(")");
+	CString sTarget = UniqueFileNameInFolder(sSource.Left(nSlash), sCopyName);
+	if (::CopyFile(sSource, sTarget, TRUE)) {
+		m_pFileList->Reload(NULL, false);
+		m_pChrome->ShowMessage(CString(CNLS::GetString(_T("Copy made:"))) + _T(" ") + sTarget.Mid(nSlash + 1));
+		Invalidate(FALSE);
+	} else {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The file could not be copied.")));
+	}
+}
+
+void CMainDlg::GotoImageNumber() {
+	if (m_pFileList == NULL || m_pFileList->Size() == 0 || m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage()) return;
+	MouseOn();
+	CString sNumber;
+	sNumber.Format(_T("%d"), m_pFileList->CurrentIndex() + 1);
+	CString sTitle;
+	sTitle.Format(CNLS::GetString(_T("Go to image number (1 - %d)")), m_pFileList->Size());
+	if (!CAnnotations::AskForText(m_hWnd, sTitle, CNLS::GetString(_T("OK")), CNLS::GetString(_T("Cancel")), sNumber)) return;
+	int nNumber = _ttoi(sNumber.Trim());
+	if (nNumber < 1 || nNumber > m_pFileList->Size()) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("There is no image with this number.")));
+		return;
+	}
+	if (m_pFileList->GotoIndex(nNumber - 1)) {
+		GotoImage(POS_Current);
+	}
+}
+
+void CMainDlg::CopyAsDataUri() {
+	if (!HasFileImage()) return;
+	CString sFile = m_pFileList->Current();
+	std::vector<char> data;
+	const size_t MAX_BYTES = 20 * 1024 * 1024;
+	if (!Metadata::ReadFileData(sFile, data) || data.empty()) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The image could not be read.")));
+		return;
+	}
+	if (data.size() > MAX_BYTES) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The file is too large for a data URI (more than 20 MB).")));
+		return;
+	}
+	// image/<type> by the file ending
+	CString sEnding = sFile.Mid(sFile.ReverseFind(_T('.')) + 1);
+	sEnding.MakeLower();
+	if (sEnding == _T("jpg") || sEnding == _T("jpe") || sEnding == _T("jfif")) sEnding = _T("jpeg");
+	if (sEnding == _T("tif")) sEnding = _T("tiff");
+	if (sEnding == _T("ico")) sEnding = _T("x-icon");
+#ifndef CRYPT_STRING_NOCRLF
+#define CRYPT_STRING_NOCRLF 0x40000000
+#endif
+	DWORD nChars = 0;
+	if (!::CryptBinaryToString((const BYTE*)&data[0], (DWORD)data.size(), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &nChars) || nChars == 0) {
+		return;
+	}
+	CString sBase64;
+	::CryptBinaryToString((const BYTE*)&data[0], (DWORD)data.size(), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, sBase64.GetBuffer(nChars), &nChars);
+	sBase64.ReleaseBuffer(nChars);
+	CString sUri = CString(_T("data:image/")) + sEnding + _T(";base64,") + sBase64;
+	if (CClipboard::CopyTextToClipboard(m_hWnd, sUri)) {
+		CString sMessage;
+		sMessage.Format(CNLS::GetString(_T("Data URI copied (%d KB of text).")), (int)(sUri.GetLength() / 1024));
+		m_pChrome->ShowMessage(sMessage);
+	}
+}
+
+// Tags of the file (System.Keywords) as "a; b; c"
+static CString ReadTags(LPCTSTR sFileName) {
+	CString sTags;
+	IPropertyStore* pStore = NULL;
+	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFileName, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
+		PROPVARIANT value;
+		::PropVariantInit(&value);
+		if (SUCCEEDED(pStore->GetValue(PKEY_Keywords, &value)) && value.vt != VT_EMPTY) {
+			PWSTR pText = NULL;
+			if (SUCCEEDED(::PropVariantToStringAlloc(value, &pText)) && pText != NULL) {
+				sTags = pText;
+				::CoTaskMemFree(pText);
+			}
+		}
+		::PropVariantClear(&value);
+		pStore->Release();
+	}
+	return sTags;
+}
+
+// "a,b ; c" -> "a; b; c", empty parts and doubles removed
+static CString NormalizeTags(const CString& sText) {
+	CString sInput(sText);
+	sInput.Replace(_T(','), _T(';'));
+	std::vector<CString> tags;
+	int nStart = 0;
+	CString sTag = sInput.Tokenize(_T(";"), nStart);
+	while (nStart >= 0) {
+		sTag.Trim();
+		bool bDouble = false;
+		for (const CString& sExisting : tags) bDouble |= sExisting.CompareNoCase(sTag) == 0;
+		if (!sTag.IsEmpty() && !bDouble) tags.push_back(sTag);
+		sTag = sInput.Tokenize(_T(";"), nStart);
+	}
+	CString sResult;
+	for (const CString& s : tags) sResult += (sResult.IsEmpty() ? _T("") : _T("; ")) + s;
+	return sResult;
+}
+
+void CMainDlg::EditTags() {
+	if (!HasFileImage()) return;
+	MouseOn();
+	CString sFile = m_pFileList->Current();
+	CString sOldTags = ReadTags(sFile);
+	CString sTags = sOldTags;
+	// AskForText returns false when cancelled (the text is unchanged then) and for an emptied field (removes the tags)
+	if (!CAnnotations::AskForText(m_hWnd, CNLS::GetString(_T("Tags, separated by semicolons")), CNLS::GetString(_T("Save")), CNLS::GetString(_T("Cancel")), sTags) &&
+		!sTags.IsEmpty()) {
+		return;
+	}
+	sTags = NormalizeTags(sTags);
+	if (sTags == NormalizeTags(sOldTags)) return;
+	std::vector<std::pair<PROPERTYKEY, CString>> values;
+	values.push_back({ PKEY_Keywords, sTags });
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	bool bOK = Metadata::WriteTexts(sFile, values);
+	::SetCursor(hOldCursor);
+	if (bOK) {
+		CUndoEntry undo;
+		undo.Kind = UNDO_METADATA;
+		undo.File = sFile;
+		undo.Metadata.push_back({ PKEY_Keywords, sOldTags });
+		PushUndoEntry(undo);
+		m_pFileList->UpdateKeywords(sFile, sTags);
+		m_pChrome->ShowMessage(sTags.IsEmpty() ? CString(CNLS::GetString(_T("The tags were removed."))) : CString(CNLS::GetString(_T("Tags saved:"))) + _T(" ") + sTags);
+		AfterMetadataChanged();
+	} else {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The value could not be written to the file.")));
+	}
+}
+
+void CMainDlg::FilterByTag() {
+	if (m_pFileList == NULL || m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage()) return;
+	MouseOn();
+	CString sOldFilter = CFileList::GetTagFilter();
+	CString sTag = sOldFilter;
+	// false: cancelled (the text is unchanged) or an emptied field (switches the filter off)
+	bool bOK = CAnnotations::AskForText(m_hWnd, CNLS::GetString(_T("Show only images with this tag (empty: all images)")), CNLS::GetString(_T("OK")), CNLS::GetString(_T("Cancel")), sTag);
+	if (!bOK && !sTag.IsEmpty()) return;
+	sTag.Trim();
+	if (sTag.CompareNoCase(sOldFilter) == 0) return;
+	CString sCurrent = m_pFileList->Current() != NULL ? m_pFileList->Current() : _T("");
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	CFileList::SetTagFilter(sTag);
+	m_pFileList->Reload(sCurrent, false);
+	::SetCursor(hOldCursor);
+	CString sMessage;
+	if (m_pFileList->Size() == 0) {
+		// nothing to show, the filter is not used
+		CFileList::SetTagFilter(sOldFilter);
+		m_pFileList->Reload(sCurrent, false);
+		sMessage.Format(CNLS::GetString(_T("No image of this folder has the tag %s.")), (LPCTSTR)sTag);
+	} else if (sTag.IsEmpty()) {
+		sMessage.Format(CNLS::GetString(_T("All %d images are shown")), m_pFileList->Size());
+	} else {
+		sMessage.Format(CNLS::GetString(_T("%d images with the tag %s are shown")), m_pFileList->Size(), (LPCTSTR)sTag);
+	}
+	m_pChrome->ShowMessage(sMessage);
+	if (m_pFileList->Current() == NULL || sCurrent.CompareNoCase(m_pFileList->Current()) != 0) {
+		GotoImage(POS_Current); // the shown image was filtered out, the first of the list is shown
+	}
+	Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::ShowOnMap() {
+	if (!HasFileImage()) return;
+	std::vector<Metadata::CEntry> entries;
+	Metadata::Read(m_pFileList->Current(), entries);
+	for (const Metadata::CEntry& entry : entries) {
+		// the decimal coordinates are added by Metadata::Read as entry that is not in the file
+		if (IsEqualPropertyKey(entry.Key, PKEY_GPS_Latitude) && entry.Order == -1 && !entry.Writable) {
+			double dLatitude = 0, dLongitude = 0;
+			if (_stscanf_s(entry.Value, _T("%lf, %lf"), &dLatitude, &dLongitude) == 2) {
+				CString sUrl;
+				sUrl.Format(_T("https://www.openstreetmap.org/?mlat=%.6f&mlon=%.6f#map=16/%.6f/%.6f"), dLatitude, dLongitude, dLatitude, dLongitude);
+				::ShellExecute(m_hWnd, _T("open"), sUrl, NULL, NULL, SW_SHOWNORMAL);
+				return;
+			}
+		}
+	}
+	m_pChrome->ShowMessage(CNLS::GetString(_T("This photo has no location (GPS).")));
+}
+
+void CMainDlg::SetAsLockScreen() {
+	if (!HasFileImage()) return;
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	bool bOK = Share::SetLockScreenImage(m_pFileList->Current());
+	::SetCursor(hOldCursor);
+	if (bOK) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("The image is the picture of the lock screen now.")));
+	} else if (::MessageBox(m_hWnd, CNLS::GetString(_T("Windows did not accept the image for the lock screen. Open the lock screen settings?")),
+		_T(APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+		::ShellExecute(m_hWnd, _T("open"), _T("ms-settings:lockscreen"), NULL, NULL, SW_SHOWNORMAL);
+	}
+}
+
+void CMainDlg::PickColorAt(int nX, int nY) {
+	m_bPickColor = false;
+	if (m_pCurrentImage == NULL || m_pCurrentImage->OriginalPixels() == NULL) return;
+	float fX = (float)nX, fY = (float)nY;
+	ScreenToImage(fX, fY);
+	int nWidth = m_pCurrentImage->OrigWidth(), nHeight = m_pCurrentImage->OrigHeight();
+	int x = (int)fX, y = (int)fY;
+	if (fX < 0 || fY < 0 || x >= nWidth || y >= nHeight) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("Color picker off")));
+		return;
+	}
+	int nChannels = m_pCurrentImage->OriginalChannels();
+	int nStride = (nChannels == 4) ? nWidth * 4 : ((nWidth * 3 + 3) & ~3);
+	const uint8* p = (const uint8*)m_pCurrentImage->OriginalPixels() + (size_t)y * nStride + (size_t)x * nChannels;
+	int nRed = p[2], nGreen = p[1], nBlue = p[0];
+	CString sColor;
+	sColor.Format(_T("#%02X%02X%02X"), nRed, nGreen, nBlue);
+	CClipboard::CopyTextToClipboard(m_hWnd, sColor);
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(_T("Color %s (RGB %d, %d, %d) copied")), (LPCTSTR)sColor, nRed, nGreen, nBlue);
+	m_pChrome->ShowMessage(sMessage);
+}
+
+LRESULT CMainDlg::OnGesture(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
+	GESTUREINFO info = { 0 };
+	info.cbSize = sizeof(info);
+	if (!::GetGestureInfo((HGESTUREINFO)lParam, &info)) {
+		bHandled = FALSE;
+		return 0;
+	}
+	if (info.dwID != GID_ZOOM || m_pCurrentImage == NULL || IsStartScreenActive() || m_bZoomMode) {
+		bHandled = FALSE; // DefWindowProc closes the gesture handle
+		return 0;
+	}
+	// two fingers: ullArguments is the distance between them, the zoom follows its change around the center of the fingers
+	DWORD nDistance = (DWORD)info.ullArguments;
+	if ((info.dwFlags & GF_BEGIN) != 0 || m_nGestureStartDistance == 0) {
+		m_nGestureStartDistance = nDistance;
+		m_dGestureStartZoom = m_dZoom;
+	} else if (nDistance > 0) {
+		POINT center = { info.ptsLocation.x, info.ptsLocation.y };
+		ScreenToClient(&center);
+		m_nMouseX = center.x;
+		m_nMouseY = center.y;
+		PerformZoom(m_dGestureStartZoom * nDistance / m_nGestureStartDistance, false, true, false);
+	}
+	if ((info.dwFlags & GF_END) != 0) {
+		m_nGestureStartDistance = 0;
+	}
+	::CloseGestureInfoHandle((HGESTUREINFO)lParam);
+	return 0;
 }
 
 LRESULT CMainDlg::OnUpdateChecked(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {

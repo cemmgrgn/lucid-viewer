@@ -1243,6 +1243,10 @@ CString CWindowChrome::GetStatusText() {
 	} else if (pFileList != NULL && pFileList->Current() != NULL) {
 		CString sIndex;
 		sIndex.Format(_T("[%d/%d]  "), pFileList->CurrentIndex() + 1, pFileList->Size());
+		if (CFileList::GetTagFilter()[0] != 0) {
+			// filtered by a tag: the count is of the images with the tag
+			sIndex.Format(_T("[%d/%d  #%s]  "), pFileList->CurrentIndex() + 1, pFileList->Size(), CFileList::GetTagFilter());
+		}
 		sText = sIndex + m_pMainDlg->CurrentFileName(true);
 	}
 	if (pImage == NULL) {

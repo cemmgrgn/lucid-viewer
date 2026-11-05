@@ -25,7 +25,8 @@ namespace Helpers {
 		FS_FileName,
 		FS_Random,
 		FS_FileSize,
-		FS_Rating
+		FS_Rating,
+		FS_DateTaken // EXIF date the photo was taken, the modification date for files without it
 	};
 
 	// Navigation mode over directories

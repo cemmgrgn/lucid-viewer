@@ -23,6 +23,8 @@ public:
 	static void SetPinned(LPCTSTR sFile, bool bPinned);
 	// A file was moved or renamed: its entries in the pinned and recent lists get the new path
 	static void FileMoved(LPCTSTR sOldFile, LPCTSTR sNewFile);
+	// The photo opened last that still exists, empty if none
+	static CString GetLastOpened();
 	// UI test: lists used instead of the stored ones
 	static void SetTestLists(const std::vector<CString>& recent, const std::vector<CString>& pinned, const std::vector<CString>& screenshots);
 

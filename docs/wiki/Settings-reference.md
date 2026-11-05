@@ -48,6 +48,7 @@ Most settings are in **Tools → Settings**, a searchable window that explains e
 | `SidePanelCollapsed` | `false` | Side panel collapsed to a narrow strip with icons (toggled with its arrow button) |
 | `EscapeClosesWindow` | `false` | If true, the Esc key closes Lucid Viewer also in window mode (as in older versions). If false, Esc ends the current tool (crop, drawing, compare) and leaves full screen mode. |
 | `ShowStartScreen` | `true` | Start screen with the last opened photos and the photos pinned by the user, shown when no image is open (Alt+Home). If false, the file open dialog is shown when Lucid Viewer is started without an image. |
+| `OpenLastImage` | `false` | Started without an image, Lucid Viewer opens the photo viewed last (needs RememberRecentFiles=true) |
 | `RememberRecentFiles` | `true` | Remember the recently opened photos and show them on the start screen. If false, nothing is written to. StartRecent.txt and the recent row stays empty. |
 | `MinDisplaySize` | `600` | Small images are shown zoomed in so that their larger side has at least this size (pixels at 96 DPI) when the zoom mode does not enlarge images. 0 shows them in their original size. |
 | `SmoothAnimations` | `true` | Smooth zooming with the mouse wheel and the zoom keys, smooth scrolling of the start screen and the thumbnail strip |
@@ -70,7 +71,7 @@ Most settings are in **Tools → Settings**, a searchable window that explains e
 
 | Key | Default | Description |
 |---|---|---|
-| `FileDisplayOrder` | `LastModDate` | Sorting order of the files when displaying the image files in a folder. Can be LastModDate, CreationDate, FileName, FileSize, Random or Rating (star rating) |
+| `FileDisplayOrder` | `LastModDate` | Sorting order of the files when displaying the image files in a folder. Can be LastModDate, CreationDate, FileName, FileSize, Random, Rating (star rating) or DateTaken (EXIF date the photo was taken) |
 | `FileSortAscending` | `true` | Sort files ascending (increasing, e.g. A->Z, 0->9) or descending (decreasing, e.g. Z->A, 9->0) |
 | `FolderNavigation` | `LoopFolder` | Navigation within or between folders. LoopFolder : Loop within the source folder and never leave this folder. LoopSameFolderLevel: Loop to next folder on the same hierarchy level (sibling folders). LoopSubFolders: Loop into subfolders of the source folder |
 | `WrapAroundFolder` | `true` | If true the files in a folder are shown with wrap around, thus going from last to first image and vice versa. If false navigation stops on the last and first image |

@@ -208,6 +208,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bShowStartScreen = GetBool(_T("ShowStartScreen"), true);
 	m_bScreenshotHistory = GetBool(_T("ScreenshotHistory"), false);
 	m_bRememberRecentFiles = GetBool(_T("RememberRecentFiles"), true);
+	m_bOpenLastImage = GetBool(_T("OpenLastImage"), false);
 	m_nMinDisplaySize = GetInt(_T("MinDisplaySize"), 600, 0, 4000);
 	m_bSmoothAnimations = GetBool(_T("SmoothAnimations"), true);
 	m_nSidePanelTab = GetInt(_T("SidePanelTab"), 0, 0, 2);
@@ -461,6 +462,9 @@ void CSettingsProvider::ReadWriteableINISettings() {
 	else if (sSorting.CompareNoCase(_T("Rating")) == 0) {
 		m_eSorting = Helpers::FS_Rating;
 	}
+	else if (sSorting.CompareNoCase(_T("DateTaken")) == 0) {
+		m_eSorting = Helpers::FS_DateTaken;
+	}
 	else {
 		m_eSorting = Helpers::FS_LastModTime;
 	}
@@ -520,6 +524,8 @@ void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams,
 		sSorting = _T("FileSize");
 	} else if (eFileSorting == Helpers::FS_Rating) {
 		sSorting = _T("Rating");
+	} else if (eFileSorting == Helpers::FS_DateTaken) {
+		sSorting = _T("DateTaken");
 	}
 	WriteString(_T("FileDisplayOrder"), sSorting);
 

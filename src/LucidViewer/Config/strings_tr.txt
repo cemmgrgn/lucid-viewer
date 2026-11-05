@@ -950,3 +950,35 @@ The image was copied with transparency.	Görüntü saydamlığıyla kopyalandı.
 The image could not be copied to the clipboard.	Görüntü panoya kopyalanamadı.
 Background removed. Save it with 'Save as transparent PNG' or copy it with %s.	Arka plan kaldırıldı. 'Saydam PNG olarak kaydet' ile kaydedin ya da %s ile kopyalayın.
 Open in new window	Yeni pencerede aç
+Copied	Kopyalandı
+copy	kopya
+Copy made:	Kopya oluşturuldu:
+Go to image number (1 - %d)	Görüntü numarasına git (1 - %d)
+There is no image with this number.	Bu numarada görüntü yok.
+The file is too large for a data URI (more than 20 MB).	Dosya data URI için çok büyük (20 MB'tan fazla).
+Data URI copied (%d KB of text).	Data URI kopyalandı (%d KB metin).
+Tags, separated by semicolons	Etiketler, noktalı virgülle ayrılmış
+The tags were removed.	Etiketler kaldırıldı.
+Tags saved:	Etiketler kaydedildi:
+Show only images with this tag (empty: all images)	Yalnızca bu etiketi taşıyan görüntüleri göster (boş: tüm görüntüler)
+No image of this folder has the tag %s.	Bu klasörde %s etiketli görüntü yok.
+%d images with the tag %s are shown	%d görüntü %s etiketiyle gösteriliyor
+This photo has no location (GPS).	Bu fotoğrafın konum bilgisi (GPS) yok.
+The image is the picture of the lock screen now.	Görüntü artık kilit ekranı resmi.
+Windows did not accept the image for the lock screen. Open the lock screen settings?	Windows görüntüyü kilit ekranı için kabul etmedi. Kilit ekranı ayarları açılsın mı?
+Color picker off	Renk seçici kapalı
+Click on the image to copy the color, Esc cancels.	Rengi kopyalamak için görüntüye tıklayın, Esc iptal eder.
+Color %s (RGB %d, %d, %d) copied	%s rengi (RGB %d, %d, %d) kopyalandı
+Sorted by date taken	Çekim tarihine göre sıralandı
+Date taken	Çekim tarihi
+Copy file name	Dosya adını kopyala
+Duplicate file	Dosyayı çoğalt
+Copy as data URI (base64)	Data URI (base64) olarak kopyala
+Edit tags...	Etiketleri düzenle...
+Show on map	Haritada göster
+Go to image number...	Görüntü numarasına git...
+Filter by tag...	Etikete göre filtrele...
+Pick color	Renk seç
+Set as lock screen	Kilit ekranı olarak ayarla
+Sort by date taken	Çekim tarihine göre sırala
+%d dropped images, the arrow keys go through them	%d görüntü bırakıldı, ok tuşlarıyla aralarında gezinebilirsiniz

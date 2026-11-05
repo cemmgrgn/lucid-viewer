@@ -26,6 +26,10 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Return</kbd> | File properties... |
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd> | Open with another app... |
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> | Open in new window |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>D</kbd> | Duplicate file |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>N</kbd> | Copy file name |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd> | Edit tags... |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd> | Show on map |
 
 ## Navigation
 
@@ -46,6 +50,9 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>N</kbd> | Display order: File name |
 | <kbd>M</kbd> | Display order: Modification date |
 | <kbd>Z</kbd> | Display order: Random |
+| <kbd>Ctrl</kbd> + <kbd>G</kbd> | Go to image number... |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd> | Sort by date taken |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>G</kbd> | Filter by tag... |
 
 ## View and zoom
 
@@ -109,6 +116,7 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Undo |
 | <kbd>Ctrl</kbd> + <kbd>Y</kbd> | Redo |
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> | Lossless JPEG transformations: Rotate 180 |
 
 ## Drawing
 
@@ -121,6 +129,7 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | Key | Action |
 |---|---|
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>T</kbd> | Copy text from image |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>P</kbd> | Pick color |
 
 ## Slideshow
 

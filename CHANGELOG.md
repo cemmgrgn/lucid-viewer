@@ -13,6 +13,19 @@
 - After removing the background, <kbd>Ctrl</kbd>+<kbd>C</kbd> copies the whole image **with transparency** (PNG on the
   clipboard, for Word, PowerPoint, browsers and chats; on white for other programs).
 - Pinned and recent photos on the start screen follow a file that is moved or renamed in Lucid Viewer.
+- **Tags** (digiKam-like): <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> edits the tags of a photo, they are written into
+  the file as Windows keywords (Explorer, digiKam, Lightroom read them), undo works. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>G</kbd>
+  shows only the photos of the folder with a tag, the status bar shows the active filter.
+- **Sort by date taken** (EXIF, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>, also `FileDisplayOrder=DateTaken`), oldest first.
+- **Show on map** (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>L</kbd>): the GPS location of the photo on OpenStreetMap.
+- **Go to image number** (<kbd>Ctrl</kbd>+<kbd>G</kbd>), **Duplicate file** (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd>),
+  **Copy file name** (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd>), **Copy as data URI (base64)** for HTML, CSS and Markdown.
+- **Pick color** (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd>): the next click copies the color of the pixel as `#RRGGBB`.
+- **Set as lock screen** in the wallpaper menu.
+- Lossless 180° rotation on <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>.
+- Pinch zoom with two fingers on touch screens.
+- Several dropped files are a list of their own, the arrow keys go through them.
+- `OpenLastImage` setting: started without an image, the photo viewed last is opened instead of the start screen.
 - **Open in new window** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>, command line `/newwindow`): a second window, also
   in single instance mode, to compare two photos side by side.
 - **Help → Check for updates**: compares the version with the latest release on GitHub and opens the download page.

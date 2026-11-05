@@ -356,6 +356,16 @@
 #define IDM_FILE_PROPERTIES		16560	// :KeyMap: show the Explorer properties of the file (size, dates, security, details)
 #define IDM_OPEN_WITH_OTHER_APP	16570	// :KeyMap: open the file with another app, chosen in the 'Open with' window of Windows
 #define IDM_OPEN_IN_NEW_WINDOW	16580	// :KeyMap: open the image in a second window, also in single instance mode (to compare two photos)
+#define IDM_DUPLICATE_FILE		16590	// :KeyMap: make a copy of the file in the same folder ('name (copy).jpg')
+#define IDM_COPY_FILE_NAME		16600	// :KeyMap: copy the file name (without folder) to the clipboard
+#define IDM_GOTO_IMAGE			16610	// :KeyMap: go to the image with the given number in the folder
+#define IDM_COPY_BASE64			16620	// :KeyMap: copy the file as data URI (base64) for HTML, CSS or Markdown
+#define IDM_SET_LOCK_SCREEN		16630	// :KeyMap: use the image as picture of the Windows lock screen
+#define IDM_PICK_COLOR			16640	// :KeyMap: the next click on the image copies the color of the pixel (#RRGGBB)
+#define IDM_SORT_DATE_TAKEN		16650	// :KeyMap: sorting order date the photo was taken (EXIF), oldest first
+#define IDM_EDIT_TAGS			16660	// :KeyMap: edit the tags (keywords) of the file, written into the file
+#define IDM_FILTER_BY_TAG		16670	// :KeyMap: show only the images of the folder with a tag
+#define IDM_SHOW_ON_MAP			16680	// :KeyMap: show the GPS location of the photo on OpenStreetMap
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010
