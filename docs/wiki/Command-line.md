@@ -13,6 +13,7 @@ LucidViewer.exe "C:\Photos" /slideshow10 /fullscreen
 | `/fullscreen` | Starts in full screen mode. | `LucidViewer.exe "C:\Photos" /fullscreen` |
 | `/autoexit` | Closes Lucid Viewer when the slideshow ends. Press <kbd>Esc</kbd> during the slideshow to close it too. | `LucidViewer.exe "C:\Photos" /slideshow5 /autoexit` |
 | `/monitor<N>` | Starts on monitor `N`. See `DisplayMonitor` in the settings. | `LucidViewer.exe "C:\Photos" /monitor2` |
+| `/newwindow` | Opens a window of its own, also when *Open images in the window that is already open* (`SingleInstance`) is on. **File → Open in new window** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>) uses it. | `LucidViewer.exe "C:\Photos\a.jpg" /newwindow` |
 | `/order<X>` | File order. `X` is `M` (modified date), `C` (created date), `N` (name), `Z` (random) or `S` (size). | `LucidViewer.exe "C:\Photos" /orderN` |
 | `/effect <Name>` | Transition for the slideshow. See the list below. | `LucidViewer.exe "C:\Photos" /slideshow5 /effect SlideLR` |
 | `/transitiontime<ms>` | Duration of the transition in milliseconds, from 100 to 5000. | `LucidViewer.exe "C:\Photos" /slideshow5 /transitiontime500` |

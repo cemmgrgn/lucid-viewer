@@ -1012,6 +1012,7 @@ static struct { LPCTSTR Name; LPCTSTR Text; } s_commandTexts[] = {
 	{ _T("IDM_COPY_FILE"), _T("Copy file") }, { _T("IDM_COPY_TO_FOLDER"), _T("Copy to folder...") },
 	{ _T("IDM_MOVE_TO_FOLDER"), _T("Move to folder...") }, { _T("IDM_CHECK_FOR_UPDATES"), _T("Check for updates...") },
 	{ _T("IDM_FILE_PROPERTIES"), _T("File properties...") }, { _T("IDM_OPEN_WITH_OTHER_APP"), _T("Open with another app...") },
+	{ _T("IDM_OPEN_IN_NEW_WINDOW"), _T("Open in new window") },
 	{ _T("IDM_SAVE_SCREEN"), _T("Save as shown on screen...") },
 	{ _T("IDM_SAVE_ALLOW_NO_PROMPT"), _T("Save") },
 	{ _T("IDM_TOGGLE"), _T("Switch between this and the marked image") },

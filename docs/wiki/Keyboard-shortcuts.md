@@ -25,6 +25,7 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> | Move to folder... |
 | <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Return</kbd> | File properties... |
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd> | Open with another app... |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> | Open in new window |
 
 ## Navigation
 

@@ -499,3 +499,4 @@ Open with another app...
 The image was copied with transparency.	
 The image could not be copied to the clipboard.	
 Background removed. Save it with 'Save as transparent PNG' or copy it with %s.	
+Open in new window	

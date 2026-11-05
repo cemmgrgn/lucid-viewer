@@ -92,6 +92,11 @@ static bool ParseCommandLineForFullScreen(LPCTSTR sCommandLine) {
 	return Helpers::stristr(sCommandLine, _T("/fullscreen")) != NULL;
 }
 
+// '/newwindow': opens a window of its own also in single instance mode (Open in new window)
+static bool ParseCommandLineForNewWindow(LPCTSTR sCommandLine) {
+	return Helpers::stristr(sCommandLine, _T("/newwindow")) != NULL;
+}
+
 static bool ParseCommandLineForAutoExit(LPCTSTR sCommandLine) {
 	return Helpers::stristr(sCommandLine, _T("/autoexit")) != NULL;
 }
@@ -261,7 +266,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	// Searches for other instances and terminates them
 	bool bFileLoadedByExistingInstance = false;
 	HANDLE hMutex = ::CreateMutex(NULL, FALSE, _T("LucidViewer.Instance"));
-	if (::GetLastError() == ERROR_ALREADY_EXISTS) {
+	if (::GetLastError() == ERROR_ALREADY_EXISTS && !ParseCommandLineForNewWindow(lpstrCmdLine)) {
 		::EnumWindows((WNDENUMPROC)EnumWindowsProc, 0);
 		if (_HWNDOtherInstance != NULL) {
 			// Other instance found, send the filename to be loaded to this instance

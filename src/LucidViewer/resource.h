@@ -355,6 +355,7 @@
 #define IDM_CHECK_FOR_UPDATES	16550	// :KeyMap: check if a newer version is published on GitHub
 #define IDM_FILE_PROPERTIES		16560	// :KeyMap: show the Explorer properties of the file (size, dates, security, details)
 #define IDM_OPEN_WITH_OTHER_APP	16570	// :KeyMap: open the file with another app, chosen in the 'Open with' window of Windows
+#define IDM_OPEN_IN_NEW_WINDOW	16580	// :KeyMap: open the image in a second window, also in single instance mode (to compare two photos)
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

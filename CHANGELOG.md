@@ -13,6 +13,8 @@
 - After removing the background, <kbd>Ctrl</kbd>+<kbd>C</kbd> copies the whole image **with transparency** (PNG on the
   clipboard, for Word, PowerPoint, browsers and chats; on white for other programs).
 - Pinned and recent photos on the start screen follow a file that is moved or renamed in Lucid Viewer.
+- **Open in new window** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>, command line `/newwindow`): a second window, also
+  in single instance mode, to compare two photos side by side.
 - **Help → Check for updates**: compares the version with the latest release on GitHub and opens the download page.
   Only on request, the program never checks by itself.
 

@@ -949,3 +949,4 @@ Open with another app...	Başka bir uygulamayla aç...
 The image was copied with transparency.	Görüntü saydamlığıyla kopyalandı.
 The image could not be copied to the clipboard.	Görüntü panoya kopyalanamadı.
 Background removed. Save it with 'Save as transparent PNG' or copy it with %s.	Arka plan kaldırıldı. 'Saydam PNG olarak kaydet' ile kaydedin ya da %s ile kopyalayın.
+Open in new window	Yeni pencerede aç
