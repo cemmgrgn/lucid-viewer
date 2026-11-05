@@ -3,6 +3,7 @@
 #include "SettingsProvider.h"
 #include "Helpers.h"
 #include "DirectoryWatcher.h"
+#include "TextUtils.h"
 #include "Shlwapi.h"
 #include <propsys.h>
 #include <propkey.h>
@@ -147,14 +148,7 @@ const CString& CFileDesc::GetKeywords() const {
 }
 
 bool CFileDesc::HasKeyword(LPCTSTR sTag) const {
-	CString sKeywords = GetKeywords();
-	int nStart = 0;
-	CString sKeyword = sKeywords.Tokenize(_T(";"), nStart);
-	while (nStart >= 0) {
-		if (sKeyword.Trim().CompareNoCase(sTag) == 0) return true;
-		sKeyword = sKeywords.Tokenize(_T(";"), nStart);
-	}
-	return false;
+	return TextUtils::HasTag(GetKeywords(), sTag);
 }
 
 bool CFileDesc::SortAscending(const CFileDesc& other) const {

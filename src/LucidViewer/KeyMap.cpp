@@ -4,6 +4,7 @@
 #include "resource.h"
 #include "Helpers.h"
 #include "SettingsProvider.h"
+#include "TextUtils.h"
 
 #define M_SHIFT 0x10000
 #define M_ALT   0x20000
@@ -153,21 +154,6 @@ static CString _GetKeyShortcutName(int nShortcut) {
 	return sKeyDesc;
 }
 
-// True if the text has the command name as a whole word: IDM_UNDO is not found in IDM_UNDO_TRANSPARENCY
-static bool ContainsCommandName(const CString& sText, const CString& sCommand) {
-	int nPos = 0;
-	while ((nPos = sText.Find(sCommand, nPos)) >= 0) {
-		int nEnd = nPos + sCommand.GetLength();
-		TCHAR cBefore = (nPos > 0) ? sText[nPos - 1] : _T(' ');
-		TCHAR cAfter = (nEnd < sText.GetLength()) ? sText[nEnd] : _T(' ');
-		if (!(_istalnum(cBefore) || cBefore == _T('_')) && !(_istalnum(cAfter) || cAfter == _T('_'))) {
-			return true;
-		}
-		nPos = nEnd;
-	}
-	return false;
-}
-
 // Similar to SettingsProvider, attemps to load the keymap from various locations
 // before settling for the default
 //
@@ -280,7 +266,7 @@ CKeyMap::CKeyMap() {
 				if (nCommandId < FIRST_NEW_COMMAND) continue;
 				CString sCommand(sCommandId);
 				sCommand.Trim();
-				if (ContainsCommandName(sUserText, sCommand)) continue;
+				if (TextUtils::ContainsCommandName(sUserText, sCommand)) continue;
 				int nKeyCode = _ParseKeys(sLine);
 				if (nKeyCode == 0 || m_keyMap.find(nKeyCode) != m_keyMap.end()) continue;
 				m_keyMap[nKeyCode] = nCommandId;

@@ -48,6 +48,7 @@ The installer is written to `installer\Output`. Options for testing, e.g. `/DNoL
 | `src/LucidViewer` | The program: C++ sources, resources, `Config` (settings, string tables, key map) and prebuilt image libraries |
 | `src/WICLoader` | Small DLL that decodes images with the Windows Imaging Component |
 | `installer` | Inno Setup script and wizard images |
+| `tests/UnitTests` | Unit tests of `src/LucidViewer/TextUtils.h`, built and run by the CI workflow |
 | `tools/bench` | Startup benchmark used for the numbers in the README |
 | `docs` | README images, logo, building notes, history of JPEGView |
 | `site` | The website (GitHub Pages), published by `.github/workflows/pages.yml` with the images from `docs` |

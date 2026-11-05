@@ -36,6 +36,14 @@ jobs:
       - name: Build
         run: msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=x64 /m /v:m
 
+      - name: Unit tests
+        shell: pwsh
+        run: |
+          msbuild tests\UnitTests\UnitTests.vcxproj /p:Configuration=Release /p:Platform=x64 /v:m
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          & .\tests\UnitTests\bin\UnitTests.exe
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
       - name: Version
         id: version
         shell: pwsh

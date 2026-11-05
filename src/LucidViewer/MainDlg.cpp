@@ -66,6 +66,7 @@
 #include "UpdateCheck.h"
 #include "FolderGrid.h"
 #include "CompareWindow.h"
+#include "TextUtils.h"
 #include <propkey.h>
 #include <propvarutil.h>
 #include <wincrypt.h>
@@ -6345,11 +6346,7 @@ void CMainDlg::CopyAsDataUri() {
 		return;
 	}
 	// image/<type> by the file ending
-	CString sEnding = sFile.Mid(sFile.ReverseFind(_T('.')) + 1);
-	sEnding.MakeLower();
-	if (sEnding == _T("jpg") || sEnding == _T("jpe") || sEnding == _T("jfif")) sEnding = _T("jpeg");
-	if (sEnding == _T("tif")) sEnding = _T("tiff");
-	if (sEnding == _T("ico")) sEnding = _T("x-icon");
+	CString sMimeType = TextUtils::ImageMimeType(sFile.Mid(sFile.ReverseFind(_T('.')) + 1));
 #ifndef CRYPT_STRING_NOCRLF
 #define CRYPT_STRING_NOCRLF 0x40000000
 #endif
@@ -6360,7 +6357,7 @@ void CMainDlg::CopyAsDataUri() {
 	CString sBase64;
 	::CryptBinaryToString((const BYTE*)&data[0], (DWORD)data.size(), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, sBase64.GetBuffer(nChars), &nChars);
 	sBase64.ReleaseBuffer(nChars);
-	CString sUri = CString(_T("data:image/")) + sEnding + _T(";base64,") + sBase64;
+	CString sUri = CString(_T("data:")) + sMimeType + _T(";base64,") + sBase64;
 	if (CClipboard::CopyTextToClipboard(m_hWnd, sUri)) {
 		CString sMessage;
 		sMessage.Format(CNLS::GetString(_T("Data URI copied (%d KB of text).")), (int)(sUri.GetLength() / 1024));
@@ -6390,21 +6387,7 @@ static CString ReadTags(LPCTSTR sFileName) {
 
 // "a,b ; c" -> "a; b; c", empty parts and doubles removed
 static CString NormalizeTags(const CString& sText) {
-	CString sInput(sText);
-	sInput.Replace(_T(','), _T(';'));
-	std::vector<CString> tags;
-	int nStart = 0;
-	CString sTag = sInput.Tokenize(_T(";"), nStart);
-	while (nStart >= 0) {
-		sTag.Trim();
-		bool bDouble = false;
-		for (const CString& sExisting : tags) bDouble |= sExisting.CompareNoCase(sTag) == 0;
-		if (!sTag.IsEmpty() && !bDouble) tags.push_back(sTag);
-		sTag = sInput.Tokenize(_T(";"), nStart);
-	}
-	CString sResult;
-	for (const CString& s : tags) sResult += (sResult.IsEmpty() ? _T("") : _T("; ")) + s;
-	return sResult;
+	return TextUtils::NormalizeTags(sText);
 }
 
 void CMainDlg::EditTags() {
@@ -6725,20 +6708,7 @@ void CMainDlg::BatchTags(const std::vector<CString>& files, bool bAdd) {
 		if (bAdd) {
 			sNew = NormalizeTags(sOld + _T(";") + sChange);
 		} else {
-			// all tags except the removed ones
-			CString sRemove = _T(";") + sChange + _T(";");
-			sRemove.Replace(_T("; "), _T(";"));
-			sRemove.MakeLower();
-			CString sOldList = NormalizeTags(sOld);
-			int nStart = 0;
-			CString sTag = sOldList.Tokenize(_T(";"), nStart);
-			while (nStart >= 0) {
-				sTag.Trim();
-				CString sLower = sTag;
-				sLower.MakeLower();
-				if (sRemove.Find(_T(";") + sLower + _T(";")) < 0) sNew += (sNew.IsEmpty() ? _T("") : _T("; ")) + sTag;
-				sTag = sOldList.Tokenize(_T(";"), nStart);
-			}
+			sNew = TextUtils::RemoveTags(sOld, sChange);
 		}
 		if (sNew == NormalizeTags(sOld)) continue;
 		std::vector<std::pair<PROPERTYKEY, CString>> values;
@@ -6837,8 +6807,7 @@ void CMainDlg::BatchRename(const std::vector<CString>& files) {
 	CString sTitle;
 	sTitle.Format(CNLS::GetString(_T("New name of %d files: {name} old name, {n} number, {date} date taken, {time} time taken")), (int)files.size());
 	if (!CAnnotations::AskForText(m_hWnd, sTitle, CNLS::GetString(_T("Next")), CNLS::GetString(_T("Cancel")), sPattern)) return;
-	int nDigits = 2;
-	for (size_t nCount = files.size(); nCount >= 100; nCount /= 10) nDigits++;
+	int nDigits = TextUtils::RenameDigits(files.size());
 	// the new names, invalid characters replaced, the ending is kept
 	std::vector<CString> targets;
 	for (size_t i = 0; i < files.size(); i++) {
@@ -6847,8 +6816,7 @@ void CMainDlg::BatchRename(const std::vector<CString>& files) {
 		int nDot = sFile.ReverseFind(_T('.'));
 		CString sName = (nDot > nSlash) ? sFile.Mid(nSlash + 1, nDot - nSlash - 1) : sFile.Mid(nSlash + 1);
 		CString sEnding = (nDot > nSlash) ? sFile.Mid(nDot) : CString();
-		CString sNumber, sDate, sTime;
-		sNumber.Format(_T("%0*d"), nDigits, (int)i + 1);
+		CString sDate, sTime;
 		SYSTEMTIME time;
 		if (sPattern.Find(_T("{date}")) >= 0 || sPattern.Find(_T("{time}")) >= 0) {
 			if (ReadLocalDateTaken(sFile, time)) {
@@ -6856,14 +6824,7 @@ void CMainDlg::BatchRename(const std::vector<CString>& files) {
 				sTime.Format(_T("%02d-%02d-%02d"), time.wHour, time.wMinute, time.wSecond);
 			}
 		}
-		CString sNew = sPattern;
-		sNew.Replace(_T("{name}"), sName);
-		sNew.Replace(_T("{n}"), sNumber);
-		sNew.Replace(_T("{date}"), sDate);
-		sNew.Replace(_T("{time}"), sTime);
-		for (LPCTSTR p = _T("\\/:*?\"<>|"); *p != 0; p++) sNew.Replace(*p, _T('_'));
-		sNew.Trim();
-		if (sNew.IsEmpty()) sNew = sName;
+		CString sNew = TextUtils::ExpandRenamePattern(sPattern, sName, (int)i + 1, nDigits, sDate, sTime);
 		targets.push_back(sFile.Left(nSlash + 1) + sNew + sEnding);
 	}
 	// preview of the first names
@@ -6941,8 +6902,10 @@ void CMainDlg::SearchPhotos() {
 		return;
 	}
 	// parse the query
-	std::vector<CString> words, tags;
-	int nMinStars = 0;
+	TextUtils::CSearchQuery query = TextUtils::ParseSearchQuery(sQuery);
+	const std::vector<CString>& words = query.Words;
+	const std::vector<CString>& tags = query.Tags;
+	int nMinStars = query.MinStars;
 	__int64 nFrom = 0, nTo = 0;
 	auto ParseDate = [](const CString& sDate, bool bEndOfDay, __int64& nResult) {
 		SYSTEMTIME time = { 0 };
@@ -6953,18 +6916,9 @@ void CMainDlg::SearchPhotos() {
 		nResult = ((__int64)utc.dwHighDateTime << 32) | utc.dwLowDateTime;
 		return true;
 	};
+	if (!query.From.IsEmpty()) ParseDate(query.From, false, nFrom);
+	if (!query.To.IsEmpty()) ParseDate(query.To, true, nTo);
 	int nStart = 0;
-	CString sToken = sQuery.Tokenize(_T(" "), nStart);
-	while (nStart >= 0) {
-		CString sLower = sToken;
-		sLower.MakeLower();
-		if (sLower.Left(4) == _T("tag:")) tags.push_back(sToken.Mid(4));
-		else if (sLower.Left(6) == _T("stars:")) nMinStars = _ttoi(sToken.Mid(6));
-		else if (sLower.Left(5) == _T("from:")) ParseDate(sToken.Mid(5), false, nFrom);
-		else if (sLower.Left(3) == _T("to:")) ParseDate(sToken.Mid(3), true, nTo);
-		else if (!sToken.IsEmpty()) words.push_back(sLower);
-		sToken = sQuery.Tokenize(_T(" "), nStart);
-	}
 	bool bNeedsProperties = !tags.empty() || nMinStars > 0 || nFrom != 0 || nTo != 0;
 
 	// the file endings Lucid Viewer reads

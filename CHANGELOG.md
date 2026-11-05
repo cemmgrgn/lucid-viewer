@@ -3,6 +3,16 @@
 ## Unreleased
 
 ### New
+- **Thumbnails of the folder** (<kbd>G</kbd>, toolbar button): a grid of all images of the folder, a search result or
+  dropped files. Select several with <kbd>Ctrl</kbd>/<kbd>Shift</kbd> + click, <kbd>Shift</kbd> + arrow keys or
+  <kbd>Ctrl</kbd>+<kbd>A</kbd>, then rate them (<kbd>0</kbd>–<kbd>5</kbd>), add or remove tags, copy them
+  (<kbd>Ctrl</kbd>+<kbd>C</kbd>, to paste in Explorer), copy or move them to a folder, rename them (<kbd>F2</kbd>),
+  convert them or move them to the recycle bin (<kbd>Del</kbd>). Enter or a double click opens the image.
+- **Timeline** (<kbd>Shift</kbd>+<kbd>G</kbd>): the thumbnails sorted by the date taken, grouped by month.
+- **Compare** two selected images side by side in a window of their own, zoom and move both at once.
+- **Batch rename** with a pattern: `{name}`, `{n}` (number), `{date}` and `{time}` (taken), with a preview.
+- **Search photos** (<kbd>Ctrl</kbd>+<kbd>F</kbd>) in a folder and its sub folders by words of the name, `tag:`, `stars:`,
+  `from:` and `to:` (date taken); the results are shown as thumbnails and can be browsed like a folder.
 - **Copy file** (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>): the file itself goes to the clipboard and can be pasted in
   Explorer, a mail or a chat.
 - **Copy to folder** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>) and **Move to folder** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>)

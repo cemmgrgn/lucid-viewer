@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "UpdateCheck.h"
 #include "MessageDef.h"
+#include "TextUtils.h"
 #include <urlmon.h>
 #include <process.h>
 #include <string>
@@ -80,16 +81,6 @@ namespace UpdateCheck {
 	}
 
 	int CompareVersions(LPCTSTR sVersion1, LPCTSTR sVersion2) {
-		CString s1(sVersion1), s2(sVersion2);
-		s1.TrimLeft(_T("vV"));
-		s2.TrimLeft(_T("vV"));
-		int nPos1 = 0, nPos2 = 0;
-		for (int nPart = 0; nPart < 4; nPart++) {
-			CString sPart1 = (nPos1 >= 0) ? s1.Tokenize(_T("."), nPos1) : CString();
-			CString sPart2 = (nPos2 >= 0) ? s2.Tokenize(_T("."), nPos2) : CString();
-			int n1 = _ttoi(sPart1), n2 = _ttoi(sPart2);
-			if (n1 != n2) return (n1 < n2) ? -1 : 1;
-		}
-		return 0;
+		return TextUtils::CompareVersions(sVersion1, sVersion2);
 	}
 }
