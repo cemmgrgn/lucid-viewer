@@ -33,6 +33,25 @@ With Visual Studio 2022 add `/p:PlatformToolset=v143`.
 
 The program and everything it needs is in `src\LucidViewer\bin\x64\Release`. That folder runs as it is.
 
+### ARM64 (Windows on ARM)
+
+The prebuilt libraries are x86/x64 only. For **Release | ARM64** they come from [vcpkg](https://vcpkg.io), built for
+`arm64-windows` (the CI workflow does the same, see `.github/workflows/build.yml`):
+
+```
+vcpkg install libjpeg-turbo libpng[apng] zlib libwebp libjxl libheif libavif[dav1d] lcms libraw --triplet arm64-windows
+```
+
+Copy `installed\arm64-windows\include`, `lib` and `bin` of vcpkg to `deps\arm64`, then (with the ARM64 build tools and
+"C++ ATL for latest build tools (ARM64/ARM64EC)" installed in Visual Studio):
+
+```
+msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=ARM64
+```
+
+The SSE/AVX code of the image pipeline is x86 only, ARM64 uses the C++ implementation. The installer is built with
+`iscc /DArch=arm64 installer\LucidViewer.iss`.
+
 ## Installer
 
 ```

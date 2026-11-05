@@ -160,6 +160,7 @@ Download from the [latest release](https://github.com/cemmgrgn/lucid-viewer/rele
   - the AI model for background removal, downloaded during setup
   - start screen, recent photos, screenshot tool on <kbd>PrtScn</kbd>, theme and layout
 - **`LucidViewer-1.0.0-portable-x64.zip`**: extract anywhere and run `LucidViewer.exe`. Settings stay in that folder.
+- From version 1.1: **`-arm64`** setup and zip, native for Windows on ARM (the x64 version runs there in emulation).
 
 With [winget](https://learn.microsoft.com/windows/package-manager/) (once the package is accepted):
 

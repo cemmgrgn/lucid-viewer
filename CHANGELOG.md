@@ -80,6 +80,9 @@
   version in `src/Version.h`), as code signing requires.
 
 ### Project
+- Native **ARM64** version for Windows on ARM (setup and portable zip). The image libraries are built with vcpkg in CI;
+  the SSE/AVX code is x86 only, ARM64 uses the C++ implementation of the image pipeline.
+- Code signing with SignPath is paused, the signing steps were removed from the build workflow.
 - winget package `CemGirgin.LucidViewer` (`packaging/winget`), new versions are sent to winget-pkgs when a release is
   published.
 - Wiki with installation, feature pages, keyboard shortcuts, settings and command line reference (`docs/wiki`).
