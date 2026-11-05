@@ -18,7 +18,7 @@ IF /I "%~4" EQU "" (
 REM ----------- VARIABLES FROM Visual Studio -----------
 REM these match the order in the call from post-build event
 
-REM 32 or 64
+REM 32, 64 or ARM64
 SET PLATFORM_ARCHITECTURE=%~1
 
 REM base name of the project, to detect if we're building the VS2017 version
@@ -52,6 +52,13 @@ echo ~ ErrorLevel: %ErrorLevel%
 
 
 REM ----------- COPY DLL FILES -----------
+REM ARM64: the libraries are built by vcpkg (CI), their DLLs are in deps\arm64\bin
+IF /I "%PLATFORM_ARCHITECTURE%" EQU "ARM64" (
+	echo + XCopy ARM64 DLLs of vcpkg ...
+	xcopy "%PROJECT_DIR%..\..\deps\arm64\bin\*.dll" "%OUT_DIR_FULL_PATH%" /Y /D
+	exit /b 0
+)
+
 REM the DLLs are in either the bin (32-bit) or bin64 (64-bit) folder of each library (structure by qbnu)
 call :COPY_DLLS libjxl
 call :COPY_DLLS libheif

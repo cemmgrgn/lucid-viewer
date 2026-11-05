@@ -13,8 +13,6 @@ permissions:
 jobs:
   build:
     runs-on: windows-2025
-    env:
-      SIGNPATH_ENABLED: ${{ secrets.SIGNPATH_API_TOKEN != '' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,42 +48,6 @@ jobs:
         run: |
           $v = (Get-Item src\LucidViewer\bin\x64\Release\LucidViewer.exe).VersionInfo
           "version=$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart)" >> $env:GITHUB_OUTPUT
-          # 4-part version SignPath compares with the version resources
-          "fileversion=$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart).$($v.FilePrivatePart)" >> $env:GITHUB_OUTPUT
-
-      # Code signing with SignPath (docs/CODE_SIGNING.md), only for version tags and only once the
-      # SIGNPATH_API_TOKEN secret and the SIGNPATH_ORGANIZATION_ID variable are set up
-      - name: Upload unsigned program
-        id: unsigned
-        if: startsWith(github.ref, 'refs/tags/v') && env.SIGNPATH_ENABLED == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: unsigned-program
-          path: |
-            src/LucidViewer/bin/x64/Release/LucidViewer.exe
-            src/LucidViewer/bin/x64/Release/WICLoader.dll
-
-      - name: Sign program
-        if: steps.unsigned.outcome == 'success'
-        uses: signpath/github-action-submit-signing-request@v3
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: lucid-viewer
-          signing-policy-slug: release-signing
-          artifact-configuration-slug: program
-          parameters: |
-            version: "${{ steps.version.outputs.fileversion }}"
-          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
-          wait-for-completion: true
-          # time for the manual approval in SignPath
-          wait-for-completion-timeout-in-seconds: 3600
-          output-artifact-directory: signed-program
-
-      - name: Use the signed program
-        if: steps.unsigned.outcome == 'success'
-        shell: pwsh
-        run: Copy-Item signed-program\* src\LucidViewer\bin\x64\Release\ -Force
 
       - name: Portable zip
         shell: pwsh
@@ -105,34 +67,9 @@ jobs:
           choco install innosetup --no-progress -y
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\LucidViewer.iss
 
-      - name: Upload unsigned installer
-        id: unsignedsetup
-        if: steps.unsigned.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: unsigned-installer
-          path: installer/Output/*.exe
-
-      - name: Sign installer
-        if: steps.unsignedsetup.outcome == 'success'
-        uses: signpath/github-action-submit-signing-request@v3
-        with:
-          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: lucid-viewer
-          signing-policy-slug: release-signing
-          artifact-configuration-slug: installer
-          parameters: |
-            version: "${{ steps.version.outputs.fileversion }}"
-          github-artifact-id: ${{ steps.unsignedsetup.outputs.artifact-id }}
-          wait-for-completion: true
-          # time for the manual approval in SignPath
-          wait-for-completion-timeout-in-seconds: 3600
-          output-artifact-directory: installer/Output
-
       - uses: actions/upload-artifact@v4
         with:
-          name: LucidViewer-${{ steps.version.outputs.version }}
+          name: LucidViewer-${{ steps.version.outputs.version }}-x64
           path: |
             LucidViewer-*-portable-x64.zip
             installer/Output/*.exe
@@ -142,11 +79,105 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          # SignPath requires the words "Code signing policy" on the download page
           body: |
             See the [changelog](https://github.com/cemmgrgn/lucid-viewer/blob/main/CHANGELOG.md) for what is new.
-
-            [Code signing policy](https://github.com/cemmgrgn/lucid-viewer/blob/main/docs/CODE_SIGNING.md)
+            `x64` runs on all PCs (on ARM64 PCs in emulation), `arm64` is the native build for Windows on ARM.
           files: |
             LucidViewer-*-portable-x64.zip
+            installer/Output/*.exe
+
+  # Native build for Windows on ARM. The image libraries are built by vcpkg for arm64-windows (cached),
+  # the program is cross compiled on the x64 runner.
+  build-arm64:
+    runs-on: windows-2025
+    env:
+      VCPKG_COMMIT: 29718cfec805208b4e2d80ed91e681143b488dd7
+      VCPKG_PACKAGES: libjpeg-turbo libpng[apng] zlib libwebp libjxl libheif libavif[dav1d] lcms libraw
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}\vcpkg-cache,readwrite
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get WTL
+        run: git submodule update --init deps/WTL-sf
+
+      - name: Add ARM64 build tools and ATL to Visual Studio
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $components = "--add Microsoft.VisualStudio.Component.VC.ATL --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --add Microsoft.VisualStudio.Component.VC.ATL.ARM64"
+          $p = Start-Process "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe" -ArgumentList "modify --installPath `"$vs`" $components --quiet --norestart --nocache" -Wait -PassThru
+          "vs_installer exit code: $($p.ExitCode)"
+          if (-not (Get-ChildItem "$vs\VC\Tools\MSVC\*\atlmfc\lib\arm64\atls.lib" -ErrorAction SilentlyContinue)) { throw "ATL for ARM64 was not installed" }
+
+      # restored here and saved right after vcpkg, also when the program does not build
+      - name: Restore vcpkg packages
+        uses: actions/cache/restore@v4
+        with:
+          path: vcpkg-cache
+          key: vcpkg-arm64-${{ env.VCPKG_COMMIT }}-${{ github.run_id }}
+          restore-keys: vcpkg-arm64-${{ env.VCPKG_COMMIT }}-
+
+      - name: Build the image libraries for ARM64 (vcpkg)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force vcpkg-cache | Out-Null
+          git clone --filter=blob:none https://github.com/microsoft/vcpkg.git vcpkg
+          git -C vcpkg checkout --quiet $env:VCPKG_COMMIT
+          & .\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+          & .\vcpkg\vcpkg.exe install $env:VCPKG_PACKAGES.Split(' ') --triplet arm64-windows --host-triplet x64-windows --clean-after-build
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          New-Item -ItemType Directory -Force deps\arm64 | Out-Null
+          Copy-Item vcpkg\installed\arm64-windows\include deps\arm64\include -Recurse
+          Copy-Item vcpkg\installed\arm64-windows\lib deps\arm64\lib -Recurse
+          Copy-Item vcpkg\installed\arm64-windows\bin deps\arm64\bin -Recurse
+          Get-ChildItem deps\arm64\lib\*.lib, deps\arm64\bin\*.dll | ForEach-Object { $_.Name }
+
+      - name: Save vcpkg packages
+        uses: actions/cache/save@v4
+        with:
+          path: vcpkg-cache
+          key: vcpkg-arm64-${{ env.VCPKG_COMMIT }}-${{ github.run_id }}
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        run: msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=ARM64 /m /v:m
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Get-Item src\LucidViewer\bin\ARM64\Release\LucidViewer.exe).VersionInfo
+          "version=$($v.FileMajorPart).$($v.FileMinorPart).$($v.FileBuildPart)" >> $env:GITHUB_OUTPUT
+
+      - name: Portable zip
+        shell: pwsh
+        run: |
+          $out = "LucidViewer-${{ steps.version.outputs.version }}-portable-arm64"
+          New-Item -ItemType Directory $out | Out-Null
+          Copy-Item src\LucidViewer\bin\ARM64\Release\* $out -Exclude *.pdb,*.lib,*.exp,*.ilk,*.iobj,*.ipdb
+          $ini = "$out\LucidViewer.ini"
+          [IO.File]::WriteAllText($ini, ([IO.File]::ReadAllText($ini) -replace '(?m)^StoreToEXEPath=false', 'StoreToEXEPath=true'), (New-Object Text.UTF8Encoding($false)))
+          Compress-Archive -Path "$out\*" -DestinationPath "$out.zip"
+
+      - name: Installer
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DArch=arm64 installer\LucidViewer.iss
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LucidViewer-${{ steps.version.outputs.version }}-arm64
+          path: |
+            LucidViewer-*-portable-arm64.zip
+            installer/Output/*.exe
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            LucidViewer-*-portable-arm64.zip
             installer/Output/*.exe

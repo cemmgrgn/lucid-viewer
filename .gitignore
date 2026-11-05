@@ -47,3 +47,6 @@ tools/bench/*.jsonl
 
 # GitHub Pages build output
 _site/
+
+# ARM64 libraries built by vcpkg in CI
+deps/arm64/

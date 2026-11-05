@@ -1,7 +1,7 @@
 ; Lucid Viewer installer (Inno Setup 6.3 or later)
 ;
 ; Build:   iscc installer\LucidViewer.iss
-; Options: /DSourceDir=<folder with the release build>  /DAppExe=<exe name>  /DAppVersion=1.2.3
+; Options: /DSourceDir=<folder with the release build>  /DAppExe=<exe name>  /DAppVersion=1.2.3  /DArch=arm64
 ;
 ; Silent install examples:
 ;   LucidViewer-Setup-x64.exe /SILENT
@@ -12,8 +12,16 @@
 #define AppPublisher   "Cem Girgin"
 #define AppURL         "https://github.com/cemmgrgn/lucid-viewer"
 
+; x64 (also runs on ARM64 PCs in emulation) or arm64 (native build)
+#ifndef Arch
+  #define Arch         "x64"
+#endif
 #ifndef SourceDir
-  #define SourceDir    "..\src\LucidViewer\bin\x64\Release"
+  #if Arch == "arm64"
+    #define SourceDir  "..\src\LucidViewer\bin\ARM64\Release"
+  #else
+    #define SourceDir  "..\src\LucidViewer\bin\x64\Release"
+  #endif
 #endif
 #ifndef AppExe
   #define AppExe       "LucidViewer.exe"
@@ -74,15 +82,20 @@ UninstallDisplayName={#AppName}
 LicenseFile=..\LICENSE.txt
 #endif
 OutputDir=Output
-OutputBaseFilename=LucidViewer-{#AppVersion}-Setup-x64
+OutputBaseFilename=LucidViewer-{#AppVersion}-Setup-{#Arch}
 SetupIconFile=..\docs\brand\LucidViewer.ico
 WizardStyle=modern
 WizardImageFile=res\wizard-large-100.bmp,res\wizard-large-125.bmp,res\wizard-large-150.bmp,res\wizard-large-200.bmp
 WizardSmallImageFile=res\wizard-small-100.bmp,res\wizard-small-125.bmp,res\wizard-small-150.bmp,res\wizard-small-200.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
+#if Arch == "arm64"
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
+#else
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 ; Windows 10 1809: needed by Windows ML (background removal) and the C++/WinRT OCR code
 MinVersion=10.0.17763
 PrivilegesRequired=admin

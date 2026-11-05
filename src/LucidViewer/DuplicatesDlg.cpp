@@ -7,7 +7,7 @@
 #include "NLS.h"
 #include "Share.h"
 #include <process.h>
-#include <intrin.h>
+#include <bitset>
 
 static const LPCTSTR DUPLICATES_CLASS = _T("LucidViewerDuplicates");
 static const UINT WM_SCAN_PROGRESS = WM_APP + 1;
@@ -170,7 +170,7 @@ void CDuplicatesDlg::ShowResult() {
 	for (size_t i = 0; i < n; i++) {
 		if (!m_hashValid[i]) continue;
 		for (size_t j = i + 1; j < n; j++) {
-			if (m_hashValid[j] && __popcnt64(m_hashes[i] ^ m_hashes[j]) <= MAX_HASH_DISTANCE) {
+			if (m_hashValid[j] && (int)std::bitset<64>(m_hashes[i] ^ m_hashes[j]).count() <= MAX_HASH_DISTANCE) {
 				group[Find(j)] = Find(i);
 			}
 		}

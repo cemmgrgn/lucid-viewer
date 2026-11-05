@@ -143,6 +143,9 @@ CSettingsProvider::CSettingsProvider(void) {
 	else {
 		m_eCPUAlgorithm = Helpers::ProbeCPU();
 	}
+#if !defined(_M_IX86) && !defined(_M_X64)
+	m_eCPUAlgorithm = Helpers::CPU_Generic; // ARM64: the SSE/AVX code is x86 only
+#endif
 	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 4);
 	if (m_nNumCores == 0) {
 		m_nNumCores = Helpers::NumCoresPerPhysicalProc();

@@ -5,7 +5,7 @@
 #include "Helpers.h"
 #include "WorkThread.h"
 #include "ProcessingThreadPool.h"
-#ifdef _WIN64
+#if defined(_M_X64)
 #include "ApplyFilterAVX.h"
 #endif
 #include <math.h>
@@ -1886,7 +1886,22 @@ static void* RotateToDIB(const CXMMImage* pSourceImg, int simdPixelsPerRegister,
 // High quality filtering (SSE implementation)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN64
+#if !defined(_M_IX86) && !defined(_M_X64)
+// ARM64: SSE and AVX are x86 only, the C++ implementation is used (CPU_Generic). Not called.
+static CXMMImage* ApplyFilter_SSE(int nSourceHeight, int nTargetHeight, int nWidth,
+	int nStartY_FP, int nStartX, int nIncrementY_FP,
+	const XMMFilterKernelBlock& filter,
+	int nFilterOffset, const CXMMImage* pSourceImg) {
+	return NULL;
+}
+
+CXMMImage* ApplyFilter_AVX(int nSourceHeight, int nTargetHeight, int nWidth,
+	int nStartY_FP, int nStartX, int nIncrementY_FP,
+	const AVXFilterKernelBlock& filter,
+	int nFilterOffset, const CXMMImage* pSourceImg) {
+	return NULL;
+}
+#elif defined(_M_X64)
 // Apply filter in y direction in SSE
 // No inline assembly is supported in 64 bit mode, thus intrinsics are used instead.
 // nSourceHeight: Height of source image, only here to match interface of C++ implementation
@@ -2167,7 +2182,7 @@ CXMMImage* ApplyFilter_AVX(int nSourceHeight, int nTargetHeight, int nWidth,
 // High quality filtering (MMX implementation)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN64
+#if !defined(_M_IX86)
 // Not used in 64 bit - uses always SSE version for 64 bit
 static CXMMImage* ApplyFilter_MMX(int nSourceHeight, int nTargetHeight, int nWidth,
 	int nStartY_FP, int nStartX, int nIncrementY_FP,
