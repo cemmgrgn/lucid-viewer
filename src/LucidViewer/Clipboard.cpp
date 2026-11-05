@@ -99,9 +99,19 @@ bool CClipboard::CopyFileToClipboard(HWND hWnd, LPCTSTR fileName) {
 	if (fileName == NULL || fileName[0] == 0) {
 		return false;
 	}
-	// CF_HDROP: DROPFILES followed by the list of file names, the list ends with two zero characters
-	size_t nChars = _tcslen(fileName);
-	HGLOBAL hDrop = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DROPFILES) + (nChars + 2) * sizeof(TCHAR));
+	std::vector<CString> fileNames;
+	fileNames.push_back(fileName);
+	return CopyFilesToClipboard(hWnd, fileNames);
+}
+
+bool CClipboard::CopyFilesToClipboard(HWND hWnd, const std::vector<CString>& fileNames) {
+	if (fileNames.empty()) {
+		return false;
+	}
+	// CF_HDROP: DROPFILES followed by the list of zero terminated file names, the list ends with a second zero
+	size_t nChars = 0;
+	for (const CString& sName : fileNames) nChars += sName.GetLength() + 1;
+	HGLOBAL hDrop = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DROPFILES) + (nChars + 1) * sizeof(TCHAR));
 	if (hDrop == NULL) {
 		return false;
 	}
@@ -112,7 +122,11 @@ bool CClipboard::CopyFileToClipboard(HWND hWnd, LPCTSTR fileName) {
 	}
 	pDropFiles->pFiles = sizeof(DROPFILES);
 	pDropFiles->fWide = sizeof(TCHAR) == sizeof(WCHAR);
-	memcpy((BYTE*)pDropFiles + sizeof(DROPFILES), fileName, nChars * sizeof(TCHAR));
+	TCHAR* pTarget = (TCHAR*)((BYTE*)pDropFiles + sizeof(DROPFILES));
+	for (const CString& sName : fileNames) {
+		memcpy(pTarget, (LPCTSTR)sName, sName.GetLength() * sizeof(TCHAR));
+		pTarget += sName.GetLength() + 1; // the zero is there already (GMEM_ZEROINIT)
+	}
 	::GlobalUnlock(hDrop);
 
 	// Explorer pastes a copy, not a move
@@ -138,8 +152,8 @@ bool CClipboard::CopyFileToClipboard(HWND hWnd, LPCTSTR fileName) {
 	if (hEffect != NULL && ::SetClipboardData(::RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), hEffect) == NULL) {
 		::GlobalFree(hEffect);
 	}
-	if (bOk) {
-		CopyFileNameTextToClipboard(fileName);
+	if (bOk && fileNames.size() == 1) {
+		CopyFileNameTextToClipboard(fileNames[0]);
 	}
 	::CloseClipboard();
 	return bOk;

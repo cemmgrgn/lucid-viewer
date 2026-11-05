@@ -534,3 +534,43 @@ Pick color
 Set as lock screen	
 Sort by date taken	
 %d dropped images, the arrow keys go through them	
+Thumbnails of the folder	
+Timeline (by date taken)	
+Search photos...	
+No images in this folder	
+Ctrl or Shift + click selects several images, right click shows the actions, Enter opens the image.	
+Unknown date	
+Open	
+Compare the two selected images	
+No stars	
+1 star	
+%d stars	
+Add tags...	
+Remove tag...	
+Copy files	
+Rename...	
+Move to recycle bin	
+Close the thumbnails	
+%d files copied, they can be pasted in Explorer.	
+%d of %d images rated with %d stars	
+Tags to add, separated by semicolons	
+Tag to remove	
+The tags of %d images were changed.	
+%d of %d files moved to %s	
+%d of %d files copied to %s	
+Move %d images to the recycle bin?	
+The images were moved to the recycle bin.	
+Not all images could be deleted.	
+New name of %d files: {name} old name, {n} number, {date} date taken, {time} time taken	
+Next	
+Rename the files?	
+%d files renamed, %d failed	
+Converting...	
+Search photos in this folder and its sub folders	
+Search: words of the name, tag:holiday stars:3 from:2024-01-01 to:2024-12-31	
+Search	
+Searching... %d images checked, %d found (Esc cancels)	
+Search cancelled	
+No photo found	
+%d photos found	
+Compare	

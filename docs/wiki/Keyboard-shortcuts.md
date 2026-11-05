@@ -82,6 +82,8 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>T</kbd> | Toolbar |
 | <kbd>Ctrl</kbd> + <kbd>I</kbd> | Information panel |
 | <kbd>Ctrl</kbd> + <kbd>E</kbd> | Edit image (brightness, contrast, colors) |
+| <kbd>G</kbd> | Thumbnails of the folder |
+| <kbd>Shift</kbd> + <kbd>G</kbd> | Timeline (by date taken) |
 
 ## Editing
 
@@ -130,6 +132,7 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 |---|---|
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>T</kbd> | Copy text from image |
 | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>P</kbd> | Pick color |
+| <kbd>Ctrl</kbd> + <kbd>F</kbd> | Search photos... |
 
 ## Slideshow
 

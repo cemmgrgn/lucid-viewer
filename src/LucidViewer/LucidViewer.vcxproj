@@ -318,6 +318,8 @@
     <ClCompile Include="UITest.cpp" />
     <ClCompile Include="StartScreen.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
+    <ClCompile Include="FolderGrid.cpp" />
+    <ClCompile Include="CompareWindow.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="SettingsEditor.cpp" />
     <ClCompile Include="Share.cpp">
@@ -434,6 +436,8 @@
     <ClInclude Include="SettingsEditor.h" />
     <ClInclude Include="Share.h" />
     <ClInclude Include="UpdateCheck.h" />
+    <ClInclude Include="FolderGrid.h" />
+    <ClInclude Include="CompareWindow.h" />
     <ClInclude Include="BackgroundRemoval.h" />
     <ClInclude Include="dcraw_mod.h" />
     <ClInclude Include="DesktopWallpaper.h" />

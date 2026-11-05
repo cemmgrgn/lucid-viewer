@@ -982,3 +982,39 @@ Pick color	Renk seç
 Set as lock screen	Kilit ekranı olarak ayarla
 Sort by date taken	Çekim tarihine göre sırala
 %d dropped images, the arrow keys go through them	%d görüntü bırakıldı, ok tuşlarıyla aralarında gezinebilirsiniz
+Thumbnails of the folder	Klasörün küçük resimleri
+Timeline (by date taken)	Zaman çizelgesi (çekim tarihine göre)
+Search photos...	Fotoğraf ara...
+No images in this folder	Bu klasörde görüntü yok
+Ctrl or Shift + click selects several images, right click shows the actions, Enter opens the image.	Ctrl veya Shift + tıklama birden çok görüntü seçer, sağ tık işlemleri gösterir, Enter görüntüyü açar.
+Unknown date	Bilinmeyen tarih
+Compare the two selected images	Seçili iki görüntüyü karşılaştır
+No stars	Yıldız yok
+1 star	1 yıldız
+%d stars	%d yıldız
+Add tags...	Etiket ekle...
+Remove tag...	Etiket kaldır...
+Copy files	Dosyaları kopyala
+Rename...	Yeniden adlandır...
+Close the thumbnails	Küçük resimleri kapat
+%d files copied, they can be pasted in Explorer.	%d dosya kopyalandı, Explorer'a yapıştırılabilir.
+%d of %d images rated with %d stars	%d/%d görüntüye %d yıldız verildi
+Tags to add, separated by semicolons	Eklenecek etiketler, noktalı virgülle ayrılmış
+Tag to remove	Kaldırılacak etiket
+The tags of %d images were changed.	%d görüntünün etiketleri değiştirildi.
+%d of %d files moved to %s	%d/%d dosya %s klasörüne taşındı
+%d of %d files copied to %s	%d/%d dosya %s klasörüne kopyalandı
+Move %d images to the recycle bin?	%d görüntü geri dönüşüm kutusuna taşınsın mı?
+The images were moved to the recycle bin.	Görüntüler geri dönüşüm kutusuna taşındı.
+Not all images could be deleted.	Görüntülerin hepsi silinemedi.
+New name of %d files: {name} old name, {n} number, {date} date taken, {time} time taken	%d dosyanın yeni adı: {name} eski ad, {n} numara, {date} çekim tarihi, {time} çekim saati
+Next	İleri
+Rename the files?	Dosyalar yeniden adlandırılsın mı?
+%d files renamed, %d failed	%d dosya yeniden adlandırıldı, %d başarısız
+Search photos in this folder and its sub folders	Bu klasörde ve alt klasörlerinde fotoğraf ara
+Search: words of the name, tag:holiday stars:3 from:2024-01-01 to:2024-12-31	Ara: addaki kelimeler, tag:tatil stars:3 from:2024-01-01 to:2024-12-31
+Search	Ara
+Searching... %d images checked, %d found (Esc cancels)	Aranıyor... %d görüntü denetlendi, %d bulundu (Esc iptal eder)
+Search cancelled	Arama iptal edildi
+No photo found	Fotoğraf bulunamadı
+%d photos found	%d fotoğraf bulundu

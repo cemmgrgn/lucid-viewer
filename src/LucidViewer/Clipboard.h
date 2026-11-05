@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ProcessParams.h"
+#include <vector>
 
 class CJPEGImage;
 
@@ -28,6 +29,8 @@ public:
 	// Copy the file itself to the clipboard (as Explorer does with Ctrl+C), it can be pasted in Explorer, mails and chats.
 	// The path is put on the clipboard as text as well. Returns false on error.
 	static bool CopyFileToClipboard(HWND hWnd, LPCTSTR fileName);
+	// The same for several files
+	static bool CopyFilesToClipboard(HWND hWnd, const std::vector<CString>& fileNames);
 
 	// Copy an image with transparency: as PNG (kept by Office, browsers, chats) and as DIB on white for other programs.
 	// pBGRA are the original pixels, pMask the alpha per pixel. Returns false on error.

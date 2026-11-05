@@ -366,6 +366,9 @@
 #define IDM_EDIT_TAGS			16660	// :KeyMap: edit the tags (keywords) of the file, written into the file
 #define IDM_FILTER_BY_TAG		16670	// :KeyMap: show only the images of the folder with a tag
 #define IDM_SHOW_ON_MAP			16680	// :KeyMap: show the GPS location of the photo on OpenStreetMap
+#define IDM_FOLDER_GRID			16690	// :KeyMap: thumbnails of the folder, several images can be selected for batch actions
+#define IDM_TIMELINE			16700	// :KeyMap: thumbnails of the folder sorted by the date taken, grouped by month
+#define IDM_SEARCH_PHOTOS		16710	// :KeyMap: search photos in a folder and its sub folders by tag, stars, date and name
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

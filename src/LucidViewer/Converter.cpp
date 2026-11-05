@@ -609,6 +609,11 @@ namespace Converter {
 		return NULL;
 	}
 
+	CJPEGImage* LoadImage(LPCTSTR sFileName) {
+		bool bOutOfMemory = false;
+		return LoadImageForConversion(sFileName, 0, bOutOfMemory);
+	}
+
 	bool ConvertFile(LPCTSTR sSourceFile, const CPreset& preset, CString& sOutputFile, CString& sError) {
 		sOutputFile.Empty();
 		sError.Empty();

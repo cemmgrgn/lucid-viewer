@@ -496,6 +496,23 @@ private:
 	void SetAsLockScreen();
 	void PickColorAt(int nX, int nY);
 	bool m_bPickColor; // the next click copies the color of the pixel
+	// thumbnail grid of the folder with multi selection, NULL when not shown
+	class CFolderGrid* m_pFolderGrid;
+	bool IsFolderGridActive();
+	void ShowFolderGrid(bool bShow);
+	void RefreshFolderGrid();
+	void ShowFolderGridMenu(POINT screenPoint);
+	void OpenFromFolderGrid();
+	// batch actions on files (selection of the grid)
+	void BatchRating(const std::vector<CString>& files, int nStars);
+	void BatchTags(const std::vector<CString>& files, bool bAdd);
+	void BatchCopyOrMove(const std::vector<CString>& files, bool bMove);
+	void BatchRecycle(const std::vector<CString>& files);
+	void BatchRename(const std::vector<CString>& files);
+	void BatchConvert(const std::vector<CString>& files, int nPresetIndex);
+	// the files are gone from the folder (moved, deleted, renamed): file list, image and grid are updated
+	void AfterFilesChanged();
+	void SearchPhotos();
 	// pinch zoom on touch screens: finger distance and zoom when the gesture started
 	DWORD m_nGestureStartDistance;
 	double m_dGestureStartZoom;

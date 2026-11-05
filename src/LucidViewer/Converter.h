@@ -3,6 +3,8 @@
 #include "ImageProcessingTypes.h"
 #include <vector>
 
+class CJPEGImage;
+
 // Fast image format conversion, used by the Explorer context menu ('LucidViewer.exe /convert:<preset> <files>')
 // and by the 'Convert to' menus inside Lucid Viewer. Converted files are written next to the source file, existing
 // files are never overwritten.
@@ -57,6 +59,10 @@ namespace Converter {
 
 	// Converts a single file. Returns true on success, sOutputFile receives the name of the written file
 	// and sError the error message on failure.
+	// Loads the image with the EXIF rotation applied and no other processing, NULL if it cannot be read.
+	// The caller deletes the image.
+	CJPEGImage* LoadImage(LPCTSTR sFileName);
+
 	bool ConvertFile(LPCTSTR sSourceFile, const CPreset& preset, CString& sOutputFile, CString& sError);
 
 	// Returns true if the command line requests a converter action (/convert, /registerconvertmenu, /unregisterconvertmenu)

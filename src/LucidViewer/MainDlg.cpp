@@ -64,6 +64,8 @@
 #include "Metadata.h"
 #include "StartScreen.h"
 #include "UpdateCheck.h"
+#include "FolderGrid.h"
+#include "CompareWindow.h"
 #include <propkey.h>
 #include <propvarutil.h>
 #include <wincrypt.h>
@@ -338,6 +340,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pAnnotations = new CAnnotations();
 	m_pStartScreen = NULL;
 	m_bStartScreen = false;
+	m_pFolderGrid = NULL;
 	m_bRecordRecent = false;
 	m_bZoomAnimation = m_bZoomFrame = m_bZoomAnimToMouse = m_bZoomAnimAdjust = false;
 	m_dZoomFrom = m_dZoomTo = 1.0;
@@ -364,6 +367,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 }
 
 CMainDlg::~CMainDlg() {
+	delete m_pFolderGrid;
 	delete m_pStartScreen;
 	delete m_pChrome;
 	delete m_pAnnotations;
@@ -589,6 +593,11 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	m_dRealizedZoom = 1.0;
 
 	this->GetClientRect(&m_clientRect);
+	if (IsFolderGridActive()) {
+		m_pFolderGrid->Paint(dc.m_hDC, m_clientRect);
+		m_pChrome->Paint();
+		return 0;
+	}
 	if (IsStartScreenActive()) {
 		m_pStartScreen->Paint(dc.m_hDC, m_clientRect);
 		m_pChrome->Paint();
@@ -917,6 +926,13 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		HandleStartScreenAction(result.Action, result.File);
 		return 0;
 	}
+	if (IsFolderGridActive()) {
+		bool bCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0, bShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+		if (m_pFolderGrid->OnClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), bCtrl, bShift) != CFolderGrid::ACTION_NONE) {
+			this->Invalidate(FALSE);
+		}
+		return 0;
+	}
 	if (m_bPickColor) {
 		PickColorAt(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
@@ -1151,6 +1167,13 @@ LRESULT CMainDlg::OnNCActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 }
 
 LRESULT CMainDlg::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
+	if (LOWORD(lParam) == HTCLIENT && IsFolderGridActive()) {
+		POINT point;
+		::GetCursorPos(&point);
+		ScreenToClient(&point);
+		::SetCursor(::LoadCursor(NULL, m_pFolderGrid->IsOverItem(point.x, point.y) ? IDC_HAND : IDC_ARROW));
+		return TRUE;
+	}
 	if (LOWORD(lParam) == HTCLIENT && m_bPickColor && !IsStartScreenActive()) {
 		::SetCursor(::LoadCursor(NULL, IDC_CROSS));
 		return TRUE;
@@ -1197,6 +1220,12 @@ LRESULT CMainDlg::OnMButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 }
 
 LRESULT CMainDlg::OnLButtonDblClk(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
+	if (IsFolderGridActive()) {
+		if (m_pFolderGrid->OnDoubleClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)) == CFolderGrid::ACTION_OPEN) {
+			OpenFromFolderGrid();
+		}
+		return 0;
+	}
 	if (IsStartScreenActive()) {
 		return 0;
 	}
@@ -1242,6 +1271,10 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	int nOldMouseX = m_nMouseX;
 	m_nMouseX = GET_X_LPARAM(lParam);
 	m_nMouseY = GET_Y_LPARAM(lParam);
+	if (IsFolderGridActive() && !m_pChrome->IsDragging()) {
+		if (m_pFolderGrid->OnMouseMove(m_nMouseX, m_nMouseY)) this->Invalidate(FALSE);
+		return 0;
+	}
 	if (IsStartScreenActive() && !m_pChrome->IsDragging()) {
 		if (m_pStartScreen->OnMouseMove(m_nMouseX, m_nMouseY)) this->Invalidate(FALSE);
 		return 0;
@@ -1330,6 +1363,10 @@ LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL
 	if (m_pChrome->OnMouseWheel(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)), nDelta)) {
 		return 0; // side panel scrolled
 	}
+	if (IsFolderGridActive()) {
+		if (m_pFolderGrid->OnMouseWheel(nDelta)) this->Invalidate(FALSE);
+		return 0;
+	}
 	if (IsStartScreenActive()) {
 		POINT point = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 		ScreenToClient(&point);
@@ -1355,6 +1392,41 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOO
 	bool bAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
 	if (m_pPanelMgr->OnKeyDown((unsigned int)wParam, bShift, bAlt, bCtrl)) {
 		return 1; // a panel has handled the key
+	}
+	if (IsFolderGridActive() && !bAlt) {
+		std::vector<CString> selection = m_pFolderGrid->GetSelection();
+		if (wParam == VK_DELETE && !selection.empty()) {
+			BatchRecycle(selection);
+			return 0;
+		}
+		if (!bCtrl && wParam >= '0' && wParam <= '5' && !selection.empty()) {
+			BatchRating(selection, (int)(wParam - '0'));
+			return 0;
+		}
+		if (bCtrl && wParam == 'C' && !selection.empty()) {
+			if (CClipboard::CopyFilesToClipboard(m_hWnd, selection)) {
+				CString sMessage;
+				sMessage.Format(CNLS::GetString(_T("%d files copied, they can be pasted in Explorer.")), (int)selection.size());
+				m_pChrome->ShowMessage(sMessage);
+			}
+			return 0;
+		}
+		if (wParam == VK_F2 && !selection.empty()) {
+			BatchRename(selection);
+			return 0;
+		}
+		CFolderGrid::EAction eAction = m_pFolderGrid->OnKey((int)wParam, bCtrl, bShift);
+		if (eAction == CFolderGrid::ACTION_OPEN) {
+			OpenFromFolderGrid();
+			return 0;
+		} else if (eAction == CFolderGrid::ACTION_CLOSE) {
+			ShowFolderGrid(false);
+			return 0;
+		} else if (eAction == CFolderGrid::ACTION_REPAINT) {
+			m_pChrome->ShowMessage(CString());
+			this->Invalidate(FALSE);
+			return 0;
+		}
 	}
 	if (!bCtrl && !bAlt && IsStartScreenActive() && m_pStartScreen->OnKey((int)wParam)) {
 		this->Invalidate(FALSE);
@@ -1606,6 +1678,17 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 	int nY = GET_Y_LPARAM(lParam);
 
 	MouseOn();
+
+	if (IsFolderGridActive()) {
+		POINT screenPoint = { nX, nY };
+		if (nX == -1 && nY == -1) ::GetCursorPos(&screenPoint);
+		POINT clientPoint = screenPoint;
+		ScreenToClient(&clientPoint);
+		m_pFolderGrid->OnRightClick(clientPoint.x, clientPoint.y);
+		this->Invalidate(FALSE);
+		ShowFolderGridMenu(screenPoint);
+		return 1;
+	}
 
 	if (IsStartScreenActive()) {
 		POINT screenPoint = { nX, nY };
@@ -2061,6 +2144,20 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			break;
 		case IDM_OPEN_WITH_OTHER_APP:
 			OpenWithOtherApp();
+			break;
+		case IDM_FOLDER_GRID:
+			ShowFolderGrid(!IsFolderGridActive());
+			break;
+		case IDM_TIMELINE:
+			if (m_pFileList != NULL && m_pCurrentImage != NULL) {
+				HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+				m_pFileList->SetSorting(Helpers::FS_DateTaken, true);
+				::SetCursor(hOldCursor);
+				ShowFolderGrid(true);
+			}
+			break;
+		case IDM_SEARCH_PHOTOS:
+			SearchPhotos();
 			break;
 		case IDM_DUPLICATE_FILE:
 			DuplicateFile();
@@ -3029,6 +3126,7 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			}
 			break;
 		case IDM_START_SCREEN:
+			if (m_pFolderGrid != NULL) ShowFolderGrid(false);
 			if (m_pStartScreen == NULL && m_pChrome->IsEnabled()) {
 				m_pStartScreen = new CStartScreen(m_hWnd);
 				m_pStartScreen->SetPinShortcut(m_pKeyMap->GetKeyStringForCommand(IDM_PIN_TO_START));
@@ -3367,6 +3465,7 @@ bool CMainDlg::OpenFileWithDialog(bool bFullScreen, bool bAfterStartup) {
 }
 
 void CMainDlg::OpenFile(LPCTSTR sFileName, bool bAfterStartup) {
+	if (m_pFolderGrid != NULL) ShowFolderGrid(false); // an image is opened: the grid of the old folder is closed
 	if (!ConfirmDiscardEdits()) {
 		return;
 	}
@@ -4615,18 +4714,18 @@ enum {
 	MBAR_COPY_FILE = -31, MBAR_COPY_TO_FOLDER = -32, MBAR_MOVE_TO_FOLDER = -33, MBAR_UPDATES = -34,
 	MBAR_PROPERTIES = -35, MBAR_OPEN_WITH_OTHER = -36, MBAR_NEW_WINDOW = -37,
 	MBAR_COPY_NAME = -38, MBAR_DUPLICATE = -39, MBAR_DATA_URI = -40, MBAR_TAGS = -41, MBAR_MAP = -42, MBAR_GOTO = -43,
-	MBAR_TAG_FILTER = -44, MBAR_PICK_COLOR = -45
+	MBAR_TAG_FILTER = -44, MBAR_PICK_COLOR = -45, MBAR_GRID = -46, MBAR_TIMELINE = -47, MBAR_SEARCH = -48
 };
 
 static const int s_menuBarFile[] = { IDM_OPEN, MBAR_START, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), MBAR_OPEN_WITH_OTHER, MBAR_NEW_WINDOW, IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, MBAR_TAGS, MBAR_MAP, MBAR_PIN, IDM_RELOAD, MBAR_SEPARATOR,
 	IDM_EXPLORE, IDM_COPY_PATH, MBAR_COPY_FILE, MBAR_COPY_NAME, MBAR_DATA_URI, MBAR_DUPLICATE, MBAR_COPY_TO_FOLDER, MBAR_MOVE_TO_FOLDER, MBAR_PROPERTIES, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { MBAR_UNDO, MBAR_SEPARATOR, IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
-static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
+static const int s_menuBarView[] = { MBAR_GRID, MBAR_TIMELINE, MBAR_SEPARATOR, MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
 	MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_FIT_TO_SCREEN), MENUBAR_SUBMENU(IDM_AUTO_ZOOM_FIT_NO_ZOOM) };
 static const int s_menuBarNavigate[] = { IDM_NEXT, IDM_PREV, MBAR_FIRST_IMAGE, MBAR_LAST_IMAGE, MBAR_GOTO, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_LOOP_FOLDER),
 	MENUBAR_SUBMENU(IDM_SORT_MOD_DATE), MBAR_RATING, MBAR_TAG_FILTER, MENUBAR_SUBMENU(IDM_SLIDESHOW_START), IDM_STOP_MOVIE };
-static const int s_menuBarTools[] = { MBAR_SCREENSHOT, MBAR_SEPARATOR, MBAR_CONVERT, MBAR_CONVERT_FOLDER, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_PICK_COLOR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
+static const int s_menuBarTools[] = { MBAR_SEARCH, MBAR_SEPARATOR, MBAR_SCREENSHOT, MBAR_SEPARATOR, MBAR_CONVERT, MBAR_CONVERT_FOLDER, MBAR_EXPLORER_MENU, MBAR_SEPARATOR, MBAR_SIMILAR, MBAR_PICK_COLOR, MBAR_SETTINGS, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_EDIT_USER_CONFIG), MENUBAR_SUBMENU(IDM_FIRST_USER_CMD) };
 static const int s_menuBarHelp[] = { MBAR_HELP, MBAR_SHORTCUTS, MBAR_SEPARATOR, MBAR_UPDATES, IDM_ABOUT };
 
 // Position of the (non popup) item with the given command, -1 if not found
@@ -4841,6 +4940,15 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_TAG_FILTER:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_FILTER_BY_TAG, _T("Filter by tag..."), !CString(CFileList::GetTagFilter()).IsEmpty(), m_pFileList != NULL && m_pFileList->Size() > 0);
+				break;
+			case MBAR_GRID:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_FOLDER_GRID, _T("Thumbnails of the folder"), IsFolderGridActive(), m_pFileList != NULL && m_pFileList->Size() > 0);
+				break;
+			case MBAR_TIMELINE:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_TIMELINE, _T("Timeline (by date taken)"), false, m_pFileList != NULL && m_pFileList->Size() > 0);
+				break;
+			case MBAR_SEARCH:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_SEARCH_PHOTOS, _T("Search photos..."), false, true);
 				break;
 			case MBAR_PICK_COLOR:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_PICK_COLOR, _T("Pick color"), m_bPickColor, m_pCurrentImage != NULL);
@@ -5988,7 +6096,7 @@ bool CMainDlg::SwapFileData(const CUndoEntry& entry, bool bRedo) {
 }
 
 bool CMainDlg::IsStartScreenActive() {
-	if (m_pStartScreen == NULL || m_bMovieMode) return false;
+	if (m_pStartScreen == NULL || m_bMovieMode || m_pFolderGrid != NULL) return false;
 	return m_bStartScreen || (m_pCurrentImage == NULL && m_sStartupFile.IsEmpty());
 }
 
@@ -6417,6 +6525,535 @@ void CMainDlg::PickColorAt(int nX, int nY) {
 	CClipboard::CopyTextToClipboard(m_hWnd, sColor);
 	CString sMessage;
 	sMessage.Format(CNLS::GetString(_T("Color %s (RGB %d, %d, %d) copied")), (LPCTSTR)sColor, nRed, nGreen, nBlue);
+	m_pChrome->ShowMessage(sMessage);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Thumbnail grid of the folder, batch actions on the selection, search
+///////////////////////////////////////////////////////////////////////////////////
+
+bool CMainDlg::IsFolderGridActive() {
+	return m_pFolderGrid != NULL && !m_bMovieMode;
+}
+
+void CMainDlg::ShowFolderGrid(bool bShow) {
+	if (!bShow) {
+		if (m_pFolderGrid != NULL) {
+			delete m_pFolderGrid;
+			m_pFolderGrid = NULL;
+			this->Invalidate(FALSE);
+			m_pChrome->Paint();
+		}
+		return;
+	}
+	if (m_pFileList == NULL || m_pFileList->Size() == 0 || m_bMovieMode) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("No images in this folder")));
+		return;
+	}
+	MouseOn();
+	if (m_pFolderGrid == NULL) {
+		m_pFolderGrid = new CFolderGrid(m_hWnd);
+	}
+	RefreshFolderGrid();
+	m_pChrome->ShowMessage(CNLS::GetString(_T("Ctrl or Shift + click selects several images, right click shows the actions, Enter opens the image.")));
+}
+
+void CMainDlg::RefreshFolderGrid() {
+	if (m_pFolderGrid == NULL || m_pFileList == NULL) return;
+	CString sFocus = m_pFolderGrid->GetFocusedFile();
+	if (sFocus.IsEmpty() || ::GetFileAttributes(sFocus) == INVALID_FILE_ATTRIBUTES) {
+		sFocus = (m_pFileList->Current() != NULL) ? m_pFileList->Current() : _T("");
+	}
+	bool bGroupByMonth = m_pFileList->GetSorting() == Helpers::FS_DateTaken;
+	std::vector<CFolderGrid::CItem> items;
+	for (const CFileDesc& file : m_pFileList->GetFileList()) {
+		CFolderGrid::CItem item = { file.GetName(), bGroupByMonth ? file.GetDateTaken() : 0 };
+		items.push_back(item);
+	}
+	m_pFolderGrid->SetItems(items, bGroupByMonth, sFocus);
+	this->Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::OpenFromFolderGrid() {
+	if (m_pFolderGrid == NULL || m_pFileList == NULL) return;
+	CString sFile = m_pFolderGrid->GetFocusedFile();
+	delete m_pFolderGrid;
+	m_pFolderGrid = NULL;
+	if (sFile.IsEmpty()) {
+		this->Invalidate(FALSE);
+		return;
+	}
+	// the image is in the file list of the grid: the list stays as it is (also a search result or dropped files)
+	int nIndex = 0;
+	for (const CFileDesc& file : m_pFileList->GetFileList()) {
+		if (file.GetName().CompareNoCase(sFile) == 0) break;
+		nIndex++;
+	}
+	m_bStartScreen = false;
+	if (m_pFileList->GotoIndex(nIndex)) {
+		GotoImage(POS_Current);
+	} else {
+		OpenFile(sFile, false);
+	}
+	this->Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::AfterFilesChanged() {
+	if (m_pFileList == NULL) return;
+	CString sCurrent = (m_pFileList->Current() != NULL) ? m_pFileList->Current() : _T("");
+	bool bCurrentGone = !sCurrent.IsEmpty() && ::GetFileAttributes(sCurrent) == INVALID_FILE_ATTRIBUTES;
+	m_pFileList->Reload(NULL, false);
+	if (bCurrentGone && m_pFileList->Size() > 0) {
+		GotoImage(POS_Current);
+	}
+	RefreshFolderGrid();
+	this->Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::ShowFolderGridMenu(POINT screenPoint) {
+	if (m_pFolderGrid == NULL) return;
+	std::vector<CString> selection = m_pFolderGrid->GetSelection();
+	bool bAny = !selection.empty();
+	enum { CMD_OPEN = 1, CMD_COMPARE, CMD_TAGS_ADD, CMD_TAGS_REMOVE, CMD_COPY_FILES, CMD_COPY_TO, CMD_MOVE_TO, CMD_RENAME,
+		CMD_RECYCLE, CMD_SELECT_ALL, CMD_CLOSE, CMD_STARS_0 = 100, CMD_CONVERT_0 = 1000 };
+	auto Text = [&](LPCTSTR sEnglish, LPCTSTR sKey) {
+		CString sText = CNLS::GetString(sEnglish);
+		if (sKey != NULL) sText += CString(_T("\t")) + sKey;
+		return sText;
+	};
+	HMENU hMenu = ::CreatePopupMenu();
+	::AppendMenu(hMenu, MF_STRING | (m_pFolderGrid->GetFocusedFile().IsEmpty() ? MF_GRAYED : 0), CMD_OPEN, Text(_T("Open"), _T("Enter")));
+	::AppendMenu(hMenu, MF_STRING | (selection.size() == 2 ? 0 : MF_GRAYED), CMD_COMPARE, CNLS::GetString(_T("Compare the two selected images")));
+	::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+	HMENU hStars = ::CreatePopupMenu();
+	for (int i = 0; i <= 5; i++) {
+		CString sStars;
+		if (i == 0) sStars = CNLS::GetString(_T("No stars"));
+		else if (i == 1) sStars = CNLS::GetString(_T("1 star"));
+		else sStars.Format(CNLS::GetString(_T("%d stars")), i);
+		CString sKey;
+		sKey.Format(_T("\t%d"), i);
+		sStars += sKey;
+		::AppendMenu(hStars, MF_STRING, CMD_STARS_0 + i, sStars);
+	}
+	::AppendMenu(hMenu, MF_POPUP | MF_STRING | (bAny ? 0 : MF_GRAYED), (UINT_PTR)hStars, CNLS::GetString(_T("Star rating")));
+	::AppendMenu(hMenu, MF_STRING | (bAny ? 0 : MF_GRAYED), CMD_TAGS_ADD, CNLS::GetString(_T("Add tags...")));
+	::AppendMenu(hMenu, MF_STRING | (bAny ? 0 : MF_GRAYED), CMD_TAGS_REMOVE, CNLS::GetString(_T("Remove tag...")));
+	::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+	::AppendMenu(hMenu, MF_STRING | (bAny ? 0 : MF_GRAYED), CMD_COPY_FILES, Text(_T("Copy files"), _T("Ctrl+C")));
+	::AppendMenu(hMenu, MF_STRING | (bAny ? 0 : MF_GRAYED), CMD_COPY_TO, CNLS::GetString(_T("Copy to folder...")));
+	::AppendMenu(hMenu, MF_STRING | (bAny ? 0 : MF_GRAYED), CMD_MOVE_TO, CNLS::GetString(_T("Move to folder...")));
+	::AppendMenu(hMenu, MF_STRING | (bAny ? 0 : MF_GRAYED), CMD_RENAME, Text(_T("Rename..."), _T("F2")));
+	::AppendMenu(hMenu, MF_POPUP | MF_STRING | (bAny ? 0 : MF_GRAYED), (UINT_PTR)Converter::CreatePresetMenu(CMD_CONVERT_0), CNLS::GetString(_T("Convert to")));
+	::AppendMenu(hMenu, MF_STRING | (bAny ? 0 : MF_GRAYED), CMD_RECYCLE, Text(_T("Move to recycle bin"), _T("Del")));
+	::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+	::AppendMenu(hMenu, MF_STRING, CMD_SELECT_ALL, Text(_T("Select all"), _T("Ctrl+A")));
+	::AppendMenu(hMenu, MF_STRING, CMD_CLOSE, Text(_T("Close the thumbnails"), _T("Esc")));
+	int nCommand = TrackPopupMenu(CPoint(screenPoint.x, screenPoint.y), hMenu);
+	::DestroyMenu(hMenu);
+	if (nCommand >= CMD_CONVERT_0) {
+		BatchConvert(selection, nCommand - CMD_CONVERT_0);
+	} else if (nCommand >= CMD_STARS_0) {
+		BatchRating(selection, nCommand - CMD_STARS_0);
+	} else {
+		switch (nCommand) {
+			case CMD_OPEN: OpenFromFolderGrid(); break;
+			case CMD_COMPARE: if (selection.size() == 2) CompareWindow::Show(m_hWnd, selection[0], selection[1]); break;
+			case CMD_TAGS_ADD: BatchTags(selection, true); break;
+			case CMD_TAGS_REMOVE: BatchTags(selection, false); break;
+			case CMD_COPY_FILES:
+				if (CClipboard::CopyFilesToClipboard(m_hWnd, selection)) {
+					CString sMessage;
+					sMessage.Format(CNLS::GetString(_T("%d files copied, they can be pasted in Explorer.")), (int)selection.size());
+					m_pChrome->ShowMessage(sMessage);
+				}
+				break;
+			case CMD_COPY_TO: BatchCopyOrMove(selection, false); break;
+			case CMD_MOVE_TO: BatchCopyOrMove(selection, true); break;
+			case CMD_RENAME: BatchRename(selection); break;
+			case CMD_RECYCLE: BatchRecycle(selection); break;
+			case CMD_SELECT_ALL: m_pFolderGrid->SelectAll(); break;
+			case CMD_CLOSE: ShowFolderGrid(false); break;
+		}
+	}
+	this->Invalidate(FALSE);
+}
+
+void CMainDlg::BatchRating(const std::vector<CString>& files, int nStars) {
+	// the values Windows uses for 0 to 5 stars
+	static const int ratingValues[6] = { 0, 1, 25, 50, 75, 99 };
+	if (nStars < 0 || nStars > 5) return;
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	int nDone = 0;
+	for (const CString& sFile : files) {
+		CString sValue;
+		sValue.Format(_T("%d"), ratingValues[nStars]);
+		std::vector<std::pair<PROPERTYKEY, CString>> values;
+		values.push_back({ PKEY_Rating, nStars == 0 ? CString() : sValue });
+		if (Metadata::WriteTexts(sFile, values)) {
+			nDone++;
+			if (m_pFileList != NULL) m_pFileList->UpdateRating(sFile, nStars);
+			if (m_sRatingFile.CompareNoCase(sFile) == 0) m_sRatingFile.Empty(); // read again for the side panel
+		}
+	}
+	::SetCursor(hOldCursor);
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(_T("%d of %d images rated with %d stars")), nDone, (int)files.size(), nStars);
+	m_pChrome->ShowMessage(sMessage);
+	this->Invalidate(FALSE);
+	m_pChrome->Paint();
+}
+
+void CMainDlg::BatchTags(const std::vector<CString>& files, bool bAdd) {
+	if (files.empty()) return;
+	MouseOn();
+	CString sTags;
+	if (!CAnnotations::AskForText(m_hWnd, CNLS::GetString(bAdd ? _T("Tags to add, separated by semicolons") : _T("Tag to remove")),
+		CNLS::GetString(_T("OK")), CNLS::GetString(_T("Cancel")), sTags)) {
+		return;
+	}
+	CString sChange = NormalizeTags(sTags);
+	if (sChange.IsEmpty()) return;
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	int nDone = 0;
+	for (const CString& sFile : files) {
+		CString sOld = ReadTags(sFile);
+		CString sNew;
+		if (bAdd) {
+			sNew = NormalizeTags(sOld + _T(";") + sChange);
+		} else {
+			// all tags except the removed ones
+			CString sRemove = _T(";") + sChange + _T(";");
+			sRemove.Replace(_T("; "), _T(";"));
+			sRemove.MakeLower();
+			CString sOldList = NormalizeTags(sOld);
+			int nStart = 0;
+			CString sTag = sOldList.Tokenize(_T(";"), nStart);
+			while (nStart >= 0) {
+				sTag.Trim();
+				CString sLower = sTag;
+				sLower.MakeLower();
+				if (sRemove.Find(_T(";") + sLower + _T(";")) < 0) sNew += (sNew.IsEmpty() ? _T("") : _T("; ")) + sTag;
+				sTag = sOldList.Tokenize(_T(";"), nStart);
+			}
+		}
+		if (sNew == NormalizeTags(sOld)) continue;
+		std::vector<std::pair<PROPERTYKEY, CString>> values;
+		values.push_back({ PKEY_Keywords, sNew });
+		if (Metadata::WriteTexts(sFile, values)) {
+			nDone++;
+			if (m_pFileList != NULL) m_pFileList->UpdateKeywords(sFile, sNew);
+		}
+	}
+	::SetCursor(hOldCursor);
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(_T("The tags of %d images were changed.")), nDone);
+	m_pChrome->ShowMessage(sMessage);
+	if (m_pFileList != NULL && m_pFileList->Current() != NULL) AfterMetadataChanged();
+}
+
+void CMainDlg::BatchCopyOrMove(const std::vector<CString>& files, bool bMove) {
+	if (files.empty()) return;
+	MouseOn();
+	CString sSourceFolder = files[0].Left(max(0, files[0].ReverseFind(_T('\\'))));
+	CString sLastFolder = CSettingsProvider::This().LastTargetFolder();
+	if (sLastFolder.IsEmpty() || ::GetFileAttributes(sLastFolder) == INVALID_FILE_ATTRIBUTES) sLastFolder = sSourceFolder;
+	CString sFolder = PickFolder(m_hWnd, CNLS::GetString(bMove ? _T("Move to folder") : _T("Copy to folder")), sLastFolder);
+	if (sFolder.IsEmpty()) return;
+	CSettingsProvider::This().SaveLastTargetFolder(sFolder);
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	int nDone = 0;
+	for (const CString& sFile : files) {
+		int nSlash = sFile.ReverseFind(_T('\\'));
+		if (nSlash < 0 || sFile.Left(nSlash).CompareNoCase(sFolder) == 0) continue;
+		CString sTarget = UniqueFileNameInFolder(sFolder, sFile.Mid(nSlash + 1));
+		bool bOK = bMove ? ::MoveFileEx(sFile, sTarget, MOVEFILE_COPY_ALLOWED) != FALSE : ::CopyFile(sFile, sTarget, TRUE) != FALSE;
+		if (bOK) {
+			nDone++;
+			if (bMove) CStartScreen::FileMoved(sFile, sTarget);
+		}
+	}
+	::SetCursor(hOldCursor);
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(bMove ? _T("%d of %d files moved to %s") : _T("%d of %d files copied to %s")), nDone, (int)files.size(), (LPCTSTR)sFolder);
+	m_pChrome->ShowMessage(sMessage);
+	if (bMove) AfterFilesChanged();
+}
+
+void CMainDlg::BatchRecycle(const std::vector<CString>& files) {
+	if (files.empty() || !CSettingsProvider::This().AllowFileDeletion()) return;
+	MouseOn();
+	CString sQuestion;
+	sQuestion.Format(CNLS::GetString(_T("Move %d images to the recycle bin?")), (int)files.size());
+	if (::MessageBox(m_hWnd, sQuestion, _T(APP_TITLE), MB_YESNO | MB_ICONQUESTION) != IDYES) return;
+	// SHFileOperation takes a list of zero terminated names, ended by a second zero
+	std::vector<TCHAR> list;
+	for (const CString& sFile : files) {
+		list.insert(list.end(), (LPCTSTR)sFile, (LPCTSTR)sFile + sFile.GetLength());
+		list.push_back(0);
+	}
+	list.push_back(0);
+	SHFILEOPSTRUCT operation = { 0 };
+	operation.hwnd = m_hWnd;
+	operation.wFunc = FO_DELETE;
+	operation.pFrom = &list[0];
+	operation.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION;
+	bool bOK = ::SHFileOperation(&operation) == 0 && !operation.fAnyOperationsAborted;
+	m_pChrome->ShowMessage(CNLS::GetString(bOK ? _T("The images were moved to the recycle bin.") : _T("Not all images could be deleted.")));
+	AfterFilesChanged();
+}
+
+// Date taken (or the last write time) of the file as local time
+static bool ReadLocalDateTaken(LPCTSTR sFileName, SYSTEMTIME& time) {
+	FILETIME utc = { 0, 0 };
+	bool bFound = false;
+	IPropertyStore* pStore = NULL;
+	if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(sFileName, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
+		PROPVARIANT value;
+		::PropVariantInit(&value);
+		if (SUCCEEDED(pStore->GetValue(PKEY_Photo_DateTaken, &value)) && value.vt == VT_FILETIME) {
+			utc = value.filetime;
+			bFound = true;
+		}
+		::PropVariantClear(&value);
+		pStore->Release();
+	}
+	if (!bFound) {
+		WIN32_FILE_ATTRIBUTE_DATA data;
+		if (!::GetFileAttributesEx(sFileName, GetFileExInfoStandard, &data)) return false;
+		utc = data.ftLastWriteTime;
+	}
+	FILETIME local;
+	return ::FileTimeToLocalFileTime(&utc, &local) && ::FileTimeToSystemTime(&local, &time);
+}
+
+void CMainDlg::BatchRename(const std::vector<CString>& files) {
+	if (files.empty()) return;
+	MouseOn();
+	CString sPattern = _T("{name}");
+	CString sTitle;
+	sTitle.Format(CNLS::GetString(_T("New name of %d files: {name} old name, {n} number, {date} date taken, {time} time taken")), (int)files.size());
+	if (!CAnnotations::AskForText(m_hWnd, sTitle, CNLS::GetString(_T("Next")), CNLS::GetString(_T("Cancel")), sPattern)) return;
+	int nDigits = 2;
+	for (size_t nCount = files.size(); nCount >= 100; nCount /= 10) nDigits++;
+	// the new names, invalid characters replaced, the ending is kept
+	std::vector<CString> targets;
+	for (size_t i = 0; i < files.size(); i++) {
+		const CString& sFile = files[i];
+		int nSlash = sFile.ReverseFind(_T('\\'));
+		int nDot = sFile.ReverseFind(_T('.'));
+		CString sName = (nDot > nSlash) ? sFile.Mid(nSlash + 1, nDot - nSlash - 1) : sFile.Mid(nSlash + 1);
+		CString sEnding = (nDot > nSlash) ? sFile.Mid(nDot) : CString();
+		CString sNumber, sDate, sTime;
+		sNumber.Format(_T("%0*d"), nDigits, (int)i + 1);
+		SYSTEMTIME time;
+		if (sPattern.Find(_T("{date}")) >= 0 || sPattern.Find(_T("{time}")) >= 0) {
+			if (ReadLocalDateTaken(sFile, time)) {
+				sDate.Format(_T("%04d-%02d-%02d"), time.wYear, time.wMonth, time.wDay);
+				sTime.Format(_T("%02d-%02d-%02d"), time.wHour, time.wMinute, time.wSecond);
+			}
+		}
+		CString sNew = sPattern;
+		sNew.Replace(_T("{name}"), sName);
+		sNew.Replace(_T("{n}"), sNumber);
+		sNew.Replace(_T("{date}"), sDate);
+		sNew.Replace(_T("{time}"), sTime);
+		for (LPCTSTR p = _T("\\/:*?\"<>|"); *p != 0; p++) sNew.Replace(*p, _T('_'));
+		sNew.Trim();
+		if (sNew.IsEmpty()) sNew = sName;
+		targets.push_back(sFile.Left(nSlash + 1) + sNew + sEnding);
+	}
+	// preview of the first names
+	CString sPreview;
+	for (size_t i = 0; i < files.size() && i < 5; i++) {
+		sPreview += files[i].Mid(files[i].ReverseFind(_T('\\')) + 1) + _T("  \x2192  ") + targets[i].Mid(targets[i].ReverseFind(_T('\\')) + 1) + _T("\n");
+	}
+	if (files.size() > 5) sPreview += _T("...\n");
+	if (::MessageBox(m_hWnd, CString(CNLS::GetString(_T("Rename the files?"))) + _T("\n\n") + sPreview, _T(APP_TITLE), MB_YESNO | MB_ICONQUESTION) != IDYES) return;
+
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	// two steps: first to temporary names, a new name can be the old name of another selected file
+	std::vector<CString> temporary(files.size());
+	std::vector<bool> moved(files.size(), false);
+	for (size_t i = 0; i < files.size(); i++) {
+		temporary[i].Format(_T("%s.lucidrename%d"), (LPCTSTR)files[i], (int)i);
+		moved[i] = files[i].CompareNoCase(targets[i]) != 0 && ::MoveFile(files[i], temporary[i]) != FALSE;
+	}
+	int nDone = 0, nFailed = 0;
+	CString sCurrent = (m_pFileList != NULL && m_pFileList->Current() != NULL) ? m_pFileList->Current() : _T("");
+	for (size_t i = 0; i < files.size(); i++) {
+		if (!moved[i]) continue;
+		CString sTarget = targets[i];
+		if (::GetFileAttributes(sTarget) != INVALID_FILE_ATTRIBUTES) {
+			// taken by a file that is not renamed: 'name (2).jpg'
+			int nSlash = sTarget.ReverseFind(_T('\\'));
+			sTarget = UniqueFileNameInFolder(sTarget.Left(nSlash), sTarget.Mid(nSlash + 1));
+		}
+		if (::MoveFile(temporary[i], sTarget)) {
+			nDone++;
+			CStartScreen::FileMoved(files[i], sTarget);
+			if (m_pFileList != NULL) m_pFileList->FileHasRenamed(files[i], sTarget);
+			if (m_pJPEGProvider != NULL) m_pJPEGProvider->FileHasRenamed(files[i], sTarget);
+		} else {
+			::MoveFile(temporary[i], files[i]); // back to the old name
+			nFailed++;
+		}
+	}
+	::SetCursor(hOldCursor);
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(_T("%d files renamed, %d failed")), nDone, nFailed);
+	m_pChrome->ShowMessage(sMessage);
+	AfterFilesChanged();
+	UpdateWindowTitle();
+}
+
+void CMainDlg::BatchConvert(const std::vector<CString>& files, int nPresetIndex) {
+	if (files.empty() || nPresetIndex < 0 || nPresetIndex >= (int)Converter::GetPresets().size()) return;
+	// converter processes show the progress; the first one collects the files of the others (Converter.cpp),
+	// the files are split so that a command line stays below its length limit
+	TCHAR sExe[MAX_PATH + 1] = { 0 };
+	::GetModuleFileName(NULL, sExe, MAX_PATH);
+	CString sStart;
+	sStart.Format(_T("/convert:%s"), (LPCTSTR)Converter::GetPresets()[nPresetIndex].Id);
+	CString sParameters = sStart;
+	for (size_t i = 0; i < files.size(); i++) {
+		sParameters += _T(" \"") + files[i] + _T("\"");
+		if (sParameters.GetLength() > 24000 || i + 1 == files.size()) {
+			::ShellExecute(m_hWnd, _T("open"), sExe, sParameters, NULL, SW_SHOWNORMAL);
+			sParameters = sStart;
+		}
+	}
+	m_pChrome->ShowMessage(CNLS::GetString(_T("Converting...")));
+}
+
+void CMainDlg::SearchPhotos() {
+	MouseOn();
+	CString sStartFolder = (m_pFileList != NULL && m_pFileList->CurrentDirectory() != NULL) ? CString(m_pFileList->CurrentDirectory()) : CString();
+	sStartFolder.TrimRight(_T('\\'));
+	CString sFolder = PickFolder(m_hWnd, CNLS::GetString(_T("Search photos in this folder and its sub folders")), sStartFolder);
+	if (sFolder.IsEmpty()) return;
+	CString sQuery;
+	if (!CAnnotations::AskForText(m_hWnd, CNLS::GetString(_T("Search: words of the name, tag:holiday stars:3 from:2024-01-01 to:2024-12-31")),
+		CNLS::GetString(_T("Search")), CNLS::GetString(_T("Cancel")), sQuery)) {
+		return;
+	}
+	// parse the query
+	std::vector<CString> words, tags;
+	int nMinStars = 0;
+	__int64 nFrom = 0, nTo = 0;
+	auto ParseDate = [](const CString& sDate, bool bEndOfDay, __int64& nResult) {
+		SYSTEMTIME time = { 0 };
+		if (_stscanf_s(sDate, _T("%hu-%hu-%hu"), &time.wYear, &time.wMonth, &time.wDay) != 3) return false;
+		if (bEndOfDay) { time.wHour = 23; time.wMinute = 59; time.wSecond = 59; }
+		FILETIME local, utc;
+		if (!::SystemTimeToFileTime(&time, &local) || !::LocalFileTimeToFileTime(&local, &utc)) return false;
+		nResult = ((__int64)utc.dwHighDateTime << 32) | utc.dwLowDateTime;
+		return true;
+	};
+	int nStart = 0;
+	CString sToken = sQuery.Tokenize(_T(" "), nStart);
+	while (nStart >= 0) {
+		CString sLower = sToken;
+		sLower.MakeLower();
+		if (sLower.Left(4) == _T("tag:")) tags.push_back(sToken.Mid(4));
+		else if (sLower.Left(6) == _T("stars:")) nMinStars = _ttoi(sToken.Mid(6));
+		else if (sLower.Left(5) == _T("from:")) ParseDate(sToken.Mid(5), false, nFrom);
+		else if (sLower.Left(3) == _T("to:")) ParseDate(sToken.Mid(3), true, nTo);
+		else if (!sToken.IsEmpty()) words.push_back(sLower);
+		sToken = sQuery.Tokenize(_T(" "), nStart);
+	}
+	bool bNeedsProperties = !tags.empty() || nMinStars > 0 || nFrom != 0 || nTo != 0;
+
+	// the file endings Lucid Viewer reads
+	std::vector<CString> endings;
+	CString sEndings = CFileList::GetSupportedFileEndings();
+	nStart = 0;
+	CString sEnding = sEndings.Tokenize(_T(";"), nStart);
+	while (nStart >= 0) {
+		sEnding.TrimLeft(_T("*"));
+		sEnding.MakeLower();
+		if (!sEnding.IsEmpty()) endings.push_back(sEnding);
+		sEnding = sEndings.Tokenize(_T(";"), nStart);
+	}
+
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	std::vector<CString> results;
+	std::vector<CString> folders;
+	folders.push_back(sFolder);
+	int nScanned = 0;
+	bool bCancelled = false;
+	while (!folders.empty() && !bCancelled) {
+		CString sCurrentFolder = folders.back();
+		folders.pop_back();
+		WIN32_FIND_DATA findData;
+		HANDLE hFind = ::FindFirstFile(sCurrentFolder + _T("\\*"), &findData);
+		if (hFind == INVALID_HANDLE_VALUE) continue;
+		do {
+			if (_tcscmp(findData.cFileName, _T(".")) == 0 || _tcscmp(findData.cFileName, _T("..")) == 0) continue;
+			if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) != 0) continue;
+			CString sPath = sCurrentFolder + _T("\\") + findData.cFileName;
+			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+				if ((findData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0) folders.push_back(sPath);
+				continue;
+			}
+			LPCTSTR sDot = _tcsrchr(findData.cFileName, _T('.'));
+			if (sDot == NULL) continue;
+			CString sFileEnding(sDot);
+			sFileEnding.MakeLower();
+			bool bImage = false;
+			for (const CString& sKnown : endings) bImage |= sKnown == sFileEnding;
+			if (!bImage) continue;
+			if (++nScanned % 200 == 0) {
+				CString sProgress;
+				sProgress.Format(CNLS::GetString(_T("Searching... %d images checked, %d found (Esc cancels)")), nScanned, (int)results.size());
+				m_pChrome->ShowMessage(sProgress);
+				m_pChrome->Paint();
+				bCancelled = (::GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0;
+				if (bCancelled) break;
+			}
+			CString sLowerName(findData.cFileName);
+			sLowerName.MakeLower();
+			bool bMatch = true;
+			for (const CString& sWord : words) bMatch &= sLowerName.Find(sWord) >= 0;
+			if (bMatch && bNeedsProperties) {
+				FILETIME lastWrite = findData.ftLastWriteTime;
+				CFileDesc file(sPath, &lastWrite, &findData.ftCreationTime, 0);
+				if (nMinStars > 0) bMatch &= file.GetRating() >= nMinStars;
+				for (const CString& sTag : tags) bMatch = bMatch && file.HasKeyword(sTag);
+				if (bMatch && (nFrom != 0 || nTo != 0)) {
+					__int64 nDate = file.GetDateTaken();
+					bMatch = (nFrom == 0 || nDate >= nFrom) && (nTo == 0 || nDate <= nTo);
+				}
+			}
+			if (bMatch) results.push_back(sPath);
+		} while (::FindNextFile(hFind, &findData));
+		::FindClose(hFind);
+	}
+	::SetCursor(hOldCursor);
+	if (results.empty()) {
+		m_pChrome->ShowMessage(CNLS::GetString(bCancelled ? _T("Search cancelled") : _T("No photo found")));
+		return;
+	}
+	// the results are a list of their own (slideshow list file), shown as thumbnails
+	TCHAR sTempPath[MAX_PATH + 1] = { 0 };
+	::GetTempPath(MAX_PATH, sTempPath);
+	CString sListFile = CString(sTempPath) + _T("LucidViewer search results.txt");
+	FILE* pFile = NULL;
+	if (_tfopen_s(&pFile, sListFile, _T("wb")) != 0 || pFile == NULL) return;
+	const wchar_t bom = 0xFEFF;
+	fwrite(&bom, sizeof(wchar_t), 1, pFile);
+	for (const CString& sResult : results) {
+		fwrite((LPCWSTR)sResult, sizeof(wchar_t), sResult.GetLength(), pFile);
+		fwrite(L"\r\n", sizeof(wchar_t), 2, pFile);
+	}
+	fclose(pFile);
+	OpenFile(sListFile, false);
+	ShowFolderGrid(true);
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(_T("%d photos found")), (int)results.size());
 	m_pChrome->ShowMessage(sMessage);
 }
 
