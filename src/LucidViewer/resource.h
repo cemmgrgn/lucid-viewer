@@ -353,6 +353,8 @@
 #define IDM_COPY_TO_FOLDER	16530		// :KeyMap: copy the file to a folder (folder dialog, the last folder is suggested)
 #define IDM_MOVE_TO_FOLDER	16540		// :KeyMap: move the file to a folder and show the next image (can be undone)
 #define IDM_CHECK_FOR_UPDATES	16550	// :KeyMap: check if a newer version is published on GitHub
+#define IDM_FILE_PROPERTIES		16560	// :KeyMap: show the Explorer properties of the file (size, dates, security, details)
+#define IDM_OPEN_WITH_OTHER_APP	16570	// :KeyMap: open the file with another app, chosen in the 'Open with' window of Windows
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

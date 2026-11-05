@@ -1461,17 +1461,26 @@ LRESULT CMainDlg::OnMouseHWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOO
 
 LRESULT CMainDlg::OnDropFiles(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
 	HDROP hDrop = (HDROP) wParam;
-	if (hDrop != NULL && !m_pPanelMgr->IsModalPanelShown()) {
-		const int BUFF_SIZE = 512;
-		TCHAR buff[BUFF_SIZE];
-		if (::DragQueryFile(hDrop, 0, (LPTSTR) &buff, BUFF_SIZE - 1) > 0) {
-			if (::GetFileAttributes(buff) & FILE_ATTRIBUTE_DIRECTORY) {
-				_tcsncat_s(buff, BUFF_SIZE, _T("\\"), BUFF_SIZE);
-			}
-			OpenFile(buff, false);
-		}
-		::DragFinish(hDrop);
+	if (hDrop == NULL) {
+		return 0;
 	}
+	if (!m_pPanelMgr->IsModalPanelShown()) {
+		// the length is asked first, the path can be longer than MAX_PATH
+		UINT nLength = ::DragQueryFile(hDrop, 0, NULL, 0);
+		if (nLength > 0) {
+			CString sFile;
+			UINT nCopied = ::DragQueryFile(hDrop, 0, sFile.GetBuffer(nLength + 1), nLength + 1);
+			sFile.ReleaseBuffer(nCopied);
+			DWORD nAttributes = ::GetFileAttributes(sFile);
+			if (nAttributes != INVALID_FILE_ATTRIBUTES && (nAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 && sFile.Right(1) != _T("\\")) {
+				sFile += _T("\\");
+			}
+			if (!sFile.IsEmpty()) {
+				OpenFile(sFile, false);
+			}
+		}
+	}
+	::DragFinish(hDrop); // also when the drop is ignored, the drop handle belongs to the receiver
 	return 0;
 }
 
@@ -1605,6 +1614,8 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		InsertString(nPos + 6, IDM_COPY_FILE, _T("Copy file"), bHasFileImage);
 		InsertString(nPos + 7, IDM_COPY_TO_FOLDER, _T("Copy to folder..."), bHasFileImage);
 		InsertString(nPos + 8, IDM_MOVE_TO_FOLDER, _T("Move to folder..."), bHasFileImage);
+		InsertString(nPos + 9, IDM_OPEN_WITH_OTHER_APP, _T("Open with another app..."), bHasFileImage);
+		InsertString(nPos + 10, IDM_FILE_PROPERTIES, _T("File properties..."), bHasFileImage);
 	}
 	nPos = FindPos(IDM_OPEN);
 	if (nPos >= 0 && m_pChrome->IsEnabled()) {
@@ -1966,6 +1977,12 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 		case IDM_COPY_TO_FOLDER:
 		case IDM_MOVE_TO_FOLDER:
 			CopyOrMoveToFolder(nCommand == IDM_MOVE_TO_FOLDER);
+			break;
+		case IDM_FILE_PROPERTIES:
+			ShowFileProperties();
+			break;
+		case IDM_OPEN_WITH_OTHER_APP:
+			OpenWithOtherApp();
 			break;
 		case IDM_CHECK_FOR_UPDATES:
 			if (!m_bUpdateCheckRunning) {
@@ -4457,11 +4474,12 @@ enum {
 	MBAR_SEPARATOR = -1, MBAR_CONVERT = -2, MBAR_TOOLBAR = -3, MBAR_STATUSBAR = -4, MBAR_SIDEPANEL = -5,
 	MBAR_EDITPANEL = -6, MBAR_EXPLORER_MENU = -7, MBAR_FIRST_IMAGE = -8, MBAR_LAST_IMAGE = -9, MBAR_HELP = -10,
 	MBAR_COMPARE = -11, MBAR_RESET = -12, MBAR_UNSHARP = -13, MBAR_COLLAPSE = -14, MBAR_RESIZE = -15, MBAR_SETTINGS = -16, MBAR_OCR = -17, MBAR_SHARE = -18, MBAR_EXPORT = -19, MBAR_FILMSTRIP = -20, MBAR_SIMILAR = -21, MBAR_REMOVE_BACKGROUND = -22, MBAR_CONVERT_FOLDER = -23, MBAR_SHORTCUTS = -24, MBAR_METADATA = -25, MBAR_SCREENSHOT = -26, MBAR_UNDO = -27, MBAR_RATING = -28, MBAR_START = -29, MBAR_PIN = -30,
-	MBAR_COPY_FILE = -31, MBAR_COPY_TO_FOLDER = -32, MBAR_MOVE_TO_FOLDER = -33, MBAR_UPDATES = -34
+	MBAR_COPY_FILE = -31, MBAR_COPY_TO_FOLDER = -32, MBAR_MOVE_TO_FOLDER = -33, MBAR_UPDATES = -34,
+	MBAR_PROPERTIES = -35, MBAR_OPEN_WITH_OTHER = -36
 };
 
-static const int s_menuBarFile[] = { IDM_OPEN, MBAR_START, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, MBAR_PIN, IDM_RELOAD, MBAR_SEPARATOR,
-	IDM_EXPLORE, IDM_COPY_PATH, MBAR_COPY_FILE, MBAR_COPY_TO_FOLDER, MBAR_MOVE_TO_FOLDER, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
+static const int s_menuBarFile[] = { IDM_OPEN, MBAR_START, MENUBAR_SUBMENU(IDM_FIRST_OPENWITH_CMD), MBAR_OPEN_WITH_OTHER, IDM_SAVE, MBAR_EXPORT, MBAR_CONVERT, MBAR_SHARE, MBAR_METADATA, MBAR_PIN, IDM_RELOAD, MBAR_SEPARATOR,
+	IDM_EXPLORE, IDM_COPY_PATH, MBAR_COPY_FILE, MBAR_COPY_TO_FOLDER, MBAR_MOVE_TO_FOLDER, MBAR_PROPERTIES, IDM_PRINT, IDM_BATCH_COPY, MENUBAR_SUBMENU(IDM_TOUCH_IMAGE), MENUBAR_SUBMENU(IDM_SET_WALLPAPER_ORIG), MBAR_SEPARATOR, IDM_EXIT };
 static const int s_menuBarEdit[] = { MBAR_UNDO, MBAR_SEPARATOR, IDM_COPY, IDM_COPY_FULL, IDM_PASTE, MBAR_SEPARATOR, MENUBAR_SUBMENU(IDM_ROTATE_90), MENUBAR_SUBMENU(IDM_ROTATE_90_LOSSLESS),
 	MBAR_EDITPANEL, MBAR_COMPARE, MBAR_RESET, MBAR_UNSHARP, MBAR_RESIZE, MBAR_OCR, MBAR_REMOVE_BACKGROUND, MBAR_SEPARATOR, IDM_AUTO_CORRECTION, IDM_LDC, IDM_KEEP_PARAMETERS, MBAR_SEPARATOR, IDM_SAVE_PARAM_DB, IDM_CLEAR_PARAM_DB };
 static const int s_menuBarView[] = { MBAR_TOOLBAR, MBAR_STATUSBAR, MBAR_FILMSTRIP, MBAR_SIDEPANEL, MBAR_COLLAPSE, MBAR_SEPARATOR, IDM_SHOW_FILEINFO, IDM_SHOW_FILENAME, IDM_SHOW_NAVPANEL,
@@ -4662,6 +4680,12 @@ HMENU CMainDlg::CreateMenuBarMenu(int nIndex) {
 				break;
 			case MBAR_MOVE_TO_FOLDER:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_MOVE_TO_FOLDER, _T("Move to folder..."), false, bHasFileImage);
+				break;
+			case MBAR_PROPERTIES:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_FILE_PROPERTIES, _T("File properties..."), false, bHasFileImage);
+				break;
+			case MBAR_OPEN_WITH_OTHER:
+				AppendMenuString(m_pKeyMap, hMenu, IDM_OPEN_WITH_OTHER_APP, _T("Open with another app..."), false, bHasFileImage);
 				break;
 			case MBAR_UPDATES:
 				AppendMenuString(m_pKeyMap, hMenu, IDM_CHECK_FOR_UPDATES, _T("Check for updates..."), false, !m_bUpdateCheckRunning);
@@ -5906,8 +5930,9 @@ void CMainDlg::CopyOrMoveToFolder(bool bMove) {
 	int nSlash = sSource.ReverseFind(_T('\\'));
 	if (nSlash < 0) return;
 	CString sSourceFolder = sSource.Left(nSlash);
-	CString sFolder = PickFolder(m_hWnd, CNLS::GetString(bMove ? _T("Move to folder") : _T("Copy to folder")),
-		m_sLastTargetFolder.IsEmpty() ? (LPCTSTR)sSourceFolder : (LPCTSTR)m_sLastTargetFolder);
+	CString sLastFolder = CSettingsProvider::This().LastTargetFolder();
+	if (sLastFolder.IsEmpty() || ::GetFileAttributes(sLastFolder) == INVALID_FILE_ATTRIBUTES) sLastFolder = sSourceFolder;
+	CString sFolder = PickFolder(m_hWnd, CNLS::GetString(bMove ? _T("Move to folder") : _T("Copy to folder")), sLastFolder);
 	if (sFolder.IsEmpty()) {
 		return;
 	}
@@ -5915,7 +5940,7 @@ void CMainDlg::CopyOrMoveToFolder(bool bMove) {
 		m_pChrome->ShowMessage(CNLS::GetString(_T("The file is already in this folder.")));
 		return;
 	}
-	m_sLastTargetFolder = sFolder;
+	CSettingsProvider::This().SaveLastTargetFolder(sFolder);
 	CString sTarget = UniqueFileNameInFolder(sFolder, sSource.Mid(nSlash + 1));
 	if (bMove) {
 		if (MoveImageFile(sSource, sTarget)) {
@@ -5934,6 +5959,54 @@ void CMainDlg::CopyOrMoveToFolder(bool bMove) {
 		::SetCursor(hOldCursor);
 		m_pChrome->ShowMessage(bCopied ? CString(CNLS::GetString(_T("Copied to"))) + _T(" ") + sFolder :
 			CString(CNLS::GetString(_T("The file could not be copied."))));
+	}
+}
+
+void CMainDlg::ShowFileProperties() {
+	if (m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage() || m_pFileList == NULL || m_pFileList->Current() == NULL) {
+		return;
+	}
+	MouseOn();
+	// SHObjectProperties: the properties window of Explorer, it stays open next to the program
+	typedef BOOL(WINAPI* SHObjectPropertiesFunc)(HWND, DWORD, PCWSTR, PCWSTR);
+	SHObjectPropertiesFunc pProperties = (SHObjectPropertiesFunc)::GetProcAddress(::GetModuleHandle(_T("shell32.dll")), "SHObjectProperties");
+	const DWORD SHOP_FILEPATH_ = 0x00000002;
+	if (pProperties == NULL || !pProperties(m_hWnd, SHOP_FILEPATH_, m_pFileList->Current(), NULL)) {
+		SHELLEXECUTEINFO info = { 0 };
+		info.cbSize = sizeof(info);
+		info.fMask = SEE_MASK_INVOKEIDLIST;
+		info.hwnd = m_hWnd;
+		info.lpVerb = _T("properties");
+		info.lpFile = m_pFileList->Current();
+		info.nShow = SW_SHOWNORMAL;
+		::ShellExecuteEx(&info);
+	}
+}
+
+void CMainDlg::OpenWithOtherApp() {
+	if (m_pCurrentImage == NULL || m_pCurrentImage->IsClipboardImage() || m_pFileList == NULL || m_pFileList->Current() == NULL) {
+		return;
+	}
+	MouseOn();
+	// SHOpenWithDialog and OPENASINFO are declared for Vista and later only, newer than the WINVER of the project
+	struct COpenAsInfo {
+		LPCWSTR pcszFile;
+		LPCWSTR pcszClass;
+		int oaifInFlags;
+	};
+	const int OAIF_ALLOW_REGISTRATION_ = 0x1, OAIF_EXEC_ = 0x4;
+	typedef HRESULT(WINAPI* SHOpenWithDialogFunc)(HWND, const COpenAsInfo*);
+	SHOpenWithDialogFunc pOpenWith = (SHOpenWithDialogFunc)::GetProcAddress(::GetModuleHandle(_T("shell32.dll")), "SHOpenWithDialog");
+	CString sFile = m_pFileList->Current();
+	COpenAsInfo info = { sFile, NULL, OAIF_ALLOW_REGISTRATION_ | OAIF_EXEC_ };
+	if (pOpenWith == NULL || FAILED(pOpenWith(m_hWnd, &info))) {
+		SHELLEXECUTEINFO execInfo = { 0 };
+		execInfo.cbSize = sizeof(execInfo);
+		execInfo.hwnd = m_hWnd;
+		execInfo.lpVerb = _T("openas");
+		execInfo.lpFile = sFile;
+		execInfo.nShow = SW_SHOWNORMAL;
+		::ShellExecuteEx(&execInfo);
 	}
 }
 

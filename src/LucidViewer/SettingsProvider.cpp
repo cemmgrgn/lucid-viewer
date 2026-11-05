@@ -211,6 +211,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_nMinDisplaySize = GetInt(_T("MinDisplaySize"), 600, 0, 4000);
 	m_bSmoothAnimations = GetBool(_T("SmoothAnimations"), true);
 	m_nSidePanelTab = GetInt(_T("SidePanelTab"), 0, 0, 2);
+	m_sLastTargetFolder = GetString(_T("LastTargetFolder"), _T(""));
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
 	m_bSaveWithoutPrompt = GetBool(_T("OverwriteOriginalFileWithoutSaveDialog"), false);
 	m_bCropWithoutPromptLosslessJPEG = GetBool(_T("CropWithoutPromptLosslessJPEG"), false);
@@ -601,6 +602,14 @@ void CSettingsProvider::SaveSidePanelTab(int nTab) {
 	MakeSureUserINIExists();
 	m_nSidePanelTab = nTab;
 	WriteInt(_T("SidePanelTab"), nTab);
+	m_bUserINIExists = true;
+}
+
+void CSettingsProvider::SaveLastTargetFolder(LPCTSTR sFolder) {
+	if (m_sLastTargetFolder.CompareNoCase(sFolder) == 0) return;
+	MakeSureUserINIExists();
+	m_sLastTargetFolder = sFolder;
+	WriteString(_T("LastTargetFolder"), sFolder);
 	m_bUserINIExists = true;
 }
 

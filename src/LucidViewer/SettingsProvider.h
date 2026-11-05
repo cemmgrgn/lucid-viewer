@@ -156,6 +156,9 @@ public:
 	void SaveShowFilmstrip(bool bShow);
 	int SidePanelTab() { return m_nSidePanelTab; }
 	void SaveSidePanelTab(int nTab);
+	// folder of the last 'Copy to folder' or 'Move to folder', kept in the user INI file (not shown in the settings)
+	LPCTSTR LastTargetFolder() { return m_sLastTargetFolder; }
+	void SaveLastTargetFolder(LPCTSTR sFolder);
 
 	double ZoomPauseFactor() { return m_zoomPauseFactor; }  // while internally this is represented in doubles, using a whole number percent simplifies it for the user... configuring doubles is not user friendly at all
 
@@ -342,6 +345,7 @@ private:
 	CString m_sConvertCustomPresets;
 	CString m_sConvertOutputFolder;
 	CString m_sScreenshotFolder;
+	CString m_sLastTargetFolder;
 	CString m_sOcrLanguage;
 	CString m_sScreenshotHotkey;
 	CString m_sScreenshotTextHotkey;

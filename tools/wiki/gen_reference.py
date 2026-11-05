@@ -30,7 +30,7 @@ def category(name):
            "EXPLORER_CONVERT", "SAVE_PARAMETERS", "OPENWITH", "UPDATES"):
         return 5
     if has("OPEN", "SAVE", "RELOAD", "PRINT", "COPY", "PASTE", "EXPLORE", "BATCH", "RENAME", "RECYCLE", "DELETE",
-           "TOUCH", "WALLPAPER", "EXPORT", "SHARE", "CONVERT", "EXIT", "METADATA", "TO_FOLDER"):
+           "TOUCH", "WALLPAPER", "EXPORT", "SHARE", "CONVERT", "EXIT", "METADATA", "TO_FOLDER", "PROPERTIES"):
         return 0
     if has("NEXT", "PREV", "FIRST", "LAST", "LOOP", "SORT", "RATING") or name == "IDM_TOGGLE":
         return 1

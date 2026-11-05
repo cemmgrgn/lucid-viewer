@@ -480,9 +480,11 @@ private:
 	void OpenFolderWithDialog();
 	// Copies or moves the current file into a folder chosen with the folder dialog
 	void CopyOrMoveToFolder(bool bMove);
+	// Explorer properties of the current file, and the Windows 'Open with' window
+	void ShowFileProperties();
+	void OpenWithOtherApp();
 	// Moves a file, the current image is left first if it is the moved file. Returns false on error.
 	bool MoveImageFile(const CString& sFrom, const CString& sTo);
-	CString m_sLastTargetFolder; // folder of the last 'Copy to folder' or 'Move to folder'
 	bool m_bUpdateCheckRunning;
 	void ExecuteCommandInternal(int nCommand);
 	// Sub menu for sorting and filtering by the star rating

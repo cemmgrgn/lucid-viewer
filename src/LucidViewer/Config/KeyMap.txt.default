@@ -100,3 +100,5 @@ Alt+Return              IDM_SHOW_METADATA
 Ctrl+Alt+C              IDM_COPY_FILE
 Ctrl+Shift+F            IDM_COPY_TO_FOLDER
 Ctrl+Shift+X            IDM_MOVE_TO_FOLDER
+Alt+Shift+Return        IDM_FILE_PROPERTIES
+Ctrl+Shift+O            IDM_OPEN_WITH_OTHER_APP

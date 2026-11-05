@@ -6,7 +6,10 @@
 - **Copy file** (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>): the file itself goes to the clipboard and can be pasted in
   Explorer, a mail or a chat.
 - **Copy to folder** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>) and **Move to folder** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>)
-  in the File and context menu. The last folder is suggested, a move shows the next photo and can be undone.
+  in the File and context menu. The last folder is suggested (also after a restart), a move shows the next photo and
+  can be undone.
+- **File properties** (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd>): the properties window of Explorer.
+- **Open with another app** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>): the *Open with* window of Windows.
 - **Help → Check for updates**: compares the version with the latest release on GitHub and opens the download page.
   Only on request, the program never checks by itself.
 
@@ -20,6 +23,10 @@
 - *Set as default viewer* did nothing on Windows 10 and 11, it now opens the default apps page of the Windows settings
   (on Windows 11 the page of Lucid Viewer) and does not register the program a second time after an all-users setup.
 - Closing the window with a slow network folder in the thumbnail strip could crash.
+- The background removal model downloaded by the program is checked (SHA-256, as the setup does). A broken download
+  was kept before and background removal failed until the file was deleted by hand.
+- Dropping a file with a long path opened a cut path, a dropped item that does not exist was taken for a folder,
+  and the drop was not released while a panel was open. Folders longer than 260 characters were not watched for changes.
 - Changing permissions of a protected file association kept only the allowed entries of the original list.
 
 ### Old JPEGView parts and leftovers removed

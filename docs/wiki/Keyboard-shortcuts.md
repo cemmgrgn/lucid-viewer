@@ -23,6 +23,8 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd> | Copy file |
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Copy to folder... |
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> | Move to folder... |
+| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Return</kbd> | File properties... |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd> | Open with another app... |
 
 ## Navigation
 
