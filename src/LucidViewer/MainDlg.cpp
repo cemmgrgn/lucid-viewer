@@ -1953,7 +1953,16 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			}
 			break;
 		case IDM_COPY:
-			if (m_pCurrentImage != NULL) {
+			if (m_pCurrentImage != NULL && HasTransparency() &&
+				m_transparencyBackup.size() == (size_t)m_pCurrentImage->OrigWidth() * m_pCurrentImage->OrigHeight() * 4 &&
+				m_transparencyMask.size() == (size_t)m_pCurrentImage->OrigWidth() * m_pCurrentImage->OrigHeight()) {
+				// removed background: the whole image with transparency, so it can be pasted into documents and chats
+				HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+				bool bCopied = CClipboard::CopyTransparentImageToClipboard(m_hWnd, &m_transparencyBackup[0], &m_transparencyMask[0],
+					m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight());
+				::SetCursor(hOldCursor);
+				m_pChrome->ShowMessage(CNLS::GetString(bCopied ? _T("The image was copied with transparency.") : _T("The image could not be copied to the clipboard.")));
+			} else if (m_pCurrentImage != NULL) {
 				CClipboard::CopyImageToClipboard(this->m_hWnd, m_pCurrentImage, m_pFileList->Current());
 			}
 			break;
@@ -2980,7 +2989,11 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 					PushUndo(true);
 					ApplyTransparencyMask(alpha);
 					m_pChrome->ShowSideTab(CWindowChrome::TAB_DRAW);
-					m_pChrome->ShowMessage(CNLS::GetString(_T("Background removed. Save it with 'Save as transparent PNG'.")));
+					CString sMessage;
+					CString sCopyKey = m_pKeyMap->GetKeyStringForCommand(IDM_COPY);
+					sMessage.Format(CNLS::GetString(_T("Background removed. Save it with 'Save as transparent PNG' or copy it with %s.")),
+						sCopyKey.IsEmpty() ? _T("Ctrl+C") : (LPCTSTR)sCopyKey);
+					m_pChrome->ShowMessage(sMessage);
 				}
 			}
 			break;
@@ -5901,6 +5914,7 @@ bool CMainDlg::MoveImageFile(const CString& sFrom, const CString& sTo) {
 		sFrom.CompareNoCase(m_pFileList->Current()) == 0;
 	if (!bIsCurrent) {
 		if (!::MoveFileEx(sFrom, sTo, MOVEFILE_COPY_ALLOWED)) return false;
+		CStartScreen::FileMoved(sFrom, sTo);
 		if (m_pFileList != NULL) m_pFileList->Reload(NULL, false);
 		Invalidate();
 		return true;
@@ -5909,6 +5923,7 @@ bool CMainDlg::MoveImageFile(const CString& sFrom, const CString& sTo) {
 	CFileList* pFileListOfMovedImage = m_pFileList;
 	GotoImage(POS_AwayFromCurrent, NO_REQUEST);
 	if (::MoveFileEx(sFrom, sTo, MOVEFILE_COPY_ALLOWED)) {
+		CStartScreen::FileMoved(sFrom, sTo);
 		pFileListOfMovedImage->Reload(NULL, false);
 		m_pFileList->DeleteHistory(true);
 		Invalidate();

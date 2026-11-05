@@ -18,6 +18,7 @@
 #include "HelpersGUI.h"
 #include "Helpers.h"
 #include "NLS.h"
+#include "StartScreen.h"
 
 CImageProcPanelCtl::CImageProcPanelCtl(CMainDlg* pMainDlg, CImageProcessingParams* pParams, bool* pEnableLDC, bool* pEnableContrastCorr) 
 : CPanelController(pMainDlg, false) {
@@ -237,6 +238,7 @@ bool CImageProcPanelCtl::RenameCurrentFile(LPCTSTR sNewFileTitle) {
 	CString sCurFileName(sCurrentFileName); // copy, ptr will be replaced
 	m_pMainDlg->GetFileList()->FileHasRenamed(sCurFileName, sNewFileName);
 	m_pMainDlg->GetJPEGProvider()->FileHasRenamed(sCurFileName, sNewFileName);
+	CStartScreen::FileMoved(sCurFileName, sNewFileName);
 
 	// Needs to update filename
 	if (m_pMainDlg->GetEXIFDisplayCtl()->IsActive() || m_pMainDlg->IsShowFileName()) {

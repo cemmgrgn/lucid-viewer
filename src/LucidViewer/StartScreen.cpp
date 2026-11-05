@@ -109,6 +109,26 @@ void CStartScreen::SetPinned(LPCTSTR sFile, bool bPinned) {
 	WriteLines(_T("StartPinned.txt"), lines);
 }
 
+void CStartScreen::FileMoved(LPCTSTR sOldFile, LPCTSTR sNewFile) {
+	if (s_bTestLists || sOldFile == NULL || sNewFile == NULL || sOldFile[0] == 0 || sNewFile[0] == 0) return;
+	std::vector<CString> pinned = ReadLines(_T("StartPinned.txt"));
+	bool bChanged = false;
+	for (CString& sLine : pinned) {
+		if (sLine.CompareNoCase(sOldFile) == 0) { sLine = sNewFile; bChanged = true; }
+	}
+	if (bChanged) WriteLines(_T("StartPinned.txt"), pinned);
+	std::vector<CString> recent = ReadLines(_T("StartRecent.txt"));
+	bChanged = false;
+	for (CString& sLine : recent) {
+		int nTab = sLine.Find(_T('\t'));
+		if (RecentPath(sLine).CompareNoCase(sOldFile) == 0) {
+			sLine = (nTab > 0 ? sLine.Left(nTab + 1) : CString()) + sNewFile;
+			bChanged = true;
+		}
+	}
+	if (bChanged) WriteLines(_T("StartRecent.txt"), recent);
+}
+
 void CStartScreen::SetTestLists(const std::vector<CString>& recent, const std::vector<CString>& pinned, const std::vector<CString>& screenshots) {
 	s_bTestLists = true;
 	s_testRecent = recent;

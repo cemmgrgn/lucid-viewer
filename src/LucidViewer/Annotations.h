@@ -74,6 +74,9 @@ public:
 	// Writes 32 bpp BGRA pixels with the alpha values of the mask (0: transparent) as PNG, returns false on error
 	static bool SaveTransparentPNG(LPCTSTR sFileName, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight);
 
+	// The same PNG in memory, for the clipboard. Returns a movable HGLOBAL owned by the caller, NULL on error.
+	static HGLOBAL EncodeTransparentPNG(const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight);
+
 	// Window to draw the signature with the mouse or pen, saves it. Returns false if cancelled.
 	static bool DrawSignature(HWND hParent);
 

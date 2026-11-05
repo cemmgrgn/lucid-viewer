@@ -26,6 +26,10 @@ public:
 	// The path is put on the clipboard as text as well. Returns false on error.
 	static bool CopyFileToClipboard(HWND hWnd, LPCTSTR fileName);
 
+	// Copy an image with transparency: as PNG (kept by Office, browsers, chats) and as DIB on white for other programs.
+	// pBGRA are the original pixels, pMask the alpha per pixel. Returns false on error.
+	static bool CopyTransparentImageToClipboard(HWND hWnd, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight);
+
 	// Paste image from clipboard. Returns NULL if paste failed. The caller gets ownership of the returned image.
 	static CJPEGImage* PasteImageFromClipboard(HWND hWnd, const CImageProcessingParams& procParams, EProcessingFlags eFlags);
 

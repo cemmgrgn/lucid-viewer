@@ -496,3 +496,6 @@ Lucid Viewer %s is available, you have version %s. Open the download page?
 You have the latest version (%s).	
 File properties...	
 Open with another app...	
+The image was copied with transparency.	
+The image could not be copied to the clipboard.	
+Background removed. Save it with 'Save as transparent PNG' or copy it with %s.	

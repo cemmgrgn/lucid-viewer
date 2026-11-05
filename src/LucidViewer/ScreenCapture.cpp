@@ -90,6 +90,18 @@ static CString GetNewScreenshotName(LPCTSTR sExtension) {
 	return sName;
 }
 
+// Full path of a new screenshot file. Two screenshots in the same second get 'name (2).png', the first is not overwritten.
+static CString GetNewScreenshotPath(LPCTSTR sExtension) {
+	CString sFolder = GetScreenshotFolder();
+	CString sName = GetNewScreenshotName(sExtension);
+	CString sPath = sFolder + _T("\\") + sName;
+	CString sBase = sPath.Left(sPath.GetLength() - (int)_tcslen(sExtension) - 1);
+	for (int i = 2; ::GetFileAttributes(sPath) != INVALID_FILE_ATTRIBUTES && i < 1000; i++) {
+		sPath.Format(_T("%s (%d).%s"), (LPCTSTR)sBase, i, sExtension);
+	}
+	return sPath;
+}
+
 static bool GetEncoder(LPCWSTR sMimeType, CLSID& clsid) {
 	UINT nEncoders = 0, nSize = 0;
 	Gdiplus::GetImageEncodersSize(&nEncoders, &nSize);
@@ -1746,7 +1758,7 @@ void COverlay::Copy() {
 	if (nWidth > 0 && nHeight > 0 && CopyPixelsToClipboard(m_hWnd, pixels, nWidth, nHeight)) {
 		// screenshot history: also the copied ones are kept in the folder (shown on the start screen of the viewer)
 		if (CSettingsProvider::This().ScreenshotHistory()) {
-			SavePixels(GetScreenshotFolder() + _T("\\") + GetNewScreenshotName(_T("png")), pixels, nWidth, nHeight);
+			SavePixels(GetNewScreenshotPath(_T("png")), pixels, nWidth, nHeight);
 		}
 		Close(RESULT_NONE);
 		ShowToast(CNLS::GetString(_T("The screenshot was copied to the clipboard.")), false);
@@ -1758,7 +1770,7 @@ void COverlay::Save() {
 	int nWidth, nHeight;
 	GetCrop(pixels, nWidth, nHeight);
 	if (nWidth <= 0 || nHeight <= 0) return;
-	CString sFileName = GetScreenshotFolder() + _T("\\") + GetNewScreenshotName(_T("png"));
+	CString sFileName = GetNewScreenshotPath(_T("png"));
 	int nFilterIndex = 1;
 	CString sFilter = _T("PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|");
 	if (!HelpersGUI::ShowFileDialog(m_hWnd, true, sFilter, _T("png"), sFileName, CNLS::GetString(_T("Save screenshot")), nFilterIndex, sFileName)) {
@@ -1779,7 +1791,7 @@ void COverlay::OpenInViewer() {
 	GetCrop(pixels, nWidth, nHeight);
 	if (nWidth <= 0 || nHeight <= 0) return;
 	// saved in the screenshot folder, so the file is there to be edited, shared or deleted
-	CString sFileName = GetScreenshotFolder() + _T("\\") + GetNewScreenshotName(_T("png"));
+	CString sFileName = GetNewScreenshotPath(_T("png"));
 	if (!SavePixels(sFileName, pixels, nWidth, nHeight)) {
 		::MessageBox(m_hWnd, CNLS::GetString(_T("Error writing file to disk!")), CNLS::GetString(_T("Screenshot")), MB_OK | MB_ICONERROR);
 		return;
