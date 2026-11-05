@@ -27,7 +27,8 @@ Open an [issue](https://github.com/cemmgrgn/lucid-viewer/issues) with
 ## Translations
 
 The string tables are in `src/LucidViewer/Config/strings_<language>.txt`, one `English<TAB>Translation` pair per line.
-Many lines added by Lucid Viewer are not translated yet in most languages, help is welcome.
+Turkish, German, French and Spanish are complete. In the other languages the lines added by Lucid Viewer are not
+translated yet (they are shown in English), help is welcome; `strings.txt` lists all English texts.
 
 ## License
 

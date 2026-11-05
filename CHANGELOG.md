@@ -74,6 +74,8 @@
   repository.
 
 ### Changed
+- All texts of Lucid Viewer are translated to Turkish, German, French and Spanish; `strings.txt` lists all English texts
+  for translators.
 - WICLoader.dll and the installer carry the product name *Lucid Viewer* and the same version as the program (one
   version in `src/Version.h`), as code signing requires.
 

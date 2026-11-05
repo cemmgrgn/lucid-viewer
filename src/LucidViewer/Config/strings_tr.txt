@@ -132,7 +132,7 @@ Error saving file	Dosya kaydedilirken sorun çıktı
 Error while writing the following registry key	Şu kayıt anahtarı yazılırken sorun çıktı
 Error writing file to disk!	Dosya diske yazılırken sorun çıktı!
 Example:	Örnek:
-Exif Date Time:	
+Exif Date Time:	Exif tarih/saat:
 Exposure bias (EV):	Pozlama telafisi (EV):
 Exposure time (s):	Pozlama süresi (s):
 Extension	Uzatma
@@ -338,7 +338,7 @@ Slide from right	Sağdan üstüne kaydır
 Slide from top	Üstten üstüne kaydır
 Slideshow	Sunum
 Slideshow with timeout of 'n' seconds (ESC to stop)	'n' saniye zaman aşımı ile sunum (durdurmak için ESC)
-Software:	
+Software:	Yazılım:
 Sort images by creation date, resp. modification date, resp. file name	Görselleri oluşturulma  tarihi, değiştirilme tarihi ya da dosya adına göre sıralar
 Source:	Kaynak:
 Target folders that do not yet exist are created as needed.	Var olmayan hedef klasörler oluşturulur.
