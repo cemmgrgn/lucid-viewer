@@ -11,8 +11,8 @@
 typedef stdext::hash_map<LPCTSTR, LPCTSTR, CHashCompareLPCTSTR> IniHashMap;
 
 // INI settings
-// All settings are first searched in a file name JPEGView.ini located in User/AppData/Roaming/JPEGView
-// If not found there, the setting is searched in JPEGView.ini located in the EXE path of the application
+// All settings are first searched in a file name LucidViewer.ini located in User/AppData/Roaming/LucidViewer
+// If not found there, the setting is searched in LucidViewer.ini located in the EXE path of the application
 class CSettingsProvider
 {
 public:
@@ -151,23 +151,27 @@ public:
 	bool ShowStartScreen() { return m_bShowStartScreen; }
 	bool ScreenshotHistory() { return m_bScreenshotHistory; }
 	bool RememberRecentFiles() { return m_bRememberRecentFiles; }
+	bool OpenLastImage() { return m_bOpenLastImage; }
 	int MinDisplaySize() { return m_nMinDisplaySize; }
 	bool SmoothAnimations() { return m_bSmoothAnimations; }
 	void SaveShowFilmstrip(bool bShow);
 	int SidePanelTab() { return m_nSidePanelTab; }
 	void SaveSidePanelTab(int nTab);
+	// folder of the last 'Copy to folder' or 'Move to folder', kept in the user INI file (not shown in the settings)
+	LPCTSTR LastTargetFolder() { return m_sLastTargetFolder; }
+	void SaveLastTargetFolder(LPCTSTR sFolder);
 
 	double ZoomPauseFactor() { return m_zoomPauseFactor; }  // while internally this is represented in doubles, using a whole number percent simplifies it for the user... configuring doubles is not user friendly at all
 
 	// Returns if a user INI file exists
 	bool ExistsUserINI();
-	// Copies the user INI file (in AppData/Roaming) from the INI file template JPEGView.ini.tpl
+	// Copies the user INI file (in AppData/Roaming) from the INI file template LucidViewer.ini.tpl
 	void CopyUserINIFromTemplate();
 
 	std::list<CUserCommand*> & UserCommandList() { return m_userCommands; }
 	std::list<CUserCommand*> & OpenWithCommandList() { return m_openWithCommands; }
 
-	// This will only save a subset of settings to the INI file located in AppData\JPEGView\JPEGView.ini.
+	// This will only save a subset of settings to the INI file located in AppData\LucidViewer\LucidViewer.ini.
 	// Note that this INI file has precedence over the INI file at the program directory
 	void SaveSettings(const CImageProcessingParams& procParams,
 		EProcessingFlags eProcFlags,
@@ -342,6 +346,7 @@ private:
 	CString m_sConvertCustomPresets;
 	CString m_sConvertOutputFolder;
 	CString m_sScreenshotFolder;
+	CString m_sLastTargetFolder;
 	CString m_sOcrLanguage;
 	CString m_sScreenshotHotkey;
 	CString m_sScreenshotTextHotkey;
@@ -350,6 +355,7 @@ private:
 	bool m_bShowStartScreen;
 	bool m_bScreenshotHistory;
 	bool m_bRememberRecentFiles;
+	bool m_bOpenLastImage;
 	int m_nMinDisplaySize;
 	bool m_bSmoothAnimations;
 	int m_nSidePanelTab;

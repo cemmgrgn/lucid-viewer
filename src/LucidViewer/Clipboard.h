@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ProcessParams.h"
+#include <vector>
 
 class CJPEGImage;
 
@@ -19,8 +20,21 @@ public:
 	static void CopyFullImageToClipboard(HWND hWnd, CJPEGImage * pImage, const CImageProcessingParams& procParams,
 		EProcessingFlags eFlags, CRect clipRect, LPCTSTR fileName);
 
+	// Copy a text to the clipboard, returns false on error
+	static bool CopyTextToClipboard(HWND hWnd, LPCTSTR sText);
+
 	// Copy file path to the clipboard.
 	static void CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR fileName);
+
+	// Copy the file itself to the clipboard (as Explorer does with Ctrl+C), it can be pasted in Explorer, mails and chats.
+	// The path is put on the clipboard as text as well. Returns false on error.
+	static bool CopyFileToClipboard(HWND hWnd, LPCTSTR fileName);
+	// The same for several files
+	static bool CopyFilesToClipboard(HWND hWnd, const std::vector<CString>& fileNames);
+
+	// Copy an image with transparency: as PNG (kept by Office, browsers, chats) and as DIB on white for other programs.
+	// pBGRA are the original pixels, pMask the alpha per pixel. Returns false on error.
+	static bool CopyTransparentImageToClipboard(HWND hWnd, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight);
 
 	// Paste image from clipboard. Returns NULL if paste failed. The caller gets ownership of the returned image.
 	static CJPEGImage* PasteImageFromClipboard(HWND hWnd, const CImageProcessingParams& procParams, EProcessingFlags eFlags);

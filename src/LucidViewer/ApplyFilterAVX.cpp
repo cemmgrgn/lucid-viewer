@@ -10,7 +10,7 @@
 	int16* name = (int16*)((((PTR_INTEGRAL_TYPE)&(_tempVal##name) + 31) & ~31)); \
 	name[0] = name[1] = name[2] = name[3] = name[4] = name[5] = name[6] = name[7] = name[8] = name[9] = name[10] = name[11] = name[12] = name[13] = name[14] = name[15] = initializer;
 
-#ifdef _WIN64
+#if defined(_M_X64)
 
 CXMMImage* ApplyFilter_AVX(int nSourceHeight, int nTargetHeight, int nWidth,
 	int nStartY_FP, int nStartX, int nIncrementY_FP,

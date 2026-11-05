@@ -5,9 +5,14 @@
 #include <urlmon.h>
 #include <shlobj_core.h>
 #include <commctrl.h>
+#include <bcrypt.h>
 #include <thread>
 #include <atomic>
 #include <algorithm>
+#include <vector>
+#include <string>
+#include <cstdio>
+#include <cstring>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.AI.MachineLearning.h>
@@ -15,6 +20,7 @@
 
 #pragma comment(lib, "windowsapp")
 #pragma comment(lib, "urlmon")
+#pragma comment(lib, "bcrypt")
 
 using namespace winrt::Windows::AI::MachineLearning;
 
@@ -22,6 +28,37 @@ namespace BackgroundRemoval {
 
 	static const wchar_t* MODEL_URL = L"https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx";
 	static const int MODEL_SIZE = 320; // input size of U2-Net
+	// SHA-256 of the model file, the same as the setup checks (installer\LucidViewer.iss)
+	static const char* MODEL_SHA256 = "8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491";
+
+	// True if the file has the SHA-256 of the model: a broken download (or an error page of a proxy) must not be kept,
+	// it would count as model and background removal would fail until the file is deleted by hand
+	static bool HasModelHash(const std::wstring& sFile) {
+		BCRYPT_ALG_HANDLE hAlgorithm = NULL;
+		BCRYPT_HASH_HANDLE hHash = NULL;
+		if (!BCRYPT_SUCCESS(::BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_SHA256_ALGORITHM, NULL, 0))) return false;
+		bool bOk = BCRYPT_SUCCESS(::BCryptCreateHash(hAlgorithm, &hHash, NULL, 0, NULL, 0, 0));
+		HANDLE hFile = bOk ? ::CreateFileW(sFile.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL) : INVALID_HANDLE_VALUE;
+		bOk = hFile != INVALID_HANDLE_VALUE;
+		if (bOk) {
+			std::vector<unsigned char> buffer(1024 * 1024);
+			DWORD nRead = 0;
+			while (bOk && ::ReadFile(hFile, buffer.data(), (DWORD)buffer.size(), &nRead, NULL) && nRead > 0) {
+				bOk = BCRYPT_SUCCESS(::BCryptHashData(hHash, buffer.data(), nRead, 0));
+			}
+			::CloseHandle(hFile);
+		}
+		unsigned char digest[32] = { 0 };
+		bOk = bOk && BCRYPT_SUCCESS(::BCryptFinishHash(hHash, digest, sizeof(digest), 0));
+		if (hHash != NULL) ::BCryptDestroyHash(hHash);
+		::BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+		if (!bOk) return false;
+		char sHex[65];
+		for (int i = 0; i < 32; i++) {
+			sprintf_s(sHex + 2 * i, 3, "%02x", digest[i]);
+		}
+		return strcmp(sHex, MODEL_SHA256) == 0;
+	}
 
 	static std::wstring GetModelPath() {
 		// The installer puts the model next to the program (models\u2net.onnx), use that copy when it is there
@@ -161,7 +198,7 @@ namespace BackgroundRemoval {
 		::DestroyWindow(hWnd);
 		::DeleteObject(hFont);
 		::SetActiveWindow(hParent);
-		if (FAILED(hrDownload) || callback.Cancel) {
+		if (FAILED(hrDownload) || callback.Cancel || !HasModelHash(sTemp)) {
 			::DeleteFileW(sTemp.c_str());
 			return false;
 		}

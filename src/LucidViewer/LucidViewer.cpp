@@ -1,4 +1,4 @@
-// JPEGView.cpp : main entry point for JPEGView.exe
+// LucidViewer.cpp : main entry point for LucidViewer.exe
 
 #include "stdafx.h"
 #include <locale.h>
@@ -22,15 +22,21 @@ CAppModule _Module;
 static HWND _HWNDOtherInstance = NULL;
 
 static BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
-	const int BUF_LEN = 255;
-	TCHAR buff[BUF_LEN + 1];
-	buff[BUF_LEN] = 0;
-	::GetWindowText(hwnd, (LPTSTR)&buff, BUF_LEN);
-	if (_tcsstr(buff, _T(" - Lucid Viewer")) != NULL) {
+	// the main window of a running instance carries this property, also on the start screen where the title has no file name
+	if (::GetProp(hwnd, MAIN_WINDOW_PROP) != NULL) {
 		_HWNDOtherInstance = hwnd;
 		return FALSE;
 	}
 	return TRUE;
+}
+
+// Brings the window of the running instance to the front, restored if it was minimized. The new process was started
+// by the user and may set the foreground window.
+static void ActivateOtherInstance(HWND hWnd) {
+	if (::IsIconic(hWnd)) {
+		::ShowWindowAsync(hWnd, SW_RESTORE);
+	}
+	::SetForegroundWindow(hWnd);
 }
 
 static CString ParseCommandLineForStartupFile(LPCTSTR sCommandLine) { 
@@ -84,6 +90,11 @@ static int ParseCommandLineForAutostart(LPCTSTR sCommandLine) {
 
 static bool ParseCommandLineForFullScreen(LPCTSTR sCommandLine) {
 	return Helpers::stristr(sCommandLine, _T("/fullscreen")) != NULL;
+}
+
+// '/newwindow': opens a window of its own also in single instance mode (Open in new window)
+static bool ParseCommandLineForNewWindow(LPCTSTR sCommandLine) {
+	return Helpers::stristr(sCommandLine, _T("/newwindow")) != NULL;
 }
 
 static bool ParseCommandLineForAutoExit(LPCTSTR sCommandLine) {
@@ -149,7 +160,7 @@ static BOOL GenerateDump(EXCEPTION_POINTERS* pExceptionPointers)
 
 	CString fileName;
 	fileName.Format(_T("%s\\%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp"),
-		Helpers::JPEGViewAppDataPath(), szAppName,
+		Helpers::AppDataPath(), szAppName,
 		stLocalTime.wYear, stLocalTime.wMonth, stLocalTime.wDay,
 		stLocalTime.wHour, stLocalTime.wMinute, stLocalTime.wSecond,
 		GetCurrentProcessId(), GetCurrentThreadId());
@@ -170,7 +181,7 @@ static LONG WINAPI CrashHandler(EXCEPTION_POINTERS * pExceptionInfo)
 	::EnterCriticalSection(&s_lock);
 	if (GenerateDump(pExceptionInfo))
 	{
-		::MessageBox(NULL, CString(_T("Unhandled exception\nMinidump file written to:\n")) + Helpers::JPEGViewAppDataPath(), _T("Unhandled exception"), MB_OK);
+		::MessageBox(NULL, CString(_T("Unhandled exception\nMinidump file written to:\n")) + Helpers::AppDataPath(), _T("Unhandled exception"), MB_OK);
 	}
 	else
 	{
@@ -255,7 +266,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	// Searches for other instances and terminates them
 	bool bFileLoadedByExistingInstance = false;
 	HANDLE hMutex = ::CreateMutex(NULL, FALSE, _T("LucidViewer.Instance"));
-	if (::GetLastError() == ERROR_ALREADY_EXISTS) {
+	if (::GetLastError() == ERROR_ALREADY_EXISTS && !ParseCommandLineForNewWindow(lpstrCmdLine)) {
 		::EnumWindows((WNDENUMPROC)EnumWindowsProc, 0);
 		if (_HWNDOtherInstance != NULL) {
 			// Other instance found, send the filename to be loaded to this instance
@@ -266,7 +277,10 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 			ULONG_PTR result = 0;
 			PDWORD_PTR resultPtr = &result;
 			LRESULT res = ::SendMessageTimeout(_HWNDOtherInstance, WM_COPYDATA, 0, (LPARAM)&copyData, 0, 250, resultPtr);
-			bFileLoadedByExistingInstance = *resultPtr == (ULONG_PTR)KEY_MAGIC;
+			bFileLoadedByExistingInstance = res != 0 && *resultPtr == (ULONG_PTR)KEY_MAGIC;
+			if (bFileLoadedByExistingInstance) {
+				ActivateOtherInstance(_HWNDOtherInstance);
+			}
 		}
 	}
 
@@ -279,20 +293,24 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 		Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 		StartupTrace::Mark("GDI+ started");
-		CMainDlg dlgMain(bForceFullScreen);
-		StartupTrace::Mark("CMainDlg constructed");
+		{
+			// own scope: the main window and everything it owns (start screen thumbnails, drawings) holds GDI+ objects,
+			// they must be deleted before GDI+ is shut down
+			CMainDlg dlgMain(bForceFullScreen);
+			StartupTrace::Mark("CMainDlg constructed");
 
-		dlgMain.SetStartupInfo(sStartupFile, nAutostartSlideShow, eSorting, eTransitionEffect, nTransitionTime, bAutoExit, nDisplayMonitor);
+			dlgMain.SetStartupInfo(sStartupFile, nAutostartSlideShow, eSorting, eTransitionEffect, nTransitionTime, bAutoExit, nDisplayMonitor);
 
-		try {
-			nRet = (int)dlgMain.DoModal();
-			if (CSettingsProvider::This().StickyWindowSize() && !dlgMain.IsFullScreenMode()) {
-				CSettingsProvider::This().SaveStickyWindowRect(dlgMain.WindowRectOnClose());
+			try {
+				nRet = (int)dlgMain.DoModal();
+				if (CSettingsProvider::This().StickyWindowSize() && !dlgMain.IsFullScreenMode()) {
+					CSettingsProvider::This().SaveStickyWindowRect(dlgMain.WindowRectOnClose());
+				}
+				::ShowCursor(TRUE);
 			}
-			::ShowCursor(TRUE);
-		}
-		catch (...) {
-			::ShowCursor(TRUE);
+			catch (...) {
+				::ShowCursor(TRUE);
+			}
 		}
 
 		// Shut down GDI+

@@ -177,6 +177,9 @@ EscapeClosesWindow=false
 ; If false, the file open dialog is shown when Lucid Viewer is started without an image.
 ShowStartScreen=true
 
+; Started without an image, Lucid Viewer opens the photo viewed last (needs RememberRecentFiles=true)
+OpenLastImage=false
+
 ; Remember the recently opened photos and show them on the start screen. If false, nothing is written to
 ; StartRecent.txt and the recent row stays empty.
 RememberRecentFiles=true
@@ -256,7 +259,7 @@ ScaleFactorNavPanel=1.0
 ; *****************************************************************************
 
 ; Sorting order of the files when displaying the image files in a folder
-; Can be LastModDate, CreationDate, FileName, FileSize or Random
+; Can be LastModDate, CreationDate, FileName, FileSize, Random, Rating (star rating) or DateTaken (EXIF date the photo was taken)
 FileDisplayOrder=LastModDate
 
 ; Sort files ascending (increasing, e.g. A->Z, 0->9) or descending (decreasing, e.g. Z->A, 9->0)

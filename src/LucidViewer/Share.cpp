@@ -8,6 +8,9 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include <winrt/Windows.Storage.h>
+#include <winrt/Windows.System.UserProfile.h>
+#include <thread>
+#include <string>
 #include "Share.h"
 
 #pragma comment(lib, "windowsapp")
@@ -60,6 +63,25 @@ namespace Share {
 			pFactory->Release();
 		}
 		return hBitmap;
+	}
+
+	bool SetLockScreenImage(LPCWSTR sFileName) {
+		bool bSuccess = false;
+		std::wstring sFile(sFileName);
+		// the asynchronous calls are waited for in a thread of the multi-threaded apartment, not in the UI thread
+		std::thread worker([&]() {
+			try {
+				winrt::init_apartment(winrt::apartment_type::multi_threaded);
+				StorageFile file = StorageFile::GetFileFromPathAsync(sFile).get();
+				winrt::Windows::System::UserProfile::LockScreen::SetImageFileAsync(file).get();
+				bSuccess = true;
+			} catch (...) {
+				bSuccess = false;
+			}
+			winrt::uninit_apartment();
+		});
+		worker.join();
+		return bSuccess;
 	}
 
 	bool DragFile(HWND hWnd, LPCWSTR sFileName) {

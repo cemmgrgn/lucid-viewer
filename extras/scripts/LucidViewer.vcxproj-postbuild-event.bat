@@ -9,7 +9,7 @@ REM NOTE: this batch file does not fail on error, it will continue processing (j
 
 
 IF /I "%~4" EQU "" (
-	echo ERROR: This batch file is meant to be run from src\JPEGView vcxproj's Post-Build Event
+	echo ERROR: This batch file is meant to be run from src\LucidViewer vcxproj's Post-Build Event
 	echo;
 	echo    It requires VS Macro parameters to function properly.
 	exit /b 1
@@ -18,13 +18,13 @@ IF /I "%~4" EQU "" (
 REM ----------- VARIABLES FROM Visual Studio -----------
 REM these match the order in the call from post-build event
 
-REM 32 or 64
+REM 32, 64 or ARM64
 SET PLATFORM_ARCHITECTURE=%~1
 
 REM base name of the project, to detect if we're building the VS2017 version
 SET PROJECT_NAME=%~2
 
-REM absolute path to src\JPEGView, with trailing "\"
+REM absolute path to src\LucidViewer, with trailing "\"
 SET PROJECT_DIR=%~3
 
 REM absolute path to the output dir (target to copy to) with trailing backslash
@@ -52,15 +52,14 @@ echo ~ ErrorLevel: %ErrorLevel%
 
 
 REM ----------- COPY DLL FILES -----------
-REM qbnu standardized JPEGView's DLL structure which puts DLLs in either the bin (32-bit) or bin64 (64-bit) folders
-
-IF /I "%PROJECT_NAME%" EQU "JPEGView_VS2017" (
-	REM specifically for VS2017:  Currently, VS2017 project file is used to build the XP-version ONLY
-	REM the XP version does NOT support any of the new DLLs at this time
+REM ARM64: the libraries are built by vcpkg (CI), their DLLs are in deps\arm64\bin
+IF /I "%PLATFORM_ARCHITECTURE%" EQU "ARM64" (
+	echo + XCopy ARM64 DLLs of vcpkg ...
+	xcopy "%PROJECT_DIR%..\..\deps\arm64\bin\*.dll" "%OUT_DIR_FULL_PATH%" /Y /D
 	exit /b 0
 )
 
-REM all other projects files get DLLs...
+REM the DLLs are in either the bin (32-bit) or bin64 (64-bit) folder of each library (structure by qbnu)
 call :COPY_DLLS libjxl
 call :COPY_DLLS libheif
 call :COPY_DLLS libavif

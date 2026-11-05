@@ -1,7 +1,7 @@
 ; Lucid Viewer installer (Inno Setup 6.3 or later)
 ;
 ; Build:   iscc installer\LucidViewer.iss
-; Options: /DSourceDir=<folder with the release build>  /DAppExe=<exe name>  /DAppVersion=1.2.3
+; Options: /DSourceDir=<folder with the release build>  /DAppExe=<exe name>  /DAppVersion=1.2.3  /DArch=arm64
 ;
 ; Silent install examples:
 ;   LucidViewer-Setup-x64.exe /SILENT
@@ -12,8 +12,16 @@
 #define AppPublisher   "Cem Girgin"
 #define AppURL         "https://github.com/cemmgrgn/lucid-viewer"
 
+; x64 (also runs on ARM64 PCs in emulation) or arm64 (native build)
+#ifndef Arch
+  #define Arch         "x64"
+#endif
 #ifndef SourceDir
-  #define SourceDir    "..\src\LucidViewer\bin\x64\Release"
+  #if Arch == "arm64"
+    #define SourceDir  "..\src\LucidViewer\bin\ARM64\Release"
+  #else
+    #define SourceDir  "..\src\LucidViewer\bin\x64\Release"
+  #endif
 #endif
 #ifndef AppExe
   #define AppExe       "LucidViewer.exe"
@@ -24,7 +32,8 @@
 #endif
 ; Mutexes the running program holds (main window and screenshot tray)
 #ifndef AppMutexes
-  #define AppMutexes   "LucidViewer.Instance,LucidViewerScreenshotTray"
+  ; JPEGViewScreenshotTray: tray tool of the versions before the rename to Lucid Viewer, it holds the Print Screen key
+  #define AppMutexes   "LucidViewer.Instance,LucidViewerScreenshotTray,JPEGViewScreenshotTray"
 #endif
 ; Name of the HKCU\...\Run value the tray tool writes for "Start with Windows"
 #ifndef AutostartValue
@@ -73,15 +82,20 @@ UninstallDisplayName={#AppName}
 LicenseFile=..\LICENSE.txt
 #endif
 OutputDir=Output
-OutputBaseFilename=LucidViewer-{#AppVersion}-Setup-x64
+OutputBaseFilename=LucidViewer-{#AppVersion}-Setup-{#Arch}
 SetupIconFile=..\docs\brand\LucidViewer.ico
 WizardStyle=modern
 WizardImageFile=res\wizard-large-100.bmp,res\wizard-large-125.bmp,res\wizard-large-150.bmp,res\wizard-large-200.bmp
 WizardSmallImageFile=res\wizard-small-100.bmp,res\wizard-small-125.bmp,res\wizard-small-150.bmp,res\wizard-small-200.bmp
 Compression=lzma2/ultra64
 SolidCompression=yes
+#if Arch == "arm64"
+ArchitecturesAllowed=arm64
+ArchitecturesInstallIn64BitMode=arm64
+#else
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 ; Windows 10 1809: needed by Windows ML (background removal) and the C++/WinRT OCR code
 MinVersion=10.0.17763
 PrivilegesRequired=admin
@@ -204,6 +218,15 @@ Name: "{autodesktop}\{#AppName}";  Filename: "{app}\{#AppExe}"; Tasks: desktopic
 ; Uninstall must not leave the tray tool in the Run key
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#AutostartValue}"; ValueData: """{app}\{#AppExe}"" /tray"; Check: PrefOn(2); Flags: uninsdeletevalue
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "{#AutostartValue}"; Flags: uninsdeletevalue dontcreatekey
+; Autostart value of the versions before the rename to Lucid Viewer, it would start the tray tool a second time
+; or although it was switched off on the preferences page
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "JPEGView Screenshot"; Flags: deletevalue dontcreatekey
+
+; Written by the program itself (Settings > Set as default viewer, Open with), removed on uninstall
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExe}"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Classes\{#ProgId}"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\{#AppId}"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\RegisteredApplications"; ValueType: none; ValueName: "{#AppName}"; Flags: uninsdeletevalue dontcreatekey
 
 ; ProgID used for all image types
 Root: HKA; Subkey: "Software\Classes\{#ProgId}"; ValueType: string; ValueData: "{#AppName}"; Flags: uninsdeletekey; Tasks: fileassoc

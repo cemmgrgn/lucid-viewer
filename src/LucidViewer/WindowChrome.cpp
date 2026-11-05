@@ -186,7 +186,11 @@ public:
 	~CThumbnailCache() {
 		m_bStop = true;
 		::SetEvent(m_hEvent);
-		::WaitForSingleObject(m_hThread, 5000);
+		if (::WaitForSingleObject(m_hThread, 5000) == WAIT_TIMEOUT) {
+			// the thread still waits for the shell (slow network drive): it uses the lock and the cache, they are
+			// kept, the process ends anyway
+			return;
+		}
 		::CloseHandle(m_hThread);
 		::CloseHandle(m_hEvent);
 		for (auto& entry : m_cache) {
@@ -302,6 +306,7 @@ CWindowChrome::CWindowChrome(CMainDlg* pMainDlg) {
 	const ButtonDef buttons[] = {
 		{ 0, _T(""), 0, NULL, false, false },
 		{ 0xE80F, _T("Home"), IDM_START_SCREEN, _T("Start screen"), false, false },
+		{ 0xF0E2, _T("Grid"), IDM_FOLDER_GRID, _T("Thumbnails of the folder"), false, true },
 		{ 0xE8E5, _T("Open"), IDM_OPEN, _T("Open image..."), false, false },
 		{ 0xE74E, _T("Save"), IDM_SAVE, _T("Save processed image..."), false, true },
 		{ 0xE8AB, _T("Convert"), IDM_CONVERT_MENU, _T("Convert to"), false, true },
@@ -1239,6 +1244,10 @@ CString CWindowChrome::GetStatusText() {
 	} else if (pFileList != NULL && pFileList->Current() != NULL) {
 		CString sIndex;
 		sIndex.Format(_T("[%d/%d]  "), pFileList->CurrentIndex() + 1, pFileList->Size());
+		if (CFileList::GetTagFilter()[0] != 0) {
+			// filtered by a tag: the count is of the images with the tag
+			sIndex.Format(_T("[%d/%d  #%s]  "), pFileList->CurrentIndex() + 1, pFileList->Size(), CFileList::GetTagFilter());
+		}
 		sText = sIndex + m_pMainDlg->CurrentFileName(true);
 	}
 	if (pImage == NULL) {
@@ -1730,7 +1739,7 @@ int CWindowChrome::PaintMetadata(CDC& dc, int nWidth, int nY) {
 			bHasWritable = true;
 			bHasLocation = bHasLocation || entry.Group == Metadata::GROUP_LOCATION;
 		}
-		// the location in the EXIF block of PNG and WebP files is removed by JPEGView itself
+		// the location in the EXIF block of PNG and WebP files is removed by Lucid Viewer itself
 		if (entry.Embedded && entry.Present && entry.Group == Metadata::GROUP_LOCATION) bHasLocation = true;
 		if (entry.Group != nGroup) {
 			nGroup = entry.Group;

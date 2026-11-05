@@ -95,10 +95,10 @@ CSettingsProvider::CSettingsProvider(void) {
 	if (!m_bStoreToEXEPath) {
 		Helpers::MigrateLegacyAppData();
 		// User INI file
-		m_sIniNameUser = CString(Helpers::JPEGViewAppDataPath()) + m_sIniFileTitle;
+		m_sIniNameUser = CString(Helpers::AppDataPath()) + m_sIniFileTitle;
 		m_bUserINIExists = (::GetFileAttributes(m_sIniNameUser) != INVALID_FILE_ATTRIBUTES);
 	} else {
-		Helpers::SetJPEGViewAppDataPath(m_sEXEPath);
+		Helpers::SetAppDataPath(m_sEXEPath);
 	}
 
 	// Get "My documents" path
@@ -143,6 +143,9 @@ CSettingsProvider::CSettingsProvider(void) {
 	else {
 		m_eCPUAlgorithm = Helpers::ProbeCPU();
 	}
+#if !defined(_M_IX86) && !defined(_M_X64)
+	m_eCPUAlgorithm = Helpers::CPU_Generic; // ARM64: the SSE/AVX code is x86 only
+#endif
 	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 4);
 	if (m_nNumCores == 0) {
 		m_nNumCores = Helpers::NumCoresPerPhysicalProc();
@@ -208,9 +211,11 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bShowStartScreen = GetBool(_T("ShowStartScreen"), true);
 	m_bScreenshotHistory = GetBool(_T("ScreenshotHistory"), false);
 	m_bRememberRecentFiles = GetBool(_T("RememberRecentFiles"), true);
+	m_bOpenLastImage = GetBool(_T("OpenLastImage"), false);
 	m_nMinDisplaySize = GetInt(_T("MinDisplaySize"), 600, 0, 4000);
 	m_bSmoothAnimations = GetBool(_T("SmoothAnimations"), true);
 	m_nSidePanelTab = GetInt(_T("SidePanelTab"), 0, 0, 2);
+	m_sLastTargetFolder = GetString(_T("LastTargetFolder"), _T(""));
 	m_zoomPauseFactor = GetInt(_T("ZoomPausePercent"), 100, 0, 6553500) / 100.0;  // can't have a % larger than the MAX_IMAGE_DIMENSION %, and convert to a scale factor (double/double division) only once
 	m_bSaveWithoutPrompt = GetBool(_T("OverwriteOriginalFileWithoutSaveDialog"), false);
 	m_bCropWithoutPromptLosslessJPEG = GetBool(_T("CropWithoutPromptLosslessJPEG"), false);
@@ -460,6 +465,9 @@ void CSettingsProvider::ReadWriteableINISettings() {
 	else if (sSorting.CompareNoCase(_T("Rating")) == 0) {
 		m_eSorting = Helpers::FS_Rating;
 	}
+	else if (sSorting.CompareNoCase(_T("DateTaken")) == 0) {
+		m_eSorting = Helpers::FS_DateTaken;
+	}
 	else {
 		m_eSorting = Helpers::FS_LastModTime;
 	}
@@ -519,6 +527,8 @@ void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams,
 		sSorting = _T("FileSize");
 	} else if (eFileSorting == Helpers::FS_Rating) {
 		sSorting = _T("Rating");
+	} else if (eFileSorting == Helpers::FS_DateTaken) {
+		sSorting = _T("DateTaken");
 	}
 	WriteString(_T("FileDisplayOrder"), sSorting);
 
@@ -604,6 +614,14 @@ void CSettingsProvider::SaveSidePanelTab(int nTab) {
 	m_bUserINIExists = true;
 }
 
+void CSettingsProvider::SaveLastTargetFolder(LPCTSTR sFolder) {
+	if (m_sLastTargetFolder.CompareNoCase(sFolder) == 0) return;
+	MakeSureUserINIExists();
+	m_sLastTargetFolder = sFolder;
+	WriteString(_T("LastTargetFolder"), sFolder);
+	m_bUserINIExists = true;
+}
+
 void CSettingsProvider::SaveShowFilmstrip(bool bShow) {
 	MakeSureUserINIExists();
 	m_bShowFilmstrip = bShow;
@@ -622,7 +640,7 @@ void CSettingsProvider::CopyUserINIFromTemplate() {
 	}
 
 	LPCTSTR sINIFileName = GetUserINIFileName();
-	::CreateDirectory(Helpers::JPEGViewAppDataPath(), NULL);
+	::CreateDirectory(Helpers::AppDataPath(), NULL);
 	::CopyFile(GetINITemplateName(), sINIFileName, TRUE);
 }
 
@@ -741,8 +759,8 @@ void CSettingsProvider::MakeSureUserINIExists() {
 		return; // no user INI file needed
 	}
 
-	// Create JPEGView appdata directory and copy INI file if it does not exist
-	::CreateDirectory(Helpers::JPEGViewAppDataPath(), NULL);
+	// Create Lucid Viewer appdata directory and copy INI file if it does not exist
+	::CreateDirectory(Helpers::AppDataPath(), NULL);
 	if (::GetFileAttributes(m_sIniNameUser) == INVALID_FILE_ATTRIBUTES) {
 		::CopyFile(GetINITemplateName(), m_sIniNameUser, TRUE);
 	}

@@ -67,7 +67,7 @@ LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_btnClose.Attach(GetDlgItem(IDC_CLOSE));
 	m_lblIcon.Attach(GetDlgItem(IDC_ICONJPEGVIEW));
 
-	m_lblVersion.SetWindowText(CString(_T("Lucid Viewer ")) + JPEGVIEW_VERSION);
+	m_lblVersion.SetWindowText(CString(_T("Lucid Viewer ")) + APP_VERSION);
 
 	m_lblSIMD.SetWindowText(CString(CNLS::GetString(_T("SIMD mode used"))) + _T(": ") + GetSIMDModeString());
 	TCHAR sNumCores[16];

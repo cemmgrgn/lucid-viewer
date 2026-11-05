@@ -102,7 +102,7 @@ LRESULT CFileExtensionsDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*
 		if (!bIsSelected && oldSelectionState == 2) {
 			for (int i = 0; i < nNumExtensions; i++) {
 				bool bRegisteredInHKLM;
-				m_pRegistry->CheckIfOpenedByJPEGView(extensions[i], bRegisteredInHKLM);
+				m_pRegistry->CheckIfOpenedByApp(extensions[i], bRegisteredInHKLM);
 				if (bRegisteredInHKLM) {
 					endingsCantUnregister.push_back(CString(extensions[i]));
 				} else {
@@ -112,14 +112,14 @@ LRESULT CFileExtensionsDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*
 		} else if (!bIsSelected && (oldSelectionState != 0)) {
 			for (int i = 0; i < nNumExtensions; i++) {
 				bool bRegisteredInHKLM;
-				if (m_pRegistry->CheckIfOpenedByJPEGView(extensions[i], bRegisteredInHKLM)) {
+				if (m_pRegistry->CheckIfOpenedByApp(extensions[i], bRegisteredInHKLM)) {
 					endingsToUnregister.push_back(CString(extensions[i]));
 				}
 			}
 		} else if (bIsSelected && (oldSelectionState == 0)) {
 			for (int i = 0; i < nNumExtensions; i++) {
 				bool bRegisteredInHKLM;
-				if (!m_pRegistry->CheckIfOpenedByJPEGView(extensions[i], bRegisteredInHKLM)) {
+				if (!m_pRegistry->CheckIfOpenedByApp(extensions[i], bRegisteredInHKLM)) {
 					endingsToRegister.push_back(CString(extensions[i]));
 				}
 			}
@@ -142,8 +142,8 @@ LRESULT CFileExtensionsDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*
 		}
 	}
 
-	// make sure JPEGView is registered in HKEY_CURRENT_USER\Software\Classes\Applications
-	if (!m_pRegistry->RegisterJPEGView()) {
+	// make sure Lucid Viewer is registered in HKEY_CURRENT_USER\Software\Classes\Applications
+	if (!m_pRegistry->RegisterApp()) {
 		if (!ShowRegistryError(m_hWnd, _T("HKCU\\Software\\Classes\\Applications\\LucidViewer.exe\\shell\\open\\command"), NULL)) {
 			return 0;
 		}
@@ -319,7 +319,7 @@ void CFileExtensionsDlg::InsertExtension(LPCTSTR sExtension, LPCTSTR sHint)
 	m_lvFileExtensions.SetItemText(numItems, 1, sHint);
 
 	bool bIsRegisteredInHKLM = false;
-	bool bIsRegistered = m_pRegistry->IsJPEGViewRegistered() && m_pRegistry->CheckIfOpenedByJPEGView(sExtension, bIsRegisteredInHKLM);
+	bool bIsRegistered = m_pRegistry->IsAppRegistered() && m_pRegistry->CheckIfOpenedByApp(sExtension, bIsRegisteredInHKLM);
 	m_lvFileExtensions.SetCheckState(numItems, bIsRegistered);
 
 	int originalCheckState = (bIsRegisteredInHKLM && bIsRegistered) ? 2 : bIsRegistered ? 1 : 0;

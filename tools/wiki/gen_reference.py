@@ -27,14 +27,15 @@ def category(name):
     if has("PARAM_DB"):
         return 3
     if has("SCREENSHOT", "SETTINGS", "SHORTCUTS", "SIMILAR", "CONFIG", "HELP", "ABOUT", "USER_CMD", "OCR",
-           "EXPLORER_CONVERT", "SAVE_PARAMETERS", "OPENWITH"):
+           "EXPLORER_CONVERT", "SAVE_PARAMETERS", "OPENWITH", "UPDATES", "PICK_COLOR", "SEARCH"):
         return 5
     if has("OPEN", "SAVE", "RELOAD", "PRINT", "COPY", "PASTE", "EXPLORE", "BATCH", "RENAME", "RECYCLE", "DELETE",
-           "TOUCH", "WALLPAPER", "EXPORT", "SHARE", "CONVERT", "EXIT", "METADATA"):
+           "TOUCH", "WALLPAPER", "EXPORT", "SHARE", "CONVERT", "EXIT", "METADATA", "TO_FOLDER", "PROPERTIES", "DUPLICATE", "FILE_NAME",
+           "BASE64", "LOCK_SCREEN", "EDIT_TAGS", "ON_MAP"):
         return 0
-    if has("NEXT", "PREV", "FIRST", "LAST", "LOOP", "SORT", "RATING") or name == "IDM_TOGGLE":
+    if has("NEXT", "PREV", "FIRST", "LAST", "LOOP", "SORT", "RATING", "GOTO", "FILTER_BY_TAG") or name == "IDM_TOGGLE":
         return 1
-    if has("ZOOM", "FIT", "FILL", "SPAN", "FULL_SCREEN", "SHOW_", "TOGGLE_", "HIDE", "ALWAYS_ON_TOP", "PAN_",
+    if has("GRID", "TIMELINE", "ZOOM", "FIT", "FILL", "SPAN", "FULL_SCREEN", "SHOW_", "TOGGLE_", "HIDE", "ALWAYS_ON_TOP", "PAN_",
            "MINIMIZE", "MONITOR"):
         return 2
     if has("CONTRAST", "GAMMA", "SHARPEN", "COLOR", "LDC", "AUTO_", "LANDSCAPE", "UNSHARP", "RESET", "KEEP",

@@ -6,6 +6,8 @@ Get the files from the [latest release](https://github.com/cemmgrgn/lucid-viewer
 
 - `LucidViewer-<version>-Setup-x64.exe`: the installer. Use this for most people.
 - `LucidViewer-<version>-portable-x64.zip`: the portable version. See [Portable version](#portable-version) below.
+- `LucidViewer-<version>-Setup-arm64.exe` and `LucidViewer-<version>-portable-arm64.zip`: the native versions for
+  Windows on ARM (Snapdragon PCs). The x64 versions run there too, in emulation.
 
 ## Run the installer
 

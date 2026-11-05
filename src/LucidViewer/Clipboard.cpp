@@ -5,6 +5,8 @@
 #include "BasicProcessing.h"
 #include "MaxImageDef.h"
 #include <gdiplus.h>
+#include <shlobj.h>
+#include "Annotations.h"
 
 static void CopyOriginalFileNameToClipboard(LPCWSTR filename) {
 	int fileNameLength = (int)wcslen(filename);
@@ -70,6 +72,145 @@ void CClipboard::CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR file
 	pImage->EnableDimming(false);
 	DoCopyFileNameText(hWnd, fileName);
 	pImage->EnableDimming(true);
+}
+
+bool CClipboard::CopyTextToClipboard(HWND hWnd, LPCTSTR sText) {
+	if (sText == NULL || !::OpenClipboard(hWnd)) {
+		return false;
+	}
+	::EmptyClipboard();
+	size_t nBytes = (_tcslen(sText) + 1) * sizeof(TCHAR);
+	HGLOBAL hMem = ::GlobalAlloc(GMEM_MOVEABLE, nBytes);
+	bool bOk = false;
+	if (hMem != NULL) {
+		void* pMem = ::GlobalLock(hMem);
+		if (pMem != NULL) {
+			memcpy(pMem, sText, nBytes);
+			::GlobalUnlock(hMem);
+			bOk = ::SetClipboardData(sizeof(TCHAR) == sizeof(WCHAR) ? CF_UNICODETEXT : CF_TEXT, hMem) != NULL;
+		}
+		if (!bOk) ::GlobalFree(hMem);
+	}
+	::CloseClipboard();
+	return bOk;
+}
+
+bool CClipboard::CopyFileToClipboard(HWND hWnd, LPCTSTR fileName) {
+	if (fileName == NULL || fileName[0] == 0) {
+		return false;
+	}
+	std::vector<CString> fileNames;
+	fileNames.push_back(fileName);
+	return CopyFilesToClipboard(hWnd, fileNames);
+}
+
+bool CClipboard::CopyFilesToClipboard(HWND hWnd, const std::vector<CString>& fileNames) {
+	if (fileNames.empty()) {
+		return false;
+	}
+	// CF_HDROP: DROPFILES followed by the list of zero terminated file names, the list ends with a second zero
+	size_t nChars = 0;
+	for (const CString& sName : fileNames) nChars += sName.GetLength() + 1;
+	HGLOBAL hDrop = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DROPFILES) + (nChars + 1) * sizeof(TCHAR));
+	if (hDrop == NULL) {
+		return false;
+	}
+	DROPFILES* pDropFiles = (DROPFILES*)::GlobalLock(hDrop);
+	if (pDropFiles == NULL) {
+		::GlobalFree(hDrop);
+		return false;
+	}
+	pDropFiles->pFiles = sizeof(DROPFILES);
+	pDropFiles->fWide = sizeof(TCHAR) == sizeof(WCHAR);
+	TCHAR* pTarget = (TCHAR*)((BYTE*)pDropFiles + sizeof(DROPFILES));
+	for (const CString& sName : fileNames) {
+		memcpy(pTarget, (LPCTSTR)sName, sName.GetLength() * sizeof(TCHAR));
+		pTarget += sName.GetLength() + 1; // the zero is there already (GMEM_ZEROINIT)
+	}
+	::GlobalUnlock(hDrop);
+
+	// Explorer pastes a copy, not a move
+	HGLOBAL hEffect = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+	if (hEffect != NULL) {
+		DWORD* pEffect = (DWORD*)::GlobalLock(hEffect);
+		if (pEffect != NULL) {
+			*pEffect = DROPEFFECT_COPY;
+			::GlobalUnlock(hEffect);
+		}
+	}
+
+	if (!::OpenClipboard(hWnd)) {
+		::GlobalFree(hDrop);
+		if (hEffect != NULL) ::GlobalFree(hEffect);
+		return false;
+	}
+	::EmptyClipboard();
+	bool bOk = ::SetClipboardData(CF_HDROP, hDrop) != NULL;
+	if (!bOk) {
+		::GlobalFree(hDrop);
+	}
+	if (hEffect != NULL && ::SetClipboardData(::RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT), hEffect) == NULL) {
+		::GlobalFree(hEffect);
+	}
+	if (bOk && fileNames.size() == 1) {
+		CopyFileNameTextToClipboard(fileNames[0]);
+	}
+	::CloseClipboard();
+	return bOk;
+}
+
+bool CClipboard::CopyTransparentImageToClipboard(HWND hWnd, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight) {
+	if (pBGRA == NULL || pMask == NULL || nWidth <= 0 || nHeight <= 0) {
+		return false;
+	}
+	HGLOBAL hPNG = CAnnotations::EncodeTransparentPNG(pBGRA, pMask, nWidth, nHeight);
+	if (hPNG == NULL) {
+		return false;
+	}
+	// 24 bpp bottom-up DIB, the removed parts white
+	uint32 nLineBytes = Helpers::DoPadding(nWidth * 3, 4);
+	SIZE_T nDIBBytes = sizeof(BITMAPINFOHEADER) + (SIZE_T)nLineBytes * nHeight;
+	HGLOBAL hDIB = ::GlobalAlloc(GMEM_MOVEABLE, nDIBBytes);
+	uint8* pDIB = (hDIB != NULL) ? (uint8*)::GlobalLock(hDIB) : NULL;
+	if (pDIB != NULL) {
+		BITMAPINFOHEADER* pHeader = (BITMAPINFOHEADER*)pDIB;
+		memset(pHeader, 0, sizeof(BITMAPINFOHEADER));
+		pHeader->biSize = sizeof(BITMAPINFOHEADER);
+		pHeader->biWidth = nWidth;
+		pHeader->biHeight = nHeight;
+		pHeader->biPlanes = 1;
+		pHeader->biBitCount = 24;
+		pHeader->biCompression = BI_RGB;
+		const uint8* pSource = (const uint8*)pBGRA;
+		for (int y = 0; y < nHeight; y++) {
+			uint8* pTarget = pDIB + sizeof(BITMAPINFOHEADER) + (SIZE_T)(nHeight - 1 - y) * nLineBytes;
+			for (int x = 0; x < nWidth; x++) {
+				SIZE_T nIndex = (SIZE_T)y * nWidth + x;
+				int nAlpha = pMask[nIndex];
+				for (int c = 0; c < 3; c++) {
+					pTarget[x * 3 + c] = (uint8)((pSource[nIndex * 4 + c] * nAlpha + 255 * (255 - nAlpha) + 127) / 255);
+				}
+			}
+		}
+		::GlobalUnlock(hDIB);
+	}
+	if (!::OpenClipboard(hWnd)) {
+		::GlobalFree(hPNG);
+		if (hDIB != NULL) ::GlobalFree(hDIB);
+		return false;
+	}
+	::EmptyClipboard();
+	bool bOk = ::SetClipboardData(::RegisterClipboardFormat(_T("PNG")), hPNG) != NULL;
+	if (!bOk) ::GlobalFree(hPNG);
+	if (hDIB != NULL) {
+		if (pDIB == NULL || ::SetClipboardData(CF_DIB, hDIB) == NULL) {
+			::GlobalFree(hDIB);
+		} else {
+			bOk = true;
+		}
+	}
+	::CloseClipboard();
+	return bOk;
 }
 
 CJPEGImage* CClipboard::PasteImageFromClipboard(HWND hWnd, const CImageProcessingParams& procParams, 

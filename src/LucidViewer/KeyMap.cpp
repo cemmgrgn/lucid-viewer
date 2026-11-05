@@ -4,6 +4,7 @@
 #include "resource.h"
 #include "Helpers.h"
 #include "SettingsProvider.h"
+#include "TextUtils.h"
 
 #define M_SHIFT 0x10000
 #define M_ALT   0x20000
@@ -157,9 +158,9 @@ static CString _GetKeyShortcutName(int nShortcut) {
 // before settling for the default
 //
 // First tries to see if /keymap parameter was passed on command line
-// Then tries %AppData%\JPEGView\KeyMap.txt
-// Then tries (JPEGView root)\KeyMap.txt
-// if none of those, then (JPEGView root)\KeyMap.txt.default
+// Then tries %AppData%\LucidViewer\KeyMap.txt
+// Then tries (Lucid Viewer folder)\KeyMap.txt
+// if none of those, then (Lucid Viewer folder)\KeyMap.txt.default
 CKeyMap::CKeyMap() {
 	FILE* fkm_ptr;
 	CString exe_path = CString(CSettingsProvider::This().GetEXEPath());
@@ -168,7 +169,7 @@ CKeyMap::CKeyMap() {
 
 	// check if the use directory keymap.txt exists
 	bool bUserFile = true;
-	fkm_ptr = _tfopen(CString(Helpers::JPEGViewAppDataPath()) + KEYMAP_USER_FILE_NAME, _T("r"));
+	fkm_ptr = _tfopen(CString(Helpers::AppDataPath()) + KEYMAP_USER_FILE_NAME, _T("r"));
 	if (fkm_ptr == NULL) {
 		// the appdata one doesn't exist, try the local directory
 		fkm_ptr = _tfopen(exe_path + KEYMAP_USER_FILE_NAME, _T("r"));
@@ -253,7 +254,9 @@ CKeyMap::CKeyMap() {
 		while (_fgetts(lineBuff, BUFF_LEN, fkm_ptr) != NULL) sUserText += lineBuff;
 		FILE* fdefault_ptr = _tfopen(exe_path + KEYMAP_DEFAULT_FILE_NAME, _T("r"));
 		if (fdefault_ptr != NULL) {
-			const int FIRST_NEW_COMMAND = 16400;
+			// first command of Lucid Viewer (toolbar), the commands below are known by JPEGView: a key map taken over
+			// from JPEGView has its own keys for them, but none for the commands of Lucid Viewer
+			const int FIRST_NEW_COMMAND = IDM_TOGGLE_TOOLBAR;
 			while (_fgetts(lineBuff, BUFF_LEN, fdefault_ptr) != NULL) {
 				LPTSTR sLine = _SkipWhiteSpace(lineBuff);
 				if (*sLine == 0 || _IsComment(sLine) || _tcsncmp(sLine, _T("#define"), 7) == 0) continue;
@@ -263,7 +266,7 @@ CKeyMap::CKeyMap() {
 				if (nCommandId < FIRST_NEW_COMMAND) continue;
 				CString sCommand(sCommandId);
 				sCommand.Trim();
-				if (sUserText.Find(sCommand) >= 0) continue;
+				if (TextUtils::ContainsCommandName(sUserText, sCommand)) continue;
 				int nKeyCode = _ParseKeys(sLine);
 				if (nKeyCode == 0 || m_keyMap.find(nKeyCode) != m_keyMap.end()) continue;
 				m_keyMap[nKeyCode] = nCommandId;

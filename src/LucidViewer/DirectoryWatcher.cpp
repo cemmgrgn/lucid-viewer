@@ -76,8 +76,16 @@ void CDirectoryWatcher::SetCurrentFile(LPCTSTR fileName)
 
 void CDirectoryWatcher::SetCurrentDirectory(LPCTSTR directoryName)
 {
-	TCHAR fullName[MAX_PATH]{ 0 };
-	GetFullPathName(directoryName, MAX_PATH, (LPTSTR)fullName, NULL);
+	// the size is asked first, folders can be longer than MAX_PATH
+	CString fullName;
+	DWORD nLength = ::GetFullPathName(directoryName, 0, NULL, NULL);
+	if (nLength > 0) {
+		DWORD nCopied = ::GetFullPathName(directoryName, nLength, fullName.GetBuffer(nLength), NULL);
+		fullName.ReleaseBuffer((nCopied > 0 && nCopied < nLength) ? (int)nCopied : 0);
+	}
+	if (fullName.IsEmpty()) {
+		fullName = directoryName;
+	}
 
 	::EnterCriticalSection(&m_lock);
 

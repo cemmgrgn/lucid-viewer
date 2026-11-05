@@ -1,5 +1,5 @@
 //! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
-//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/sylikc/jpegview> and distributed under the same license.  See <https://github.com/sylikc/jpegview/blob/master/LICENSE.txt> for more info.
+//! LICENSE: This localization file is part of Lucid Viewer <https://github.com/cemmgrgn/lucid-viewer> and distributed under the same license.  See <https://github.com/cemmgrgn/lucid-viewer/blob/main/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
 //! Alternate Filename Convention: 'strings_%languagecode%-%countrycode%.txt' where %countrycode% is the ISO 3166-1 country code e.g. 'US' for United States (See <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>)
@@ -132,7 +132,7 @@ Error saving file	Dosya kaydedilirken sorun çıktı
 Error while writing the following registry key	Şu kayıt anahtarı yazılırken sorun çıktı
 Error writing file to disk!	Dosya diske yazılırken sorun çıktı!
 Example:	Örnek:
-Exif Date Time:	
+Exif Date Time:	Exif tarih/saat:
 Exposure bias (EV):	Pozlama telafisi (EV):
 Exposure time (s):	Pozlama süresi (s):
 Extension	Uzatma
@@ -338,7 +338,7 @@ Slide from right	Sağdan üstüne kaydır
 Slide from top	Üstten üstüne kaydır
 Slideshow	Sunum
 Slideshow with timeout of 'n' seconds (ESC to stop)	'n' saniye zaman aşımı ile sunum (durdurmak için ESC)
-Software:	
+Software:	Yazılım:
 Sort images by creation date, resp. modification date, resp. file name	Görselleri oluşturulma  tarihi, değiştirilme tarihi ya da dosya adına göre sıralar
 Source:	Kaynak:
 Target folders that do not yet exist are created as needed.	Var olmayan hedef klasörler oluşturulur.
@@ -924,3 +924,97 @@ Start screen	Başlangıç ekranı
 Pinned to the start screen	Başlangıca sabitlendi
 Removed from the start screen	Başlangıçtan kaldırıldı
 Screenshots	Ekran görüntüleri
+Fast image viewer and light editor.	Hızlı görüntü görüntüleyici ve hafif düzenleyici.
+Copy file	Dosyayı kopyala
+Copy to folder...	Klasöre kopyala...
+Move to folder...	Klasöre taşı...
+Copy to folder	Klasöre kopyala
+Move to folder	Klasöre taşı
+Check for updates...	Güncellemeleri denetle...
+The file was copied, it can be pasted in Explorer, a mail or a chat.	Dosya kopyalandı; Explorer'a, bir e-postaya ya da sohbete yapıştırılabilir.
+The file could not be copied to the clipboard.	Dosya panoya kopyalanamadı.
+Checking for a new version...	Yeni sürüm denetleniyor...
+The file was moved back.	Dosya geri taşındı.
+The file could not be moved back.	Dosya geri taşınamadı.
+The file is already in this folder.	Dosya zaten bu klasörde.
+Moved to	Şuraya taşındı:
+Copied to	Şuraya kopyalandı:
+The file could not be moved.	Dosya taşınamadı.
+The file could not be copied.	Dosya kopyalanamadı.
+The latest version could not be found. Please check the internet connection.	Son sürüm bulunamadı. Lütfen internet bağlantınızı denetleyin.
+Lucid Viewer %s is available, you have version %s. Open the download page?	Lucid Viewer %s yayımlandı, kullandığınız sürüm %s. İndirme sayfası açılsın mı?
+You have the latest version (%s).	En son sürümü kullanıyorsunuz (%s).
+File properties...	Dosya özellikleri...
+Open with another app...	Başka bir uygulamayla aç...
+The image was copied with transparency.	Görüntü saydamlığıyla kopyalandı.
+The image could not be copied to the clipboard.	Görüntü panoya kopyalanamadı.
+Background removed. Save it with 'Save as transparent PNG' or copy it with %s.	Arka plan kaldırıldı. 'Saydam PNG olarak kaydet' ile kaydedin ya da %s ile kopyalayın.
+Open in new window	Yeni pencerede aç
+Copied	Kopyalandı
+copy	kopya
+Copy made:	Kopya oluşturuldu:
+Go to image number (1 - %d)	Görüntü numarasına git (1 - %d)
+There is no image with this number.	Bu numarada görüntü yok.
+The file is too large for a data URI (more than 20 MB).	Dosya data URI için çok büyük (20 MB'tan fazla).
+Data URI copied (%d KB of text).	Data URI kopyalandı (%d KB metin).
+Tags, separated by semicolons	Etiketler, noktalı virgülle ayrılmış
+The tags were removed.	Etiketler kaldırıldı.
+Tags saved:	Etiketler kaydedildi:
+Show only images with this tag (empty: all images)	Yalnızca bu etiketi taşıyan görüntüleri göster (boş: tüm görüntüler)
+No image of this folder has the tag %s.	Bu klasörde %s etiketli görüntü yok.
+%d images with the tag %s are shown	%d görüntü %s etiketiyle gösteriliyor
+This photo has no location (GPS).	Bu fotoğrafın konum bilgisi (GPS) yok.
+The image is the picture of the lock screen now.	Görüntü artık kilit ekranı resmi.
+Windows did not accept the image for the lock screen. Open the lock screen settings?	Windows görüntüyü kilit ekranı için kabul etmedi. Kilit ekranı ayarları açılsın mı?
+Color picker off	Renk seçici kapalı
+Click on the image to copy the color, Esc cancels.	Rengi kopyalamak için görüntüye tıklayın, Esc iptal eder.
+Color %s (RGB %d, %d, %d) copied	%s rengi (RGB %d, %d, %d) kopyalandı
+Sorted by date taken	Çekim tarihine göre sıralandı
+Date taken	Çekim tarihi
+Copy file name	Dosya adını kopyala
+Duplicate file	Dosyayı çoğalt
+Copy as data URI (base64)	Data URI (base64) olarak kopyala
+Edit tags...	Etiketleri düzenle...
+Show on map	Haritada göster
+Go to image number...	Görüntü numarasına git...
+Filter by tag...	Etikete göre filtrele...
+Pick color	Renk seç
+Set as lock screen	Kilit ekranı olarak ayarla
+Sort by date taken	Çekim tarihine göre sırala
+%d dropped images, the arrow keys go through them	%d görüntü bırakıldı, ok tuşlarıyla aralarında gezinebilirsiniz
+Thumbnails of the folder	Klasörün küçük resimleri
+Timeline (by date taken)	Zaman çizelgesi (çekim tarihine göre)
+Search photos...	Fotoğraf ara...
+No images in this folder	Bu klasörde görüntü yok
+Ctrl or Shift + click selects several images, right click shows the actions, Enter opens the image.	Ctrl veya Shift + tıklama birden çok görüntü seçer, sağ tık işlemleri gösterir, Enter görüntüyü açar.
+Unknown date	Bilinmeyen tarih
+Compare the two selected images	Seçili iki görüntüyü karşılaştır
+No stars	Yıldız yok
+1 star	1 yıldız
+%d stars	%d yıldız
+Add tags...	Etiket ekle...
+Remove tag...	Etiket kaldır...
+Copy files	Dosyaları kopyala
+Rename...	Yeniden adlandır...
+Close the thumbnails	Küçük resimleri kapat
+%d files copied, they can be pasted in Explorer.	%d dosya kopyalandı, Explorer'a yapıştırılabilir.
+%d of %d images rated with %d stars	%d/%d görüntüye %d yıldız verildi
+Tags to add, separated by semicolons	Eklenecek etiketler, noktalı virgülle ayrılmış
+Tag to remove	Kaldırılacak etiket
+The tags of %d images were changed.	%d görüntünün etiketleri değiştirildi.
+%d of %d files moved to %s	%d/%d dosya %s klasörüne taşındı
+%d of %d files copied to %s	%d/%d dosya %s klasörüne kopyalandı
+Move %d images to the recycle bin?	%d görüntü geri dönüşüm kutusuna taşınsın mı?
+The images were moved to the recycle bin.	Görüntüler geri dönüşüm kutusuna taşındı.
+Not all images could be deleted.	Görüntülerin hepsi silinemedi.
+New name of %d files: {name} old name, {n} number, {date} date taken, {time} time taken	%d dosyanın yeni adı: {name} eski ad, {n} numara, {date} çekim tarihi, {time} çekim saati
+Next	İleri
+Rename the files?	Dosyalar yeniden adlandırılsın mı?
+%d files renamed, %d failed	%d dosya yeniden adlandırıldı, %d başarısız
+Search photos in this folder and its sub folders	Bu klasörde ve alt klasörlerinde fotoğraf ara
+Search: words of the name, tag:holiday stars:3 from:2024-01-01 to:2024-12-31	Ara: addaki kelimeler, tag:tatil stars:3 from:2024-01-01 to:2024-12-31
+Search	Ara
+Searching... %d images checked, %d found (Esc cancels)	Aranıyor... %d görüntü denetlendi, %d bulundu (Esc iptal eder)
+Search cancelled	Arama iptal edildi
+No photo found	Fotoğraf bulunamadı
+%d photos found	%d fotoğraf bulundu

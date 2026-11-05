@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by JPEGView.RC
+// Used by LucidViewer.rc
 //
 
 // scripts in the extras directory will search this for strings as to which keys to include in KeyMap
@@ -8,9 +8,9 @@
 // don't worry about the formatting, the script that auto-generates the definition will take care of it
 
 #include "..\Version.h"
-#define JPEGVIEW_VERSION LUCID_VERSION_SHORT
+#define APP_VERSION LUCID_VERSION_SHORT
 // title for main window and msgbox so it can be change via actions
-#define JPEGVIEW_TITLE "Lucid Viewer"
+#define APP_TITLE "Lucid Viewer"
 
 
 #define IDD_ABOUTBOX				100
@@ -275,7 +275,7 @@
 #define IDM_BACKUP_PARAMDB     12620		// :KeyMap: backup parameter DB
 #define IDM_RESTORE_PARAMDB    12630		// :KeyMap: restore parameter DB
 #define IDM_ABOUT			12900		// :KeyMap: show about box
-#define IDM_EXIT			13000		// :KeyMap: exit JPEGView application
+#define IDM_EXIT			13000		// :KeyMap: exit Lucid Viewer application
 #define IDM_HELP			14000
 #define IDM_TOGGLE			14100		// :KeyMap: toggle between marked image and current image
 #define IDM_MARK_FOR_TOGGLE			14101		// :KeyMap: mark current image for toggling
@@ -349,6 +349,26 @@
 #define IDM_RATING_FILTER_5	16495		// :KeyMap: show only images with 5 stars
 #define IDM_START_SCREEN	16500		// :KeyMap: start screen with the last opened and the pinned photos
 #define IDM_PIN_TO_START	16510		// :KeyMap: pin the image to the start screen or remove it
+#define IDM_COPY_FILE		16520		// :KeyMap: copy the file to the clipboard, to paste it in Explorer, a mail or a chat
+#define IDM_COPY_TO_FOLDER	16530		// :KeyMap: copy the file to a folder (folder dialog, the last folder is suggested)
+#define IDM_MOVE_TO_FOLDER	16540		// :KeyMap: move the file to a folder and show the next image (can be undone)
+#define IDM_CHECK_FOR_UPDATES	16550	// :KeyMap: check if a newer version is published on GitHub
+#define IDM_FILE_PROPERTIES		16560	// :KeyMap: show the Explorer properties of the file (size, dates, security, details)
+#define IDM_OPEN_WITH_OTHER_APP	16570	// :KeyMap: open the file with another app, chosen in the 'Open with' window of Windows
+#define IDM_OPEN_IN_NEW_WINDOW	16580	// :KeyMap: open the image in a second window, also in single instance mode (to compare two photos)
+#define IDM_DUPLICATE_FILE		16590	// :KeyMap: make a copy of the file in the same folder ('name (copy).jpg')
+#define IDM_COPY_FILE_NAME		16600	// :KeyMap: copy the file name (without folder) to the clipboard
+#define IDM_GOTO_IMAGE			16610	// :KeyMap: go to the image with the given number in the folder
+#define IDM_COPY_BASE64			16620	// :KeyMap: copy the file as data URI (base64) for HTML, CSS or Markdown
+#define IDM_SET_LOCK_SCREEN		16630	// :KeyMap: use the image as picture of the Windows lock screen
+#define IDM_PICK_COLOR			16640	// :KeyMap: the next click on the image copies the color of the pixel (#RRGGBB)
+#define IDM_SORT_DATE_TAKEN		16650	// :KeyMap: sorting order date the photo was taken (EXIF), oldest first
+#define IDM_EDIT_TAGS			16660	// :KeyMap: edit the tags (keywords) of the file, written into the file
+#define IDM_FILTER_BY_TAG		16670	// :KeyMap: show only the images of the folder with a tag
+#define IDM_SHOW_ON_MAP			16680	// :KeyMap: show the GPS location of the photo on OpenStreetMap
+#define IDM_FOLDER_GRID			16690	// :KeyMap: thumbnails of the folder, several images can be selected for batch actions
+#define IDM_TIMELINE			16700	// :KeyMap: thumbnails of the folder sorted by the date taken, grouped by month
+#define IDM_SEARCH_PHOTOS		16710	// :KeyMap: search photos in a folder and its sub folders by tag, stars, date and name
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

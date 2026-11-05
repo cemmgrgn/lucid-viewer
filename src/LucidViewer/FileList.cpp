@@ -3,10 +3,13 @@
 #include "SettingsProvider.h"
 #include "Helpers.h"
 #include "DirectoryWatcher.h"
+#include "TextUtils.h"
 #include "Shlwapi.h"
 #include <propsys.h>
 #include <propkey.h>
+#include <propvarutil.h>
 #include <shobjidl.h>
+#include <vector>
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -17,6 +20,7 @@ Helpers::ESorting CFileDesc::sm_eSorting = Helpers::FS_LastModTime;
 bool CFileDesc::sm_bSortAscending = true;
 Helpers::ENavigationMode CFileList::sm_eMode = Helpers::NM_LoopDirectory;
 int CFileList::sm_nMinRating = 0;
+CString CFileList::sm_sTagFilter;
 
 // Helper to add the current file of filefind object to the list
 static void AddToFileList(std::list<CFileDesc> & fileList, CFindFile & fileFind, LPCTSTR expectedExtension) {
@@ -82,6 +86,8 @@ CFileDesc::CFileDesc(const CString & sName, const FILETIME* lastModTime, const F
 	m_nRandomOrderNumber = rand();
 	m_fileSize = fileSize;
 	m_nRating = -2;
+	m_nDateTaken = -2;
+	m_bKeywordsRead = false;
 }
 
 int CFileDesc::GetRating() const {
@@ -102,6 +108,49 @@ int CFileDesc::GetRating() const {
 	return m_nRating;
 }
 
+__int64 CFileDesc::GetDateTaken() const {
+	if (m_nDateTaken == -2) {
+		m_nDateTaken = ((__int64)m_lastModTime.dwHighDateTime << 32) | m_lastModTime.dwLowDateTime;
+		IPropertyStore* pStore = NULL;
+		if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(m_sName, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
+			PROPVARIANT value;
+			::PropVariantInit(&value);
+			if (SUCCEEDED(pStore->GetValue(PKEY_Photo_DateTaken, &value)) && value.vt == VT_FILETIME) {
+				m_nDateTaken = ((__int64)value.filetime.dwHighDateTime << 32) | value.filetime.dwLowDateTime;
+			}
+			::PropVariantClear(&value);
+			pStore->Release();
+		}
+	}
+	return m_nDateTaken;
+}
+
+const CString& CFileDesc::GetKeywords() const {
+	if (!m_bKeywordsRead) {
+		m_bKeywordsRead = true;
+		IPropertyStore* pStore = NULL;
+		if (SUCCEEDED(::SHGetPropertyStoreFromParsingName(m_sName, NULL, GPS_DEFAULT, IID_PPV_ARGS(&pStore)))) {
+			PROPVARIANT value;
+			::PropVariantInit(&value);
+			if (SUCCEEDED(pStore->GetValue(PKEY_Keywords, &value)) && value.vt != VT_EMPTY) {
+				PWSTR pText = NULL;
+				// a vector of strings becomes "a; b; c"
+				if (SUCCEEDED(::PropVariantToStringAlloc(value, &pText)) && pText != NULL) {
+					m_sKeywords = pText;
+					::CoTaskMemFree(pText);
+				}
+			}
+			::PropVariantClear(&value);
+			pStore->Release();
+		}
+	}
+	return m_sKeywords;
+}
+
+bool CFileDesc::HasKeyword(LPCTSTR sTag) const {
+	return TextUtils::HasTag(GetKeywords(), sTag);
+}
+
 bool CFileDesc::SortAscending(const CFileDesc& other) const {
 	if (sm_eSorting == Helpers::FS_CreationTime || sm_eSorting == Helpers::FS_LastModTime) {
 		const FILETIME* pTime = (sm_eSorting == Helpers::FS_LastModTime) ? &m_lastModTime : &m_creationTime;
@@ -119,6 +168,8 @@ bool CFileDesc::SortAscending(const CFileDesc& other) const {
 		return m_fileSize < other.m_fileSize;
 	} else if (sm_eSorting == Helpers::FS_Rating && GetRating() != other.GetRating()) {
 		return GetRating() < other.GetRating();
+	} else if (sm_eSorting == Helpers::FS_DateTaken && GetDateTaken() != other.GetDateTaken()) {
+		return GetDateTaken() < other.GetDateTaken();
 	} else {
 		if (UseLogicalStringCompare()) {
 			// If the filename contains numbers, we want to sort the files
@@ -339,15 +390,15 @@ bool CFileList::DriveHasRecycleBin(LPCTSTR filePath) {
 
 bool CFileList::DeleteFile(LPCTSTR fileNameWithPath) const {
 	if (fileNameWithPath != NULL) {
-		// append a double null character
-		TCHAR fileName[MAX_PATH + 1];
-		_tcscpy(fileName, fileNameWithPath);
-		fileName[_tcslen(fileName) + 1] = 0;
+		// append a double null character, the path can be longer than MAX_PATH (long paths of Windows 10)
+		size_t nLength = _tcslen(fileNameWithPath);
+		std::vector<TCHAR> fileName(nLength + 2, 0);
+		memcpy(&fileName[0], fileNameWithPath, nLength * sizeof(TCHAR));
 
 		SHFILEOPSTRUCT fileOp{ 0 };
 		fileOp.hwnd = NULL;
 		fileOp.wFunc = FO_DELETE;
-		fileOp.pFrom = fileName;
+		fileOp.pFrom = &fileName[0];
 		fileOp.pTo = NULL;
 		fileOp.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION;
 		fileOp.hNameMappings = NULL;
@@ -661,6 +712,23 @@ void CFileList::UpdateRating(LPCTSTR sFileName, int nRating) {
 	}
 }
 
+void CFileList::UpdateKeywords(LPCTSTR sFileName, LPCTSTR sKeywords) {
+	for (CFileDesc& file : m_fileList) {
+		if (file.GetName().CompareNoCase(sFileName) == 0) file.SetKeywords(sKeywords);
+	}
+}
+
+bool CFileList::GotoIndex(int nIndex) {
+	if (nIndex < 0 || nIndex >= (int)m_fileList.size()) {
+		return false;
+	}
+	m_nMarkedIndexShow = -1;
+	m_iter = m_fileList.begin();
+	std::advance(m_iter, nIndex);
+	m_iterStart = m_fileList.begin();
+	return true;
+}
+
 std::list<CFileDesc>::iterator CFileList::FindFile(const CString& sName) {
 	int nStart = sName.ReverseFind(_T('\\')) + 1;
 	if (nStart == sName.GetLength()) {
@@ -858,6 +926,9 @@ void CFileList::FindFiles() {
 	}
 	if (sm_nMinRating > 0) {
 		m_fileList.remove_if([](const CFileDesc& file) { return file.GetRating() < sm_nMinRating; });
+	}
+	if (!sm_sTagFilter.IsEmpty()) {
+		m_fileList.remove_if([](const CFileDesc& file) { return !file.HasKeyword(sm_sTagFilter); });
 	}
 
 	m_fileList.sort();

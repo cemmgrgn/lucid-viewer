@@ -18,13 +18,17 @@ Open an [issue](https://github.com/cemmgrgn/lucid-viewer/issues) with
   or `LUCID_TRACE=1` before and after, and mention the numbers.
 - New settings go into `src/LucidViewer/Config/LucidViewer.ini` (and the `.tpl`) with a comment above the key,
   the settings window reads its descriptions from there.
+- Text logic without user interface goes into `src/LucidViewer/TextUtils.h` with a test in
+  `tests/UnitTests/UnitTests.cpp`. The tests run in CI; locally: `msbuild tests\UnitTests\UnitTests.vcxproj /p:Configuration=Release /p:Platform=x64`
+  and `tests\UnitTests\bin\UnitTests.exe`.
 - New user-visible text goes through `CNLS::GetString(...)`. Add the English text to `Config/strings.txt` and,
   if you can, the translation to `Config/strings_<language>.txt`.
 
 ## Translations
 
 The string tables are in `src/LucidViewer/Config/strings_<language>.txt`, one `English<TAB>Translation` pair per line.
-Many lines added by Lucid Viewer are not translated yet in most languages, help is welcome.
+Turkish, German, French and Spanish are complete. In the other languages the lines added by Lucid Viewer are not
+translated yet (they are shown in English), help is welcome; `strings.txt` lists all English texts.
 
 ## License
 

@@ -7,7 +7,7 @@
 
 class CMainDlg;
 
-// Dialog to show help screen for JPEGView
+// Dialog to show help screen for Lucid Viewer
 class CHelpDlg : public CDialogImpl<CHelpDlg>, public CScrollImpl<CHelpDlg>
 {
 public:

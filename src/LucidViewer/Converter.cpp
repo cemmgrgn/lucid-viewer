@@ -58,13 +58,15 @@ namespace Converter {
 		{ _T("rotate-right"), _T("rotr:same") },
 	};
 
-	// File endings that get the Explorer context menu, all are readable by JPEGView without extra codecs
+	// File endings that get the Explorer context menu, all are readable by Lucid Viewer without extra codecs
 	static const LPCTSTR s_explorerFileEndings[] = {
 		_T("jpg"), _T("jpeg"), _T("jfif"), _T("png"), _T("gif"), _T("bmp"), _T("tif"), _T("tiff"), _T("webp"),
 		_T("heic"), _T("heif"), _T("hif"), _T("avif"), _T("jxl"), _T("qoi"), _T("psd"), _T("tga")
 	};
 
 	static const LPCTSTR EXPLORER_VERB_NAME = _T("LucidViewer.Convert");
+	// Verb of the versions before the program was renamed to Lucid Viewer, removed so Explorer does not show two menus
+	static const LPCTSTR LEGACY_EXPLORER_VERB_NAME = _T("JPEGView.Convert");
 	static const LPCTSTR COMMAND_CONVERT = _T("/convert:");
 	static const LPCTSTR COMMAND_REGISTER = _T("/registerconvertmenu");
 	static const LPCTSTR COMMAND_UNREGISTER = _T("/unregisterconvertmenu");
@@ -547,11 +549,14 @@ namespace Converter {
 		}
 		::WaitForSingleObject(hThread, INFINITE);
 		::CloseHandle(hThread);
+		if (hCollector != NULL) {
+			// no more files are taken: a process that starts now converts its files itself
+			::DestroyWindow(hCollector);
+		}
+		// files handed over after the conversion thread had ended
+		BatchThread(NULL);
 		if (batch.ProgressWnd != NULL) {
 			::DestroyWindow(batch.ProgressWnd);
-		}
-		if (hCollector != NULL) {
-			::DestroyWindow(hCollector);
 		}
 		::ReleaseMutex(hMutex);
 		::CloseHandle(hMutex);
@@ -560,7 +565,7 @@ namespace Converter {
 
 		if (!batch.Errors.IsEmpty()) {
 			::MessageBox(NULL, CString(CNLS::GetString(_T("The following files could not be converted:"))) + _T("\n\n") + batch.Errors,
-				_T(JPEGVIEW_TITLE), MB_OK | MB_ICONWARNING);
+				_T(APP_TITLE), MB_OK | MB_ICONWARNING);
 			return 1;
 		}
 		return 0;
@@ -602,6 +607,11 @@ namespace Converter {
 			}
 		}
 		return NULL;
+	}
+
+	CJPEGImage* LoadImage(LPCTSTR sFileName) {
+		bool bOutOfMemory = false;
+		return LoadImageForConversion(sFileName, 0, bOutOfMemory);
 	}
 
 	bool ConvertFile(LPCTSTR sSourceFile, const CPreset& preset, CString& sOutputFile, CString& sError) {
@@ -729,7 +739,7 @@ namespace Converter {
 				sValidIds += (sValidIds.IsEmpty() ? _T("") : _T(", ")) + preset.Id;
 			}
 			::MessageBox(NULL, CString(CNLS::GetString(_T("Unknown conversion:"))) + _T(" ") + sPresetId + _T("\n\n") +
-				CNLS::GetString(_T("Valid conversions:")) + _T("\n") + sValidIds, _T(JPEGVIEW_TITLE), MB_OK | MB_ICONERROR);
+				CNLS::GetString(_T("Valid conversions:")) + _T("\n") + sValidIds, _T(APP_TITLE), MB_OK | MB_ICONERROR);
 			return 1;
 		}
 
@@ -879,6 +889,7 @@ namespace Converter {
 				if (nResult != ERROR_SUCCESS && nResult != ERROR_FILE_NOT_FOUND) {
 					bSuccess = false;
 				}
+				shellKey.RecurseDeleteKey(LEGACY_EXPLORER_VERB_NAME);
 			}
 		}
 		NotifyShellAssociationsChanged();

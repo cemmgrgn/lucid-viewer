@@ -109,6 +109,35 @@ void CStartScreen::SetPinned(LPCTSTR sFile, bool bPinned) {
 	WriteLines(_T("StartPinned.txt"), lines);
 }
 
+CString CStartScreen::GetLastOpened() {
+	if (s_bTestLists) return CString();
+	for (const CString& sLine : ReadLines(_T("StartRecent.txt"))) {
+		CString sPath = RecentPath(sLine);
+		if (::GetFileAttributes(sPath) != INVALID_FILE_ATTRIBUTES) return sPath;
+	}
+	return CString();
+}
+
+void CStartScreen::FileMoved(LPCTSTR sOldFile, LPCTSTR sNewFile) {
+	if (s_bTestLists || sOldFile == NULL || sNewFile == NULL || sOldFile[0] == 0 || sNewFile[0] == 0) return;
+	std::vector<CString> pinned = ReadLines(_T("StartPinned.txt"));
+	bool bChanged = false;
+	for (CString& sLine : pinned) {
+		if (sLine.CompareNoCase(sOldFile) == 0) { sLine = sNewFile; bChanged = true; }
+	}
+	if (bChanged) WriteLines(_T("StartPinned.txt"), pinned);
+	std::vector<CString> recent = ReadLines(_T("StartRecent.txt"));
+	bChanged = false;
+	for (CString& sLine : recent) {
+		int nTab = sLine.Find(_T('\t'));
+		if (RecentPath(sLine).CompareNoCase(sOldFile) == 0) {
+			sLine = (nTab > 0 ? sLine.Left(nTab + 1) : CString()) + sNewFile;
+			bChanged = true;
+		}
+	}
+	if (bChanged) WriteLines(_T("StartRecent.txt"), recent);
+}
+
 void CStartScreen::SetTestLists(const std::vector<CString>& recent, const std::vector<CString>& pinned, const std::vector<CString>& screenshots) {
 	s_bTestLists = true;
 	s_testRecent = recent;
@@ -244,6 +273,7 @@ void CStartScreen::LoadThumbnails() {
 					if (nPass == 0 && !pBitmap) continue;
 					{
 						std::lock_guard<std::mutex> lock(pThumbnails->Lock);
+						if (pThumbnails->Cancel) break; // start screen closed, nothing is kept
 						pThumbnails->Images[sPath] = pBitmap;
 						pThumbnails->Loading.erase(sPath);
 					}
@@ -274,6 +304,11 @@ static UINT_PTR s_nAnimationTimer = 0;
 
 CStartScreen::~CStartScreen() {
 	m_pThumbnails->Cancel = true;
+	{
+		// the GDI+ bitmaps are released here and not by a loading thread that may end after GDI+ was shut down
+		std::lock_guard<std::mutex> lock(m_pThumbnails->Lock);
+		m_pThumbnails->Images.clear();
+	}
 	if (s_pAnimating == this) {
 		::KillTimer(NULL, s_nAnimationTimer);
 		s_pAnimating = NULL;

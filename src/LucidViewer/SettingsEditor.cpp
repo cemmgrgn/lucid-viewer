@@ -971,12 +971,13 @@ static int GetCommandCategory(const CString& sName) {
 	if (Has(_T("SLIDESHOW")) || Has(_T("MOVIE")) || Has(_T("EFFECT"))) return 6;
 	if (Has(_T("PARAM_DB"))) return 3;
 	if (Has(_T("SCREENSHOT")) || Has(_T("SETTINGS")) || Has(_T("SHORTCUTS")) || Has(_T("SIMILAR")) || Has(_T("CONFIG")) || Has(_T("HELP")) ||
-		Has(_T("ABOUT")) || Has(_T("USER_CMD")) || Has(_T("OCR")) || Has(_T("EXPLORER_CONVERT")) || Has(_T("SAVE_PARAMETERS")) || Has(_T("OPENWITH"))) return 5;
+		Has(_T("ABOUT")) || Has(_T("USER_CMD")) || Has(_T("OCR")) || Has(_T("EXPLORER_CONVERT")) || Has(_T("SAVE_PARAMETERS")) || Has(_T("OPENWITH")) || Has(_T("UPDATES")) || Has(_T("PICK_COLOR")) || Has(_T("SEARCH"))) return 5;
 	if (Has(_T("OPEN")) || Has(_T("SAVE")) || Has(_T("RELOAD")) || Has(_T("PRINT")) || Has(_T("COPY")) || Has(_T("PASTE")) || Has(_T("EXPLORE")) ||
 		Has(_T("BATCH")) || Has(_T("RENAME")) || Has(_T("RECYCLE")) || Has(_T("DELETE")) || Has(_T("TOUCH")) || Has(_T("WALLPAPER")) || Has(_T("EXPORT")) ||
-		Has(_T("SHARE")) || Has(_T("CONVERT")) || Has(_T("EXIT")) || Has(_T("METADATA"))) return 0;
-	if (Has(_T("NEXT")) || Has(_T("PREV")) || Has(_T("FIRST")) || Has(_T("LAST")) || Has(_T("LOOP")) || Has(_T("SORT")) || Has(_T("RATING")) || sName == _T("IDM_TOGGLE")) return 1;
-	if (Has(_T("ZOOM")) || Has(_T("FIT")) || Has(_T("FILL")) || Has(_T("SPAN")) || Has(_T("FULL_SCREEN")) || Has(_T("SHOW_")) || Has(_T("TOGGLE_")) ||
+		Has(_T("SHARE")) || Has(_T("CONVERT")) || Has(_T("EXIT")) || Has(_T("METADATA")) || Has(_T("TO_FOLDER")) || Has(_T("PROPERTIES")) || Has(_T("DUPLICATE")) || Has(_T("FILE_NAME")) ||
+		Has(_T("BASE64")) || Has(_T("LOCK_SCREEN")) || Has(_T("EDIT_TAGS")) || Has(_T("ON_MAP"))) return 0;
+	if (Has(_T("NEXT")) || Has(_T("PREV")) || Has(_T("FIRST")) || Has(_T("LAST")) || Has(_T("LOOP")) || Has(_T("SORT")) || Has(_T("RATING")) || Has(_T("GOTO")) || Has(_T("FILTER_BY_TAG")) || sName == _T("IDM_TOGGLE")) return 1;
+	if (Has(_T("GRID")) || Has(_T("TIMELINE")) || Has(_T("ZOOM")) || Has(_T("FIT")) || Has(_T("FILL")) || Has(_T("SPAN")) || Has(_T("FULL_SCREEN")) || Has(_T("SHOW_")) || Has(_T("TOGGLE_")) ||
 		Has(_T("HIDE")) || Has(_T("ALWAYS_ON_TOP")) || Has(_T("PAN_")) || Has(_T("MINIMIZE")) || Has(_T("MONITOR"))) return 2;
 	if (Has(_T("CONTRAST")) || Has(_T("GAMMA")) || Has(_T("SHARPEN")) || Has(_T("COLOR")) || Has(_T("LDC")) || Has(_T("AUTO_")) || Has(_T("LANDSCAPE")) ||
 		Has(_T("UNSHARP")) || Has(_T("RESET")) || Has(_T("KEEP")) || Has(_T("ROTATE")) || Has(_T("MIRROR")) || Has(_T("CROP")) || Has(_T("CHANGESIZE")) ||
@@ -1009,6 +1010,17 @@ static struct { LPCTSTR Name; LPCTSTR Text; } s_commandTexts[] = {
 	{ _T("IDM_TOGGLE_SIDEPANEL_COLLAPSED"), _T("Collapse the side panel") }, { _T("IDM_EXPLORER_CONVERT_MENU"), _T("'Convert to' in the Explorer context menu") },
 	{ _T("IDM_HELP"), _T("Keyboard shortcuts...") },
 	{ _T("IDM_START_SCREEN"), _T("Start screen") }, { _T("IDM_PIN_TO_START"), _T("Pin to start screen") },
+	{ _T("IDM_COPY_FILE"), _T("Copy file") }, { _T("IDM_COPY_TO_FOLDER"), _T("Copy to folder...") },
+	{ _T("IDM_MOVE_TO_FOLDER"), _T("Move to folder...") }, { _T("IDM_CHECK_FOR_UPDATES"), _T("Check for updates...") },
+	{ _T("IDM_FILE_PROPERTIES"), _T("File properties...") }, { _T("IDM_OPEN_WITH_OTHER_APP"), _T("Open with another app...") },
+	{ _T("IDM_OPEN_IN_NEW_WINDOW"), _T("Open in new window") },
+	{ _T("IDM_DUPLICATE_FILE"), _T("Duplicate file") }, { _T("IDM_COPY_FILE_NAME"), _T("Copy file name") },
+	{ _T("IDM_GOTO_IMAGE"), _T("Go to image number...") }, { _T("IDM_COPY_BASE64"), _T("Copy as data URI (base64)") },
+	{ _T("IDM_SET_LOCK_SCREEN"), _T("Set as lock screen") }, { _T("IDM_PICK_COLOR"), _T("Pick color") },
+	{ _T("IDM_SORT_DATE_TAKEN"), _T("Sort by date taken") }, { _T("IDM_EDIT_TAGS"), _T("Edit tags...") },
+	{ _T("IDM_FILTER_BY_TAG"), _T("Filter by tag...") }, { _T("IDM_SHOW_ON_MAP"), _T("Show on map") },
+	{ _T("IDM_FOLDER_GRID"), _T("Thumbnails of the folder") }, { _T("IDM_TIMELINE"), _T("Timeline (by date taken)") },
+	{ _T("IDM_SEARCH_PHOTOS"), _T("Search photos...") },
 	{ _T("IDM_SAVE_SCREEN"), _T("Save as shown on screen...") },
 	{ _T("IDM_SAVE_ALLOW_NO_PROMPT"), _T("Save") },
 	{ _T("IDM_TOGGLE"), _T("Switch between this and the marked image") },
@@ -1075,7 +1087,7 @@ struct CShortcutEditor {
 static CShortcutEditor* s_pShortcuts = NULL;
 
 static CString GetUserKeyMapFileName() {
-	return CString(Helpers::JPEGViewAppDataPath()) + _T("KeyMap.txt");
+	return CString(Helpers::AppDataPath()) + _T("KeyMap.txt");
 }
 
 static void ReadKeyMapFile(LPCTSTR sFileName, std::vector<std::pair<CString, CString>>& mapping) {

@@ -4,7 +4,7 @@
 #include <vector>
 
 // Removes the background of a photo with the U2-Net model (MIT license) and Windows ML (in Windows, uses the GPU with DirectML).
-// The model (176 MB) is downloaded on first use into %LOCALAPPDATA%\JPEGView\models.
+// The model (176 MB) is downloaded on first use into %LOCALAPPDATA%\LucidViewer\models.
 namespace BackgroundRemoval {
 	bool IsModelAvailable();
 	// Downloads the model with a progress window, returns false if cancelled or failed

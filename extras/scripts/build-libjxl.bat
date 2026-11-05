@@ -1,7 +1,7 @@
 @echo off
 
 setlocal
-REM this builds libjxl and replaces the libs in the JPEGView src folder
+REM this builds libjxl and replaces the libs in the Lucid Viewer src folder
 
 REM for me it takes like 15min to build
 echo NOTE: this takes a LONG time to build, don't be alarmed...
@@ -26,7 +26,7 @@ IF ERRORLEVEL 1 exit /b 1
 
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo TO: src\JPEGView\libjxl\include\jxl
+echo TO: src\LucidViewer\libjxl\include\jxl
 echo FROM: extras\third_party\libjxl\lib\include\jxl
 echo FROM: %XOUT_DIR%\[arch]\lib\include\jxl
 
@@ -61,11 +61,11 @@ IF ERRORLEVEL 1 exit /b 1
 popd
 
 REM copy the libs over
-copy /y "%XBUILD_DIR%\Release\jxl*.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
+copy /y "%XBUILD_DIR%\Release\jxl*.dll" "%XSRC_DIR%\LucidViewer\libjxl\bin%XJPV_ARCH_PATH%\"
 IF ERRORLEVEL 1 exit /b 1
-copy /y "%XBUILD_DIR%\third_party\brotli\Release\brotli*.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
+copy /y "%XBUILD_DIR%\third_party\brotli\Release\brotli*.dll" "%XSRC_DIR%\LucidViewer\libjxl\bin%XJPV_ARCH_PATH%\"
 IF ERRORLEVEL 1 exit /b 1
-copy /y "%XBUILD_DIR%\lib\Release\jxl*.lib" "%XSRC_DIR%\JPEGView\libjxl\lib%XJPV_ARCH_PATH%\"
+copy /y "%XBUILD_DIR%\lib\Release\jxl*.lib" "%XSRC_DIR%\LucidViewer\libjxl\lib%XJPV_ARCH_PATH%\"
 IF ERRORLEVEL 1 exit /b 1
 
 

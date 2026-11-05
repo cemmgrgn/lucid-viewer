@@ -20,6 +20,16 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>D</kbd> | Convert to |
 | <kbd>Ctrl</kbd> + <kbd>W</kbd> | Exit |
 | <kbd>Alt</kbd> + <kbd>Return</kbd> | Metadata... |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd> | Copy file |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Copy to folder... |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> | Move to folder... |
+| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Return</kbd> | File properties... |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd> | Open with another app... |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> | Open in new window |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>D</kbd> | Duplicate file |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>N</kbd> | Copy file name |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd> | Edit tags... |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>L</kbd> | Show on map |
 
 ## Navigation
 
@@ -40,6 +50,9 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>N</kbd> | Display order: File name |
 | <kbd>M</kbd> | Display order: Modification date |
 | <kbd>Z</kbd> | Display order: Random |
+| <kbd>Ctrl</kbd> + <kbd>G</kbd> | Go to image number... |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd> | Sort by date taken |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>G</kbd> | Filter by tag... |
 
 ## View and zoom
 
@@ -69,6 +82,8 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>T</kbd> | Toolbar |
 | <kbd>Ctrl</kbd> + <kbd>I</kbd> | Information panel |
 | <kbd>Ctrl</kbd> + <kbd>E</kbd> | Edit image (brightness, contrast, colors) |
+| <kbd>G</kbd> | Thumbnails of the folder |
+| <kbd>Shift</kbd> + <kbd>G</kbd> | Timeline (by date taken) |
 
 ## Editing
 
@@ -103,6 +118,7 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Undo |
 | <kbd>Ctrl</kbd> + <kbd>Y</kbd> | Redo |
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo |
+| <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd> | Lossless JPEG transformations: Rotate 180 |
 
 ## Drawing
 
@@ -115,6 +131,8 @@ These are the default keys. Change them in **Help → Keyboard shortcuts** (also
 | Key | Action |
 |---|---|
 | <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>T</kbd> | Copy text from image |
+| <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>P</kbd> | Pick color |
+| <kbd>Ctrl</kbd> + <kbd>F</kbd> | Search photos... |
 
 ## Slideshow
 

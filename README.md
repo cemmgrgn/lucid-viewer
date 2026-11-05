@@ -132,7 +132,9 @@ LucidViewer.exe /convert:fit1920:webp photo.jpg
 ### Organize
 Star ratings (keys <kbd>0</kbd>–<kbd>5</kbd>) are written into the file, so Explorer and other programs see them too.
 Sort and filter the folder by rating, find similar photos, and view or edit all metadata. One click removes the GPS
-location before you share a photo.
+location before you share a photo. Copy or move the photo to another folder, or copy the file itself to paste it into
+a mail or a chat. Tag photos (the tags are written into the file, as digiKam and Explorer do), filter the folder by a tag,
+sort by the date taken and show the place of a photo on the map.
 
 <p align="center"><img src="docs/images/metadata.webp" width="900" alt="Metadata view in the side panel"></p>
 
@@ -158,6 +160,7 @@ Download from the [latest release](https://github.com/cemmgrgn/lucid-viewer/rele
   - the AI model for background removal, downloaded during setup
   - start screen, recent photos, screenshot tool on <kbd>PrtScn</kbd>, theme and layout
 - **`LucidViewer-1.0.0-portable-x64.zip`**: extract anywhere and run `LucidViewer.exe`. Settings stay in that folder.
+- From version 1.1: **`-arm64`** setup and zip, native for Windows on ARM (the x64 version runs there in emulation).
 
 With [winget](https://learn.microsoft.com/windows/package-manager/) (once the package is accepted):
 

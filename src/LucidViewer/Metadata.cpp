@@ -1048,7 +1048,7 @@ bool ReadFileData(LPCTSTR sFileName, std::vector<char>& data) {
 
 bool WriteFileData(LPCTSTR sFileName, const std::vector<char>& data) {
 	// written to a new file first, ReplaceFile keeps the creation time, attributes and security of the old one
-	CString sTemp = CString(sFileName) + _T(".jpegview-tmp");
+	CString sTemp = CString(sFileName) + _T(".lucidviewer-tmp");
 	HANDLE hFile = ::CreateFile(sTemp, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) return false;
 	DWORD nWritten = 0;

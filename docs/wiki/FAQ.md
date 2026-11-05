@@ -35,6 +35,16 @@ AVIF files open, but Lucid Viewer cannot save them. Convert the photo to JPG, PN
 
 Nothing is removed. On the first start, Lucid Viewer copies your JPEGView settings, shortcuts and signature to `%APPDATA%\LucidViewer`. The JPEGView folder is not changed. See [[Installation|Installation]].
 
+## Two "Convert to" menus, or "Print Screen is used by another program"
+
+Builds made before the program was renamed to Lucid Viewer used the names of JPEGView for their Explorer menu and their
+screenshot tool. Lucid Viewer removes these leftovers: the setup does it, and the program does it when the screenshot tool
+starts or when the Explorer menu is switched on or off (**Tools → 'Convert to' in the Explorer context menu**). If the old
+screenshot tool started with Windows, the new one takes over this setting.
+
+The keyboard shortcuts you took over from JPEGView keep working. Commands that JPEGView did not have get their default keys,
+unless you use those keys for something else.
+
 ## Portable or installed: which one should I use?
 
 - **Installed** is the best choice for most people. It adds shortcuts and Windows integration, and it stores the settings in your user folder.

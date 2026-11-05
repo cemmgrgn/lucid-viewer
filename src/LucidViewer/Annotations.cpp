@@ -354,7 +354,7 @@ void CAnnotations::PixelateInto(void* pPixels, int nWidth, int nHeight, int nOff
 
 CString CAnnotations::GetSignatureFileName() {
 	// the settings folder: %APPDATA%\LucidViewer, or the program folder of the portable version
-	CString sFolder = Helpers::JPEGViewAppDataPath();
+	CString sFolder = Helpers::AppDataPath();
 	::CreateDirectory(sFolder, NULL);
 	return sFolder + _T("signature.txt");
 }
@@ -519,11 +519,11 @@ bool CAnnotations::AskForText(HWND hParent, LPCTSTR sTitle, LPCTSTR sOK, LPCTSTR
 	return input.OK && !sText.IsEmpty();
 }
 
-bool CAnnotations::SaveTransparentPNG(LPCTSTR sFileName, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight) {
-	Gdiplus::Bitmap bitmap(nWidth, nHeight, PixelFormat32bppARGB);
+// 32 bpp ARGB bitmap of the pixels with the mask as alpha channel
+static bool FillTransparentBitmap(Gdiplus::Bitmap& bitmap, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight) {
 	Gdiplus::BitmapData data;
 	Gdiplus::Rect rect(0, 0, nWidth, nHeight);
-	if (bitmap.LockBits(&rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &data) != Gdiplus::Ok) {
+	if (bitmap.GetLastStatus() != Gdiplus::Ok || bitmap.LockBits(&rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &data) != Gdiplus::Ok) {
 		return false;
 	}
 	const unsigned char* pSource = (const unsigned char*)pBGRA;
@@ -538,17 +538,51 @@ bool CAnnotations::SaveTransparentPNG(LPCTSTR sFileName, const void* pBGRA, cons
 		}
 	}
 	bitmap.UnlockBits(&data);
+	return true;
+}
+
+static bool GetPNGEncoder(CLSID& clsid) {
 	UINT nEncoders = 0, nSize = 0;
 	Gdiplus::GetImageEncodersSize(&nEncoders, &nSize);
+	if (nSize == 0) return false;
 	std::vector<BYTE> buffer(nSize);
 	Gdiplus::ImageCodecInfo* pEncoders = (Gdiplus::ImageCodecInfo*)&buffer[0];
 	Gdiplus::GetImageEncoders(nEncoders, nSize, pEncoders);
 	for (UINT i = 0; i < nEncoders; i++) {
 		if (wcscmp(pEncoders[i].MimeType, L"image/png") == 0) {
-			return bitmap.Save(sFileName, &pEncoders[i].Clsid, NULL) == Gdiplus::Ok;
+			clsid = pEncoders[i].Clsid;
+			return true;
 		}
 	}
 	return false;
+}
+
+bool CAnnotations::SaveTransparentPNG(LPCTSTR sFileName, const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight) {
+	Gdiplus::Bitmap bitmap(nWidth, nHeight, PixelFormat32bppARGB);
+	CLSID clsid;
+	return FillTransparentBitmap(bitmap, pBGRA, pMask, nWidth, nHeight) && GetPNGEncoder(clsid) &&
+		bitmap.Save(sFileName, &clsid, NULL) == Gdiplus::Ok;
+}
+
+HGLOBAL CAnnotations::EncodeTransparentPNG(const void* pBGRA, const unsigned char* pMask, int nWidth, int nHeight) {
+	Gdiplus::Bitmap bitmap(nWidth, nHeight, PixelFormat32bppARGB);
+	CLSID clsid;
+	if (!FillTransparentBitmap(bitmap, pBGRA, pMask, nWidth, nHeight) || !GetPNGEncoder(clsid)) {
+		return NULL;
+	}
+	IStream* pStream = NULL;
+	if (FAILED(::CreateStreamOnHGlobal(NULL, FALSE, &pStream)) || pStream == NULL) {
+		return NULL;
+	}
+	bool bOk = bitmap.Save(pStream, &clsid, NULL) == Gdiplus::Ok;
+	HGLOBAL hPNG = NULL;
+	::GetHGlobalFromStream(pStream, &hPNG);
+	pStream->Release(); // the memory is not freed with the stream (fDeleteOnRelease FALSE)
+	if (!bOk && hPNG != NULL) {
+		::GlobalFree(hPNG);
+		hPNG = NULL;
+	}
+	return hPNG;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

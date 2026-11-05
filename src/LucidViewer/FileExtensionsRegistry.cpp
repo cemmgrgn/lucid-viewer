@@ -11,7 +11,7 @@
 // Helpers
 ///////////////////////////////////////////////////////////////////////////////////
 
-RegResult ResetPermissionsForRegistryKey(LPCTSTR subKeyRelativeToHKCU);
+static RegResult ResetPermissionsForRegistryKey(LPCTSTR subKeyRelativeToHKCU);
 
 // Auto closing registry key on destructor
 class auto_hkey {
@@ -35,7 +35,11 @@ static bool GetRegistryStringValue(HKEY key, LPCTSTR name, CString & outValue) {
 	DWORD size = buffsize * sizeof(TCHAR);
 	bool bOk = RegQueryValueEx(key, name, NULL, &type, (LPBYTE)&buff, &size) == ERROR_SUCCESS;
 	bOk = bOk && (type == REG_SZ || type == REG_EXPAND_SZ);
-	if (bOk) outValue = buff;
+	if (bOk) {
+		// the stored string is not necessarily terminated
+		buff[min((int)(size / sizeof(TCHAR)), buffsize - 1)] = 0;
+		outValue = buff;
+	}
 	return bOk;
 }
 
@@ -59,7 +63,7 @@ static bool SetRegistryStringValue(HKEY key, LPCTSTR name, LPCTSTR stringValue) 
 	return RegSetValueEx(key, name, 0, REG_SZ, (const BYTE *)stringValue, ((int)_tcslen(stringValue) + 1) * sizeof(TCHAR)) == ERROR_SUCCESS;
 }
 
-// Checks if JPEGView is registered as application in the registry
+// Checks if Lucid Viewer is registered as application in the registry
 static bool IsRegistered() {
 	HKEY key;
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\Classes\\Applications\\LucidViewer.exe\\shell\\open\\command"), 0, KEY_READ, &key) == ERROR_SUCCESS) {
@@ -89,7 +93,7 @@ static CString GetMRURegistryPathForExtension(LPCTSTR sExtension) {
 	return sRegKeyPath;
 }
 
-static bool CheckJPEGViewIsShellOpenHandler(LPCTSTR sClassesName) {
+static bool IsAppShellOpenHandler(LPCTSTR sClassesName) {
 	CString sRegKeyPathForExtension = CString(sClassesName) + _T("\\shell\\open\\command");
 	HKEY subKey;
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, CString(_T("Software\\Classes\\")) + sRegKeyPathForExtension, 0, KEY_READ, &subKey) != ERROR_SUCCESS) {
@@ -104,7 +108,7 @@ static bool CheckJPEGViewIsShellOpenHandler(LPCTSTR sClassesName) {
 	return isRegistered;
 }
 
-// Checks if the given extension is registered for JPEGView in HKEY_CLASSES_ROOT\Extension or HKCU\Software\Classes\Extension
+// Checks if the given extension is registered for Lucid Viewer in HKEY_CLASSES_ROOT\Extension or HKCU\Software\Classes\Extension
 static bool CheckExtensionRegisteredInClasses(LPCTSTR sExtension) {
 	HKEY key;
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, CString(_T("Software\\Classes\\")) + sExtension, 0, KEY_READ, &key) != ERROR_SUCCESS) {
@@ -116,13 +120,13 @@ static bool CheckExtensionRegisteredInClasses(LPCTSTR sExtension) {
 	bool isRegistered = false;
 	CString value;
 	if (GetRegistryStringValue(key, NULL, value)) {
-		isRegistered = CheckJPEGViewIsShellOpenHandler(value);
+		isRegistered = IsAppShellOpenHandler(value);
 	}
 	RegCloseKey(key);
 	return isRegistered;
 }
 
-// Checks if the given extension is registered for JPEGView
+// Checks if the given extension is registered for Lucid Viewer
 static bool CheckExtensionRegistered(LPCTSTR sExtension, bool bNewRegistryFormat, bool & outRegisteredInHKLM) {
 	outRegisteredInHKLM = CheckExtensionRegisteredInClasses(sExtension);
 
@@ -133,7 +137,7 @@ static bool CheckExtensionRegistered(LPCTSTR sExtension, bool bNewRegistryFormat
 		bool userChoiceExists = GetRegistryStringValue(key, bNewRegistryFormat ? _T("Progid") : _T("Application"), value);
 		bool isRegistered;
 		if (userChoiceExists) {
-			isRegistered = Helpers::stristr(value, _T("LucidViewer.exe")) != NULL || CheckJPEGViewIsShellOpenHandler(value);
+			isRegistered = Helpers::stristr(value, _T("LucidViewer.exe")) != NULL || IsAppShellOpenHandler(value);
 		} else {
 			isRegistered = outRegisteredInHKLM;
 		}
@@ -181,7 +185,7 @@ static bool IsProtectedByHash(LPCTSTR subKeyRelativeToHKCU, bool checkForRegistr
 	return false;
 }
 
-// Registers JPEGView in the MRU list for the extension so that it appears in the 'Open with' list
+// Registers Lucid Viewer in the MRU list for the extension so that it appears in the 'Open with' list
 static void RegisterInMRU(LPCTSTR sRegMRUPath) {
 	HKEY key;
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, sRegMRUPath, 0, KEY_READ | KEY_WRITE, &key) != ERROR_SUCCESS)
@@ -191,7 +195,7 @@ static void RegisterInMRU(LPCTSTR sRegMRUPath) {
 
 	CString mruList;
 	if (!GetRegistryStringValue(key, _T("MRUList"), mruList) || mruList.IsEmpty()) {
-		// No MRU list yet, create new list containing JPEGView.exe
+		// No MRU list yet, create new list containing LucidViewer.exe
 		if (SetRegistryStringValue(key, _T("MRUList"), _T("a"))) {
 			SetRegistryStringValue(key, _T("a"), _T("LucidViewer.exe"));
 		}
@@ -207,7 +211,7 @@ static void RegisterInMRU(LPCTSTR sRegMRUPath) {
 			}
 		}
 	}
-	// append another entry to the MRU list with JPEGView.exe
+	// append another entry to the MRU list with LucidViewer.exe
 	CString nextMRUEntry = CString(wchar_t(mruList.GetAt(mruList.GetLength() - 1) + 1));
 	// another solution
 	// https://stackoverflow.com/questions/12602526/how-can-i-convert-an-int-to-a-cstring
@@ -219,7 +223,7 @@ static void RegisterInMRU(LPCTSTR sRegMRUPath) {
 	}
 }
 
-// Registers the given extension for JPEGView
+// Registers the given extension for Lucid Viewer
 static RegResult RegisterExtension(LPCTSTR sExtension, bool bNewRegistryFormat, bool bIsWindows8, bool bChangeDACLIfRequired) {
 	
 	bool hasDefaultValue;
@@ -273,7 +277,9 @@ static RegResult RegisterExtension(LPCTSTR sExtension, bool bNewRegistryFormat, 
 
 	HKEY key;
 	bool bCanWriteKey = (RegCreateKeyEx(HKEY_CURRENT_USER, sRegKeyPathForExtension, 0, NULL, 0, KEY_WRITE | KEY_READ, NULL, &key, NULL) == ERROR_SUCCESS);
-	if (!bCanWriteKey) {
+	if (bCanWriteKey) {
+		RegCloseKey(key); // opened again below
+	} else {
 		if (ExistsKey(sRegKeyPathForExtension)) {
 			// no rights to write to the key
 			if (!bChangeDACLIfRequired) {
@@ -301,7 +307,7 @@ static RegResult RegisterExtension(LPCTSTR sExtension, bool bNewRegistryFormat, 
 					return Reg_ErrorWriteKey;
 				}
 			} else {
-				// already registered for JPEGView
+				// already registered for Lucid Viewer
 				return Reg_Success;
 			}
 		}
@@ -331,7 +337,9 @@ static RegResult UnregisterExtension(LPCTSTR sExtension, bool bNewRegistryFormat
 
 	HKEY key;
 	bool bCanWriteKey = (RegOpenKeyEx(HKEY_CURRENT_USER, sRegKeyPathForExtension, 0, DELETE | KEY_WRITE | KEY_READ, &key) == ERROR_SUCCESS);
-	if (!bCanWriteKey) {
+	if (bCanWriteKey) {
+		RegCloseKey(key); // opened again below
+	} else {
 		if (ExistsKey(sRegKeyPathForExtension)) {
 			// no rights to write to the key
 			if (!bChangeDACLIfRequired) {
@@ -379,8 +387,8 @@ static RegResult ResetPermissionsForRegistryKey(LPCTSTR subKeyRelativeToHKCU)
 	auto_hkey autoKey(hKey);
 
 	const int MAX_SIZE_SEC_DESC = 1024;
-	SECURITY_DESCRIPTOR* pExistingSecDesc = (SECURITY_DESCRIPTOR*)new char[MAX_SIZE_SEC_DESC];
-	std::unique_ptr<char> auto_ptr_sec_desc((char*)pExistingSecDesc);
+	std::unique_ptr<char[]> auto_ptr_sec_desc(new char[MAX_SIZE_SEC_DESC]);
+	SECURITY_DESCRIPTOR* pExistingSecDesc = (SECURITY_DESCRIPTOR*)auto_ptr_sec_desc.get();
 
 	// Get the existing DACL of the registry key
 	DWORD sizeDecDesc = MAX_SIZE_SEC_DESC;
@@ -426,7 +434,7 @@ static RegResult ResetPermissionsForRegistryKey(LPCTSTR subKeyRelativeToHKCU)
 					if (::GetAce(pACL, i, (LPVOID*)&pace))
 					{
 						// Build the new ACL but exclude the access denied ACEs
-						if (!pace->Header.AceType == ACCESS_DENIED_ACE_TYPE) {
+						if (pace->Header.AceType != ACCESS_DENIED_ACE_TYPE) {
 							::AddAce(pDacl, ACL_REVISION, MAXDWORD, pace, ((PACE_HEADER)pace)->AceSize);
 						}
 					}
@@ -466,11 +474,11 @@ CFileExtensionsRegistry::CFileExtensionsRegistry() {
 	// to register file extensions
 	m_bNewRegistryFormat = version >= 600;
 	m_bIsWindows8 = version >= 602;
-	m_bIsJPEGViewRegistered = IsRegistered();
+	m_bIsAppRegistered = IsRegistered();
 }
 
-bool CFileExtensionsRegistry::RegisterJPEGView() {
-	if (!m_bIsJPEGViewRegistered) {
+bool CFileExtensionsRegistry::RegisterApp() {
+	if (!m_bIsAppRegistered) {
 		HKEY key;
 		if (RegCreateKeyEx(HKEY_CURRENT_USER, _T("Software\\Classes\\Applications\\LucidViewer.exe\\shell\\open\\command"), 0,
 			NULL, 0, KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
@@ -486,7 +494,7 @@ bool CFileExtensionsRegistry::RegisterJPEGView() {
 	return true;
 }
 
-bool CFileExtensionsRegistry::CheckIfOpenedByJPEGView(LPCTSTR sExtensionList, bool& outRegisteredInHKLM) {
+bool CFileExtensionsRegistry::CheckIfOpenedByApp(LPCTSTR sExtensionList, bool& outRegisteredInHKLM) {
 	bool bOk = false;
 	int nNumChars = (int)_tcslen(sExtensionList);
 	int nStart = 0;
@@ -539,25 +547,30 @@ RegResult CFileExtensionsRegistry::UnregisterFileExtension(LPCTSTR sExtension, b
 CFileExtensionsRegistrationWindows8::CFileExtensionsRegistrationWindows8() {
 }
 
-bool CFileExtensionsRegistrationWindows8::RegisterJPEGView() {
+bool CFileExtensionsRegistrationWindows8::RegisterApp() {
 	// ProgId
 	CString startupCommand;
 	startupCommand.Format(_T("\"%sLucidViewer.exe\" \"%%1\""), CSettingsProvider::This().GetEXEPath());
 	if (!WriteStringValue(_T("Software\\Classes\\LucidViewer.Image\\shell\\open\\command"), NULL, startupCommand)) {
 		return false;
 	}
+	CString sIcon;
+	sIcon.Format(_T("%sLucidViewer.exe,0"), CSettingsProvider::This().GetEXEPath());
+	WriteStringValue(_T("Software\\Classes\\LucidViewer.Image"), NULL, _T("Lucid Viewer"));
+	WriteStringValue(_T("Software\\Classes\\LucidViewer.Image\\DefaultIcon"), NULL, sIcon);
 
 	// Set as RegisteredApplications and declare capabilities
 	if (!WriteStringValue(_T("Software\\RegisteredApplications"), _T("Lucid Viewer"), _T("Software\\LucidViewer\\Capabilities"))) {
 		return false;
 	}
 	if (!WriteStringValue(_T("Software\\LucidViewer\\Capabilities"), _T("ApplicationDescription"), 
-		CNLS::GetString(_T("Lucid Viewer is a lean, fast and highly configurable viewer/editor for JPEG, BMP, PNG, WEBP, TGA, GIF and TIFF images with a minimal GUI.")))) {
+		CNLS::GetString(_T("Fast image viewer and light editor.")))) {
 		return false;
 	}
 	if (!WriteStringValue(_T("Software\\LucidViewer\\Capabilities"), _T("ApplicationName"), _T("Lucid Viewer"))) {
 		return false;
 	}
+	WriteStringValue(_T("Software\\LucidViewer\\Capabilities"), _T("ApplicationIcon"), sIcon);
 	
 	// Declare all supported file endings
 	CString fileEndings = CFileList::GetSupportedFileEndings();
@@ -588,6 +601,27 @@ public:
 		/* [string][in] */ __RPC__in_string LPCWSTR pszAppRegistryName) = 0;
 
 };
+
+bool CFileExtensionsRegistrationWindows8::IsRegisteredForAllUsers() {
+	// written by the setup (all users installation)
+	HKEY key;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\RegisteredApplications"), 0, KEY_READ, &key) != ERROR_SUCCESS) {
+		return false;
+	}
+	CString value;
+	bool bRegistered = GetRegistryStringValue(key, _T("Lucid Viewer"), value);
+	RegCloseKey(key);
+	return bRegistered;
+}
+
+void CFileExtensionsRegistrationWindows8::OpenDefaultAppsSettings(bool bForAllUsers) {
+	// Windows 10 and 11: the default apps page of the settings app, Windows 11 opens the page of the program directly.
+	// The association dialog of Windows 8 (LaunchApplicationAssociationDialog) does nothing on these versions.
+	LPCTSTR sUri = bForAllUsers ? _T("ms-settings:defaultapps?registeredAppMachine=Lucid%20Viewer") : _T("ms-settings:defaultapps?registeredAppUser=Lucid%20Viewer");
+	if ((INT_PTR)::ShellExecute(NULL, _T("open"), sUri, NULL, NULL, SW_SHOWNORMAL) <= 32) {
+		LaunchApplicationAssociationDialog();
+	}
+}
 
 void CFileExtensionsRegistrationWindows8::LaunchApplicationAssociationDialog() {
 	const GUID CLSID_ApplicationAssociationRegistrationUI_ = { 0x1968106d, 0xf3b5, 0x44cf, { 0x89, 0x0e, 0x11, 0x6f, 0xcb, 0x9e, 0xce, 0xf1 } };

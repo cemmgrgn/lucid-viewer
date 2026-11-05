@@ -1,13 +1,13 @@
 @echo off
 
 setlocal
-REM this builds libheif and replaces the libs in the JPEGView src folder
+REM this builds libheif and replaces the libs in the Lucid Viewer src folder
 REM it also builds libavif as both share the same dav1d libs
 
-SET XSRC_DIR=%~dp0..\..\src\JPEGView\libheif
+SET XSRC_DIR=%~dp0..\..\src\LucidViewer\libheif
 SET XLIB_DIR=%~dp0..\third_party\libheif
 SET XLIBAVIF_DIR=%~dp0..\third_party\libavif
-SET XAVIFSRC_DIR=%~dp0..\..\src\JPEGView\libavif
+SET XAVIFSRC_DIR=%~dp0..\..\src\LucidViewer\libavif
 SET XOUT_DIR=%~dp0libheif_libavif
 
 SET XVENV_DIR=%~dp0venv-meson
@@ -70,12 +70,12 @@ IF ERRORLEVEL 1 exit /b 1
 
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo TO: src\JPEGView\libheif\include\libheif
+echo TO: src\LucidViewer\libheif\include\libheif
 echo .h FROM: extras\third_party\libheif\libheif\libheif
 echo FROM: %OUT_DIR%\libheif-[arch]\libheif\heif_version.h
 
 echo;
-echo TO: src\JPEGView\libheif\include\libavif
+echo TO: src\LucidViewer\libheif\include\libavif
 echo .h FROM: extras\third_party\libavif\include\avif
 
 exit /b 0

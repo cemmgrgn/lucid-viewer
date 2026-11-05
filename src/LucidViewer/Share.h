@@ -8,4 +8,6 @@ namespace Share {
 	bool DragFile(HWND hWnd, LPCWSTR sFileName);
 	// Thumbnail of the file from the Windows thumbnail cache (as shown by Explorer), NULL on error. The caller deletes the bitmap.
 	HBITMAP GetThumbnail(LPCWSTR sFileName, int nSize);
+	// Uses the image file as picture of the Windows lock screen, returns false if Windows refuses it
+	bool SetLockScreenImage(LPCWSTR sFileName);
 }

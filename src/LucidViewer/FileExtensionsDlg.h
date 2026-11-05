@@ -7,7 +7,7 @@
 
 class CFileExtensionsRegistry;
 
-// Dialog to define the file extensions that are bound to JPEGView.
+// Dialog to define the file extensions that are bound to Lucid Viewer.
 // This dialog is used for Windows XP, Vista and Windows 7 but not for Windows 8 and later.
 class CFileExtensionsDlg : public CDialogImpl<CFileExtensionsDlg>
 {

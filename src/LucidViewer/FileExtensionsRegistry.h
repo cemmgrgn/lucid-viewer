@@ -10,7 +10,7 @@ enum RegResult {
 	Reg_Internal
 };
 
-// Class to support registering file extensions in the Windows registry to be opened by JPEGView
+// Class to support registering file extensions in the Windows registry to be opened by Lucid Viewer
 // This class only works for Windows <= Windows 7. For windows 8, the only way to register file extensions
 // is to call the 'default programs' dialog from Windows.
 class CFileExtensionsRegistry
@@ -18,29 +18,29 @@ class CFileExtensionsRegistry
 public:
 	CFileExtensionsRegistry();
 
-	// Checks if JPEGView is registered in HKEY_CURRENT_USER\Software\Classes\Applications
-	bool IsJPEGViewRegistered() { return m_bIsJPEGViewRegistered; }
+	// Checks if Lucid Viewer is registered in HKEY_CURRENT_USER\Software\Classes\Applications
+	bool IsAppRegistered() { return m_bIsAppRegistered; }
 
-	// Register JPEGView in HKEY_CURRENT_USER\Software\Classes\Applications
-	bool RegisterJPEGView();
+	// Register Lucid Viewer in HKEY_CURRENT_USER\Software\Classes\Applications
+	bool RegisterApp();
 	
-	// Checks if all given list of extensions in the form "*.ext1;*.ext2" are opened by JPEGView
-	// outRegisteredInHKLM contains true if it's registered to JPEGView but in HKLM registry root, not in HKCU
-	bool CheckIfOpenedByJPEGView(LPCTSTR sExtensionList, bool& outRegisteredInHKLM);
+	// Checks if all given list of extensions in the form "*.ext1;*.ext2" are opened by Lucid Viewer
+	// outRegisteredInHKLM contains true if it's registered to Lucid Viewer but in HKLM registry root, not in HKCU
+	bool CheckIfOpenedByApp(LPCTSTR sExtensionList, bool& outRegisteredInHKLM);
 
-	// Registers JPEGView as default viewer for the given extension in the form "*.ext1"
+	// Registers Lucid Viewer as default viewer for the given extension in the form "*.ext1"
 	RegResult RegisterFileExtension(LPCTSTR sExtension, bool bChangeDACLIfRequired);
 
-	// Unregisters JPEGView as default viewer for the given extension in the form "*.ext1"
+	// Unregisters Lucid Viewer as default viewer for the given extension in the form "*.ext1"
 	RegResult UnregisterFileExtension(LPCTSTR sExtension, bool bChangeDACLIfRequired);
 
 private:
 	bool m_bNewRegistryFormat;
 	bool m_bIsWindows8;
-	bool m_bIsJPEGViewRegistered;
+	bool m_bIsAppRegistered;
 };
 
-// Class to register file extensions in windows 8. To do so, JPEGView must be registered in RegisteredApplications
+// Class to register file extensions in windows 8. To do so, Lucid Viewer must be registered in RegisteredApplications
 // and its capabilities (i.e. file extensions it supports) must be published in the registry.
 // Finally the 'Default programs' dialog from Windows 8 needs to be called to perform the actual registration.
 class CFileExtensionsRegistrationWindows8
@@ -48,13 +48,19 @@ class CFileExtensionsRegistrationWindows8
 public:
 	CFileExtensionsRegistrationWindows8();
 
-	// Register JPEGView in HKEY_CURRENT_USER\Software\RegisteredApplications
-	// Also publishes the capabilities and creates a ProgId for JPEGView.
+	// Register Lucid Viewer in HKEY_CURRENT_USER\Software\RegisteredApplications
+	// Also publishes the capabilities and creates a ProgId for Lucid Viewer.
 	// Everything is done under HKEY_CURRENT_USER
-	bool RegisterJPEGView();
+	bool RegisterApp();
 
 	// Launches the Windows 8 application association dialog (Default programs)
 	void LaunchApplicationAssociationDialog();
+
+	// True if the setup has registered Lucid Viewer for all users (HKEY_LOCAL_MACHINE)
+	static bool IsRegisteredForAllUsers();
+
+	// Opens the default apps page of the Windows settings, on Windows 11 the page of Lucid Viewer
+	void OpenDefaultAppsSettings(bool bForAllUsers);
 
 	// Gets the key name of the last failed key to write
 	CString GetLastFailedRegistryKey() { return m_lastFailedRegistryKey; }

@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "Helpers.h"
+#if defined(_M_IX86) || defined(_M_X64)
 #include "immintrin.h"
+#endif
 #include "NLS.h"
 #include "MultiMonitorSupport.h"
 #include "JPEGImage.h"
@@ -26,7 +28,7 @@ CReplacePipe::CReplacePipe(LPCTSTR sText) {
 
 static TCHAR buffAppPath[MAX_PATH + 32] = _T("");
 
-LPCTSTR JPEGViewAppDataPath() {
+LPCTSTR AppDataPath() {
 	if (buffAppPath[0] == 0) {
 		::SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffAppPath);
 		_tcscat_s(buffAppPath, MAX_PATH + 32, _T("\\LucidViewer\\"));
@@ -34,7 +36,7 @@ LPCTSTR JPEGViewAppDataPath() {
 	return buffAppPath;
 }
 
-void SetJPEGViewAppDataPath(LPCTSTR sPath) {
+void SetAppDataPath(LPCTSTR sPath) {
 	_tcscpy_s(buffAppPath, MAX_PATH + 32, sPath);
 }
 
@@ -238,7 +240,7 @@ void GetZoomParameters(float & fZoom, CPoint & offsets, CSize imageSize, CSize w
 	offsets = CPoint(nOffsetX, nOffsetY);
 }
 
-#ifdef _WIN64
+#if defined(_M_X64)
 static CPUType ProbeSSEorAVX2() {
 	__try {
 		// check if CPU supports AVX and the xgetbv instruction
@@ -271,8 +273,11 @@ CPUType ProbeCPU(void) {
 		return cpuType;
 	}
 
-#ifdef _WIN64
+#if defined(_M_X64)
 	return ProbeSSEorAVX2(); // 64 bit always supports at least SSE
+#elif !defined(_M_IX86)
+	cpuType = CPU_Generic; // ARM64: the C++ implementation, SSE and AVX are x86 only
+	return cpuType;
 #else
 	// Structured exception handling is mandatory, try/catch(...) does not catch such severe stuff.
 	cpuType = CPU_Generic;
@@ -315,6 +320,9 @@ GiveUp:
 
 // returns if the CPU supports some form of hardware multiprocessing, e.g. hyperthreading or multicore
 static bool CPUSupportsHWMultiprocessing(void) {   
+#if !defined(_M_IX86) && !defined(_M_X64)
+	return false;
+#else
 	if (ProbeCPU() >= CPU_SSE) {
 		int output[4];
 		__cpuid(output, 1);
@@ -322,12 +330,21 @@ static bool CPUSupportsHWMultiprocessing(void) {
 	} else {
 		return false;
 	}  
+#endif
 }
 
 int NumCoresPerPhysicalProc(void) {
 	if (!CPUSupportsHWMultiprocessing()) {
+#if !defined(_M_IX86) && !defined(_M_X64)
+		// ARM64: no cpuid, the number of logical processors
+		SYSTEM_INFO info;
+		::GetNativeSystemInfo(&info);
+		return max(1, (int)info.dwNumberOfProcessors);
+#else
 		return 1;
+#endif
 	}
+#if defined(_M_IX86) || defined(_M_X64)
 
 	int output[4];
 
@@ -340,6 +357,7 @@ int NumCoresPerPhysicalProc(void) {
 	__cpuidex(output, 4, 0);
 
 	return (int)((output[0] & 0xFC000000) >> 26) + 1;
+#endif
 }
 
 bool PatternMatch(LPCTSTR & sMatchingPattern, LPCTSTR sString, LPCTSTR sPattern) {
