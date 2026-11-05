@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 (not released yet)
+## 1.1.0 (2026-11-05)
 
 ### New
 - **Thumbnails of the folder** (<kbd>G</kbd>, toolbar button): a grid of all images of the folder, a search result or
