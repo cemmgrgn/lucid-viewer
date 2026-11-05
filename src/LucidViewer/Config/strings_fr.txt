@@ -133,7 +133,7 @@ Error saving file	Erreur de sauvegarde du fichier
 Error while writing the following registry key	Erreur lors de l'écriture de la clé de registre suivante
 Error writing file to disk!	Erreur d'écriture sur le disque !
 Example:	Exemple :
-Exif Date Time:	
+Exif Date Time:	Date/heure Exif :
 Exposure bias (EV):	Correction d'exposition (EV) :
 Exposure time (s):	Temps de pose (s):
 Extension	Extension
@@ -339,7 +339,7 @@ Slide from right	Faire glisser depuis la droite
 Slide from top	Faire glisser depuis le haut
 Slideshow	Diaporama
 Slideshow with timeout of 'n' seconds (ESC to stop)	Diaporama avec un délai de n secondes (Échap pour arrêter)
-Software:	
+Software:	Logiciel :
 Sort images by creation date, resp. modification date, resp. file name	Trier les images par date de création, date de modification, nom du fichier
 Source:	Source :
 Target folders that do not yet exist are created as needed.	Les dossiers cibles qui n'existent pas sont créés en cas de besoin.
@@ -514,3 +514,528 @@ Zoom to Selection	Zoom sur la sélection
 //! * Total (Strings + Menu) = 429
 //! * Done = 427
 //! * Missing = 2 (0%)
+WEBP (lossless)	WEBP (sans perte)
+ICO (icon)	ICO (icône)
+Scale to 75 %	Réduire à 75 %
+Scale to 50 %	Réduire à 50 %
+Scale to 25 %	Réduire à 25 %
+Rotate left	Rotation à gauche
+Rotate right	Rotation à droite
+The image could not be loaded because there is not enough memory.	L'image n'a pas pu être chargée car la mémoire est insuffisante.
+The image could not be read.	L'image n'a pas pu être lue.
+The following files could not be converted:	Les fichiers suivants n'ont pas pu être convertis :
+Convert to	Convertir en
+Unknown conversion. Valid conversions are: jpg, png, webp, webp-lossless, bmp, tiff, gif, ico, pdf, scale75, scale50, scale25, rotate-left, rotate-right	Conversion inconnue. Conversions valides : jpg, png, webp, webp-lossless, bmp, tiff, gif, ico, pdf, scale75, scale50, scale25, rotate-left, rotate-right
+File	Fichier
+View	Affichage
+Navigate	Navigation
+Tools	Outils
+Help	Aide
+Zoom in	Zoom avant
+Zoom out	Zoom arrière
+100 %	100 %
+Image processing panel	Panneau de traitement d'image
+Move to recycle bin	Déplacer vers la corbeille
+Information panel	Panneau d'informations
+Information	Informations
+Histogram	Histogramme
+Comment	Commentaire
+The Explorer context menu could not be changed.	Le menu contextuel de l'Explorateur n'a pas pu être modifié.
+'Convert to' was removed from the Explorer context menu.	« Convertir en » a été retiré du menu contextuel de l'Explorateur.
+'Convert to' was added to the Explorer context menu.	« Convertir en » a été ajouté au menu contextuel de l'Explorateur.
+Toolbar	Barre d'outils
+Status bar	Barre d'état
+'Convert to' in the Explorer context menu	« Convertir en » dans le menu contextuel de l'Explorateur
+First image	Première image
+Last image	Dernière image
+Help and keyboard shortcuts	Aide et raccourcis clavier
+Converting...	Conversion...
+Converted:	Converti :
+After	Après
+All values were reset to the defaults.	Toutes les valeurs ont été réinitialisées.
+Automatic correction	Correction automatique
+Before	Avant
+Clipboard image	Image du presse-papiers
+Collapse the side panel	Réduire le panneau latéral
+Compare	Comparer
+Compare before and after editing	Comparer avant et après retouche
+Comparing: left before, right after editing	Comparaison : à gauche avant, à droite après retouche
+Drag to change, double click to reset	Faites glisser pour modifier, double-cliquez pour réinitialiser
+Edit image (brightness, contrast, colors)	Retoucher l'image (luminosité, contraste, couleurs)
+Expand the side panel	Développer le panneau latéral
+Fit long edge to 1280 px	Grand côté à 1280 px
+Fit long edge to 1920 px	Grand côté à 1920 px
+Forget the values of this image	Oublier les valeurs de cette image
+Lucid Viewer shows this image with these values the next time (parameter DB)	Lucid Viewer affichera cette image avec ces valeurs la prochaine fois (base de paramètres)
+Remove metadata (EXIF, GPS)	Supprimer les métadonnées (EXIF, GPS)
+Removes this image from the parameter DB	Retire cette image de la base de paramètres
+Reset all values to the defaults	Réinitialiser toutes les valeurs
+Same format	Même format
+Save these values for this image	Enregistrer ces valeurs pour cette image
+Sharpen with radius, amount and threshold	Accentuer avec rayon, intensité et seuil
+Show the location on the map	Afficher le lieu sur la carte
+Switch this correction on or off	Activer ou désactiver cette correction
+Tone and color	Tons et couleurs
+Unknown conversion:	Conversion inconnue :
+Valid conversions:	Conversions valides :
+Scale to %d %%	Réduire à %d %%
+Fit long edge to %d px	Grand côté à %d px
+Move the current image to the recycle bin?	Déplacer l'image actuelle vers la corbeille ?
+Enter or Del: delete, Esc: cancel	Entrée ou Suppr : supprimer, Échap : annuler
+The HEIF/AVIF encoder of Windows is not available (HEIF and HEVC video extensions, AVIF needs Windows 11).	L'encodeur HEIF/AVIF de Windows n'est pas disponible (extensions vidéo HEIF et HEVC, AVIF nécessite Windows 11).
+More	Plus
+Resize image...	Redimensionner l'image...
+Change the size in pixels or percent, save afterwards	Modifier la taille en pixels ou en pourcentage, puis enregistrer
+Converting	Conversion
+Settings	Paramètres
+Settings...	Paramètres...
+Window	Fenêtre
+Menu bar and toolbar	Barre de menus et barre d'outils
+Dark theme	Thème sombre
+Side panel width (pixels):	Largeur du panneau latéral (pixels) :
+General	Général
+Language:	Langue :
+Automatic	Automatique
+JPEG quality (0 - 100):	Qualité JPEG (0 - 100) :
+Additional conversions:	Conversions supplémentaires :
+Example: fit2560:webp;scale30:jpg;rot180:png	Exemple : fit2560:webp;scale30:jpg;rot180:png
+Output folder:	Dossier de sortie :
+Empty: next to the source file. A name: sub folder.	Vide : à côté du fichier source. Un nom : sous-dossier.
+Edit INI file...	Modifier le fichier INI...
+The theme and the language are changed when Lucid Viewer is started the next time.	Le thème et la langue changent au prochain démarrage de Lucid Viewer.
+Draw	Dessin
+Draw and write on the image	Dessiner et écrire sur l'image
+Tool	Outil
+Pen	Stylo
+Highlighter	Surligneur
+Rectangle	Rectangle
+Arrow	Flèche
+Text	Texte
+Off	Désactivé
+Draw freehand	Dessiner à main levée
+Mark with a transparent wide pen	Marquer avec un stylo large transparent
+Draw a rectangle	Dessiner un rectangle
+Draw an arrow	Dessiner une flèche
+Click on the image to write a text	Cliquez sur l'image pour écrire un texte
+No tool, the mouse pans and selects again	Aucun outil, la souris déplace et sélectionne de nouveau
+Color	Couleur
+Undo	Annuler
+Remove the last drawing	Supprimer le dernier dessin
+Remove all drawings	Supprimer tous les dessins
+Save pen strokes as signature	Enregistrer les traits comme signature
+Write your signature with the pen first	Écrivez d'abord votre signature avec le stylo
+Write your signature with the pen first.	Écrivez d'abord votre signature avec le stylo.
+Insert signature	Insérer la signature
+Draw into the image	Dessiner dans l'image
+Saving the image does this too	L'enregistrement de l'image le fait aussi
+The pen strokes were saved as signature.	Les traits ont été enregistrés comme signature.
+Copy text from image	Copier le texte de l'image
+Recognizes the text in the image and copies it to the clipboard	Reconnaît le texte de l'image et le copie dans le presse-papiers
+No text was found in the image.	Aucun texte n'a été trouvé dans l'image.
+%d lines of text were copied to the clipboard.	%d lignes de texte ont été copiées dans le presse-papiers.
+Rating removed	Note supprimée
+Rating: %d stars	Note : %d étoiles
+The rating could not be saved in this file format.	La note ne peut pas être enregistrée dans ce format de fichier.
+Rating (keys 1 to 5, 0 removes it)	Note (touches 1 à 5, 0 la supprime)
+Crop and straighten	Recadrer et redresser
+Crop tool	Outil de recadrage
+While on, dragging on the image selects the crop area (otherwise Ctrl + drag)	Activé, faire glisser sur l'image sélectionne la zone à recadrer (sinon Ctrl + glisser)
+Drag on the image to select the area to crop.	Faites glisser sur l'image pour sélectionner la zone à recadrer.
+Image	Image
+Aspect ratio of the crop area	Proportions de la zone de recadrage
+Straighten...	Redresser...
+Perspective...	Perspective...
+Rotate by any angle to straighten the horizon	Faire pivoter d'un angle quelconque pour redresser l'horizon
+Correct converging lines of buildings	Corriger les lignes convergentes des bâtiments
+Share...	Partager...
+The share window of Windows is not available.	La fenêtre de partage de Windows n'est pas disponible.
+Drag the file name to copy the file to other applications	Faites glisser le nom du fichier pour copier le fichier dans d'autres applications
+Export	Exporter
+Export...	Exporter...
+Format:	Format :
+Quality:	Qualité :
+Long edge (pixels):	Grand côté (pixels) :
+Original:	Original :
+Keep metadata (EXIF, GPS)	Conserver les métadonnées (EXIF, GPS)
+Estimated size: calculating...	Taille estimée : calcul en cours...
+Estimated size:	Taille estimée :
+This format can not be written.	Ce format ne peut pas être écrit.
+The image was exported.	L'image a été exportée.
+Remove color	Supprimer une couleur
+Click on a color to make the connected area transparent, the width sets the tolerance	Cliquez sur une couleur pour rendre la zone connexe transparente, l'épaisseur règle la tolérance
+Save as transparent PNG...	Enregistrer en PNG transparent...
+Saves the image with the removed colors as transparent PNG	Enregistre l'image avec les couleurs supprimées en PNG transparent
+Restore removed colors	Restaurer les couleurs supprimées
+The transparent image was saved.	L'image transparente a été enregistrée.
+%d pixels made transparent. Save them with 'Save as transparent PNG'.	%d pixels rendus transparents. Enregistrez-les avec « Enregistrer en PNG transparent ».
+Thumbnail strip	Bande de miniatures
+Find similar photos	Rechercher des photos similaires
+Find similar photos...	Rechercher des photos similaires...
+Show	Afficher
+Group	Groupe
+No similar photos found in %d files.	Aucune photo similaire trouvée dans %d fichiers.
+%d groups of similar photos found in %d files.	%d groupes de photos similaires trouvés dans %d fichiers.
+Comparing photos: %d / %d	Comparaison des photos : %d / %d
+Remove background	Supprimer l'arrière-plan
+Makes the background transparent with an AI model (176 MB download on first use)	Rend l'arrière-plan transparent avec un modèle d'IA (téléchargement de 176 Mo à la première utilisation)
+Downloading the background removal model (176 MB)	Téléchargement du modèle de suppression d'arrière-plan (176 Mo)
+The background removal model could not be downloaded.	Le modèle de suppression d'arrière-plan n'a pas pu être téléchargé.
+Background removed. Save it with 'Save as transparent PNG'.	Arrière-plan supprimé. Enregistrez-le avec « Enregistrer en PNG transparent ».
+Exposure	Exposition
+Vignette	Vignettage
+Temperature	Température
+Tint	Teinte
+Auto	Auto
+Automatic color, contrast and shadow correction	Correction automatique des couleurs, du contraste et des ombres
+The drawings or removed colors of this image are not saved. Discard them?	Les dessins ou les couleurs supprimées de cette image ne sont pas enregistrés. Les abandonner ?
+Convert all images of this folder	Convertir toutes les images de ce dossier
+Keyboard shortcuts...	Raccourcis clavier...
+Keyboard shortcuts	Raccourcis clavier
+Move to recycle bin without the question	Déplacer vers la corbeille sans confirmation
+drag	glisser
+Select the area to crop	Sélectionner la zone à recadrer
+Summary	Résumé
+Metadata	Métadonnées
+Metadata...	Métadonnées...
+All metadata of the file, editable values can be changed	Toutes les métadonnées du fichier, les valeurs modifiables peuvent être changées
+Description	Description
+Camera	Appareil photo
+Location	Lieu
+Other	Autres
+(empty)	(vide)
+(binary data)	(données binaires)
+Click to change the value	Cliquez pour modifier la valeur
+Read only, click to copy the value	Lecture seule, cliquez pour copier la valeur
+Copy all metadata	Copier toutes les métadonnées
+Remove location	Supprimer le lieu
+Remove all editable metadata	Supprimer toutes les métadonnées modifiables
+Copies the metadata as text to the clipboard	Copie les métadonnées sous forme de texte dans le presse-papiers
+Removes the GPS location from the file	Supprime la position GPS du fichier
+The orientation is kept	L'orientation est conservée
+Changes are written into the file at once, the image itself is not changed.	Les modifications sont écrites immédiatement dans le fichier, l'image elle-même n'est pas modifiée.
+Windows can not read metadata from this file.	Windows ne peut pas lire les métadonnées de ce fichier.
+The metadata was copied to the clipboard.	Les métadonnées ont été copiées dans le presse-papiers.
+The value was copied to the clipboard.	La valeur a été copiée dans le presse-papiers.
+The metadata was saved in the file.	Les métadonnées ont été enregistrées dans le fichier.
+Remove the GPS location from the file?	Supprimer la position GPS du fichier ?
+Remove all editable metadata (description, camera, location and others) from the file? The orientation is kept.	Supprimer toutes les métadonnées modifiables (description, appareil, lieu et autres) du fichier ? L'orientation est conservée.
+%d metadata values were removed.	%d valeurs de métadonnées ont été supprimées.
+An empty value removes it from the file.	Une valeur vide la supprime du fichier.
+Format: year-month-day hour:minute:second, for example 2024-05-31 14:30:00	Format : année-mois-jour heure:minute:seconde, par exemple 2024-05-31 14:30:00
+Separate several values with a semicolon (;)	Séparez plusieurs valeurs par un point-virgule (;)
+Remove	Supprimer
+The value is not valid.	La valeur n'est pas valide.
+The value could not be written to the file.	La valeur n'a pas pu être écrite dans le fichier.
+Screenshot	Capture d'écran
+Take screenshot	Faire une capture d'écran
+Copy text from screen	Copier le texte de l'écran
+Screenshot tool in the notification area	Outil de capture d'écran dans la zone de notification
+Recognized text	Texte reconnu
+Copy	Copier
+Undo (Ctrl+Z)	Annuler (Ctrl+Z)
+Copy the text in the selection (OCR)	Copier le texte de la sélection (OCR)
+Open in Lucid Viewer	Ouvrir dans Lucid Viewer
+Save (Ctrl+S)	Enregistrer (Ctrl+S)
+Copy (Ctrl+C)	Copier (Ctrl+C)
+Close (Esc)	Fermer (Échap)
+Select the area with the text, click for a window. Esc cancels.	Sélectionnez la zone avec le texte, cliquez pour une fenêtre. Échap annule.
+Drag to select an area, click for a window. Esc cancels.	Faites glisser pour sélectionner une zone, cliquez pour une fenêtre. Échap annule.
+The screenshot was copied to the clipboard.	La capture d'écran a été copiée dans le presse-papiers.
+The screenshot was saved.	La capture d'écran a été enregistrée.
+Save screenshot	Enregistrer la capture d'écran
+The text could not be recognized.	Le texte n'a pas pu être reconnu.
+Lucid Viewer screenshot	Capture d'écran Lucid Viewer
+Open screenshot folder	Ouvrir le dossier des captures d'écran
+Start with Windows	Démarrer avec Windows
+Print Screen key settings of Windows...	Paramètres de la touche Impr. écran de Windows...
+The shortcut %s is used by another program. It can be changed in the INI file (ScreenshotHotkey).	Le raccourci %s est utilisé par un autre programme. Il peut être modifié dans le fichier INI (ScreenshotHotkey).
+Windows opens the Snipping Tool with the Print Screen key. Switch this off in Settings > Accessibility > Keyboard (right click on this icon).	Windows ouvre l'Outil Capture avec la touche Impr. écran. Désactivez-le dans Paramètres > Accessibilité > Clavier (clic droit sur cette icône).
+Show the text in the selection, it can be selected and copied (Ctrl+T)	Afficher le texte de la sélection, il peut être sélectionné et copié (Ctrl+T)
+Copy all text	Copier tout le texte
+Copies all recognized text	Copie tout le texte reconnu
+Select words with the mouse, Ctrl+C copies them, Ctrl+A selects all.	Sélectionnez des mots avec la souris, Ctrl+C les copie, Ctrl+A sélectionne tout.
+All text was copied (%d lines). Select words to copy a part.	Tout le texte a été copié (%d lignes). Sélectionnez des mots pour en copier une partie.
+%d characters were copied to the clipboard.	%d caractères ont été copiés dans le presse-papiers.
+Select the area with the text, click for a window, Ctrl+C for the whole screen. Esc cancels.	Sélectionnez la zone avec le texte, cliquez pour une fenêtre, Ctrl+C pour tout l'écran. Échap annule.
+Drag to select an area, click for a window, Ctrl+C or Ctrl+S for the whole screen. Esc cancels.	Faites glisser pour sélectionner une zone, cliquez pour une fenêtre, Ctrl+C ou Ctrl+S pour tout l'écran. Échap annule.
+Redo	Rétablir
+Undone	Annulé
+Redone	Rétabli
+Nothing to undo	Rien à annuler
+Nothing to redo	Rien à rétablir
+The metadata was restored.	Les métadonnées ont été restaurées.
+The file was restored from the recycle bin.	Le fichier a été restauré depuis la corbeille.
+The file was not found in the recycle bin.	Le fichier n'a pas été trouvé dans la corbeille.
+Undo the last operation (Ctrl+Z)	Annuler la dernière opération (Ctrl+Z)
+Draw your signature	Dessiner votre signature
+Write your signature in the white area with the mouse or a pen.	Écrivez votre signature dans la zone blanche avec la souris ou un stylet.
+Clear	Effacer
+Draw a new signature...	Dessiner une nouvelle signature...
+The signature was saved.	La signature a été enregistrée.
+Inserts the saved signature, without a saved signature it can be drawn first	Insère la signature enregistrée, sans signature enregistrée elle peut d'abord être dessinée
+Program options	Options du programme
+User interface options	Options de l'interface
+Window behavior options	Options du comportement de la fenêtre
+Toolbar, status bar and side panel	Barre d'outils, barre d'état et panneau latéral
+Screenshot tool	Outil de capture d'écran
+Image control panels	Panneaux de contrôle de l'image
+File navigation options	Options de navigation dans les fichiers
+Mouse navigation options	Options de navigation à la souris
+User input config	Configuration des entrées utilisateur
+Image display options	Options d'affichage de l'image
+Transparency options	Options de transparence
+Image zoom options	Options de zoom
+Advanced image correction parameters	Paramètres avancés de correction d'image
+Default image editing options	Options de retouche par défaut
+Crop options	Options de recadrage
+Image info display options	Options d'affichage des informations
+File name area	Zone du nom de fichier
+File EXIF info box	Cadre d'informations EXIF
+Auto contrast correction	Correction automatique du contraste
+Auto color correction	Correction automatique des couleurs
+Auto brightness correction	Correction automatique de la luminosité
+Auto local density correction	Correction automatique de la densité locale
+Auto landscape mode correction	Correction automatique du mode paysage
+Slideshow options	Options du diaporama
+Confirmation options	Options de confirmation
+File save options	Options d'enregistrement
+Print options	Options d'impression
+Custom user commands	Commandes utilisateur personnalisées
+On	Activé
+Color...	Couleur...
+No setting found.	Aucun paramètre trouvé.
+Search in all settings	Rechercher dans tous les paramètres
+Edit keyboard shortcuts...	Modifier les raccourcis clavier...
+Defaults of this page	Valeurs par défaut de cette page
+Set all settings of this page to the default values?	Remettre tous les paramètres de cette page aux valeurs par défaut ?
+The settings could not be written to the user INI file.	Les paramètres n'ont pas pu être écrits dans le fichier INI de l'utilisateur.
+Automatic (Windows language)	Automatique (langue de Windows)
+The INI file with the settings was not found.	Le fichier INI des paramètres est introuvable.
+The settings were saved. Most of them take effect after a restart of Lucid Viewer. Restart now?	Les paramètres ont été enregistrés. La plupart prennent effet après un redémarrage de Lucid Viewer. Redémarrer maintenant ?
+Pixelate	Pixeliser
+Hides an area (faces, names, numbers) with large blocks, drag a rectangle	Masque une zone (visages, noms, numéros) avec de grands blocs, tracez un rectangle
+Pixelate (hide an area)	Pixeliser (masquer une zone)
+Star rating	Note par étoiles
+Sort by star rating	Trier par note
+All images	Toutes les images
+1 star or more	1 étoile ou plus
+2 stars or more	2 étoiles ou plus
+3 stars or more	3 étoiles ou plus
+4 stars or more	4 étoiles ou plus
+Only 5 stars	Seulement 5 étoiles
+Sorted by star rating	Trié par note
+No image of this folder has so many stars.	Aucune image de ce dossier n'a autant d'étoiles.
+All %d images are shown	Les %d images sont affichées
+%d images with %d stars or more are shown	%d images avec %d étoiles ou plus sont affichées
+New keyboard shortcut	Nouveau raccourci clavier
+Press the new key combination. Click here to cancel.	Appuyez sur la nouvelle combinaison de touches. Cliquez ici pour annuler.
+%s is used for '%s'. Use it for '%s' instead?	%s est utilisé pour '%s'. L'utiliser plutôt pour '%s' ?
+Restore the default keyboard shortcuts?	Restaurer les raccourcis clavier par défaut ?
+The keyboard shortcuts could not be saved.	Les raccourcis clavier n'ont pas pu être enregistrés.
+Search command or key	Rechercher une commande ou une touche
+Command	Commande
+Shortcut	Raccourci
+Name in KeyMap.txt	Nom dans KeyMap.txt
+Add shortcut...	Ajouter un raccourci...
+Remove shortcuts	Supprimer les raccourcis
+Defaults	Par défaut
+Open file...	Ouvrir un fichier...
+The settings were applied. These take effect after a restart of Lucid Viewer: %s. Restart now?	Les paramètres ont été appliqués. Ceux-ci prennent effet après un redémarrage de Lucid Viewer : %s. Redémarrer maintenant ?
+The settings were applied.	Les paramètres ont été appliqués.
+In JPEG files Windows stores title and subject in the same field, both change.	Dans les fichiers JPEG, Windows enregistre le titre et l'objet dans le même champ, les deux changent.
+Line width	Épaisseur du trait
+Color copied:	Couleur copiée :
+File size:	Taille du fichier :
+Drag the signature to move it, drag a corner to resize it.	Faites glisser la signature pour la déplacer, un coin pour la redimensionner.
+Select / move	Sélectionner / déplacer
+Click a drawing or the signature: drag to move it, drag a corner to resize it, Del removes it	Cliquez sur un dessin ou la signature : glissez pour déplacer, glissez un coin pour redimensionner, Suppr l'enlève
+Frequently used	Fréquemment utilisées
+Search results	Résultats de la recherche
+View and zoom	Affichage et zoom
+Editing	Retouche
+Drawing	Dessin
+Mouse	Souris
+Only commands with a shortcut	Seulement les commandes avec un raccourci
+Next / previous image or zoom (setting NavigateWithMouseWheel)	Image suivante / précédente ou zoom (paramètre NavigateWithMouseWheel)
+Ctrl + mouse wheel	Ctrl + molette
+Drag with the left button	Glisser avec le bouton gauche
+Move the zoomed image, or select an area to crop	Déplacer l'image agrandie ou sélectionner une zone à recadrer
+Ctrl + drag	Ctrl + glisser
+Double click	Double-clic
+Full screen on / off	Plein écran activé / désactivé
+Forward / back mouse button	Bouton avant / arrière de la souris
+Next / previous image	Image suivante / précédente
+Right click	Clic droit
+Menu with all functions	Menu avec toutes les fonctions
+Save as shown on screen...	Enregistrer tel qu'affiché à l'écran...
+Switch between this and the marked image	Basculer entre cette image et l'image marquée
+Mark the image for switching	Marquer l'image pour basculer
+Swap edit settings with the marked image	Échanger les réglages avec l'image marquée
+Resampling quality: high / fast	Qualité du rééchantillonnage : haute / rapide
+Fit to screen / 100%	Ajuster à l'écran / 100%
+Move the zoomed image up	Déplacer l'image agrandie vers le haut
+Move the zoomed image down	Déplacer l'image agrandie vers le bas
+Move the zoomed image left	Déplacer l'image agrandie vers la gauche
+Move the zoomed image right	Déplacer l'image agrandie vers la droite
+Rotate +90 without quality loss (JPEG)	Rotation +90 sans perte de qualité (JPEG)
+Rotate -90 without quality loss (JPEG)	Rotation -90 sans perte de qualité (JPEG)
+Automatic color and contrast correction on / off	Correction automatique des couleurs et du contraste activée / désactivée
+Automatic correction for the visible part	Correction automatique de la partie visible
+Shadow and highlight correction on / off	Correction des ombres et des hautes lumières activée / désactivée
+Landscape enhancement mode	Mode d'amélioration des paysages
+Keep edit settings for the next images	Conserver les réglages pour les images suivantes
+Remember edit settings for this image	Mémoriser les réglages pour cette image
+Color correction stronger	Correction des couleurs plus forte
+Color correction weaker	Correction des couleurs plus faible
+Contrast correction stronger	Correction du contraste plus forte
+Contrast correction weaker	Correction du contraste plus faible
+More contrast	Plus de contraste
+Less contrast	Moins de contraste
+Brightness (gamma) up	Luminosité (gamma) plus élevée
+Brightness (gamma) down	Luminosité (gamma) plus faible
+Lighten shadows more	Éclaircir davantage les ombres
+Lighten shadows less	Éclaircir moins les ombres
+Darken highlights more	Assombrir davantage les hautes lumières
+Darken highlights less	Assombrir moins les hautes lumières
+Sharpen more	Accentuer davantage
+Sharpen less	Accentuer moins
+Resume slideshow	Reprendre le diaporama
+Move to the next monitor	Déplacer vers l'écran suivant
+Window always on top	Fenêtre toujours au premier plan
+Latitude direction	Direction de la latitude
+Longitude direction	Direction de la longitude
+Altitude reference	Référence d'altitude
+GPS time	Heure GPS
+Direction of the target	Direction de la cible
+Direction of the target reference	Référence de la direction de la cible
+Camera direction	Direction de l'appareil
+Camera direction reference	Référence de la direction de l'appareil
+Speed	Vitesse
+Speed unit	Unité de vitesse
+Coordinates	Coordonnées
+Copies:	Copies :
+Color:	Couleur :
+Black and white	Noir et blanc
+Photo size:	Taille de la photo :
+Custom size	Taille personnalisée
+Print the file name below the image	Imprimer le nom du fichier sous l'image
+Start	Accueil
+Your recently opened photos and your picks.	Vos photos ouvertes récemment et vos favoris.
+No photo opened yet.	Aucune photo ouverte pour l'instant.
+Open file	Ouvrir un fichier
+Open folder	Ouvrir un dossier
+Paste	Coller
+Recently opened	Ouvertes récemment
+Clear list	Vider la liste
+Drag a photo here	Faites glisser une photo ici
+JPEG, PNG, WebP, HEIC, AVIF, JPEG XL, RAW and more	JPEG, PNG, WebP, HEIC, AVIF, JPEG XL, RAW et plus
+My picks	Mes favoris
+%d photos	%d photos
+Add photos	Ajouter des photos
+Pin your favorite photos here. Press %s on an open photo or right click > Pin to start screen.	Épinglez vos photos préférées ici. Appuyez sur %s sur une photo ouverte ou clic droit > Épingler à l'accueil.
+Tip: drag a photo onto this window to open it.	Astuce : faites glisser une photo sur cette fenêtre pour l'ouvrir.
+Today	Aujourd'hui
+Yesterday	Hier
+Open	Ouvrir
+Open containing folder	Ouvrir le dossier contenant
+Remove from list	Retirer de la liste
+Pin to start screen	Épingler à l'accueil
+Unpin from start screen	Détacher de l'accueil
+Start screen	Écran d'accueil
+Pinned to the start screen	Épinglé à l'accueil
+Removed from the start screen	Retiré de l'accueil
+Screenshots	Captures d'écran
+Fast image viewer and light editor.	Visionneuse d'images rapide et éditeur léger.
+Copy file	Copier le fichier
+Copy to folder...	Copier vers un dossier...
+Move to folder...	Déplacer vers un dossier...
+Copy to folder	Copier vers un dossier
+Move to folder	Déplacer vers un dossier
+Check for updates...	Rechercher des mises à jour...
+The file was copied, it can be pasted in Explorer, a mail or a chat.	Le fichier a été copié, il peut être collé dans l'Explorateur, un e-mail ou une discussion.
+The file could not be copied to the clipboard.	Le fichier n'a pas pu être copié dans le presse-papiers.
+Checking for a new version...	Recherche d'une nouvelle version...
+The file was moved back.	Le fichier a été remis à sa place.
+The file could not be moved back.	Le fichier n'a pas pu être remis à sa place.
+The file is already in this folder.	Le fichier est déjà dans ce dossier.
+Moved to	Déplacé vers
+Copied to	Copié vers
+The file could not be moved.	Le fichier n'a pas pu être déplacé.
+The file could not be copied.	Le fichier n'a pas pu être copié.
+The latest version could not be found. Please check the internet connection.	La dernière version est introuvable. Vérifiez la connexion Internet.
+Lucid Viewer %s is available, you have version %s. Open the download page?	Lucid Viewer %s est disponible, vous avez la version %s. Ouvrir la page de téléchargement ?
+You have the latest version (%s).	Vous avez la dernière version (%s).
+File properties...	Propriétés du fichier...
+Open with another app...	Ouvrir avec une autre application...
+The image was copied with transparency.	L'image a été copiée avec la transparence.
+The image could not be copied to the clipboard.	L'image n'a pas pu être copiée dans le presse-papiers.
+Background removed. Save it with 'Save as transparent PNG' or copy it with %s.	Arrière-plan supprimé. Enregistrez-le avec « Enregistrer en PNG transparent » ou copiez-le avec %s.
+Open in new window	Ouvrir dans une nouvelle fenêtre
+Copied	Copié
+copy	copie
+Copy made:	Copie créée :
+Go to image number (1 - %d)	Aller à l'image numéro (1 - %d)
+There is no image with this number.	Il n'y a pas d'image avec ce numéro.
+The file is too large for a data URI (more than 20 MB).	Le fichier est trop volumineux pour une URI de données (plus de 20 Mo).
+Data URI copied (%d KB of text).	URI de données copiée (%d Ko de texte).
+Tags, separated by semicolons	Mots-clés, séparés par des points-virgules
+The tags were removed.	Les mots-clés ont été supprimés.
+Tags saved:	Mots-clés enregistrés :
+Show only images with this tag (empty: all images)	Afficher seulement les images avec ce mot-clé (vide : toutes les images)
+No image of this folder has the tag %s.	Aucune image de ce dossier n'a le mot-clé %s.
+%d images with the tag %s are shown	%d images avec le mot-clé %s sont affichées
+This photo has no location (GPS).	Cette photo n'a pas de position (GPS).
+The image is the picture of the lock screen now.	L'image est maintenant l'image de l'écran de verrouillage.
+Windows did not accept the image for the lock screen. Open the lock screen settings?	Windows n'a pas accepté l'image pour l'écran de verrouillage. Ouvrir les paramètres de l'écran de verrouillage ?
+Color picker off	Pipette désactivée
+Click on the image to copy the color, Esc cancels.	Cliquez sur l'image pour copier la couleur, Échap annule.
+Color %s (RGB %d, %d, %d) copied	Couleur %s (RVB %d, %d, %d) copiée
+Sorted by date taken	Trié par date de prise de vue
+Date taken	Date de prise de vue
+Copy file name	Copier le nom du fichier
+Duplicate file	Dupliquer le fichier
+Copy as data URI (base64)	Copier en URI de données (base64)
+Edit tags...	Modifier les mots-clés...
+Show on map	Afficher sur la carte
+Go to image number...	Aller à l'image numéro...
+Filter by tag...	Filtrer par mot-clé...
+Pick color	Pipette
+Set as lock screen	Définir comme écran de verrouillage
+Sort by date taken	Trier par date de prise de vue
+%d dropped images, the arrow keys go through them	%d images déposées, les flèches permettent de les parcourir
+Thumbnails of the folder	Miniatures du dossier
+Timeline (by date taken)	Chronologie (par date de prise de vue)
+Search photos...	Rechercher des photos...
+No images in this folder	Aucune image dans ce dossier
+Ctrl or Shift + click selects several images, right click shows the actions, Enter opens the image.	Ctrl ou Maj + clic sélectionne plusieurs images, le clic droit affiche les actions, Entrée ouvre l'image.
+Unknown date	Date inconnue
+Compare the two selected images	Comparer les deux images sélectionnées
+No stars	Aucune étoile
+1 star	1 étoile
+%d stars	%d étoiles
+Add tags...	Ajouter des mots-clés...
+Remove tag...	Retirer un mot-clé...
+Copy files	Copier les fichiers
+Rename...	Renommer...
+Close the thumbnails	Fermer les miniatures
+%d files copied, they can be pasted in Explorer.	%d fichiers copiés, ils peuvent être collés dans l'Explorateur.
+%d of %d images rated with %d stars	%d images sur %d notées %d étoiles
+Tags to add, separated by semicolons	Mots-clés à ajouter, séparés par des points-virgules
+Tag to remove	Mot-clé à retirer
+The tags of %d images were changed.	Les mots-clés de %d images ont été modifiés.
+%d of %d files moved to %s	%d fichiers sur %d déplacés vers %s
+%d of %d files copied to %s	%d fichiers sur %d copiés vers %s
+Move %d images to the recycle bin?	Déplacer %d images vers la corbeille ?
+The images were moved to the recycle bin.	Les images ont été déplacées vers la corbeille.
+Not all images could be deleted.	Toutes les images n'ont pas pu être supprimées.
+New name of %d files: {name} old name, {n} number, {date} date taken, {time} time taken	Nouveau nom de %d fichiers : {name} ancien nom, {n} numéro, {date} date de prise de vue, {time} heure de prise de vue
+Next	Suivant
+Rename the files?	Renommer les fichiers ?
+%d files renamed, %d failed	%d fichiers renommés, %d échecs
+Search photos in this folder and its sub folders	Rechercher des photos dans ce dossier et ses sous-dossiers
+Search: words of the name, tag:holiday stars:3 from:2024-01-01 to:2024-12-31	Rechercher : mots du nom, tag:vacances stars:3 from:2024-01-01 to:2024-12-31
+Search	Rechercher
+Searching... %d images checked, %d found (Esc cancels)	Recherche... %d images vérifiées, %d trouvées (Échap annule)
+Search cancelled	Recherche annulée
+No photo found	Aucune photo trouvée
+%d photos found	%d photos trouvées
