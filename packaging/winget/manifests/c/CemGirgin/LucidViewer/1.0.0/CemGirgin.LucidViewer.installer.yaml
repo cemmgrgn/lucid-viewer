@@ -61,6 +61,7 @@ Installers:
     Custom: /CURRENTUSER
 - Architecture: x64
   Scope: machine
+  ElevationRequirement: elevationRequired
   InstallerUrl: https://github.com/cemmgrgn/lucid-viewer/releases/download/v1.0.0/LucidViewer-1.0.0-Setup-x64.exe
   InstallerSha256: 6577149399D1CEABF44B6ED759C542B2A5657E56DAB772EC008E3398C8DE2981
   InstallerSwitches:
