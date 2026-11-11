@@ -429,6 +429,9 @@ private:
 	bool m_bTransparencySaved; // the current transparency was saved as PNG
 	// Asks before drawings or removed colors that are not saved get lost, returns true to continue
 	bool ConfirmDiscardEdits();
+	// drawings, removed colors or changed pixels (crop, resize, drawings drawn into the image) that are not saved
+	bool HasUnsavedChanges();
+	int m_nSavedChangeCount; // change count of the image when it was loaded or saved
 	CString m_sRatingFile; // file of the cached rating
 	CString m_sRatingPendingFile; // file whose rating is being read in the background
 	int m_nRatingGeneration; // changes when the cached rating becomes invalid, late background results are ignored
@@ -495,6 +498,22 @@ private:
 	void ShowOnMap();
 	void SetAsLockScreen();
 	void PickColorAt(int nX, int nY);
+	// text of the image (OCR), the words are selected with the mouse
+	struct CTextWord {
+		float Left, Top, Right, Bottom; // in pixels of the original image
+		CString Text;
+		int Line;
+	};
+	std::vector<CTextWord> m_textWords;
+	bool m_bTextLayer, m_bSelectingText;
+	int m_nTextStart, m_nTextEnd;
+	void ShowTextLayer();
+	void EndTextLayer();
+	void PaintTextLayer(CDC& dc);
+	CRect TextWordScreenRect(const CTextWord& word);
+	int TextWordAt(int nX, int nY, bool bNearest);
+	CString GetSelectedImageText(bool bAllIfNone);
+	void CopySelectedImageText(bool bAllIfNone);
 	bool m_bPickColor; // the next click copies the color of the pixel
 	// thumbnail grid of the folder with multi selection, NULL when not shown
 	class CFolderGrid* m_pFolderGrid;

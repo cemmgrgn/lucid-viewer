@@ -2,21 +2,20 @@ OCR (optical character recognition) finds text in an image and lets you copy it.
 
 ![Every recognized word is framed, two lines are selected for copying](https://raw.githubusercontent.com/cemmgrgn/lucid-viewer/main/docs/images/ocr.webp)
 
-## Copy all text from a photo
+## Copy text from a photo
 
 1. Open the image in Lucid Viewer.
-2. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd>.
-3. The text is copied to the clipboard.
+2. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> (or the **T** button of the toolbar). Every recognized word is
+   framed on the image.
+3. Drag over the words you need: they are copied when you release the mouse button. A double click copies a whole line,
+   <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all text and <kbd>Ctrl</kbd>+<kbd>C</kbd> copies the selection.
+4. <kbd>Esc</kbd> ends the selection. Pressing <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> again copies the selection
+   (or all text) and ends it.
 
-## Copy part of the text
+## Text on the screen
 
-Use the screenshot tool to choose the words you need:
-
-1. Press <kbd>PrtScn</kbd> and select the region with the text.
-2. Each word is framed when the text is recognized.
-3. Select the words with the mouse.
-4. Press <kbd>Ctrl</kbd>+<kbd>C</kbd> to copy them.
-
+For text outside Lucid Viewer use the screenshot tool: press <kbd>PrtScn</kbd>, select the region, then select the words
+with the mouse and press <kbd>Ctrl</kbd>+<kbd>C</kbd>.
 You can also copy all the text of the region with <kbd>Shift</kbd>+<kbd>PrtScn</kbd>. See [[Screenshot tool|Screenshot-tool]].
 
 ## Language

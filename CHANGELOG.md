@@ -1,8 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.1.1 (2026-11-11)
 
 ### New
+- **Select text in the photo**: *Copy text from image* (toolbar **T**, Tools menu) now marks the recognized words on the
+  image. Drag over the words to copy them, double click copies a line, <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all,
+  <kbd>Ctrl</kbd>+<kbd>C</kbd> copies, <kbd>Esc</kbd> ends. Running the command again copies all text.
+- **Save, Don't save, Cancel**: every question about unsaved changes uses these buttons instead of Yes and No (image,
+  settings window, keyboard shortcuts, default parameters).
 - **All texts of the settings window can be translated**: the names of the settings, their descriptions and the texts of
   the list values go through the string tables (`strings_xx.txt`) like the rest of the program, so one file per language
   is enough. Turkish, German, French and Spanish are complete. The search finds the English and the translated words.
@@ -11,6 +16,11 @@
   hides any field of the photo (setting `MetadataFields`).
 
 ### Fixed
+- A cropped, resized or mirrored image and drawings drawn into the image were lost without a question when going to
+  another image or closing; now Lucid Viewer asks to save them. Also when another image is opened from the thumbnails of
+  the folder, with *Go to image number* or with the marked image.
+- <kbd>Esc</kbd> in full screen leaves full screen first, also when `EscapeClosesWindow=true`.
+- Closing the settings or keyboard shortcut window with changes asks to save them instead of discarding them.
 - Translated texts that did not fit: the dialogs (batch rename, resize, crop size, print, open with, file extensions,
   about) grow with longer texts, the buttons of the settings and keyboard shortcut windows are as wide as their text and
   long setting names wrap. The settings window can be resized and maximized.

@@ -353,10 +353,13 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_bCropTool = false;
 	m_bUpdateCheckRunning = false;
 	m_bPickColor = false;
+	m_bTextLayer = m_bSelectingText = false;
+	m_nTextStart = m_nTextEnd = -1;
 	m_nGestureStartDistance = 0;
 	m_dGestureStartZoom = 1.0;
 	m_bDragOutPending = false;
 	m_bTransparencySaved = false;
+	m_nSavedChangeCount = 0;
 	m_bEditPending = false;
 	m_bUndoing = false;
 	m_nCommandDepth = 0;
@@ -730,6 +733,9 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	if (m_pCurrentImage != NULL && !m_pAnnotations->IsEmpty()) {
 		PaintAnnotations(dc);
 	}
+	if (m_pCurrentImage != NULL && m_bTextLayer) {
+		PaintTextLayer(dc);
+	}
 	if (m_bCompareMode && m_pCurrentImage != NULL) {
 		PaintCompareSplit(dc);
 	}
@@ -938,6 +944,17 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 		PickColorAt(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 	}
+	if (m_bTextLayer && m_pCurrentImage != NULL) {
+		int nWord = TextWordAt(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), false);
+		m_nTextStart = m_nTextEnd = nWord;
+		Invalidate(FALSE);
+		if (nWord >= 0) {
+			this->SetCapture();
+			m_bSelectingText = true;
+			return 0;
+		}
+		// outside the text the image can be moved as usual
+	}
 	this->SetCapture();
 	bool isCropping = m_pCropCtl->IsCropping();
 	CPoint pointClicked(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
@@ -1024,6 +1041,12 @@ LRESULT CMainDlg::OnLButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam,
 
 LRESULT CMainDlg::OnLButtonUp(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/) {
 	m_bDragOutPending = false;
+	if (m_bSelectingText) {
+		m_bSelectingText = false;
+		::ReleaseCapture();
+		CopySelectedImageText(false);
+		return 0;
+	}
 	if (IsStartScreenActive() && !m_pChrome->IsDragging()) {
 		if (m_pStartScreen->IsDragging()) {
 			m_pStartScreen->OnMouseUp();
@@ -1179,6 +1202,15 @@ LRESULT CMainDlg::OnSetCursor(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 		::SetCursor(::LoadCursor(NULL, IDC_CROSS));
 		return TRUE;
 	}
+	if (LOWORD(lParam) == HTCLIENT && m_bTextLayer && !IsStartScreenActive() && !IsFolderGridActive()) {
+		POINT point;
+		::GetCursorPos(&point);
+		ScreenToClient(&point);
+		if (m_bSelectingText || TextWordAt(point.x, point.y, false) >= 0) {
+			::SetCursor(::LoadCursor(NULL, IDC_IBEAM));
+			return TRUE;
+		}
+	}
 	if (LOWORD(lParam) == HTCLIENT && IsStartScreenActive()) {
 		POINT point;
 		::GetCursorPos(&point);
@@ -1230,6 +1262,20 @@ LRESULT CMainDlg::OnLButtonDblClk(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lPara
 	if (IsStartScreenActive()) {
 		return 0;
 	}
+	if (m_bTextLayer) {
+		// a double click on a word copies its line
+		int nWord = TextWordAt(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), false);
+		if (nWord >= 0) {
+			int nFirst = nWord, nLast = nWord;
+			while (nFirst > 0 && m_textWords[nFirst - 1].Line == m_textWords[nWord].Line) nFirst--;
+			while (nLast + 1 < (int)m_textWords.size() && m_textWords[nLast + 1].Line == m_textWords[nWord].Line) nLast++;
+			m_nTextStart = nFirst;
+			m_nTextEnd = nLast;
+			Invalidate(FALSE);
+			CopySelectedImageText(false);
+			return 0;
+		}
+	}
 	if (!m_bDragging && !m_pCropCtl->IsCropping()) {
 		if (m_pPanelMgr->OnMouseLButton(MouseEvent_BtnDblClk, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam))) {
 			return 0;
@@ -1272,6 +1318,14 @@ LRESULT CMainDlg::OnMouseMove(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, B
 	int nOldMouseX = m_nMouseX;
 	m_nMouseX = GET_X_LPARAM(lParam);
 	m_nMouseY = GET_Y_LPARAM(lParam);
+	if (m_bSelectingText) {
+		int nWord = TextWordAt(m_nMouseX, m_nMouseY, true);
+		if (nWord >= 0 && nWord != m_nTextEnd) {
+			m_nTextEnd = nWord;
+			Invalidate(FALSE);
+		}
+		return 0;
+	}
 	if (IsFolderGridActive() && !m_pChrome->IsDragging()) {
 		if (m_pFolderGrid->OnMouseMove(m_nMouseX, m_nMouseY)) this->Invalidate(FALSE);
 		return 0;
@@ -1446,6 +1500,17 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOO
 		Invalidate(FALSE);
 		m_pChrome->Paint();
 		return 1;
+	}
+	if (m_bTextLayer && bCtrl && !bAlt && (wParam == 'A' || wParam == 'C')) {
+		// Ctrl+A selects all text of the image, Ctrl+C copies the selection (all if nothing is selected)
+		if (wParam == 'A') {
+			m_nTextStart = 0;
+			m_nTextEnd = (int)m_textWords.size() - 1;
+			Invalidate(FALSE);
+		} else {
+			CopySelectedImageText(true);
+		}
+		return 0;
 	}
 	if (wParam == VK_ESCAPE && CloseHelpDlg()) {
 		bHandled = true;
@@ -2825,7 +2890,9 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			}
 			break;
 		case IDM_DEFAULT_ESC:
-			if (m_bPickColor) {
+			if (m_bTextLayer) {
+				EndTextLayer();
+			} else if (m_bPickColor) {
 				m_bPickColor = false;
 				m_pChrome->ShowMessage(CNLS::GetString(_T("Color picker off")));
 			} else if (m_bStartScreen && m_pCurrentImage != NULL) {
@@ -2849,7 +2916,8 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			} else if (IsDrawMode()) {
 				m_pAnnotations->SetTool(CAnnotations::TOOL_NONE);
 				m_pChrome->Paint();
-			} else if (m_bFullScreenMode && m_pChrome->IsEnabled() && !CSettingsProvider::This().EscapeClosesWindow()) {
+			} else if (m_bFullScreenMode && !m_bAutoExit) {
+				// full screen is left first, also if Esc closes the window (EscapeClosesWindow)
 				ExecuteCommandInternal(IDM_FULL_SCREEN_MODE);
 			} else if (!m_pChrome->IsEnabled() || CSettingsProvider::This().EscapeClosesWindow()) {
 				CleanupAndTerminate();
@@ -3263,6 +3331,7 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 					::SetCursor(hOldCursor);
 					m_pFileList->Reload();
 					m_bTransparencySaved = bSuccess;
+					if (bSuccess) m_nSavedChangeCount = m_pCurrentImage->GetChangeCount();
 					m_pChrome->ShowMessage(CNLS::GetString(bSuccess ? _T("The transparent image was saved.") : _T("Error writing file to disk!")));
 				}
 			}
@@ -3299,32 +3368,12 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 			m_pChrome->Paint();
 			break;
 		case IDM_OCR_COPY_TEXT:
-			if (m_pCurrentImage != NULL && m_pCurrentImage->OriginalPixels() != NULL) {
-				HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
-				std::wstring sText, sError;
-				bool bSuccess = Ocr::RecognizeText(m_pCurrentImage->OriginalPixels(), m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight(),
-					m_pCurrentImage->OriginalChannels(), sText, sError);
-				::SetCursor(hOldCursor);
-				if (!bSuccess) {
-					m_pChrome->ShowMessage(sError.c_str());
-				} else if (sText.empty()) {
-					m_pChrome->ShowMessage(CNLS::GetString(_T("No text was found in the image.")));
-				} else if (::OpenClipboard(m_hWnd)) {
-					::EmptyClipboard();
-					size_t nBytes = (sText.size() + 1) * sizeof(wchar_t);
-					HGLOBAL hText = ::GlobalAlloc(GMEM_MOVEABLE, nBytes);
-					if (hText != NULL) {
-						memcpy(::GlobalLock(hText), sText.c_str(), nBytes);
-						::GlobalUnlock(hText);
-						::SetClipboardData(CF_UNICODETEXT, hText);
-					}
-					::CloseClipboard();
-					int nLines = 0;
-					for (wchar_t c : sText) if (c == L'\n') nLines++;
-					CString sMessage;
-					sMessage.Format(CNLS::GetString(_T("%d lines of text were copied to the clipboard.")), nLines);
-					m_pChrome->ShowMessage(sMessage);
-				}
+			// the first time the words are marked on the image to select them, again copies the selection or all text
+			if (m_bTextLayer) {
+				CopySelectedImageText(true);
+				EndTextLayer();
+			} else {
+				ShowTextLayer();
 			}
 			break;
 		case IDM_TOGGLE_DRAWPANEL:
@@ -3571,6 +3620,7 @@ bool CMainDlg::SaveImageNoPrompt(LPCTSTR sFileName, bool bFullSize) {
 
 	if (CSaveImage::SaveImage(sFileName, m_pCurrentImage, *m_pImageProcParams, 
 		CreateDefaultProcessingFlags(), bFullSize, m_bUseLosslessWEBP)) {
+		m_nSavedChangeCount = m_pCurrentImage->GetChangeCount();
 		m_pFileList->Reload(); // maybe image is stored to current directory - needs reload
 		::SetCursor(hOldCursor);
 		Invalidate();
@@ -3745,7 +3795,7 @@ void CMainDlg::GotoImage(EImagePosition ePos) {
 }
 
 void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
-	if ((ePos == POS_Next || ePos == POS_Previous || ePos == POS_First || ePos == POS_Last) && !ConfirmDiscardEdits()) {
+	if ((ePos == POS_Next || ePos == POS_Previous || ePos == POS_First || ePos == POS_Last || ePos == POS_Toggle) && !ConfirmDiscardEdits()) {
 		return;
 	}
 	// Timer handling for slideshows
@@ -4408,6 +4458,8 @@ void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool n
 		m_bRecordRecent = false;
 	}
 	m_pAnnotations->Clear(); // drawings belong to the image they were made on
+	EndTextLayer(); // the words belong to the image they were read from
+	m_nSavedChangeCount = (m_pCurrentImage != NULL) ? m_pCurrentImage->GetChangeCount() : 0;
 	m_sMetadataFile.Empty(); // the file could have been changed
 	// undo entries of editing belong to the previous image, the file operations stay
 	auto RemoveEdits = [](std::vector<CUndoEntry>& stack) {
@@ -4520,7 +4572,7 @@ void CMainDlg::SaveParameters() {
 		m_pFileList->GetNavigationMode(), m_pFileList->GetSorting(), m_pFileList->IsSortedAscending(), GetAutoZoomMode(), m_pNavPanelCtl->IsActive(),
 		m_bShowFileName, m_pEXIFDisplayCtl->IsActive(), m_eTransitionEffect);
 
-	if (IDYES == this->MessageBox(sText, CNLS::GetString(_T("Confirm save default parameters")), MB_YESNO | MB_ICONQUESTION)) {
+	if (IDYES == HelpersGUI::AskToSave(m_hWnd, CNLS::GetString(_T("Confirm save default parameters")), sText, false)) {
 		CSettingsProvider::This().SaveSettings(*m_pImageProcParams, eFlags, m_pFileList->GetNavigationMode(), m_pFileList->GetSorting(), m_pFileList->IsSortedAscending(),
 			m_eAutoZoomModeWindowed, m_eAutoZoomModeFullscreen, m_pNavPanelCtl->IsActive(), m_bShowFileName, m_pEXIFDisplayCtl->IsActive(), m_eTransitionEffect);
 	}
@@ -5752,18 +5804,37 @@ void CMainDlg::ApplyTransparencyMask(const std::vector<uint8>& alpha) {
 	m_pChrome->Paint();
 }
 
-bool CMainDlg::ConfirmDiscardEdits() {
+bool CMainDlg::HasUnsavedChanges() {
+	if (m_pCurrentImage == NULL) return false;
 	bool bUnsavedTransparency = HasTransparency() && !m_bTransparencySaved;
-	if (m_pAnnotations->IsEmpty() && !bUnsavedTransparency) {
+	bool bChangedPixels = m_pCurrentImage->IsDestructivelyProcessed() && m_pCurrentImage->GetChangeCount() != m_nSavedChangeCount;
+	return !m_pAnnotations->IsEmpty() || bUnsavedTransparency || bChangedPixels;
+}
+
+bool CMainDlg::ConfirmDiscardEdits() {
+	if (!HasUnsavedChanges()) {
 		return true;
 	}
-	if (IDYES != ::MessageBox(m_hWnd, CNLS::GetString(_T("The drawings or removed colors of this image are not saved. Discard them?")),
-		CNLS::GetString(_T("Confirm")), MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2)) {
+	MouseOn();
+	CString sQuestion;
+	sQuestion.Format(CNLS::GetString(_T("Save the changes to %s?")), CurrentFileName(true));
+	int nAnswer = HelpersGUI::AskToSave(m_hWnd, sQuestion,
+		CNLS::GetString(_T("The image was cropped, resized or drawn on. Without saving, the changes are lost.")));
+	if (nAnswer == IDCANCEL) {
 		return false;
+	}
+	if (nAnswer == IDYES) {
+		if (HasTransparency() && !m_bTransparencySaved) {
+			ExecuteCommandInternal(IDM_SAVE_TRANSPARENT);
+			if (!m_bTransparencySaved) return false; // the file dialog was cancelled
+		} else if (!SaveImage(true)) {
+			return false;
+		}
 	}
 	// asked once, closing after navigating does not ask again
 	m_pAnnotations->Clear();
 	m_bTransparencySaved = true;
+	m_nSavedChangeCount = m_pCurrentImage->GetChangeCount();
 	return true;
 }
 
@@ -6333,6 +6404,7 @@ void CMainDlg::GotoImageNumber() {
 		m_pChrome->ShowMessage(CNLS::GetString(_T("There is no image with this number.")));
 		return;
 	}
+	if (!ConfirmDiscardEdits()) return;
 	if (m_pFileList->GotoIndex(nNumber - 1)) {
 		GotoImage(POS_Current);
 	}
@@ -6494,6 +6566,135 @@ void CMainDlg::SetAsLockScreen() {
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+// Text of the image (OCR): the recognized words are marked on the image and selected with the mouse
+///////////////////////////////////////////////////////////////////////////////////
+
+void CMainDlg::ShowTextLayer() {
+	EndTextLayer();
+	if (m_pCurrentImage == NULL || m_pCurrentImage->OriginalPixels() == NULL) return;
+	HCURSOR hOldCursor = ::SetCursor(::LoadCursor(NULL, IDC_WAIT));
+	std::vector<Ocr::CWord> words;
+	std::wstring sError;
+	bool bSuccess = Ocr::RecognizeWords(m_pCurrentImage->OriginalPixels(), m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight(),
+		m_pCurrentImage->OriginalChannels(), words, sError);
+	::SetCursor(hOldCursor);
+	if (!bSuccess) {
+		m_pChrome->ShowMessage(sError.c_str());
+		return;
+	}
+	if (words.empty()) {
+		m_pChrome->ShowMessage(CNLS::GetString(_T("No text was found in the image.")));
+		return;
+	}
+	for (const Ocr::CWord& word : words) {
+		CTextWord textWord;
+		textWord.Left = word.Left;
+		textWord.Top = word.Top;
+		textWord.Right = word.Left + word.Width;
+		textWord.Bottom = word.Top + word.Height;
+		textWord.Text = word.Text.c_str();
+		textWord.Line = word.Line;
+		m_textWords.push_back(textWord);
+	}
+	m_bTextLayer = true;
+	m_bPickColor = false;
+	m_pChrome->ShowMessage(CNLS::GetString(_T("Drag over the text to copy it, double click copies a line, Ctrl+A selects all, Esc ends.")));
+	Invalidate(FALSE);
+}
+
+void CMainDlg::EndTextLayer() {
+	if (!m_bTextLayer && m_textWords.empty()) return;
+	m_bTextLayer = false;
+	m_bSelectingText = false;
+	m_textWords.clear();
+	m_nTextStart = m_nTextEnd = -1;
+	if (::GetCapture() == m_hWnd) ::ReleaseCapture();
+	Invalidate(FALSE);
+}
+
+CRect CMainDlg::TextWordScreenRect(const CTextWord& word) {
+	float fX0 = word.Left, fY0 = word.Top, fX1 = word.Right, fY1 = word.Bottom;
+	if (!ImageToScreen(fX0, fY0) || !ImageToScreen(fX1, fY1)) return CRect();
+	// a rotated image swaps the corners
+	return CRect((int)min(fX0, fX1), (int)min(fY0, fY1), (int)(max(fX0, fX1) + 0.999f), (int)(max(fY0, fY1) + 0.999f));
+}
+
+int CMainDlg::TextWordAt(int nX, int nY, bool bNearest) {
+	int nBest = -1;
+	double dBest = 1e30;
+	int nInflate = HelpersGUI::ScaleToScreen(3);
+	for (int i = 0; i < (int)m_textWords.size(); i++) {
+		CRect rect = TextWordScreenRect(m_textWords[i]);
+		rect.InflateRect(nInflate, nInflate);
+		if (rect.PtInRect(CPoint(nX, nY))) return i;
+		if (bNearest) {
+			// distance to the rectangle, the vertical distance counts more (stays on the line)
+			double dX = max(0, max((int)rect.left - nX, nX - (int)rect.right));
+			double dY = max(0, max((int)rect.top - nY, nY - (int)rect.bottom));
+			double dDistance = dX * dX + 4 * dY * dY;
+			if (dDistance < dBest) {
+				dBest = dDistance;
+				nBest = i;
+			}
+		}
+	}
+	return nBest;
+}
+
+CString CMainDlg::GetSelectedImageText(bool bAllIfNone) {
+	int nFrom = min(m_nTextStart, m_nTextEnd), nTo = max(m_nTextStart, m_nTextEnd);
+	if (nFrom < 0) {
+		if (!bAllIfNone || m_textWords.empty()) return CString();
+		nFrom = 0;
+		nTo = (int)m_textWords.size() - 1;
+	}
+	CString sText;
+	for (int i = nFrom; i <= nTo && i < (int)m_textWords.size(); i++) {
+		if (i > nFrom) sText += (m_textWords[i].Line != m_textWords[i - 1].Line) ? _T("\r\n") : _T(" ");
+		sText += m_textWords[i].Text;
+	}
+	return sText;
+}
+
+void CMainDlg::CopySelectedImageText(bool bAllIfNone) {
+	CString sText = GetSelectedImageText(bAllIfNone);
+	if (sText.IsEmpty() || !::OpenClipboard(m_hWnd)) return;
+	::EmptyClipboard();
+	size_t nBytes = (sText.GetLength() + 1) * sizeof(TCHAR);
+	HGLOBAL hText = ::GlobalAlloc(GMEM_MOVEABLE, nBytes);
+	if (hText != NULL) {
+		memcpy(::GlobalLock(hText), (LPCTSTR)sText, nBytes);
+		::GlobalUnlock(hText);
+		::SetClipboardData(CF_UNICODETEXT, hText);
+	}
+	::CloseClipboard();
+	int nWords = 1;
+	for (int i = 0; i < sText.GetLength(); i++) if (sText[i] == _T(' ') || sText[i] == _T('\n')) nWords++;
+	CString sMessage;
+	sMessage.Format(CNLS::GetString(_T("%d words were copied to the clipboard.")), nWords);
+	m_pChrome->ShowMessage(sMessage);
+}
+
+void CMainDlg::PaintTextLayer(CDC& dc) {
+	Gdiplus::Graphics graphics(dc.m_hDC);
+	graphics.SetClip(Gdiplus::Rect(m_clientRect.left, m_clientRect.top, m_clientRect.Width(), m_clientRect.Height()));
+	graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+	int nFrom = min(m_nTextStart, m_nTextEnd), nTo = max(m_nTextStart, m_nTextEnd);
+	Gdiplus::SolidBrush wordBrush(Gdiplus::Color(48, 255, 255, 255));
+	Gdiplus::Pen wordPen(Gdiplus::Color(140, 0, 120, 215), 1.0f);
+	Gdiplus::SolidBrush selectedBrush(Gdiplus::Color(110, 0, 120, 215));
+	for (int i = 0; i < (int)m_textWords.size(); i++) {
+		CRect rect = TextWordScreenRect(m_textWords[i]);
+		if (rect.IsRectEmpty()) continue;
+		rect.InflateRect(1, 1);
+		bool bSelected = nFrom >= 0 && i >= nFrom && i <= nTo;
+		Gdiplus::Rect gdiRect(rect.left, rect.top, rect.Width(), rect.Height());
+		graphics.FillRectangle(bSelected ? (Gdiplus::Brush*)&selectedBrush : (Gdiplus::Brush*)&wordBrush, gdiRect);
+		if (!bSelected) graphics.DrawRectangle(&wordPen, gdiRect);
+	}
+}
+
 void CMainDlg::PickColorAt(int nX, int nY) {
 	m_bPickColor = false;
 	if (m_pCurrentImage == NULL || m_pCurrentImage->OriginalPixels() == NULL) return;
@@ -6567,6 +6768,8 @@ void CMainDlg::RefreshFolderGrid() {
 void CMainDlg::OpenFromFolderGrid() {
 	if (m_pFolderGrid == NULL || m_pFileList == NULL) return;
 	CString sFile = m_pFolderGrid->GetFocusedFile();
+	// unsaved changes of the shown image: asked before the grid is closed, Cancel keeps the grid
+	if (!sFile.IsEmpty() && CurrentFileName(false) != NULL && sFile.CompareNoCase(CurrentFileName(false)) != 0 && !ConfirmDiscardEdits()) return;
 	delete m_pFolderGrid;
 	m_pFolderGrid = NULL;
 	if (sFile.IsEmpty()) {

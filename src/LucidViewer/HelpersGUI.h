@@ -96,4 +96,8 @@ namespace HelpersGUI {
 	// button, check box or radio button. Call at the end of OnInitDialog after all texts are set. The center stays in place.
 	void FitDialogToTexts(HWND hDlg);
 
+	// Asks whether to save the changes with the buttons Save, Don't save and Cancel (without Don't save if bCanDiscard is false).
+	// Returns IDYES (save), IDNO (don't save) or IDCANCEL.
+	int AskToSave(HWND hParent, LPCTSTR sQuestion, LPCTSTR sDetails = NULL, bool bCanDiscard = true);
+
 }

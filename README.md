@@ -154,13 +154,13 @@ files of most cameras (via LibRaw). Other formats with a Windows codec installed
 
 Download from the [latest release](https://github.com/cemmgrgn/lucid-viewer/releases/latest):
 
-- **`LucidViewer-1.1.0-Setup-x64.exe`** (recommended). The setup asks what you want:
+- **`LucidViewer-1.1.1-Setup-x64.exe`** (recommended). The setup asks what you want:
   - desktop and Start menu shortcuts and the Explorer **Convert to** menu (on by default)
   - Lucid Viewer in *Open with* and *Default apps*
   - the AI model for background removal, downloaded during setup
   - start screen, recent photos, screenshot tool on <kbd>PrtScn</kbd>, theme and layout
-- **`LucidViewer-1.1.0-portable-x64.zip`**: extract anywhere and run `LucidViewer.exe`. Settings stay in that folder.
-- **`LucidViewer-1.1.0-Setup-arm64.exe`** and **`LucidViewer-1.1.0-portable-arm64.zip`**: native for Windows on ARM (the
+- **`LucidViewer-1.1.1-portable-x64.zip`**: extract anywhere and run `LucidViewer.exe`. Settings stay in that folder.
+- **`LucidViewer-1.1.1-Setup-arm64.exe`** and **`LucidViewer-1.1.1-portable-arm64.zip`**: native for Windows on ARM (the
   x64 version runs there in emulation).
 
 With [winget](https://learn.microsoft.com/windows/package-manager/) (once the package is accepted):

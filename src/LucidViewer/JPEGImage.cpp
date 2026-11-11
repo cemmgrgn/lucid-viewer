@@ -133,6 +133,7 @@ CJPEGImage::CJPEGImage(int nWidth, int nHeight, void* pPixels, void* pEXIFData, 
 
 	m_bCropped = false;
 	m_bIsDestructivelyProcessed = false;
+	m_nChangeCount = 0;
 	m_bIsProcessedNoParamDB = false;
 	m_bRotationByEXIF = false;
 	m_bFirstReprocessing = true;
@@ -744,6 +745,7 @@ bool CJPEGImage::RestoreSnapshot(const CPixelSnapshot& snapshot) {
 	m_bCropped = snapshot.Cropped;
 	m_bIsDestructivelyProcessed = snapshot.Destructive;
 	m_bIsProcessedNoParamDB = snapshot.NoParamDB;
+	m_nChangeCount++;
 	return true;
 }
 
@@ -1533,6 +1535,7 @@ int CJPEGImage::GetRotationFromEXIF(int nOrigRotation) {
 
 void CJPEGImage::MarkAsDestructivelyProcessed() {
 	m_bIsDestructivelyProcessed = true;
+	m_nChangeCount++;
 	m_rotationParams.FreeRotation = 0.0;
 	m_rotationParams.Flags = RFLAG_None;
 }

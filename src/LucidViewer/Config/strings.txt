@@ -1298,3 +1298,11 @@ uses the system setting
 uses the metric system, e.g. centimeters for length	
 uses the English/US system, e.g. inches for length	
 User Cmd 0	
+Save the changes to %s?	
+The image was cropped, resized or drawn on. Without saving, the changes are lost.	
+Don't save	
+Save the changed settings?	
+Save the changed keyboard shortcuts?	
+Drag over the text to copy it, double click copies a line, Ctrl+A selects all, Esc ends.	
+%d words were copied to the clipboard.	
+Marks the text in the image, drag over it to copy it	

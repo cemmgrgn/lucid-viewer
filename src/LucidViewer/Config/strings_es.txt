@@ -1362,3 +1362,11 @@ uses the system setting	usa el ajuste del sistema
 uses the metric system, e.g. centimeters for length	usa el sistema métrico, p. ej., centímetros para la longitud
 uses the English/US system, e.g. inches for length	usa el sistema inglés/estadounidense, p. ej., pulgadas para la longitud
 User Cmd 0	Comando de usuario 0
+Save the changes to %s?	¿Guardar los cambios en %s?
+The image was cropped, resized or drawn on. Without saving, the changes are lost.	La imagen se ha recortado, redimensionado o se ha dibujado sobre ella. Si no la guarda, los cambios se perderán.
+Don't save	No guardar
+Save the changed settings?	¿Guardar la configuración modificada?
+Save the changed keyboard shortcuts?	¿Guardar los atajos de teclado modificados?
+Drag over the text to copy it, double click copies a line, Ctrl+A selects all, Esc ends.	Arrastre sobre el texto para copiarlo, doble clic copia una línea, Ctrl+A selecciona todo, Esc termina.
+%d words were copied to the clipboard.	Se han copiado %d palabras al portapapeles.
+Marks the text in the image, drag over it to copy it	Marca el texto de la imagen, arrastre sobre él para copiarlo

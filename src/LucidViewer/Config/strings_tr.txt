@@ -1317,3 +1317,11 @@ uses the system setting	sistem ayarını kullanır
 uses the metric system, e.g. centimeters for length	metrik sistemi kullanır, örn. uzunluk için santimetre
 uses the English/US system, e.g. inches for length	İngiliz/ABD sistemini kullanır, örn. uzunluk için inç
 User Cmd 0	Kullanıcı komutu 0
+Save the changes to %s?	%s dosyasındaki değişiklikler kaydedilsin mi?
+The image was cropped, resized or drawn on. Without saving, the changes are lost.	Görsel kırpıldı, yeniden boyutlandırıldı veya üzerine çizim yapıldı. Kaydetmezseniz değişiklikler kaybolur.
+Don't save	Kaydetme
+Save the changed settings?	Değiştirilen ayarlar kaydedilsin mi?
+Save the changed keyboard shortcuts?	Değiştirilen klavye kısayolları kaydedilsin mi?
+Drag over the text to copy it, double click copies a line, Ctrl+A selects all, Esc ends.	Kopyalamak için metnin üzerinden sürükleyin, çift tıklama satırı kopyalar, Ctrl+A tümünü seçer, Esc bitirir.
+%d words were copied to the clipboard.	%d sözcük panoya kopyalandı.
+Marks the text in the image, drag over it to copy it	Görseldeki metni işaretler, kopyalamak için üzerinden sürükleyin

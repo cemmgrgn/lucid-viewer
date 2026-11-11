@@ -736,6 +736,15 @@ static LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 					return 0;
 				case ID_CANCEL:
 				case IDCANCEL:
+					if (HasChanges(*pEditor)) {
+						int nAnswer = HelpersGUI::AskToSave(hWnd, CNLS::GetString(_T("Save the changed settings?")));
+						if (nAnswer == IDCANCEL) return 0;
+						if (nAnswer == IDYES) {
+							::SetFocus(pEditor->Categories);
+							::SendMessage(hWnd, WM_COMMAND, ID_SAVE, 0);
+							return 0;
+						}
+					}
 					pEditor->Done = true;
 					::PostMessage(hWnd, WM_NULL, 0, 0);
 					return 0;
@@ -835,8 +844,7 @@ static LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 			return TRUE;
 		}
 		case WM_CLOSE:
-			pEditor->Done = true;
-			::PostMessage(hWnd, WM_NULL, 0, 0);
+			::SendMessage(hWnd, WM_COMMAND, ID_CANCEL, 0);
 			return 0;
 	}
 	return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
@@ -1163,6 +1171,7 @@ struct CShortcutEditor {
 	int Dpi;
 	std::vector<CString> Commands;                     // IDM names in the order of the symbols file
 	std::vector<std::pair<CString, CString>> Mapping;  // key, IDM name
+	std::vector<std::pair<CString, CString>> InitialMapping; // to know if there are changes when closing
 	bool Done, Saved;
 	int S(int n) { return ::MulDiv(n, Dpi, 96); }
 };
@@ -1499,14 +1508,21 @@ static LRESULT CALLBACK ShortcutWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPA
 					return 0;
 				case ID_SC_CANCEL:
 				case IDCANCEL:
+					if (pEditor->Mapping != pEditor->InitialMapping) {
+						int nAnswer = HelpersGUI::AskToSave(hWnd, CNLS::GetString(_T("Save the changed keyboard shortcuts?")));
+						if (nAnswer == IDCANCEL) return 0;
+						if (nAnswer == IDYES) {
+							::SendMessage(hWnd, WM_COMMAND, ID_SC_SAVE, 0);
+							return 0;
+						}
+					}
 					pEditor->Done = true;
 					::PostMessage(hWnd, WM_NULL, 0, 0);
 					return 0;
 			}
 			break;
 		case WM_CLOSE:
-			pEditor->Done = true;
-			::PostMessage(hWnd, WM_NULL, 0, 0);
+			::SendMessage(hWnd, WM_COMMAND, ID_SC_CANCEL, 0);
 			return 0;
 	}
 	return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
@@ -1689,6 +1705,7 @@ bool EditShortcuts(HWND hParent) {
 	::SendMessage(editor.Search, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	::SendMessage(editor.List, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	FillShortcutList(editor);
+	editor.InitialMapping = editor.Mapping;
 	DarkUI::SetBackground(editor.Window, DarkUI::Colors().Window);
 	DarkUI::ApplyToWindow(editor.Window);
 

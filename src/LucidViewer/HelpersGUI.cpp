@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include <shobjidl.h>
+#include <commctrl.h>
 #include <vector>
 #include "resource.h"
 #include "HelpersGUI.h"
@@ -689,5 +690,37 @@ namespace HelpersGUI {
 		int nX = windowRect.left - (nNewWidth - windowRect.Width()) / 2;
 		nX = max((int)monitorInfo.rcWork.left, min(nX, (int)monitorInfo.rcWork.right - nNewWidth));
 		::SetWindowPos(hDlg, NULL, nX, windowRect.top, nNewWidth, windowRect.Height(), SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+}
+
+namespace HelpersGUI {
+
+	int AskToSave(HWND hParent, LPCTSTR sQuestion, LPCTSTR sDetails, bool bCanDiscard) {
+		CString sSave = CNLS::GetString(_T("Save")), sDontSave = CNLS::GetString(_T("Don't save")), sCancel = CNLS::GetString(_T("Cancel"));
+		TASKDIALOG_BUTTON buttons[3];
+		int nButtons = 0;
+		buttons[nButtons++] = { IDYES, sSave };
+		if (bCanDiscard) buttons[nButtons++] = { IDNO, sDontSave };
+		buttons[nButtons++] = { IDCANCEL, sCancel };
+		TASKDIALOGCONFIG config = { sizeof(TASKDIALOGCONFIG) };
+		config.hwndParent = hParent;
+		config.hInstance = ::GetModuleHandle(NULL);
+		config.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW;
+		config.pszWindowTitle = _T("Lucid Viewer");
+		config.pszMainInstruction = sQuestion;
+		config.pszContent = sDetails;
+		config.pButtons = buttons;
+		config.cButtons = nButtons;
+		config.nDefaultButton = IDYES;
+		int nButton = 0;
+		if (SUCCEEDED(::TaskDialogIndirect(&config, &nButton, NULL, NULL))) {
+			return (nButton == IDYES || nButton == IDNO) ? nButton : IDCANCEL;
+		}
+		// without the task dialog: Yes, No and Cancel
+		CString sText = sQuestion;
+		if (sDetails != NULL && sDetails[0] != 0) sText += CString(_T("\n\n")) + sDetails;
+		int nResult = ::MessageBox(hParent, sText, _T("Lucid Viewer"), (bCanDiscard ? MB_YESNOCANCEL : MB_OKCANCEL) | MB_ICONQUESTION);
+		if (nResult == IDYES || nResult == IDOK) return IDYES;
+		return nResult == IDNO ? IDNO : IDCANCEL;
 	}
 }
