@@ -458,7 +458,7 @@ void CButtonCtrl::PreDraw(CDC & dc, CRect position) {
 
 void CButtonCtrl::Draw(CDC & dc, CRect position, bool bBlack) {
 	dc.SelectStockBrush(HOLLOW_BRUSH);
-	HPEN hPen, hOldPen;
+	HPEN hPen = NULL, hOldPen = NULL;
 	HPEN hPen2 = NULL;
 	if (bBlack) {
 		dc.SelectStockPen(BLACK_PEN);

@@ -30,12 +30,17 @@ Changes from other contributors are reviewed by a reviewer before they are merge
 
 Lucid Viewer does not send information to other systems unless you ask it to or the person who installed it asks it to.
 
-The only network access is the download of the background removal model. The model is downloaded from GitHub:
+Lucid Viewer uses the network only when you ask for it:
 
-- the first time you choose **Remove background**, or
-- during setup, when you select the model
+- **Background removal model**: downloaded from GitHub the first time you choose **Remove background**, or during setup
+  when you select the model. The file is checked with its SHA-256 before it is used.
+- **Check for updates**: asks GitHub for the number of the latest version. Nothing else is sent.
+- **Show on map** and links: open your web browser, for example OpenStreetMap with the GPS position of the photo.
 
 Sharing a photo uses the Windows share window. The photo goes only where you send it.
+
+If Lucid Viewer crashes, it writes a crash dump file into `%APPDATA%\LucidViewer`. The file stays on your PC and is not sent
+anywhere. You can attach it to a bug report if you want.
 
 ## Installation and removal
 

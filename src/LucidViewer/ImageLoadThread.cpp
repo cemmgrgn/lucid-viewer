@@ -586,7 +586,7 @@ void CImageLoadThread::ProcessReadWEBPRequest(CRequest * request) {
 		bUseCachedDecoder = true;
 	}
 
-	HANDLE hFile;
+	HANDLE hFile = INVALID_HANDLE_VALUE;
 	if (!bUseCachedDecoder) {
 		hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
@@ -660,7 +660,7 @@ void CImageLoadThread::ProcessReadPNGRequest(CRequest* request) {
 		bUseCachedDecoder = true;
 	}
 
-	HANDLE hFile;
+	HANDLE hFile = INVALID_HANDLE_VALUE;
 	if (!bUseCachedDecoder) {
 		hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
@@ -747,6 +747,11 @@ void CImageLoadThread::ProcessReadPNGRequest(CRequest* request) {
 
 #ifndef WINXP
 void CImageLoadThread::ProcessReadJXLRequest(CRequest* request) {
+	// delay loaded: a missing DLL is found here, a call into it would end the program
+	if (!Helpers::IsDllAvailable(_T("jxl_dec.dll")) || !Helpers::IsDllAvailable(_T("jxl_threads.dll"))) {
+		request->ExceptionError = true;
+		return;
+	}
 	bool bUseCachedDecoder = false;
 	const wchar_t* sFileName;
 	sFileName = (const wchar_t*)request->FileName;
@@ -756,7 +761,7 @@ void CImageLoadThread::ProcessReadJXLRequest(CRequest* request) {
 		bUseCachedDecoder = true;
 	}
 
-	HANDLE hFile;
+	HANDLE hFile = INVALID_HANDLE_VALUE;
 	if (!bUseCachedDecoder) {
 		hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
@@ -819,6 +824,10 @@ void CImageLoadThread::ProcessReadJXLRequest(CRequest* request) {
 
 #ifndef WINXP
 void CImageLoadThread::ProcessReadAVIFRequest(CRequest* request) {
+	if (!Helpers::IsDllAvailable(_T("avif.dll"))) {
+		request->ExceptionError = true;
+		return;
+	}
 	bool bSuccess = false;
 	bool bUseCachedDecoder = false;
 	const wchar_t* sFileName;
@@ -829,7 +838,7 @@ void CImageLoadThread::ProcessReadAVIFRequest(CRequest* request) {
 		bUseCachedDecoder = true;
 	}
 
-	HANDLE hFile;
+	HANDLE hFile = INVALID_HANDLE_VALUE;
 	if (!bUseCachedDecoder) {
 		hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
@@ -896,7 +905,11 @@ void CImageLoadThread::ProcessReadAVIFRequest(CRequest* request) {
 
 #ifndef WINXP
 void CImageLoadThread::ProcessReadHEIFRequest(CRequest* request) {
-	HANDLE hFile;
+	if (!Helpers::IsDllAvailable(_T("heif.dll"))) {
+		request->ExceptionError = true;
+		return;
+	}
+	HANDLE hFile = INVALID_HANDLE_VALUE;
 	hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		return;
@@ -959,7 +972,7 @@ void CImageLoadThread::ProcessReadPSDRequest(CRequest* request) {
 #endif
 
 void CImageLoadThread::ProcessReadQOIRequest(CRequest* request) {
-	HANDLE hFile;
+	HANDLE hFile = INVALID_HANDLE_VALUE;
 	hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		return;
@@ -1011,7 +1024,8 @@ void CImageLoadThread::ProcessReadRAWRequest(CRequest * request) {
 #ifndef WINXP
 		// Try with libraw
 		UINT nPrevErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
-		try {
+		// libraw.dll not found or VC++ Runtime not installed: only dcraw_mod is used
+		if (Helpers::IsDllAvailable(_T("libraw.dll"))) try {
 			if (fullsize == 2 || fullsize == 3) {
 				request->Image = RawReader::ReadImage(request->FileName, bOutOfMemory, fullsize == 2);
 			}
@@ -1022,7 +1036,7 @@ void CImageLoadThread::ProcessReadRAWRequest(CRequest * request) {
 				request->Image = RawReader::ReadImage(request->FileName, bOutOfMemory, fullsize == 0 || fullsize == 3);
 			}
 		} catch (...) {
-			// libraw.dll not found or VC++ Runtime not installed
+			// error of LibRaw (C++ exception)
 		}
 		SetErrorMode(nPrevErrorMode);
 #else
@@ -1079,6 +1093,9 @@ __declspec(dllimport) unsigned char* __stdcall LoadImageWithWIC(LPCWSTR fileName
 void CImageLoadThread::ProcessReadWICRequest(CRequest* request) {
 	const wchar_t* sFileName;
 	sFileName = (const wchar_t*)request->FileName;
+	if (!Helpers::IsDllAvailable(_T("WICLoader.dll"))) {
+		return;
+	}
 
 	try {
 		uint32 nWidth, nHeight;

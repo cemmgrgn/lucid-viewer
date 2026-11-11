@@ -33,9 +33,16 @@ authentication for GitHub and SignPath.
 This program will not transfer any information to other networked systems unless specifically requested by the user
 or the person installing or operating it.
 
-The only network access is the download of the background removal model (`u2net.onnx` from GitHub), which happens when
-the user chooses *Remove background* for the first time or selects the model during setup. Sharing a photo uses the
-Windows share window and goes only where the user sends it.
+The program uses the network only when the user asks for it:
+
+- the download of the background removal model (`u2net.onnx` from GitHub), when the user chooses *Remove background*
+  for the first time or selects the model during setup. The file is checked with its SHA-256 before it is used.
+- *Check for updates*, which asks the GitHub API for the number of the latest release. Nothing else is sent.
+- *Show on map* and links in the program, which open the default web browser (for example OpenStreetMap with the
+  GPS position of the photo).
+
+Sharing a photo uses the Windows share window and goes only where the user sends it. When the program crashes it writes a
+crash dump into `%APPDATA%\LucidViewer`. The file stays on the PC and is not sent anywhere.
 
 ## Installation and removal
 

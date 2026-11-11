@@ -39,6 +39,29 @@ static void WriteUShort(void * ptr, uint16 nValue, bool bLittleEndian) {
 	*((uint16*)ptr) = nVal;
 }
 
+// The APP1 block that is parsed by the current thread. All offsets in the EXIF data come from the file, a value
+// that points outside of the block must not be followed (thread local: images are loaded by several threads).
+static thread_local const uint8* t_pBlockStart = NULL;
+static thread_local const uint8* t_pBlockEnd = NULL;
+
+// True if the nLength bytes at ptr are completely inside of the APP1 block
+static bool IsInBlock(const void* ptr, unsigned long long nLength) {
+	const uint8* p = (const uint8*)ptr;
+	if (t_pBlockStart == NULL || p < t_pBlockStart || p > t_pBlockEnd) {
+		return false;
+	}
+	return nLength <= (unsigned long long)(t_pBlockEnd - p);
+}
+
+// Pointer to the data at nOffset after the TIFF header if nLength bytes are inside of the APP1 block, else NULL
+static uint8* PointerInBlock(uint8* pTIFFHeader, unsigned long long nOffset, unsigned long long nLength) {
+	if (t_pBlockStart == NULL || nOffset > (unsigned long long)(t_pBlockEnd - pTIFFHeader)) {
+		return NULL;
+	}
+	uint8* p = pTIFFHeader + nOffset;
+	return IsInBlock(p, nLength) ? p : NULL;
+}
+
 static uint8* FindTag(uint8* ptr, uint8* ptrLast, uint16 nTag, bool bLittleEndian) {
 	while (ptr < ptrLast) {
 		if (ReadUShort(ptr, bLittleEndian) == nTag) {
@@ -57,8 +80,13 @@ static void ReadStringTag(CString & strOut, uint8* ptr, uint8* pTIFFHeader, bool
 				strOut.Empty();
 				return;
 			}
-			LPCSTR pString = (nSize <= 4) ? (LPCSTR)(ptr + 8) : (LPCSTR)(pTIFFHeader + ReadUInt(ptr + 8, bLittleEndian));
-			int nMaxChars = min(nSize, (int)strlen(pString));
+			LPCSTR pString = (nSize <= 4) ? (LPCSTR)(ptr + 8) : (LPCSTR)PointerInBlock(pTIFFHeader, ReadUInt(ptr + 8, bLittleEndian), nSize);
+			if (pString == NULL) {
+				strOut.Empty();
+				return;
+			}
+			// the string must not be read beyond its size, it does not need to end with 0
+			int nMaxChars = (int)strnlen(pString, nSize);
 			if (bTryReadAsUTF8) {
 				CString strUTF8 = Helpers::TryConvertFromUTF8((uint8*)pString, nMaxChars);
 				if (!strUTF8.IsEmpty()) {
@@ -81,10 +109,15 @@ static void ReadUserCommentTag(CString & strOut, uint8* ptr, uint8* pTIFFHeader,
 		if (ptr != NULL && ReadUShort(ptr + 2, bLittleEndian) == 7) {
 			int nSize = ReadUInt(ptr + 4, bLittleEndian);
 			if (nSize > 10 && nSize <= 4096) {
-				LPCSTR sCodeDesc = (LPCSTR)(pTIFFHeader + ReadUInt(ptr + 8, bLittleEndian));
-				if (strcmp(sCodeDesc, "ASCII") == 0) {
+				LPCSTR sCodeDesc = (LPCSTR)PointerInBlock(pTIFFHeader, ReadUInt(ptr + 8, bLittleEndian), nSize);
+				if (sCodeDesc == NULL) {
+					strOut.Empty();
+					return;
+				}
+				// the character code is 8 bytes (e.g. ASCII and three zero bytes), nSize > 10 makes sure that they are there
+				if (strncmp(sCodeDesc, "ASCII", 6) == 0) {
 					strOut = CString((LPCSTR)(sCodeDesc + 8), nSize - 8);
-				} else if (strcmp(sCodeDesc, "UNICODE") == 0) {
+				} else if (strncmp(sCodeDesc, "UNICODE", 8) == 0) {
 					bool bLE = bLittleEndian;
 					nSize -= 8;
 					sCodeDesc += 8;
@@ -168,9 +201,12 @@ static int ReadRationalTag(Rational & rational, uint8* ptr, uint8* pTIFFHeader, 
 		uint16 nCount = ReadUInt(ptr + 4, bLittleEndian);
 		if (index < nCount) {
 			if (nType == 5 || nType == 10) {
-				int nOffset = ReadUInt(ptr + 8, bLittleEndian) + index * 8;
-				rational.Numerator = ReadUInt(pTIFFHeader + nOffset, bLittleEndian);
-				rational.Denominator = ReadUInt(pTIFFHeader + nOffset + 4, bLittleEndian);
+				uint8* pRational = PointerInBlock(pTIFFHeader, (unsigned long long)ReadUInt(ptr + 8, bLittleEndian) + index * 8ull, 8);
+				if (pRational == NULL) {
+					return 0;
+				}
+				rational.Numerator = ReadUInt(pRational, bLittleEndian);
+				rational.Denominator = ReadUInt(pRational + 4, bLittleEndian);
 				if (rational.Numerator != 0 && rational.Denominator != 0) {
 					// Calculate the ggT
 					uint32 nModulo;
@@ -270,6 +306,14 @@ CEXIFReader::CEXIFReader(void* pApp1Block, EImageFormat eImageFormat)
 		return;
 	}
 	int nApp1Size = m_pApp1[2]*256 + m_pApp1[3] + 2;
+	// the offsets of the EXIF data are checked against this block until the end of the constructor
+	struct CBlockScope {
+		CBlockScope(const uint8* pStart, int nSize) { t_pBlockStart = pStart; t_pBlockEnd = pStart + nSize; }
+		~CBlockScope() { t_pBlockStart = t_pBlockEnd = NULL; }
+	} blockScope(m_pApp1, nApp1Size);
+	if (nApp1Size < 10 + 8) {
+		return; // too small for the TIFF header
+	}
 
 	// Read TIFF header
 	uint8* pTIFFHeader = m_pApp1 + 10;
@@ -424,9 +468,9 @@ CEXIFReader::CEXIFReader(void* pApp1Block, EImageFormat eImageFormat)
 			if (pTagOffsetSOI != NULL && pTagJPEGLen != NULL) {
 				uint32 nOffsetSOI = ReadLongTag(pTagOffsetSOI, bLittleEndian);
 				uint32 nJPEGBytes = ReadLongTag(pTagJPEGLen, bLittleEndian);
-				uint8* pSOI = pTIFFHeader + nOffsetSOI;
-				uint8* pSOF = (uint8*) Helpers::FindJPEGMarker(pSOI, nJPEGBytes, 0xC0);
-				if (pSOF != NULL) {
+				uint8* pSOI = PointerInBlock(pTIFFHeader, nOffsetSOI, nJPEGBytes);
+				uint8* pSOF = (pSOI == NULL || nJPEGBytes > INT_MAX) ? NULL : (uint8*) Helpers::FindJPEGMarker(pSOI, nJPEGBytes, 0xC0);
+				if (pSOF != NULL && IsInBlock(pSOF, 9)) {
 					m_nThumbWidth = pSOF[7]*256 + pSOF[8];
 					m_nThumbHeight = pSOF[5]*256 + pSOF[6];
 					m_nJPEGThumbStreamLen = nJPEGBytes;
@@ -517,7 +561,7 @@ void CEXIFReader::ReadGPSData(uint8* pTIFFHeader, uint8* pTagGPSIFD, int nApp1Si
 	if (pTagAltitude != NULL) {
 		m_dAltitude = ReadDoubleTag(pTagAltitude, pTIFFHeader, bLittleEndian);
 		uint8* pTagAltitudeRef = FindTag(pGPSIFD, pLastGPS, 0x5, bLittleEndian);
-		if (pTagAltitudeRef != NULL && *(pTagAltitudeRef + 8) == 1) {
+		if (pTagAltitudeRef != NULL && IsInBlock(pTagAltitudeRef + 8, 1) && *(pTagAltitudeRef + 8) == 1) {
 			m_dAltitude *= -1;
 		}
 	}

@@ -216,6 +216,10 @@ __declspec(dllimport) bool __stdcall WICPresent(void);
 
 // Check if Windows Image Codecs library is present
 static bool WICPresentGuarded(void) {
+	// WICLoader.dll is delay loaded, a missing DLL would end the program (not caught by catch (...))
+	if (!Helpers::IsDllAvailable(_T("WICLoader.dll"))) {
+		return false;
+	}
 	try {
 		return WICPresent();
 	} catch (...) {

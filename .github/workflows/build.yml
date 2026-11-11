@@ -7,14 +7,15 @@ on:
   pull_request:
   workflow_dispatch:
 
+# read only: also pull requests build with it. Only the release job below may write (draft release).
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # Only WTL is needed to compile, the image libraries are committed as prebuilt binaries
       - name: Get WTL
@@ -29,7 +30,7 @@ jobs:
           "vs_installer exit code: $($p.ExitCode)"
           if (-not (Get-ChildItem "$vs\VC\Tools\MSVC\*\atlmfc\include\atlbase.h" -ErrorAction SilentlyContinue)) { throw "ATL was not installed" }
 
-      - uses: microsoft/setup-msbuild@v2
+      - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
 
       - name: Build
         run: msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=x64 /m /v:m
@@ -64,26 +65,20 @@ jobs:
       - name: Installer
         shell: pwsh
         run: |
-          choco install innosetup --no-progress -y
+          choco install innosetup --version=6.7.1 --no-progress -y
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\LucidViewer.iss
 
-      - uses: actions/upload-artifact@v4
+      # the PDB files are not in the zip and the installer, they are kept for the crash dumps (%APPDATA%\LucidViewer\*.dmp)
+      - name: Symbols
+        shell: pwsh
+        run: Compress-Archive -Path src\LucidViewer\bin\x64\Release\*.pdb -DestinationPath "LucidViewer-${{ steps.version.outputs.version }}-symbols-x64.zip"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: LucidViewer-${{ steps.version.outputs.version }}-x64
           path: |
             LucidViewer-*-portable-x64.zip
-            installer/Output/*.exe
-
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true
-          body: |
-            See the [changelog](https://github.com/cemmgrgn/lucid-viewer/blob/main/CHANGELOG.md) for what is new.
-            `x64` runs on all PCs (on ARM64 PCs in emulation), `arm64` is the native build for Windows on ARM.
-          files: |
-            LucidViewer-*-portable-x64.zip
+            LucidViewer-*-symbols-x64.zip
             installer/Output/*.exe
 
   # Native build for Windows on ARM. The image libraries are built by vcpkg for arm64-windows (cached),
@@ -95,7 +90,7 @@ jobs:
       VCPKG_PACKAGES: libjpeg-turbo libpng[apng] zlib libwebp libjxl libheif libavif[dav1d] lcms libraw
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}\vcpkg-cache,readwrite
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Get WTL
         run: git submodule update --init deps/WTL-sf
@@ -111,7 +106,7 @@ jobs:
 
       # restored here and saved right after vcpkg, also when the program does not build
       - name: Restore vcpkg packages
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: vcpkg-cache
           key: vcpkg-arm64-${{ env.VCPKG_COMMIT }}-${{ github.run_id }}
@@ -133,12 +128,12 @@ jobs:
           Get-ChildItem deps\arm64\lib\*.lib, deps\arm64\bin\*.dll | ForEach-Object { $_.Name }
 
       - name: Save vcpkg packages
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: vcpkg-cache
           key: vcpkg-arm64-${{ env.VCPKG_COMMIT }}-${{ github.run_id }}
 
-      - uses: microsoft/setup-msbuild@v2
+      - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
 
       - name: Build
         run: msbuild src\LucidViewer.sln /t:WICLoader /t:LucidViewer /p:Configuration=Release /p:Platform=ARM64 /m /v:m
@@ -163,21 +158,48 @@ jobs:
       - name: Installer
         shell: pwsh
         run: |
-          choco install innosetup --no-progress -y
+          choco install innosetup --version=6.7.1 --no-progress -y
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DArch=arm64 installer\LucidViewer.iss
 
-      - uses: actions/upload-artifact@v4
+      - name: Symbols
+        shell: pwsh
+        run: Compress-Archive -Path src\LucidViewer\bin\ARM64\Release\*.pdb -DestinationPath "LucidViewer-${{ steps.version.outputs.version }}-symbols-arm64.zip"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: LucidViewer-${{ steps.version.outputs.version }}-arm64
           path: |
             LucidViewer-*-portable-arm64.zip
+            LucidViewer-*-symbols-arm64.zip
             installer/Output/*.exe
 
+  # Draft release for a version tag, from the files of both builds. The only job that may write to the repository,
+  # it runs no code of the repository.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, build-arm64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          path: artifacts
+
+      - name: Checksums
+        run: |
+          find artifacts -type f \( -name 'LucidViewer-*.zip' -o -name '*.exe' \) -print0 | xargs -0 sha256sum | sed -E 's|  .*/|  |' | sort -k2 > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           draft: true
+          body: |
+            See the [changelog](https://github.com/cemmgrgn/lucid-viewer/blob/main/CHANGELOG.md) for what is new.
+            `x64` runs on all PCs (on ARM64 PCs in emulation), `arm64` is the native build for Windows on ARM.
+            The SHA-256 checksums of all files are in `SHA256SUMS.txt`.
           files: |
-            LucidViewer-*-portable-arm64.zip
-            installer/Output/*.exe
+            artifacts/**/LucidViewer-*.zip
+            artifacts/**/*.exe
+            SHA256SUMS.txt

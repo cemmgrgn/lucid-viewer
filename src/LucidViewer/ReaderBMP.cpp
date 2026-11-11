@@ -99,12 +99,14 @@ CJPEGImage* CReaderBMP::ReadBmpImage(LPCTSTR strFileName, bool& bOutOfMemory) {
 
 	int bytesPerPixel = infoheader.bits/8;
 	int paddedWidth = Helpers::DoPadding(infoheader.width*bytesPerPixel, 4);
-	int fileSizeBytes = infoheader.height*paddedWidth;
-	if (fileSizeBytes <= 0 || fileSizeBytes > MAX_BMP_FILE_SIZE) {
+	// 64 bit: height * paddedWidth can be bigger than an int (e.g. 32768 x 32769 with 32 bpp), the result must not wrap around
+	long long nFileSizeBytes = (long long)infoheader.height * paddedWidth;
+	if (nFileSizeBytes <= 0 || nFileSizeBytes > MAX_BMP_FILE_SIZE) {
 		fclose(fptr);
-		bOutOfMemory = fileSizeBytes > MAX_BMP_FILE_SIZE;
+		bOutOfMemory = nFileSizeBytes > MAX_BMP_FILE_SIZE;
 		return NULL; // corrupt or manipulated header
 	}
+	int fileSizeBytes = (int)nFileSizeBytes;
 
 	uint8* pDest = new(std::nothrow) uint8[fileSizeBytes];
 	if (pDest == NULL) {

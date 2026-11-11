@@ -111,6 +111,13 @@ void BlendOver(unsigned char** rows_dst, unsigned char** rows_src, unsigned int 
 void* PngReader::ReadNextFrame(void** exif_chunk, png_uint_32* exif_size)
 {
 	unsigned int j;
+	// libpng jumps back here on an error in the image data (e.g. a file that ends too early). The jump target of
+	// BeginReading cannot be used: that function has already returned, a jump into it ends the program (STATUS_BAD_STACK).
+	if (setjmp(png_jmpbuf(cache.png_ptr)))
+	{
+		PngReader::DeleteCache();
+		throw std::runtime_error("Image contains errors.");
+	}
 	if (exif_chunk != NULL && exif_size != NULL) {
 		png_get_eXIf_1(cache.png_ptr, cache.info_ptr, exif_size, (png_bytep*)exif_chunk);
 	}

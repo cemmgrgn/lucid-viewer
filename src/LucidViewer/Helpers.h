@@ -316,4 +316,26 @@ namespace Helpers {
 	private:
 		CRITICAL_SECTION & m_cs;
 	};
+
+	// Full path of a program in the Windows system folder, e.g. C:\Windows\System32\cmd.exe for "cmd.exe".
+	// Programs of Windows are never started by name only: the current folder (often the folder of the shown image)
+	// would be searched before the system folder.
+	CString SystemProgramPath(LPCTSTR sProgram);
+
+	// Full path of a program that is given by name only ("cmd", "notepad.exe"): searched in the system folder, the
+	// Windows folder and the folders of PATH, never in the current folder. A name with a folder is returned as it is,
+	// an empty string if the program is not found.
+	CString ResolveProgramPath(LPCTSTR sProgram);
+
+	// Starts this program again with the parameters. With nWaitForProcessId the new process first waits until that
+	// process has ended (/waitpid, see WaitForProcessFromCommandLine), instead of a delay with cmd.exe and ping.
+	bool StartThisProgram(LPCTSTR sParameters, DWORD nWaitForProcessId);
+
+	// Handles /waitpid <id> on the command line: waits (at most 10 seconds) until that process has ended
+	void WaitForProcessFromCommandLine(LPCTSTR sCommandLine);
+
+	// True if a delay loaded DLL of the program (e.g. heif.dll) and the DLLs it needs can be loaded. Must be checked
+	// before the first call into such a DLL: without /EHa the error of the delay load helper is not caught by
+	// catch (...) and would end the program. The result is kept per DLL. On ARM64 the DLLs are not delay loaded.
+	bool IsDllAvailable(LPCTSTR sDllName);
 }

@@ -881,9 +881,14 @@ LRESULT CMainDlg::OnGetMinMaxInfo(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lPara
 LRESULT CMainDlg::OnAnotherInstanceStarted(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
 	bHandled = FALSE;
 	COPYDATASTRUCT* pData = (COPYDATASTRUCT*)lParam;
-	if (pData != NULL && pData->dwData == KEY_MAGIC && pData->cbData > 0 && 
+	// WM_COPYDATA can come from any program: only a whole string of characters with an ending 0 and at most the
+	// length of a long path is accepted
+	const DWORD MAX_PATH_BYTES = 32768 * sizeof(TCHAR);
+	if (pData != NULL && pData->dwData == KEY_MAGIC && pData->lpData != NULL && pData->cbData >= sizeof(TCHAR) &&
+		pData->cbData <= MAX_PATH_BYTES && pData->cbData % sizeof(TCHAR) == 0 &&
+		((LPCTSTR)pData->lpData)[pData->cbData / sizeof(TCHAR) - 1] == 0 &&
 		((m_bFullScreenMode && CSettingsProvider::This().SingleFullScreenInstance()) || CSettingsProvider::This().SingleInstance())) {
-		CString sFile((LPCTSTR)pData->lpData, pData->cbData / sizeof(TCHAR) - 1);
+		CString sFile((LPCTSTR)pData->lpData);
 		bHandled = TRUE;
 		if (sFile.IsEmpty()) {
 			// started again without a file: the window that is already open is brought to the front, nothing else
@@ -4701,7 +4706,7 @@ void CMainDlg::EditINIFile(bool bGlobalINI) {
 	CString command;
 	LPCTSTR argument;
 	if (iniEditor == Helpers::INI_Notepad) {
-		command = _T("notepad.exe");
+		command = Helpers::SystemProgramPath(_T("notepad.exe"));
 		argument = sINIFileName;
 	} else if (iniEditor == Helpers::INI_System) {
 		command = sINIFileName;
@@ -7346,12 +7351,11 @@ void CMainDlg::ApplyChangedSettings(const std::vector<CString>& changedKeys, boo
 		// the screenshot tool in the notification area is started again with the new settings
 		HWND hTray = ::FindWindow(_T("LucidViewerScreenshotTray"), NULL);
 		if (hTray != NULL) {
+			// the new screenshot tool waits until the old one (its own process) has ended
+			DWORD nTrayProcessId = 0;
+			::GetWindowThreadProcessId(hTray, &nTrayProcessId);
 			::PostMessage(hTray, WM_CLOSE, 0, 0);
-			TCHAR sExe[MAX_PATH];
-			::GetModuleFileName(NULL, sExe, MAX_PATH);
-			CString sParameters;
-			sParameters.Format(_T("/c ping -n 2 127.0.0.1 >nul & start \"\" \"%s\" /tray"), sExe);
-			::ShellExecute(NULL, _T("open"), _T("cmd.exe"), sParameters, NULL, SW_HIDE);
+			Helpers::StartThisProgram(_T("/tray"), nTrayProcessId);
 		}
 	}
 	if (bKeyMapChanged) {

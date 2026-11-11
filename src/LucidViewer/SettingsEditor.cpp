@@ -749,7 +749,7 @@ static LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 					::PostMessage(hWnd, WM_NULL, 0, 0);
 					return 0;
 				case ID_EDIT_INI:
-					::ShellExecute(hWnd, _T("open"), _T("notepad.exe"), CString(_T("\"")) + CSettingsProvider::This().GetUserINIFileName() + _T("\""), NULL, SW_SHOWNORMAL);
+					::ShellExecute(hWnd, _T("open"), Helpers::SystemProgramPath(_T("notepad.exe")), CString(_T("\"")) + CSettingsProvider::This().GetUserINIFileName() + _T("\""), NULL, SW_SHOWNORMAL);
 					return 0;
 				case ID_EDIT_KEYMAP:
 					if (EditShortcuts(hWnd)) pEditor->KeyMapChanged = true;
@@ -1035,12 +1035,13 @@ bool Show(HWND hParent, CResult& result) {
 }
 
 void Restart(HWND hParent, LPCTSTR sCurrentFile) {
-	TCHAR sExe[MAX_PATH];
-	::GetModuleFileName(NULL, sExe, MAX_PATH);
-	// started after a moment so that this instance has ended (single instance mode)
+	// the new process waits until this one has ended (single instance mode). Started directly, not with cmd.exe:
+	// cmd would expand % in the file name.
 	CString sParameters;
-	sParameters.Format(_T("/c ping -n 2 127.0.0.1 >nul & start \"\" \"%s\" \"%s\""), sExe, sCurrentFile != NULL ? sCurrentFile : _T(""));
-	::ShellExecute(NULL, _T("open"), _T("cmd.exe"), sParameters, NULL, SW_HIDE);
+	if (sCurrentFile != NULL && *sCurrentFile != 0) {
+		sParameters = CString(_T("\"")) + sCurrentFile + _T("\"");
+	}
+	Helpers::StartThisProgram(sParameters, ::GetCurrentProcessId());
 	::PostMessage(hParent, WM_CLOSE, 0, 0);
 }
 
@@ -1493,7 +1494,7 @@ static LRESULT CALLBACK ShortcutWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPA
 					if (::GetFileAttributes(GetUserKeyMapFileName()) == INVALID_FILE_ATTRIBUTES) {
 						::CopyFile(CString(CSettingsProvider::This().GetEXEPath()) + _T("KeyMap.txt.default"), GetUserKeyMapFileName(), TRUE);
 					}
-					::ShellExecute(hWnd, _T("open"), _T("notepad.exe"), _T("\"") + GetUserKeyMapFileName() + _T("\""), NULL, SW_SHOWNORMAL);
+					::ShellExecute(hWnd, _T("open"), Helpers::SystemProgramPath(_T("notepad.exe")), _T("\"") + GetUserKeyMapFileName() + _T("\""), NULL, SW_SHOWNORMAL);
 					return 0;
 				case ID_SC_SAVE:
 				case IDOK:

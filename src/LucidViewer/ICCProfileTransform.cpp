@@ -2,6 +2,7 @@
 
 #include "ICCProfileTransform.h"
 #include "SettingsProvider.h"
+#include "Helpers.h"
 
 
 #ifndef WINXP
@@ -18,6 +19,8 @@ void* ICCProfileTransform::CreateTransform(const void* profile, unsigned int siz
 {
 	if (profile == NULL || size == 0)
 		return NULL; // No ICC Profile
+	if (!Helpers::IsDllAvailable(_T("lcms2.dll")))
+		return NULL; // delay loaded, the error of a missing DLL is not caught by catch (...)
 	if (sRGBProfile == NULL) {
 		try {
 			sRGBProfile = cmsCreate_sRGBProfile();
@@ -92,6 +95,8 @@ void ICCProfileTransform::DeleteTransform(void* transform)
 }
 
 void* ICCProfileTransform::CreateLabTransform(PixelFormat format) {
+	if (!Helpers::IsDllAvailable(_T("lcms2.dll")))
+		return NULL;
 	cmsHTRANSFORM transform = NULL;
 	cmsHPROFILE hLabProfile = NULL;
 	try {

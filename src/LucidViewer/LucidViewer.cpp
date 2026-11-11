@@ -11,9 +11,7 @@
 #include "ScreenCapture.h"
 #include "UITest.h"
 
-#ifdef DEBUG
 #include <dbghelp.h>
-#endif
 
 // _CrtDumpMemoryLeaks
 
@@ -145,41 +143,61 @@ static int ParseCommandLineForTransitionTime(LPCTSTR sCommandLine) {
 	return max(100, min(5000, _ttoi(sTransitionTime + _tcslen(_T("/transitiontime")))));
 }
 
-#ifdef DEBUG
+// Writes a minidump to the data folder of the program (%APPDATA%\LucidViewer) when the program crashes, also in release
+// builds. The file stays on this PC, it is not sent anywhere. dbghelp.dll is loaded from the system folder only when needed.
 static CRITICAL_SECTION s_lock;
 
 static BOOL GenerateDump(EXCEPTION_POINTERS* pExceptionPointers)
 {
-	WCHAR* szAppName = L"Lucid Viewer";
-	DWORD dwBufferSize = MAX_PATH;
-	HANDLE hDumpFile;
-	SYSTEMTIME stLocalTime;
-	MINIDUMP_EXCEPTION_INFORMATION ExpParam;
+	typedef BOOL(WINAPI* MiniDumpWriteDumpFunc)(HANDLE, DWORD, HANDLE, MINIDUMP_TYPE, PMINIDUMP_EXCEPTION_INFORMATION,
+		PMINIDUMP_USER_STREAM_INFORMATION, PMINIDUMP_CALLBACK_INFORMATION);
+	HMODULE hDbgHelp = ::LoadLibrary(Helpers::SystemProgramPath(_T("dbghelp.dll")));
+	MiniDumpWriteDumpFunc pWriteDump = hDbgHelp == NULL ? NULL : (MiniDumpWriteDumpFunc)::GetProcAddress(hDbgHelp, "MiniDumpWriteDump");
+	if (pWriteDump == NULL) {
+		return FALSE;
+	}
 
-	GetLocalTime(&stLocalTime);
+	SYSTEMTIME stLocalTime;
+	::GetLocalTime(&stLocalTime);
 
 	CString fileName;
-	fileName.Format(_T("%s\\%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp"),
-		Helpers::AppDataPath(), szAppName,
+	fileName.Format(_T("%s%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp"),
+		Helpers::AppDataPath(), _T("Lucid Viewer"),
 		stLocalTime.wYear, stLocalTime.wMonth, stLocalTime.wDay,
 		stLocalTime.wHour, stLocalTime.wMinute, stLocalTime.wSecond,
-		GetCurrentProcessId(), GetCurrentThreadId());
+		::GetCurrentProcessId(), ::GetCurrentThreadId());
 
-	hDumpFile = ::CreateFile(fileName, GENERIC_READ | GENERIC_WRITE,
-		FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+	::CreateDirectory(Helpers::AppDataPath(), NULL);
+	HANDLE hDumpFile = ::CreateFile(fileName, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+	if (hDumpFile == INVALID_HANDLE_VALUE) {
+		return FALSE;
+	}
 
-	ExpParam.ThreadId = GetCurrentThreadId();
+	MINIDUMP_EXCEPTION_INFORMATION ExpParam;
+	ExpParam.ThreadId = ::GetCurrentThreadId();
 	ExpParam.ExceptionPointers = pExceptionPointers;
 	ExpParam.ClientPointers = TRUE;
 
-	return ::MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(),
-		hDumpFile, MiniDumpWithDataSegs, &ExpParam, NULL, NULL);
+	// no image data in release builds: only stacks and thread information
+#ifdef DEBUG
+	MINIDUMP_TYPE eType = MiniDumpWithDataSegs;
+#else
+	MINIDUMP_TYPE eType = (MINIDUMP_TYPE)(MiniDumpNormal | MiniDumpWithThreadInfo);
+#endif
+	BOOL bOk = pWriteDump(::GetCurrentProcess(), ::GetCurrentProcessId(), hDumpFile, eType, &ExpParam, NULL, NULL);
+	::CloseHandle(hDumpFile);
+	return bOk;
 }
 
 static LONG WINAPI CrashHandler(EXCEPTION_POINTERS * pExceptionInfo)
 {
 	::EnterCriticalSection(&s_lock);
-	if (GenerateDump(pExceptionInfo))
+	BOOL bDumpWritten = GenerateDump(pExceptionInfo);
+	if (Helpers::stristr(::GetCommandLine(), _T("/silent")) != NULL)
+	{
+		// conversions from scripts: no window, the exit code is the exception code
+	}
+	else if (bDumpWritten)
 	{
 		::MessageBox(NULL, CString(_T("Unhandled exception\nMinidump file written to:\n")) + Helpers::AppDataPath(), _T("Unhandled exception"), MB_OK);
 	}
@@ -190,18 +208,22 @@ static LONG WINAPI CrashHandler(EXCEPTION_POINTERS * pExceptionInfo)
 	::LeaveCriticalSection(&s_lock);
 	return EXCEPTION_EXECUTE_HANDLER;
 }
-#endif
 
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lpstrCmdLine, int /*nCmdShow*/)
 {
+	// DLLs are not loaded from the current folder (often the folder of the opened image), only from the folder of
+	// the program and the system folders
+	::SetDllDirectory(_T(""));
+	::SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT);
+
 	HRESULT hRes = ::CoInitialize(NULL);
 	StartupTrace::Mark("WinMain, COM");
 
-#ifdef DEBUG
 	::InitializeCriticalSection(&s_lock);
-
 	::SetUnhandledExceptionFilter(CrashHandler);
-#endif
+
+	// started again by this program (restart after settings were changed): first the old process must have ended
+	Helpers::WaitForProcessFromCommandLine(lpstrCmdLine);
 
 	// use the locale from the operating system, however for numeric input/output always use 'C' locale
 	// with the OS locale the INI file can not be read correctly (due to the different decimal point characters)

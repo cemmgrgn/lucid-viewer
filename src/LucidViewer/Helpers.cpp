@@ -9,6 +9,8 @@
 #include "FileList.h"
 #include "SettingsProvider.h"
 #include <math.h>
+#include <map>
+#include <mutex>
 
 namespace Helpers {
 
@@ -1060,6 +1062,115 @@ int GetWindowsVersion() {
 	GetVersionEx(&osvi);
 #pragma warning(pop)
 	return osvi.dwMajorVersion * 100 + osvi.dwMinorVersion;
+}
+
+CString SystemProgramPath(LPCTSTR sProgram) {
+	TCHAR sSystem[MAX_PATH];
+	UINT nLen = ::GetSystemDirectory(sSystem, MAX_PATH);
+	if (nLen == 0 || nLen >= MAX_PATH) {
+		return CString(sProgram);
+	}
+	return CString(sSystem) + _T("\\") + sProgram;
+}
+
+CString ResolveProgramPath(LPCTSTR sProgram) {
+	if (sProgram == NULL || *sProgram == 0) return CString();
+	if (_tcschr(sProgram, _T('\\')) != NULL || _tcschr(sProgram, _T('/')) != NULL || _tcschr(sProgram, _T(':')) != NULL) {
+		return CString(sProgram);
+	}
+	// the folders to search: folder of this program, system folder, Windows folder, PATH (the order of CreateProcess
+	// without the current folder). Relative entries of PATH (".") are left out.
+	CString sSearchPath;
+	TCHAR sFolder[MAX_PATH];
+	DWORD nExeLen = ::GetModuleFileName(NULL, sFolder, MAX_PATH);
+	if (nExeLen > 0 && nExeLen < MAX_PATH) {
+		CString sExeFolder(sFolder);
+		sExeFolder = sExeFolder.Left(sExeFolder.ReverseFind(_T('\\')));
+		if (!sExeFolder.IsEmpty()) sSearchPath += sExeFolder + _T(";");
+	}
+	UINT nLen = ::GetSystemDirectory(sFolder, MAX_PATH);
+	if (nLen > 0 && nLen < MAX_PATH) sSearchPath += CString(sFolder) + _T(";");
+	nLen = ::GetWindowsDirectory(sFolder, MAX_PATH);
+	if (nLen > 0 && nLen < MAX_PATH) sSearchPath += CString(sFolder) + _T(";");
+	DWORD nPathLen = ::GetEnvironmentVariable(_T("PATH"), NULL, 0);
+	if (nPathLen > 0) {
+		CString sPath;
+		::GetEnvironmentVariable(_T("PATH"), sPath.GetBuffer(nPathLen), nPathLen);
+		sPath.ReleaseBuffer();
+		int nPos = 0;
+		CString sEntry = sPath.Tokenize(_T(";"), nPos);
+		while (nPos >= 0) {
+			sEntry.Trim();
+			sEntry.Trim(_T('"'));
+			if (sEntry.GetLength() >= 3 && (sEntry[1] == _T(':') || (sEntry[0] == _T('\\') && sEntry[1] == _T('\\')))) {
+				sSearchPath += sEntry + _T(";");
+			}
+			sEntry = sPath.Tokenize(_T(";"), nPos);
+		}
+	}
+	TCHAR sResult[MAX_PATH];
+	LPTSTR pFilePart = NULL;
+	DWORD nResult = ::SearchPath(sSearchPath, sProgram, _T(".exe"), MAX_PATH, sResult, &pFilePart);
+	if (nResult == 0 || nResult >= MAX_PATH) {
+		return CString();
+	}
+	return CString(sResult);
+}
+
+bool StartThisProgram(LPCTSTR sParameters, DWORD nWaitForProcessId) {
+	TCHAR sExe[MAX_PATH];
+	DWORD nLen = ::GetModuleFileName(NULL, sExe, MAX_PATH);
+	if (nLen == 0 || nLen >= MAX_PATH) return false;
+	CString sAllParameters = sParameters;
+	if (nWaitForProcessId != 0) {
+		CString sWait;
+		sWait.Format(_T(" /waitpid %u"), nWaitForProcessId);
+		sAllParameters += sWait;
+	}
+	sAllParameters.TrimLeft();
+	return (INT_PTR)::ShellExecute(NULL, _T("open"), sExe, sAllParameters, NULL, SW_SHOWNORMAL) > 32;
+}
+
+bool IsDllAvailable(LPCTSTR sDllName) {
+#if defined(_M_ARM64)
+	return true; // imported directly, the program does not start without them
+#else
+	// several image load threads may ask at the same time
+	static std::mutex lock;
+	static std::map<CString, bool> results;
+	std::lock_guard<std::mutex> autoLock(lock);
+	CString sKey(sDllName);
+	sKey.MakeLower();
+	auto found = results.find(sKey);
+	if (found != results.end()) {
+		return found->second;
+	}
+	// loaded from the folder of the program, as the delay load helper does; the module stays loaded for it
+	TCHAR sPath[MAX_PATH];
+	DWORD nLen = ::GetModuleFileName(NULL, sPath, MAX_PATH);
+	bool bAvailable = false;
+	if (nLen > 0 && nLen < MAX_PATH) {
+		CString sDll(sPath);
+		sDll = sDll.Left(sDll.ReverseFind(_T('\\')) + 1) + sDllName;
+		UINT nPrevErrorMode = ::SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
+		bAvailable = ::LoadLibraryEx(sDll, NULL, LOAD_WITH_ALTERED_SEARCH_PATH) != NULL;
+		::SetErrorMode(nPrevErrorMode);
+	}
+	results[sKey] = bAvailable;
+	return bAvailable;
+#endif
+}
+
+void WaitForProcessFromCommandLine(LPCTSTR sCommandLine) {
+	LPCTSTR sWait = stristr(sCommandLine, _T("/waitpid"));
+	if (sWait == NULL) return;
+	DWORD nProcessId = (DWORD)_tcstoul(sWait + _tcslen(_T("/waitpid")), NULL, 10);
+	if (nProcessId == 0 || nProcessId == ::GetCurrentProcessId()) return;
+	HANDLE hProcess = ::OpenProcess(SYNCHRONIZE, FALSE, nProcessId);
+	if (hProcess != NULL) {
+		::WaitForSingleObject(hProcess, 10000);
+		::CloseHandle(hProcess);
+	}
 }
 
 }

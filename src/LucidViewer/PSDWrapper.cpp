@@ -220,7 +220,7 @@ CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
 					}
 					if (pICCProfile != NULL) {
 						ReadFromFile(pICCProfile, hFile, nResourceSize);
-						SeekFile(hFile, -nResourceSize);
+						SeekFile(hFile, -(LONG)nResourceSize);
 						nICCProfileSize = nResourceSize;
 					}
 					break;
@@ -254,7 +254,7 @@ CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
 							memcpy(pEXIFData, "\xFF\xE1\0\0Exif\0\0", 10);
 							*((unsigned short*)pEXIFData + 1) = _byteswap_ushort(nResourceSize + 8);
 							ReadFromFile((char*)pEXIFData + 10, hFile, nResourceSize);
-							SeekFile(hFile, -nResourceSize);
+							SeekFile(hFile, -(LONG)nResourceSize);
 						}
 					}
 					break;
@@ -310,7 +310,14 @@ CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
 		}
 
 		int nRowSize = Helpers::DoPadding(nWidth * nChannels, 4);
-		pPixelData = new(std::nothrow) char[nRowSize * nHeight];
+		// 64 bit: nRowSize * nHeight is bigger than 32 bit for big images, the size would wrap around. The loops
+		// below use 32 bit offsets, so the pixels must stay below 2 GB.
+		unsigned long long nPixelBytes = (unsigned long long)nRowSize * nHeight;
+		if (nPixelBytes > INT_MAX) {
+			bOutOfMemory = true;
+			ThrowIf(true);
+		}
+		pPixelData = new(std::nothrow) char[(size_t)nPixelBytes];
 		if (pPixelData == NULL) {
 			bOutOfMemory = true;
 			ThrowIf(true);
@@ -328,7 +335,7 @@ CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
 				if (nColorMode == MODE_Lab) {
 					rchannel = channel;
 				} else {
-					rchannel = (-channel - 2) % nChannels;
+					rchannel = (0u - channel - 2u) % nChannels; // same as before: wraps around as unsigned
 				}
 				for (unsigned row = 0; row < nHeight; row++) {
 					p = pOffset;
@@ -370,10 +377,13 @@ CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
 						count += c;
 					}
 
+					// the byte counts of the scan lines are at the start of the image data, inside of the file only
+					unsigned long long nCountPos = ((unsigned long long)channel * nHeight + row) * 2 * nVersion;
+					ThrowIf(nCountPos + 2 * nVersion > nImageDataSize);
 					if (nVersion == 2) {
-						pOffset += _byteswap_ulong(*(unsigned int*)(pBuffer + (channel * nHeight + row) * 4));
+						pOffset += _byteswap_ulong(*(unsigned int*)(pBuffer + nCountPos));
 					} else {
-						pOffset += _byteswap_ushort(*(unsigned short*)(pBuffer + (channel * nHeight + row) * 2));
+						pOffset += _byteswap_ushort(*(unsigned short*)(pBuffer + nCountPos));
 					}
 #ifdef DEBUG
 					if (p != pOffset) {
@@ -390,7 +400,7 @@ CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
 				if (nColorMode == MODE_Lab) {
 					rchannel = channel;
 				} else {
-					rchannel = (-channel - 2) % nChannels;
+					rchannel = (0u - channel - 2u) % nChannels; // same as before: wraps around as unsigned
 				}
 				for (unsigned row = 0; row < nHeight; row++) {
 					for (unsigned count = 0; count < nWidth; count++) {
@@ -502,7 +512,7 @@ CJPEGImage* PsdReader::ReadThumb(LPCTSTR strFileName, bool& bOutOfMemory)
 					}
 
 					ReadFromFile(pBuffer, hFile, nJpegSize);
-					SeekFile(hFile, -nResourceSize);
+					SeekFile(hFile, -(LONG)nResourceSize);
 
 
 					pPixelData = TurboJpeg::ReadImage(nWidth, nHeight, nChannels, eChromoSubSampling, bOutOfMemory, pBuffer, nJpegSize);
@@ -516,7 +526,7 @@ CJPEGImage* PsdReader::ReadThumb(LPCTSTR strFileName, bool& bOutOfMemory)
 							memcpy(pEXIFData, "\xFF\xE1\0\0Exif\0\0", 10);
 							*((unsigned short*)pEXIFData + 1) = _byteswap_ushort(nResourceSize + 8);
 							ReadFromFile((char*)pEXIFData + 10, hFile, nResourceSize);
-							SeekFile(hFile, -nResourceSize);
+							SeekFile(hFile, -(LONG)nResourceSize);
 						}
 					}
 					break;

@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased
+
+### Security
+- **BMP and TGA files with huge sizes**: the size of the pixel buffer was calculated in 32 bit and could wrap around
+  (e.g. 32768 x 32769 pixels), the pixels were then written beyond the buffer. Such files are now rejected. The same
+  calculation is fixed for PSD files, and the scan line table of RLE compressed PSD files is checked against the file.
+- **EXIF data**: offsets from the file (text, comments, numbers, GPS position, thumbnail) are checked against the size
+  of the EXIF block before they are read.
+- **Programs started by Lucid Viewer** (`cmd` of the delete command `UserCmd0` and other user commands, Notepad for the
+  INI file and the keyboard shortcuts) are no longer searched in the current folder, which is often the folder of the
+  opened image. A `cmd.exe` put into a folder of images does not run. DLLs are not loaded from the current folder either.
+- **Restart without cmd.exe**: after a change of the language or of the screenshot settings the program starts itself
+  again directly and waits for the old process (`/waitpid`). File names with `%` are no longer changed by cmd.
+- **Background removal model**: the copy installed by setup and the copy of JPEGView are checked with their SHA-256 too,
+  a damaged or replaced model is downloaded again instead of being used.
+- **Single instance**: the file name another program sends is only accepted with an ending 0 and the length of a path.
+- **PNG files with errors in the image data** (e.g. a file that ends too early): libpng jumped back into a function
+  that had already returned. This was hidden until now; the error is now handled where the image data is read.
+- **Errors are no longer hidden**: the program is compiled with standard C++ exception handling (`/EHs`) instead of
+  `/EHa`, so a memory access error ends the program with a crash dump instead of running on with damaged memory.
+  A missing image library (e.g. `heif.dll`) is checked before it is used, the program keeps running without it.
+  About 2900 damaged images of all formats Lucid Viewer reads itself were converted without a crash.
+- Release builds use Control Flow Guard, CET shadow stack compatibility and the SDL checks of the compiler.
+- **`/silent`** for conversions from the command line: no message is shown, the exit code tells the result.
+- **Crash dumps** are now written in release builds too (`%APPDATA%\LucidViewer\*.dmp`, stacks only, nothing is sent).
+  The symbol files (PDB) are attached to each release as `LucidViewer-<version>-symbols-<arch>.zip`.
+- **Build**: the workflows only read the repository; a separate job without the code of the repository creates the
+  draft release and a `SHA256SUMS.txt`. Actions are pinned to commits, Inno Setup and wingetcreate to fixed versions,
+  wingetcreate is checked with its SHA-256.
+
 ## 1.1.1 (2026-11-11)
 
 ### New

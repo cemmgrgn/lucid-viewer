@@ -13,6 +13,7 @@
 #include <string>
 #include <cstdio>
 #include <cstring>
+#include <mutex>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.AI.MachineLearning.h>
@@ -60,6 +61,33 @@ namespace BackgroundRemoval {
 		return strcmp(sHex, MODEL_SHA256) == 0;
 	}
 
+	// True if the file is the expected model. The model is loaded and run by Windows ML, so a file that was replaced
+	// (installed copy, the copy of JPEGView) is not used. The result is kept for the size and time of the file, the
+	// SHA-256 of the 176 MB is calculated once per program start.
+	static bool IsExpectedModel(const std::wstring& sFile) {
+		static std::mutex lock;
+		static std::wstring sCheckedFile;
+		static ULONGLONG nCheckedSize = 0, nCheckedTime = 0;
+		static bool bCheckedResult = false;
+		WIN32_FILE_ATTRIBUTE_DATA data;
+		if (!::GetFileAttributesExW(sFile.c_str(), GetFileExInfoStandard, &data)) {
+			return false;
+		}
+		ULONGLONG nSize = data.nFileSizeLow + ((ULONGLONG)data.nFileSizeHigh << 32);
+		ULONGLONG nTime = data.ftLastWriteTime.dwLowDateTime + ((ULONGLONG)data.ftLastWriteTime.dwHighDateTime << 32);
+		if (nSize < 1000000) {
+			return false;
+		}
+		std::lock_guard<std::mutex> guard(lock);
+		if (_wcsicmp(sCheckedFile.c_str(), sFile.c_str()) != 0 || nSize != nCheckedSize || nTime != nCheckedTime) {
+			bCheckedResult = HasModelHash(sFile);
+			sCheckedFile = sFile;
+			nCheckedSize = nSize;
+			nCheckedTime = nTime;
+		}
+		return bCheckedResult;
+	}
+
 	static std::wstring GetModelPath() {
 		// The installer puts the model next to the program (models\u2net.onnx), use that copy when it is there
 		wchar_t sExePath[MAX_PATH];
@@ -67,8 +95,7 @@ namespace BackgroundRemoval {
 		if (nLen > 0 && nLen < MAX_PATH) {
 			std::wstring sInstalled(sExePath);
 			sInstalled = sInstalled.substr(0, sInstalled.find_last_of(L'\\') + 1) + L"models\\u2net.onnx";
-			WIN32_FILE_ATTRIBUTE_DATA data;
-			if (::GetFileAttributesExW(sInstalled.c_str(), GetFileExInfoStandard, &data) && (data.nFileSizeLow > 1000000 || data.nFileSizeHigh > 0)) {
+			if (IsExpectedModel(sInstalled)) {
 				return sInstalled;
 			}
 		}
@@ -80,18 +107,17 @@ namespace BackgroundRemoval {
 			std::wstring sLegacy = std::wstring(sLocalAppData) + L"\\JPEGView\\models\\u2net.onnx";
 			::CoTaskMemFree(sLocalAppData);
 			WIN32_FILE_ATTRIBUTE_DATA data;
-			if (!::GetFileAttributesExW(sPath.c_str(), GetFileExInfoStandard, &data) &&
-				::GetFileAttributesExW(sLegacy.c_str(), GetFileExInfoStandard, &data) && (data.nFileSizeLow > 1000000 || data.nFileSizeHigh > 0)) {
+			if (!::GetFileAttributesExW(sPath.c_str(), GetFileExInfoStandard, &data) && IsExpectedModel(sLegacy)) {
 				return sLegacy;
 			}
 		}
 		return sPath;
 	}
 
+	// A damaged or replaced model in the folder of the user counts as missing, it is downloaded again
 	bool IsModelAvailable() {
 		std::wstring sPath = GetModelPath();
-		WIN32_FILE_ATTRIBUTE_DATA data;
-		return !sPath.empty() && ::GetFileAttributesExW(sPath.c_str(), GetFileExInfoStandard, &data) && data.nFileSizeLow + ((ULONGLONG)data.nFileSizeHigh << 32) > 1000000;
+		return !sPath.empty() && IsExpectedModel(sPath);
 	}
 
 	// Download progress, the UI thread shows it
@@ -211,7 +237,13 @@ namespace BackgroundRemoval {
 		std::thread worker([&]() {
 			try {
 				winrt::init_apartment(winrt::apartment_type::multi_threaded);
-				LearningModel model = LearningModel::LoadFromFilePath(GetModelPath());
+				std::wstring sModelPath = GetModelPath();
+				if (!IsExpectedModel(sModelPath)) {
+					sError = L"The background removal model is missing or damaged.";
+					winrt::uninit_apartment();
+					return;
+				}
+				LearningModel model = LearningModel::LoadFromFilePath(sModelPath);
 				LearningModelSession session{ nullptr };
 				try {
 					session = LearningModelSession(model, LearningModelDevice(LearningModelDeviceKind::DirectX));

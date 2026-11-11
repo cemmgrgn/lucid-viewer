@@ -38,6 +38,9 @@ LucidViewer.exe /convert:fit1920:jpg "C:\Photos\IMG_0001.HEIC"
 
 This makes a JPG with a long edge of at most 1920 pixels.
 
+Add `/silent` for scripts: no message is shown, the exit code is `0` when all files were converted, `1` when a file
+could not be converted and `2` for an unknown preset.
+
 ## Formats
 
 | Format | Notes |

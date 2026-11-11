@@ -353,6 +353,8 @@ namespace Converter {
 		HWND ProgressWnd, TextWnd, BarWnd;
 	};
 	static CBatch* s_pBatch = NULL;
+	// /silent: no message boxes, the exit code tells if all files were converted (for scripts and tests)
+	static bool s_bSilent = false;
 
 	static LRESULT CALLBACK CollectorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
 		if (nMsg == WM_COPYDATA && s_pBatch != NULL) {
@@ -564,6 +566,7 @@ namespace Converter {
 		::DeleteCriticalSection(&batch.Lock);
 
 		if (!batch.Errors.IsEmpty()) {
+			if (s_bSilent) return 1;
 			::MessageBox(NULL, CString(CNLS::GetString(_T("The following files could not be converted:"))) + _T("\n\n") + batch.Errors,
 				_T(APP_TITLE), MB_OK | MB_ICONWARNING);
 			return 1;
@@ -697,6 +700,8 @@ namespace Converter {
 				bRegister = true;
 			} else if (_tcsicmp(pArgs[i], COMMAND_UNREGISTER) == 0) {
 				bUnregister = true;
+			} else if (_tcsicmp(pArgs[i], _T("/silent")) == 0) {
+				s_bSilent = true;
 			} else if (pArgs[i][0] != _T('/')) {
 				CString sArgument(pArgs[i]);
 				DWORD nAttributes = ::GetFileAttributes(sArgument);
@@ -734,6 +739,7 @@ namespace Converter {
 			pPreset = &parsedPreset;
 		}
 		if (pPreset == NULL) {
+			if (s_bSilent) return 2;
 			CString sValidIds;
 			for (const CPreset& preset : GetPresets()) {
 				sValidIds += (sValidIds.IsEmpty() ? _T("") : _T(", ")) + preset.Id;

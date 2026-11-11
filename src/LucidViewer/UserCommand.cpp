@@ -296,6 +296,12 @@ bool CUserCommand::Execute(HWND hWnd, LPCTSTR sFileName, const CRect& selectionR
 	if (m_bUseShellExecute) {
 		CString sEXE, sParameters, sStartupPath;
 		_ParseCommandline(sCommandLine, !hasSpaces, sEXE, sParameters, sStartupPath);
+		// a program given by name only is not taken from the current folder (often the folder of the image).
+		// Names that are not found as file (e.g. registered in App Paths) are left to the shell.
+		CString sResolvedEXE = Helpers::ResolveProgramPath(sEXE);
+		if (!sResolvedEXE.IsEmpty()) {
+			sEXE = sResolvedEXE;
+		}
 		__int64 nRetVal = (__int64)::ShellExecute(hWnd, _T("open"), sEXE, sParameters, sStartupPath, SW_SHOW);
 		bSuccess = nRetVal > 32;
 	} else {
@@ -303,8 +309,22 @@ bool CUserCommand::Execute(HWND hWnd, LPCTSTR sFileName, const CRect& selectionR
 		startupInfo.cb = sizeof(STARTUPINFO);
 		PROCESS_INFORMATION processInfo{ 0 };
 
-		bool bIsCmdProcess = (_tcsnicmp(m_sCommand, _T("cmd "), 4) == 0) || (_tcsnicmp(m_sCommand, _T("cmd.exe"), 7) == 0); 
-		if (::CreateProcess(NULL, sCommandLine.GetBuffer(512), NULL, NULL, FALSE, (bIsCmdProcess || m_bNoWindow) ? CREATE_NO_WINDOW : 0, NULL,
+		// CreateProcess would search a program that is given by name only (e.g. 'cmd /c del') also in the current
+		// folder, a cmd.exe put into the folder of the images would run. The program is searched without it.
+		CString sEXE, sParameters, sStartupPath;
+		_ParseCommandline(sCommandLine, false, sEXE, sParameters, sStartupPath);
+		// A program with a folder ("C:\Program Files\...") is left to CreateProcess as before, it also handles paths with
+		// spaces that are not in quotes.
+		CString sApplication;
+		if (sEXE.FindOneOf(_T("\\/:")) < 0) {
+			sApplication = Helpers::ResolveProgramPath(sEXE);
+			if (sApplication.IsEmpty()) {
+				return false;
+			}
+		}
+
+		bool bIsCmdProcess = (_tcsnicmp(m_sCommand, _T("cmd "), 4) == 0) || (_tcsnicmp(m_sCommand, _T("cmd.exe"), 7) == 0);
+		if (::CreateProcess(sApplication.IsEmpty() ? NULL : (LPCTSTR)sApplication,sCommandLine.GetBuffer(512), NULL, NULL, FALSE, (bIsCmdProcess || m_bNoWindow) ? CREATE_NO_WINDOW : 0, NULL,
 			NULL, &startupInfo, &processInfo)) {
 			sCommandLine.ReleaseBuffer();
 			if (m_bWaitForProcess) {

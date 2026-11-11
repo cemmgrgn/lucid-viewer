@@ -17,15 +17,23 @@ on:
 jobs:
   winget:
     runs-on: windows-2025
+    permissions: {}
     env:
       WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+      # the tag comes in as environment variable, it is not written into the script
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      # a fixed version of wingetcreate, checked with its SHA-256 (the .txt file of that release)
+      WINGETCREATE_URL: https://github.com/microsoft/winget-create/releases/download/v1.12.13.0/wingetcreate.exe
+      WINGETCREATE_SHA256: 24042BD37915805615E6CF969AC57C6439124C3FE85823327F5F3FB24BD9FFEA
     steps:
       - name: Submit to winget
         if: env.WINGET_TOKEN != ''
         shell: pwsh
         run: |
-          $tag = '${{ github.event.release.tag_name || inputs.tag }}'
+          $tag = $env:RELEASE_TAG
+          if ($tag -notmatch '^v\d+\.\d+\.\d+$') { throw "Not a version tag: $tag" }
           $version = $tag.TrimStart('v')
           $base = "https://github.com/${{ github.repository }}/releases/download/$tag/LucidViewer-$version-Setup"
-          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          Invoke-WebRequest $env:WINGETCREATE_URL -OutFile wingetcreate.exe
+          if ((Get-FileHash wingetcreate.exe -Algorithm SHA256).Hash -ne $env:WINGETCREATE_SHA256) { throw "wingetcreate.exe has an unexpected checksum" }
           .\wingetcreate.exe update CemGirgin.LucidViewer --version $version --urls "$base-x64.exe|x64|user" "$base-x64.exe|x64|machine" "$base-arm64.exe|arm64|user" "$base-arm64.exe|arm64|machine" --token $env:WINGET_TOKEN --submit

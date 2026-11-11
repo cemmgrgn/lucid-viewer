@@ -102,33 +102,38 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, COLORREF backgroundCol
 	// check memory footprint
 	int targetChannels = (bits == 32) ? 4 : 3;
 	int targetStride = Helpers::DoPadding(width * targetChannels, 4);
-	uint32 numberOfBytesRequired = targetStride * height;
+	// 64 bit: targetStride * height wraps around in 32 bit (32768 x 32768 with 32 bpp gives 0), the size of the
+	// buffer would not match the loops below. The pixel counters below are int, the buffer must stay below 2 GB.
+	unsigned long long numberOfBytesRequired = (unsigned long long)targetStride * height;
 
-	if ((double)width * height > MAX_IMAGE_PIXELS)
+	if ((double)width * height > MAX_IMAGE_PIXELS || numberOfBytesRequired > INT_MAX)
 	{
 		bOutOfMemory = true;
 		fclose(pFile);
 		return NULL;
 	}
-	
+
 	// Allocate memory which will hold our image data
-	byte* pImageData = new(std::nothrow) byte[numberOfBytesRequired];
+	byte* pImageData = new(std::nothrow) byte[(size_t)numberOfBytesRequired];
 	if (pImageData == NULL)
 	{
 		bOutOfMemory = true;
 		fclose(pFile);
 		return NULL;
 	}
+	// a file that is shorter than its header says leaves the rest black, not with old memory contents
+	memset(pImageData, 0, (size_t)numberOfBytesRequired);
 
 	// Now we move the file pointer to the pixel data
 	if (fseek(pFile, length, SEEK_CUR) != 0)
 	{
+		delete[] pImageData;
 		fclose(pFile);
 		return NULL;
 	}
 
 	// read the color map
-	byte palette[768];
+	byte palette[768] = { 0 };
 	if (isIndexed)
 	{  
 		fread(&palette, 768, 1, pFile);
