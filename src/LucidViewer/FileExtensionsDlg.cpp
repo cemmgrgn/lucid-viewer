@@ -65,6 +65,8 @@ LRESULT CFileExtensionsDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARA
 
 	FillFileExtensionsList();
 
+	HelpersGUI::FitDialogToTexts(m_hWnd);
+
 	return TRUE;
 }
 

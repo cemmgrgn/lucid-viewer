@@ -20,6 +20,16 @@ Press <kbd>Alt</kbd>+<kbd>Enter</kbd> or choose **File > Metadata** to open the 
 - edit the metadata
 - remove the GPS location
 
+### Which fields are shown
+
+The Metadata tab shows the common fields (title, tags, camera, exposure, lens, size, location and so on) with names of
+Lucid Viewer, translated like the rest of the program. The other fields Windows reads from the file are mostly technical
+values (for example `System.Photo.FNumberDenominator` or the maker note), they are hidden and the tab says how many.
+
+**Choose fields...** below the metadata lists all fields of the current photo: check the ones to show, uncheck the ones to
+hide. *Show all fields of every file* shows everything, *Only common fields* goes back to the default. The choice is stored
+in the setting `MetadataFields` and applies to every photo. **Copy all metadata** always copies all fields.
+
 ### Title and Subject
 
 For JPEG files, Windows stores the **Title** and **Subject** in the same field. If you change one, the other one changes too.

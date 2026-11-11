@@ -10,7 +10,9 @@ namespace Metadata {
 
 	struct CEntry {
 		PROPERTYKEY Key;
-		CString Name;      // display name, translated by Windows
+		CString Name;      // display name: own translated name of the common fields, else the name given by Windows
+		CString Canonical; // name in the property system, e.g. System.Photo.FNumber
+		bool Technical;    // not one of the common fields, hidden unless the user chooses to show it
 		CString Value;     // formatted for display, empty if the file has no value
 		CString EditValue; // text shown in the edit window
 		EGroup Group;
@@ -51,6 +53,12 @@ namespace Metadata {
 	// Whole file as bytes (backup for undo) and writing it back, keeps the creation time and attributes
 	bool ReadFileData(LPCTSTR sFileName, std::vector<char>& data);
 	bool WriteFileData(LPCTSTR sFileName, const std::vector<char>& data);
+
+	// True if the entry is shown in the metadata view: the common fields, changed by the setting MetadataFields
+	bool IsShown(const CEntry& entry);
+
+	// Window to choose the shown fields from the entries of the current file, returns true if the choice was changed
+	bool ChooseFields(HWND hParent, const std::vector<CEntry>& entries);
 
 	// All entries with a value as text, one per line (for the clipboard)
 	CString ToText(const std::vector<CEntry>& entries);

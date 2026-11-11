@@ -2,6 +2,7 @@
 #include "StdAfx.h"
 #include "CropSizeDlg.h"
 #include "NLS.h"
+#include "HelpersGUI.h"
 #include "SettingsProvider.h"
 #include "Helpers.h"
 
@@ -60,6 +61,8 @@ LRESULT CCropSizeDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lP
 	CString strHeight;
 	strHeight.Format(_T("%d"), sm_nHeight);
 	m_edtHeight.SetWindowText(strHeight);
+
+	HelpersGUI::FitDialogToTexts(m_hWnd);
 
 	return TRUE;
 }

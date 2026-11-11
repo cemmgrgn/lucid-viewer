@@ -1,4 +1,4 @@
-//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
+﻿//! This file must be encoded with UTF-8 (e.g. with Windows Notepad)
 //! LICENSE: This localization file is part of Lucid Viewer <https://github.com/cemmgrgn/lucid-viewer> and distributed under the same license.  See <https://github.com/cemmgrgn/lucid-viewer/blob/main/LICENSE.txt> for more info.
 
 //! Standard  Filename Convention: 'strings_%languagecode%.txt' where %languagecode% is the ISO 639-1 language code e.g. 'en' for English (See <https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes>)
@@ -1018,3 +1018,302 @@ Searching... %d images checked, %d found (Esc cancels)	Aranıyor... %d görünt�
 Search cancelled	Arama iptal edildi
 No photo found	Fotoğraf bulunamadı
 %d photos found	%d fotoğraf bulundu
+Title	Başlık
+Subject	Konu
+Rating	Puan
+Tags	Etiketler
+Comments	Açıklamalar
+Authors	Yazarlar
+Copyright	Telif hakkı
+Categories	Kategoriler
+Company	Şirket
+Program name	Program adı
+Software	Yazılım
+Event	Etkinlik
+People	Kişiler
+Camera maker	Kamera markası
+Camera model	Kamera modeli
+Camera serial number	Kamera seri numarası
+Lens maker	Lens markası
+Lens model	Lens modeli
+F-number	F-sayısı
+Exposure time	Pozlama süresi
+ISO speed	ISO hızı
+Focal length	Odak uzaklığı
+35 mm focal length	35 mm odak uzaklığı
+Exposure compensation	Pozlama telafisi
+Exposure program	Pozlama programı
+Metering mode	Ölçüm modu
+Flash	Flaş
+White balance	Beyaz dengesi
+Light source	Işık kaynağı
+Maximum aperture	En büyük diyafram
+Subject distance	Özne mesafesi
+Digital zoom	Dijital yakınlaştırma
+Sharpness	Keskinlik
+Orientation	Yönlendirme
+Dimensions	Boyutlar
+Horizontal resolution	Yatay çözünürlük
+Vertical resolution	Dikey çözünürlük
+Bit depth	Bit derinliği
+Color space	Renk uzayı
+Compression	Sıkıştırma
+Latitude	Enlem
+Longitude	Boylam
+Altitude	Yükseklik
+Choose fields...	Alanları seç...
+Choose which fields are shown, also the technical ones	Teknik olanlar dahil hangi alanların gösterileceğini seçin
+Choose metadata fields...	Meta veri alanlarını seç...
+Choose metadata fields	Meta veri alanlarını seçin
+Checked fields are shown on the Metadata tab. Normally only the common fields are shown, the others are mostly technical values.	İşaretli alanlar Meta veri sekmesinde gösterilir. Normalde yalnızca yaygın alanlar gösterilir, diğerleri çoğunlukla teknik değerlerdir.
+Show all fields of every file	Her dosyanın tüm alanlarını göster
+Field	Alan
+Value	Değer
+Name in Windows	Windows'taki adı
+Only common fields	Yalnızca yaygın alanlar
+%d technical fields are hidden.	%d teknik alan gizli.
+Store To EXE Path	EXE yoluna kaydet
+Only set this to true if writing to the EXE directory makes sense, e.g. on an installation on an USB memory stick. Never set it to true when the EXE is located in the 'Program Files' folder, with Windows versions newer than Windows XP this would not work!	Bunu yalnızca EXE klasörüne yazmanın anlamlı olduğu durumlarda (örneğin USB bellekteki bir kurulumda) true yapın. EXE 'Program Files' klasöründeyken asla true yapmayın; Windows XP'den yeni Windows sürümlerinde bu çalışmaz!
+Single Instance	Tek örnek
+If set to true, only one single instance of Lucid Viewer runs at any time, if false multiple instances are allowed Set to true to open all images in the same Lucid Viewer window.	true ise Lucid Viewer'ın yalnızca tek bir örneği çalışır, false ise birden çok örneğe izin verilir. Tüm görüntüleri aynı Lucid Viewer penceresinde açmak için true yapın.
+Skip File Open Dialog On Startup	Açılışta Dosya Aç penceresini atla
+Set to true to skip the 'File Open' dialog when starting Lucid Viewer without providing a file name as parameter	Lucid Viewer dosya adı parametresi verilmeden başlatıldığında 'Dosya Aç' penceresini atlamak için true yapın.
+Files Processed By WIC	WIC ile işlenen dosyalar
+File endings of files to be decoded by WIC (Windows Imaging Component) If the Microsoft Camera Codec pack is installed, full size camera RAW files can be read with WIC Add the file endings of the raw files to view here, e.g. FilesProcessedByWIC=*.wdp;*.hdp;*.jxr;*.nef	WIC (Windows Imaging Component) ile çözülecek dosyaların uzantıları. Microsoft Camera Codec Pack kuruluysa tam boyutlu kamera RAW dosyaları WIC ile okunabilir. Görüntülenecek RAW dosyalarının uzantılarını buraya ekleyin, örn. FilesProcessedByWIC=*.wdp;*.hdp;*.jxr;*.nef
+File Endings RAW	RAW dosya uzantıları
+File endings of camera RAW files to be searched for embedded JPEG thumb images to display Reading just these embedded JPEGs is much faster than decoding the RAW using WIC	Gömülü JPEG küçük resimleri aranıp gösterilecek kamera RAW dosyalarının uzantıları. Yalnızca bu gömülü JPEG'leri okumak, RAW dosyayı WIC ile çözmekten çok daha hızlıdır.
+Display Full Size RAW	Tam boyutlu RAW göster
+Set behavior for opening RAW files listed in FileEndingsRAW 0: open embedded thumbnail 1: open full size 2: open thumbnail, fallback to full size 3: open full size, fallback to thumbnail	FileEndingsRAW içinde listelenen RAW dosyalarının nasıl açılacağını belirler. 0: gömülü küçük resmi aç 1: tam boyutlu aç 2: küçük resmi aç, yoksa tam boyutlu aç 3: tam boyutlu aç, olmazsa küçük resmi aç
+open embedded thumbnail	gömülü küçük resmi aç
+open full size	tam boyutlu aç
+open thumbnail, fallback to full size	küçük resmi aç, yoksa tam boyutlu aç
+open full size, fallback to thumbnail	tam boyutlu aç, olmazsa küçük resmi aç
+Keep Parameters	Parametreleri koru
+Set to true to keep the zoom, pan, contrast, gamma, sharpen and rotation setting between the images	Yakınlaştırma, kaydırma, karşıtlık, gama, keskinleştirme ve döndürme ayarlarını görüntüler arasında korumak için true yapın
+Display Monitor	Görüntülenecek monitör
+Only for multi-monitor systems! Monitor to start the application on -1: Use monitor with largest resolution, primary monitor if several monitors have the same resolution 0: Use primary monitor 1...n: Use the non-primary monitor with index n	Yalnızca çok monitörlü sistemler için! Uygulamanın başlatılacağı monitör. -1: En yüksek çözünürlüklü monitörü kullan, birden çok monitörün çözünürlüğü aynıysa ana monitörü kullan 0: Ana monitörü kullan 1...n: n numaralı ana olmayan monitörü kullan
+Use monitor with largest resolution, primary monitor if several monitors have the same resolution	En yüksek çözünürlüklü monitörü kullan, birden çok monitörün çözünürlüğü aynıysa ana monitörü kullan
+Use primary monitor	Ana monitörü kullan
+CPU Type	İşlemci türü
+CPUType can be AutoDetect, Generic, MMX, SSE or AVX2 Generic should work on all CPUs, MMX needs at least MMX II (starting from PIII) Use AutoDetect to detect the best possible algorithm to use	CPUType: AutoDetect, Generic, MMX, SSE veya AVX2 olabilir. Generic tüm işlemcilerde çalışmalıdır, MMX en az MMX II gerektirir (PIII'ten itibaren). Kullanılacak en iyi algoritmayı belirlemek için AutoDetect kullanın.
+CPU Cores Used	Kullanılan işlemci çekirdeği
+Number of CPU cores used. Set to 0 for auto detection. Must be 1 to 4, or 0 for auto detect.	Kullanılacak işlemci çekirdeği sayısı. Otomatik algılama için 0 yapın. 1 ile 4 arasında olmalı ya da otomatik algılama için 0 olmalıdır.
+Ini Editor	INI düzenleyici
+Editor for INI files notepad : Use notepad.exe system : Use application registered for INI files other : Full path to application for editing INI files, %exepath% placeholder can be used	INI dosyalarını düzenleyen uygulama. notepad : notepad.exe kullan system : INI dosyalarına atanmış uygulamayı kullan other : INI dosyalarını düzenleyecek uygulamanın tam yolu, %exepath% yer tutucusu kullanılabilir
+Wallpaper Path	Duvar kağıdı yolu
+When setting a processed image as desktop wallpaper, the processed image must be saved somewhere. This INI setting sets the path to save the file. Default is %temp%, the system TEMP directory. You must have write access to the specified directory!	İşlenmiş bir görüntü masaüstü duvar kağıdı yapılırken işlenmiş görüntünün bir yere kaydedilmesi gerekir. Bu INI ayarı dosyanın kaydedileceği yolu belirler. Varsayılan %temp% yani sistemin TEMP klasörüdür. Belirtilen klasöre yazma izniniz olmalıdır!
+Allow File Deletion	Dosya silmeye izin ver
+Set to false to disallow deletion of images in Lucid Viewer. This hides the 'x' button on the navigation panel and disables the commands for deletion (IDM_MOVE_TO_RECYCLE_BIN etc.)	Lucid Viewer'da görüntü silmeyi engellemek için false yapın. Bu, gezinme panelindeki 'x' düğmesini gizler ve silme komutlarını (IDM_MOVE_TO_RECYCLE_BIN vb.) devre dışı bırakır.
+Language	Dil
+Specify language used in the user interface. Set to 'auto' to use the language of the operating system.	Arayüzde kullanılacak dil. İşletim sisteminin dilini kullanmak için 'auto' yapın.
+Background Color	Arka plan rengi
+Background color, R G B, each component must be in [0..255], e.g. "128 128 128" for a middle gray	Arka plan rengi, R G B; her bileşen [0..255] aralığında olmalıdır, örn. orta gri için "128 128 128"
+GUI Color	Arayüz rengi
+GUI colors, R G B format as used by BackgroundColor	Arayüz renkleri, BackgroundColor ile aynı R G B biçiminde
+Highlight Color	Vurgu rengi
+Selection Color	Seçim rengi
+Slider Color	Kaydırıcı rengi
+File Name Color	Dosya adı rengi
+Default GUI Font	Varsayılan arayüz yazı tipi
+GUI font, format: "font name" fontSizeInPoints [bold] 'Default' for the default GUI font of Windows Example: DefaultGUIFont="Arial" 9.0 bold	Arayüz yazı tipi, biçim: "yazı tipi adı" fontSizeInPoints [bold] Windows'un varsayılan arayüz yazı tipi için 'Default' Örnek: DefaultGUIFont="Arial" 9.0 bold
+Allow Edit Global Settings	Genel ayarları düzenlemeye izin ver
+Set to true to show the menu item that allows editing the global INI file option is found under Settings/Admin sub-menu	Genel INI dosyasını düzenlemeyi sağlayan menü öğesini göstermek için true yapın. Seçenek Ayarlar/Yönetim alt menüsündedir.
+Show Full Screen	Tam ekranda başlat
+Start in full screen or windowed mode 'true' or 'false' to always start in full screen, respectively windowed mode 'auto' to choose best mode depending on image size of first image - windowed when it is small, full screen when it is large	Tam ekran veya pencere kipinde başlat. Her zaman tam ekranda ya da pencerede başlamak için sırasıyla 'true' veya 'false'. İlk görüntünün boyutuna göre en uygun kipi seçmek için 'auto': küçükse pencerede, büyükse tam ekranda açılır
+Single Full Screen Instance	Tek tam ekran örneği
+If set to true, only one single instance of Lucid Viewer runs in full screen mode, if false multiple instances are allowed The value is ignored if SingleInstance=true	true ise Lucid Viewer'ın tam ekran kipinde yalnızca tek bir örneği çalışır, false ise birden çok örneğe izin verilir. SingleInstance=true ise bu değer yok sayılır.
+Default Window Rect	Varsayılan pencere konumu ve boyutu
+Sets the default position and size of the window in window mode. Possible values: 'auto' for 2/3 of screen size 'max' to start with maximized window 'image' to adjust the window size automatically to the image size 'sticky' to automatically restore the last used window size (when ShowFullScreen=auto only the upper,left position is restored) 'left top right bottom', space separated e.g: 100 100 900 700	Pencere kipinde pencerenin varsayılan konumunu ve boyutunu belirler. Olası değerler: 'auto' ekran boyutunun 2/3'ü 'max' büyütülmüş pencereyle başlar 'image' pencere boyutunu görüntü boyutuna göre otomatik ayarlar 'sticky' son kullanılan pencere boyutunu otomatik geri yükler (ShowFullScreen=auto ise yalnızca sol üst konum geri yüklenir) 'left top right bottom' boşlukla ayrılmış, örn: 100 100 900 700
+2/3 of screen size	ekran boyutunun 2/3'ü
+start with maximized window	büyütülmüş pencereyle başla
+adjust the window size automatically to the image size	pencere boyutunu görüntü boyutuna göre otomatik ayarla
+automatically restore the last used window size (when ShowFullScreen=auto only the upper,left position is restored)	son kullanılan pencere boyutunu otomatik geri yükle (ShowFullScreen=auto ise yalnızca sol üst konum geri yüklenir)
+Sticky Window Rect	Kalıcı pencere konumu ve boyutu
+Contains the stored window rectangle in case of DefaultWindowRect=sticky	DefaultWindowRect=sticky olduğunda saklanan pencere dikdörtgenini içerir
+Minimal Window Size	En küçük pencere boyutu
+Minimal window size in windowed mode (in pixels)	Pencere kipinde en küçük pencere boyutu (piksel olarak)
+Window Borderless On Startup	Açılışta çerçevesiz pencere
+If set to 'true', window starts in borderless mode (title bar hidden, cannot be manually resized) The window mode can be changed after startup	'true' ise pencere çerçevesiz kipte başlar (başlık çubuğu gizli, elle yeniden boyutlandırılamaz). Pencere kipi açılıştan sonra değiştirilebilir.
+Window Always On Top On Startup	Açılışta pencere her zaman üstte
+If set to 'true', window starts in always-on-top mode (window will always be visible on top of other windows) The window mode can be changed after startup	'true' ise pencere her zaman üstte kipinde başlar (pencere diğer pencerelerin üzerinde görünür kalır). Pencere kipi açılıştan sonra değiştirilebilir.
+Show Toolbar	Araç çubuğunu göster
+The toolbar (with the main menu), the status bar and the information side panel are shown next to the image, never over it. They are hidden in full screen mode and when the window title bar is hidden. They can also be switched on and off in the View menu, in the context menu and with Ctrl+T (toolbar), Ctrl+I (side panel).	Araç çubuğu (ana menüyle birlikte), durum çubuğu ve bilgi yan paneli görüntünün yanında gösterilir, hiçbir zaman üzerinde değil. Tam ekran kipinde ve pencere başlık çubuğu gizliyken gizlenirler. Ayrıca Görünüm menüsünden, sağ tık menüsünden ve Ctrl+T (araç çubuğu), Ctrl+I (yan panel) ile açılıp kapatılabilirler.
+Show Status Bar	Durum çubuğunu göster
+Show Side Panel	Yan paneli göster
+Side Panel Collapsed	Yan panel daraltılmış
+Side panel collapsed to a narrow strip with icons (toggled with its arrow button)	Yan panel simgelerden oluşan dar bir şeride daraltılmış (ok düğmesiyle değiştirilir)
+Escape Closes Window	Esc pencereyi kapatır
+If true, the Esc key closes Lucid Viewer also in window mode (as in older versions). If false, Esc ends the current tool (crop, drawing, compare) and leaves full screen mode.	true ise Esc tuşu pencere kipinde de Lucid Viewer'ı kapatır (eski sürümlerdeki gibi). false ise Esc geçerli aracı (kırpma, çizim, karşılaştırma) sonlandırır ve tam ekran kipinden çıkar.
+Show Start Screen	Başlangıç ekranını göster
+Start screen with the last opened photos and the photos pinned by the user, shown when no image is open (Alt+Home). If false, the file open dialog is shown when Lucid Viewer is started without an image.	Hiçbir görüntü açık değilken gösterilen, son açılan ve kullanıcının sabitlediği fotoğrafları içeren başlangıç ekranı (Alt+Home). false ise Lucid Viewer görüntüsüz başlatıldığında dosya açma penceresi gösterilir.
+Open Last Image	Son görüntüyü aç
+Started without an image, Lucid Viewer opens the photo viewed last (needs RememberRecentFiles=true)	Lucid Viewer görüntüsüz başlatıldığında en son görüntülenen fotoğrafı açar (RememberRecentFiles=true gerekir)
+Remember Recent Files	Son dosyaları hatırla
+Remember the recently opened photos and show them on the start screen. If false, nothing is written to StartRecent.txt and the recent row stays empty.	Son açılan fotoğrafları hatırlar ve başlangıç ekranında gösterir. false ise StartRecent.txt dosyasına hiçbir şey yazılmaz ve son kullanılanlar satırı boş kalır.
+Min Display Size	En küçük görüntüleme boyutu
+Small images are shown zoomed in so that their larger side has at least this size (pixels at 96 DPI) when the zoom mode does not enlarge images. 0 shows them in their original size.	Yakınlaştırma kipi görüntüleri büyütmüyorsa küçük görüntüler, uzun kenarları en az bu boyutta olacak şekilde yakınlaştırılarak gösterilir (96 DPI'da piksel). 0 bunları özgün boyutlarında gösterir.
+Smooth Animations	Yumuşak animasyonlar
+Smooth zooming with the mouse wheel and the zoom keys, smooth scrolling of the start screen and the thumbnail strip	Fare tekerleği ve yakınlaştırma tuşlarıyla yumuşak yakınlaştırma, başlangıç ekranında ve küçük resim şeridinde yumuşak kaydırma
+Side Panel Width	Yan panel genişliği
+Width of the information side panel in pixels (at 96 DPI), 180 to 800	Bilgi yan panelinin genişliği piksel olarak (96 DPI'da), 180 ile 800 arası
+Chrome Theme	Arayüz teması
+Colors of toolbar, status bar, side panel and menus: dark or light	Araç çubuğu, durum çubuğu, yan panel ve menülerin renkleri: dark (koyu) veya light (açık)
+Convert Custom Presets	Özel dönüştürme ön ayarları
+Additional conversions for the 'Convert to' menus, separated by semicolons. A conversion is 'format' or 'operation:format' with the formats jpg, png, webp, webpll (lossless), bmp, tiff, gif, ico, pdf and same (format of the source file) and the operations scaleN (N percent), fitN (long edge at most N pixels), rotl, rotr, rot180 and nometa (no EXIF/GPS). Example: ConvertCustomPresets=fit2560:webp;scale30:jpg Run LucidViewer.exe /registerconvertmenu (or Tools menu) again after changing this to update the Explorer menu.	'Dönüştür' menüleri için noktalı virgülle ayrılmış ek dönüştürmeler. Bir dönüştürme 'format' veya 'işlem:format' biçimindedir. Biçimler: jpg, png, webp, webpll (kayıpsız), bmp, tiff, gif, ico, pdf ve same (kaynak dosyanın biçimi). İşlemler: scaleN (yüzde N), fitN (uzun kenar en çok N piksel), rotl, rotr, rot180 ve nometa (EXIF/GPS yok). Örnek: ConvertCustomPresets=fit2560:webp;scale30:jpg Bunu değiştirdikten sonra Explorer menüsünü güncellemek için LucidViewer.exe /registerconvertmenu komutunu (veya Araçlar menüsünü) yeniden çalıştırın.
+Convert Output Folder	Dönüştürme çıktı klasörü
+Folder for converted files. Empty: next to the source file. A relative name such as 'converted' is a sub folder of the source folder (created when needed), an absolute path is used for all files.	Dönüştürülen dosyaların klasörü. Boş: kaynak dosyanın yanı. 'converted' gibi göreli bir ad kaynak klasörün alt klasörüdür (gerektiğinde oluşturulur), mutlak yol tüm dosyalar için kullanılır.
+Screenshot Folder	Ekran görüntüsü klasörü
+Folder of saved screenshots. Empty: Pictures\Screenshots	Kaydedilen ekran görüntülerinin klasörü. Boş: Pictures\Screenshots
+Screenshot Hotkey	Ekran görüntüsü kısayol tuşu
+Global shortcuts of the screenshot tool in the notification area, e.g. PrintScreen, Shift+PrintScreen, Ctrl+Alt+S, F12. Empty switches a shortcut off. Windows 11 gives the Print Screen key to the Snipping Tool unless this is switched off in Settings > Accessibility > Keyboard.	Bildirim alanındaki ekran görüntüsü aracının genel kısayolları, örn. PrintScreen, Shift+PrintScreen, Ctrl+Alt+S, F12. Boş bırakmak kısayolu kapatır. Ayarlar > Erişilebilirlik > Klavye bölümünden kapatılmadıkça Windows 11 Print Screen tuşunu Ekran Alıntısı Aracı'na verir.
+Screenshot Text Hotkey	Ekran görüntüsü metin kısayol tuşu
+Screenshot History	Ekran görüntüsü geçmişi
+Screenshot history: if true, every screenshot is kept in the screenshot folder (also the ones only copied to the clipboard) and the start screen of the viewer shows them in a row.	Ekran görüntüsü geçmişi: true ise her ekran görüntüsü ekran görüntüsü klasöründe saklanır (yalnızca panoya kopyalananlar da) ve görüntüleyicinin başlangıç ekranı bunları bir satırda gösterir.
+Ocr Language	OCR dili
+Language of the text recognition (OCR), e.g. tr or en-US. The language must be installed in Windows. Empty: the language of a non English keyboard layout, else the Windows display language.	Metin tanıma (OCR) dili, örn. tr veya en-US. Dil Windows'ta yüklü olmalıdır. Boş: İngilizce olmayan bir klavye düzeninin dili, yoksa Windows görüntüleme dili.
+Show Bottom Panel	Alt paneli göster
+Set to true to show the bottom panel when moving the mouse to the bottom of the screen/window. The bottom panel provides basic image processing functionality	Fare ekranın/pencerenin altına götürüldüğünde alt paneli göstermek için true yapın. Alt panel temel görüntü işleme işlevlerini sunar
+Show Nav Panel	Gezinme panelini göster
+Set to false if the navigation panel shall not be blended to the image	Gezinme paneli görüntünün üzerine karıştırılmayacaksa false yapın
+Show Zoom Navigator	Yakınlaştırma gezginini göster
+Set to false to disable the thumbnail image blended in during zoom and pan	Yakınlaştırma ve kaydırma sırasında görüntünün üzerine karıştırılan küçük resmi devre dışı bırakmak için false yapın
+Blend Factor Nav Panel	Gezinme paneli karışım oranı
+Blending factor of the navigation panel when the mouse is not on that panel. Set to 0.0 to only show the panel when the mouse is over the panel	Fare gezinme panelinin üzerinde değilken panelin karışım oranı. Panelin yalnızca fare üzerindeyken görünmesi için 0.0 yapın
+Scale Factor Nav Panel	Gezinme paneli ölçek oranı
+Scaling factor for the navigation panel. Increase if the buttons on the panel are too small, e.g. on a touchscreen.	Gezinme paneli için ölçek oranı. Paneldeki düğmeler çok küçükse artırın, örn. dokunmatik ekranda.
+File Display Order	Dosya görüntüleme sırası
+Sorting order of the files when displaying the image files in a folder Can be LastModDate, CreationDate, FileName, FileSize, Random, Rating (star rating) or DateTaken (EXIF date the photo was taken)	Bir klasördeki görüntü dosyaları gösterilirken kullanılan sıralama. LastModDate, CreationDate, FileName, FileSize, Random, Rating (yıldız puanı) veya DateTaken (fotoğrafın çekildiği EXIF tarihi) olabilir
+File Sort Ascending	Dosyaları artan sırala
+Sort files ascending (increasing, e.g. A->Z, 0->9) or descending (decreasing, e.g. Z->A, 9->0)	Dosyaları artan (örn. A->Z, 0->9) veya azalan (örn. Z->A, 9->0) sırala
+Folder Navigation	Klasör gezinmesi
+Navigation within or between folders LoopFolder : Loop within the source folder and never leave this folder LoopSameFolderLevel: Loop to next folder on the same hierarchy level (sibling folders) LoopSubFolders: Loop into subfolders of the source folder	Klasör içinde veya klasörler arasında gezinme. LoopFolder : Kaynak klasörde döngü yap ve bu klasörden hiç çıkma LoopSameFolderLevel: Aynı hiyerarşi düzeyindeki sonraki klasöre (kardeş klasörler) geç LoopSubFolders: Kaynak klasörün alt klasörlerine gir
+Wrap Around Folder	Klasörde başa dön
+If true the files in a folder are shown with wrap around, thus going from last to first image and vice versa If false navigation stops on the last and first image	true ise klasördeki dosyalar başa dönerek gösterilir, yani sonuncudan ilkine ve tersine geçilir. false ise gezinme son ve ilk görüntüde durur
+Flash Window Alert	Pencere yanıp sönerek uyar
+When WrapAroundFolder is false, alert when trying to go to the next file while at the end of the file list, or previous file while at the beginning of file list If true, window flashes briefly when there are no more new images to show If false, there is no visual feedback	WrapAroundFolder false iken, dosya listesinin sonunda sonraki dosyaya ya da başında önceki dosyaya gitmeye çalışıldığında uyarır. true ise gösterilecek yeni görüntü kalmadığında pencere kısa süre yanıp söner. false ise görsel geri bildirim yoktur
+Beep Sound Alert	Bip sesiyle uyar
+When WrapAroundFolder is false, alert when trying to go to the next file while at the end of the file list, or previous file while at the beginning of file list If true, system emits a short beep using the default system sound when there are no more new images to show If false, there is no audio feedback	WrapAroundFolder false iken, dosya listesinin sonunda sonraki dosyaya ya da başında önceki dosyaya gitmeye çalışıldığında uyarır. true ise gösterilecek yeni görüntü kalmadığında sistem varsayılan sistem sesiyle kısa bir bip sesi çıkarır. false ise sesli geri bildirim yoktur
+Navigate With Mouse Wheel	Fare tekerleğiyle gezin
+If true, the mouse wheel can be used to navigate forward and backward and zoom must be done with Ctrl-MouseWheel If false, zoom is done with the mousewheel (no Ctrl required)	true ise fare tekerleği ileri ve geri gezinmek için kullanılabilir ve yakınlaştırma Ctrl+fare tekerleğiyle yapılmalıdır. false ise yakınlaştırma fare tekerleğiyle yapılır (Ctrl gerekmez)
+Exchange X Buttons	Ek fare düğmelerini değiştir
+If true, the extended mouse buttons (Forward and backward) are reversed compared to Internet explorer This is useful to put the 'go to next image' functionality to the button that is better reachable e.g. Hitting Backwards button goes Forward in Lucid Viewer	true ise genişletilmiş fare düğmeleri (ileri ve geri) Internet Explorer'a göre ters çevrilir. Bu, 'sonraki görüntüye git' işlevini daha kolay ulaşılan düğmeye atamak için yararlıdır, örn. Geri düğmesine basmak Lucid Viewer'da ileri gider
+Default Selection Mode	Varsayılan seçim kipi
+By default, Left-click and drag enables selection mode whenever pan is not available. CTRL+Left-click and drag enables selection mode when zoomed in. Set this to false to only use selection mode when CTRL is pressed	Varsayılan olarak, kaydırma mümkün olmadığında sol tıklayıp sürüklemek seçim kipini açar. Yakınlaştırılmışken CTRL+sol tıklayıp sürüklemek seçim kipini açar. Seçim kipinin yalnızca CTRL basılıyken kullanılması için bunu false yapın
+Mouse Wheel Zoom Speed	Fare tekerleği yakınlaştırma hızı
+Zoom speed with mouse wheel, 1.0 means default speed, smaller values slower zoom, larger faster zoom	Fare tekerleğiyle yakınlaştırma hızı; 1.0 varsayılan hız demektir, küçük değerler daha yavaş, büyük değerler daha hızlı yakınlaştırır
+Reload When Displayed Image Changed	Görüntü değişince yeniden yükle
+If true, reloads the currently displayed image automatically when it is changed by an external program on disk. Also reloads the image list when a file in the current directory is added or deleted. Set to false to turn off this behavior.	true ise geçerli görüntü, diskte harici bir program tarafından değiştirildiğinde otomatik olarak yeniden yüklenir. Ayrıca geçerli klasöre dosya eklendiğinde veya silindiğinde görüntü listesini yeniden yükler. Bu davranışı kapatmak için false yapın.
+High Quality Resampling	Yüksek kaliteli yeniden örnekleme
+Set to true to use high quality sampling as default.	Varsayılan olarak yüksek kaliteli örnekleme kullanmak için true yapın.
+Down Sampling Filter	Küçültme süzgeci
+DownSamplingFilter can be BestQuality, NoAliasing or Narrow The BestQuality filter produces a very small amount of aliasing. The NoAliasing filter is a Lanczos filter that has almost no aliasing when sharpen is set to zero The Narrow filter produces quite a lot of aliasing but will sharpen much and also sharpens 100% images	DownSamplingFilter: BestQuality, NoAliasing veya Narrow olabilir. BestQuality süzgeci çok az tırtıklanma üretir. NoAliasing süzgeci, keskinleştirme sıfırken neredeyse hiç tırtıklanma olmayan bir Lanczos süzgecidir. Narrow süzgeci epeyce tırtıklanma üretir ama çok keskinleştirir ve %100'lük görüntüleri de keskinleştirir
+Auto Rotate EXIF	EXIF'e göre otomatik döndür
+If true, JPEG images are auto rotated according to EXIF image orientation tag if present.	true ise JPEG görüntüler, varsa EXIF görüntü yönlendirme etiketine göre otomatik döndürülür.
+Minimal Display Time	En kısa görüntüleme süresi
+Minimal display time of an image when manually navigating (with keyboard or mouse) (in milliseconds [0..1000 ms])	Elle gezinirken (klavye veya fareyle) bir görüntünün en kısa görüntülenme süresi (milisaniye cinsinden [0..1000 ms])
+Force GDI Plus	GDI+ kullanmaya zorla
+Force using GDI+ for reading JPEG. Only use when you have problems reading your JPEGs with the default Turbo JPEG library. Note that using GDI+ is slower than the Turbo JPEG library! (Setting to true automatically disables Animated PNG support)	JPEG okumak için GDI+ kullanmaya zorlar. Yalnızca JPEG dosyalarınızı varsayılan Turbo JPEG kitaplığıyla okurken sorun yaşıyorsanız kullanın. GDI+ kullanmanın Turbo JPEG kitaplığından yavaş olduğunu unutmayın! (true yapmak Animasyonlu PNG desteğini otomatik olarak devre dışı bırakır)
+Use Embedded Color Profiles	Gömülü renk profillerini kullan
+If true, embedded ICC color profiles are used for JPEG, PNG and TIFF. This forces using GDI+ and therefore results in much slower loading of images! Only set to true if you really need this. (ICC color profiles are not supported for Animated PNG)	true ise JPEG, PNG ve TIFF için gömülü ICC renk profilleri kullanılır. Bu, GDI+ kullanmaya zorlar ve bu nedenle görüntülerin çok daha yavaş yüklenmesine yol açar! Yalnızca gerçekten gerekiyorsa true yapın. (ICC renk profilleri Animasyonlu PNG için desteklenmez)
+Transparency Color	Saydamlık rengi
+Color used for transparent parts of images, R G B format as used by BackgroundColor	Görüntülerin saydam bölümleri için kullanılan renk, BackgroundColor ile aynı R G B biçiminde
+Auto Zoom Mode	Otomatik yakınlaştırma kipi
+Auto zoom mode (for window mode only if AutoZoomModeFullscreen is present) FitNoZoom : Fit images to screen, never enlarge image FillNoZoom : Fill screen with no black borders, crop if necessary but not too much, never enlarge image Fit : Fit images to screen Fill : Fill screen with no black borders, crop if necessary	Otomatik yakınlaştırma kipi (AutoZoomModeFullscreen varsa yalnızca pencere kipi için) FitNoZoom : Görüntüleri ekrana sığdır, görüntüyü asla büyütme FillNoZoom : Ekranı siyah kenar bırakmadan doldur, gerekirse çok fazla olmayacak şekilde kırp, görüntüyü asla büyütme Fit : Görüntüleri ekrana sığdır Fill : Ekranı siyah kenar bırakmadan doldur, gerekirse kırp
+Auto Zoom Mode Fullscreen	Tam ekranda otomatik yakınlaştırma kipi
+Auto zoom mode for fullscreen mode. If empty, same value as 'AutoZoomMode' is used.	Tam ekran kipi için otomatik yakınlaştırma kipi. Boşsa 'AutoZoomMode' ile aynı değer kullanılır.
+Zoom Pause Percent	Yakınlaştırma duraklama yüzdesi
+For convenience, when zooming continuously, it will pause at the set percent (default 100%) briefly before continuing in either direction This ensures that you can always zoom in or zoom out to the set percent reliably regardless of image size or zoom steps default: 100 set to 0 to disable the pause	Kolaylık olması için sürekli yakınlaştırırken, belirlenen yüzdede (varsayılan %100) kısa süre duraklar ve sonra her iki yönde devam eder. Bu, görüntü boyutu veya yakınlaştırma adımlarından bağımsız olarak belirlenen yüzdeye her zaman güvenilir biçimde yakınlaşabilmenizi veya uzaklaşabilmenizi sağlar. Varsayılan: 100 Duraklamayı kapatmak için 0 yapın
+Contrast correction to apply to all images. Must be in -0.5 .. 0.5 Values > 0 increase contrast, values < 0 decrease contrast	Tüm görüntülere uygulanacak karşıtlık düzeltmesi. -0.5 .. 0.5 aralığında olmalıdır. 0'dan büyük değerler karşıtlıkı artırır, 0'dan küçük değerler azaltır
+Gamma	Gama
+Gamma correction to apply to all images. Must be between 0.5 and 2 Use gamma<1 to increase brightness and gamma>1 to decrease brightness	Tüm görüntülere uygulanacak gama düzeltmesi. 0.5 ile 2 arasında olmalıdır. Parlaklığı artırmak için gama<1, azaltmak için gama>1 kullanın
+Color saturation to apply to all images. Must be in 0.0 .. 2.0 0.0 means gray scale image, 1.0 no additional color saturation, 2.0 maximal saturation	Tüm görüntülere uygulanacak renk doygunluğu. 0.0 .. 2.0 aralığında olmalıdır. 0.0 gri tonlamalı görüntü, 1.0 ek doygunluk yok, 2.0 en yüksek doygunluk demektir
+Sharpening to apply for downsampled images. Must be in 0 .. 0.5 Note that for 100 % zoom, the BestQuality filter will not apply any sharpening, only the other filters do	Küçültülen görüntülere uygulanacak keskinleştirme. 0 .. 0.5 aralığında olmalıdır. %100 yakınlaştırmada BestQuality süzgecinin hiç keskinleştirme uygulamayacağını, yalnızca diğer süzgeçlerin uyguladığını unutmayın
+Unsharp Mask Parameters	Keskinleştirme maskesi parametreleri
+Default parameters for unsharp masking: Radius Amount Threshold Note: unsharp masking cannot be applied automatically to every image This setting only provides the default parameters when entering the unsharp mask mode	Keskinleştirme maskesi için varsayılan parametreler: Yarıçap Miktar Eşik Not: Keskinleştirme maskesi her görüntüye otomatik uygulanamaz. Bu ayar yalnızca keskinleştirme maskesi kipine girildiğinde varsayılan parametreleri sağlar
+RT Show Grid Lines	Döndürme: ızgara çizgilerini göster
+Default parameters for controlling rotation and perspective correction	Döndürme ve perspektif düzeltmesini denetleyen varsayılan parametreler
+RT Auto Crop	Döndürme: otomatik kırp
+RT Preserve Aspect Ratio	Döndürme: en-boy oranını koru
+Cyan Red	Camgöbeği-Kırmızı
+Default color balance. Negative values for C,M,Y correction, positive for R,G,B. Values must be in -1.0 .. +1.0	Varsayılan renk dengesi. C,M,Y düzeltmesi için negatif, R,G,B için pozitif değerler. Değerler -1.0 .. +1.0 aralığında olmalıdır
+Magenta Green	Eflatun-Yeşil
+Yellow Blue	Sarı-Mavi
+Default Fixed Crop Size	Varsayılan sabit kırpma boyutu
+The initial crop window size when using 'Fixed Size' crop mode	'Sabit boyut' kırpma kipinde kullanılan ilk kırpma penceresi boyutu
+User Crop Aspect Ratio	Kullanıcı kırpma en-boy oranı
+User defined crop aspect ratio (x y), meaning (x : y) Shows up as last item in crop popup menu	Kullanıcı tanımlı kırpma en-boy oranı (x y), yani (x : y). Kırpma açılır menüsünde son öğe olarak görünür
+Show EXIF Date In Title	Başlıkta EXIF tarihini göster
+Show the acquisition date from EXIF data in the window title	Çekim tarihini EXIF verisinden pencere başlığında göster
+Show File Path In Title	Başlıkta dosya yolunu göster
+Show full file path and name in the window title (shows only file name by default)	Pencere başlığında tam dosya yolunu ve adını göster (varsayılan olarak yalnızca dosya adı gösterilir)
+Show File Name	Dosya adını göster
+Set to true to initially display the file name of each image in the upper, left corner of the screen	Her görüntünün dosya adını başlangıçta ekranın sol üst köşesinde göstermek için true yapın
+File Name Format	Dosya adı biçimi
+The elements to show when showing the file name. Possible elements: %filename% : File name %filepath% : File name and path %index% : Index of image in folder, e.g. [1/12] %zoom% : Current zoom factor %size% : Size of image in pixels (w x h) %filesize% : Size of image on disk	Dosya adı gösterilirken kullanılacak öğeler. Olası öğeler: %filename% : Dosya adı %filepath% : Dosya adı ve yolu %index% : Görüntünün klasördeki sırası, örn. [1/12] %zoom% : Geçerli yakınlaştırma oranı %size% : Görüntü boyutu piksel olarak (g x y) %filesize% : Diskteki görüntü boyutu
+File Name Font	Dosya adı yazı tipi
+Font for the file name display, see DefaultGUIFont key for the format	Dosya adı gösterimi için yazı tipi, biçim için DefaultGUIFont anahtarına bakın
+Show File Info	Dosya bilgisini göster
+Set to true to initially display the file info box (EXIF info if available)	Dosya bilgi kutusunu (varsa EXIF bilgisi) başlangıçta göstermek için true yapın
+Show JPEG Comments	JPEG açıklamalarını göster
+Set to true to show JPEG comments (EXIF user comment, EXIF image description or JPEG comment) in the file info box	JPEG açıklamalarını (EXIF kullanıcı açıklaması, EXIF görüntü tanımı veya JPEG açıklaması) dosya bilgi kutusunda göstermek için true yapın
+Show Histogram	Histogramı göster
+Set to true to show the histogram on the file info panel by default	Dosya bilgi panelinde histogramı varsayılan olarak göstermek için true yapın
+GPS Map Provider	GPS harita sağlayıcısı
+URL for the map provider to display GPS coordinates on a map (only shown when EXIF has GPS coordinates) OpenStreetmap: www.openstreetmap.org/?mlat={lat}&mlon={lng}&zoom=15 Google maps: https://www.google.com/maps/search/?api=1&query={lat},{lng}	GPS koordinatlarını haritada göstermek için harita sağlayıcısının URL'si (yalnızca EXIF'te GPS koordinatları varsa gösterilir) OpenStreetmap: www.openstreetmap.org/?mlat={lat}&mlon={lng}&zoom=15 Google maps: https://www.google.com/maps/search/?api=1&query={lat},{lng}
+Metadata Fields	Meta veri alanları
+Fields of the Metadata tab that differ from the default, separated by semicolons. Normally only the common fields are shown. +name shows a field, -name hides it and +* shows all fields. The names are those of the Windows property system, e.g. +System.Photo.MakerNote;-System.Comment. The easiest way to change it is 'Choose fields...' on the Metadata tab.	Meta veri sekmesindeki varsayılandan farklı alanlar, noktalı virgülle ayrılmış. Normalde yalnızca yaygın alanlar gösterilir. +name bir alanı gösterir, -name gizler ve +* tüm alanları gösterir. Adlar Windows özellik sistemindeki adlardır, örn. +System.Photo.MakerNote;-System.Comment. Değiştirmenin en kolay yolu Meta veri sekmesindeki 'Alanları seç...' komutudur.
+Auto Contrast Correction	Otomatik karşıtlık düzeltme
+Automatic contrast correction by histogram equalization F5 enables/disables the correction on the current image.	Histogram eşitlemeyle otomatik karşıtlık düzeltme. F5 düzeltmeyi geçerli görüntüde açar/kapatır.
+ACC Exclude	ACC hariç tutma
+Using the following two keys, it is possible to explicitly exclude/include folders from the contrast correction. More specific patterns have precedence over less specific patterns and inclusion has precedence over exclusion if a folder matches both. Example: '*\pics\orig\* has precedence over *\pics\* because it is more specific Use the ; character to separate two expressions. Example: ACCExclude=%mypictures%\Digicam\edited\*;*.bmp This will exclude all files in the ..\My Pictures\Digicam\edited\ folder and all its subfolders and all bmp files from automatic contrast correction. The following two placeholders are recognized: %mypictures% : "My documents\My Pictures" folder %mydocuments% : "My documents" folder	Sonraki iki anahtar kullanılarak klasörler karşıtlık düzeltmeden açıkça hariç tutulabilir veya dahil edilebilir. Daha belirgin desenler daha genel desenlerden önceliklidir ve bir klasör ikisiyle de eşleşirse dahil etme hariç tutmadan önceliklidir. Örnek: '*\pics\orig\* daha belirgin olduğu için *\pics\* desenine göre önceliklidir. İki ifadeyi ayırmak için ; karakterini kullanın. Örnek: ACCExclude=%mypictures%\Digicam\edited\*;*.bmp Bu, ..\My Pictures\Digicam\edited\ klasöründeki tüm dosyaları, tüm alt klasörlerini ve tüm bmp dosyalarını otomatik karşıtlık düzeltmeden hariç tutar. Şu iki yer tutucu tanınır: %mypictures% : "My documents\My Pictures" klasörü %mydocuments% : "My documents" klasörü
+ACC Include	ACC dahil etme
+Auto Contrast Correction Amount	Otomatik karşıtlık düzeltme miktarı
+Amount of automatic contrast correction 0 means no contrast correction, 1 means full (to black and white point) contrast correction. Must be in (0 .. 1)	Otomatik karşıtlık düzeltme miktarı. 0 karşıtlık düzeltme yok, 1 tam (siyah ve beyaz noktaya kadar) karşıtlık düzeltme demektir. (0 .. 1) aralığında olmalıdır
+Amount of color correction in the color channels reg, green, blue, cyan, magenta and yellow The numbers must be between 0.0 (no correction) and 1.0 (total correction towards the gray world model) Set all values to 0 to disable color correction	Kırmızı, yeşil, mavi, camgöbeği, eflatun ve sarı renk kanallarındaki renk düzeltme miktarı. Sayılar 0.0 (düzeltme yok) ile 1.0 (gri dünya modeline doğru tam düzeltme) arasında olmalıdır. Renk düzeltmeyi kapatmak için tüm değerleri 0 yapın
+Auto Brightness Correction Amount	Otomatik parlaklık düzeltme miktarı
+Amount of automatic brightness correction 0 means no brightness correction, 1 means full correction to middle gray. Must be in (0 .. 1)	Otomatik parlaklık düzeltme miktarı. 0 parlaklık düzeltme yok, 1 orta griye kadar tam düzeltme demektir. (0 .. 1) aralığında olmalıdır
+Local Density Correction	Yerel yoğunluk düzeltme
+Automatic correction of local density (local brightness of images) Can be enabled/disabled on the image with F6	Yerel yoğunluğun (görüntülerin yerel parlaklığı) otomatik düzeltilmesi. Görüntüde F6 ile açılıp kapatılabilir
+LDC Exclude	LDC hariç tutma
+See remark about exclusion/inclusion at the ACCExclude setting. The same applies to these settings.	Hariç tutma/dahil etme hakkındaki notu ACCExclude ayarında okuyun. Aynısı bu ayarlar için de geçerlidir.
+LDC Include	LDC dahil etme
+LDC Brighten Shadows	LDC gölgeleri aydınlatma
+Amount of local density correction of shadows Can be in [0, 1]	Gölgelerin yerel yoğunluk düzeltme miktarı. [0, 1] aralığında olabilir
+LDC Brighten Shadows Steepness	LDC gölgeleri aydınlatma dikliği
+Deep shadow steepness of enhancement Can be in [0, 1], values bigger than 0.9 are not recommended	Derin gölgelerin iyileştirme dikliği. [0, 1] aralığında olabilir, 0.9'dan büyük değerler önerilmez
+LDC Darken Highlights	LDC vurguları koyulaştırma
+Amount of local density correction of highlights Can be in [0, 1]	Vurguların yerel yoğunluk düzeltme miktarı. [0, 1] aralığında olabilir
+Landscape Mode	Manzara kipi
+Set to true to turn on landscape enhancement mode automatically	Manzara iyileştirme kipini otomatik açmak için true yapın
+Landscape Mode Params	Manzara kipi parametreleri
+Parameter set used in landscape enhancement mode Space separated, use -1 to leave parameter untouched Contrast Gamma Sharpen ColorCorrection ContrastCorrection LightenShadows DarkenHighlights DeepShadows CyanRed MagentaGreen YellowBlue Saturation	Manzara iyileştirme kipinde kullanılan parametre kümesi. Boşlukla ayrılmış, bir parametreyi değiştirmeden bırakmak için -1 kullanın. Contrast Gamma Sharpen ColorCorrection ContrastCorrection LightenShadows DarkenHighlights DeepShadows CyanRed MagentaGreen YellowBlue Saturation
+Max Slide Show File List Size KB	Sunum dosya listesi en büyük boyutu (KB)
+Maximum size of slide show text files in KB	Sunum metin dosyalarının en büyük boyutu (KB)
+Slide Show Transition Effect	Sunum geçiş efekti
+Transition effect for slide shows in full screen mode - ignored when used in window mode Possible transition effects: None, Blend, SlideRL, SlideLR, SlideTB, SlideBT, RollRL, RollLR, RollTB, RollBT, ScrollRL, ScrollLR, ScrollTB, ScrollBT	Tam ekran kipindeki slayt gösterileri için geçiş efekti - pencere kipinde yok sayılır. Olası geçiş efektleri: None, Blend, SlideRL, SlideLR, SlideTB, SlideBT, RollRL, RollLR, RollTB, RollBT, ScrollRL, ScrollLR, ScrollTB, ScrollBT
+Slide Show Effect Time	Sunum efekt süresi
+Time of the slide show transition effect in milliseconds, only used in full screen mode	Sunum geçiş efektinin milisaniye cinsinden süresi, yalnızca tam ekran kipinde kullanılır
+Overwrite Original File Without Save Dialog	Kaydet penceresi olmadan özgün dosyanın üzerine yaz
+If set to true, Ctrl-S overwrites the original file on disk, applying the current processings without showing a dialog or prompting the user to confirm. CAUTION: Use at your own risk! Be aware that the original image file is overwritten and cannot be restored!	true ise Ctrl-S, pencere göstermeden veya kullanıcıdan onay istemeden geçerli düzenlemeleri uygulayarak diskteki özgün dosyanın üzerine yazar. DİKKAT: Riski size aittir! Özgün görüntü dosyasının üzerine yazıldığını ve geri getirilemeyeceğini unutmayın!
+Crop Without Prompt Lossless JPEG	Kayıpsız JPEG'i sormadan kırp
+If set to true, lossless JPEG transformations will crop the image as needed without prompting the user. This will remove 15 pixel rows/columns at the image borders in worst case. CAUTION: Use at your own risk! Be aware that the original image file is overwritten and the cropped borders cannot be restored!	true ise kayıpsız JPEG dönüşümleri, kullanıcıya sormadan görüntüyü gerektiği kadar kırpar. Bu, en kötü durumda görüntü kenarlarındaki 15 piksel satırını/sütununu siler. DİKKAT: Riski size aittir! Özgün görüntü dosyasının üzerine yazıldığını ve kırpılan kenarların geri getirilemeyeceğini unutmayın!
+Delete Confirmation	Silme onayı
+Type of confirmation required when deleting a file with the 'x' button on the navigation panel Possible values: Never, OnlyWhenNoRecycleBin, Always OnlyWhenNoRecycleBin means to only require a confirmation when there is no recycle bin available (e.g. on memory sticks) Notice: Does not apply to deleting files with the Del key. To change this edit the KeyMap.txt and assign another command to the Del key.	Gezinme panelindeki 'x' düğmesiyle dosya silerken istenen onay türü. Olası değerler: Never, OnlyWhenNoRecycleBin, Always. OnlyWhenNoRecycleBin yalnızca geri dönüşüm kutusu yokken (örn. USB belleklerde) onay istemek anlamına gelir. Not: Del tuşuyla dosya silmek için geçerli değildir. Bunu değiştirmek için KeyMap.txt dosyasını düzenleyip Del tuşuna başka bir komut atayın.
+Default Save Format	Varsayılan kaydetme biçimi
+Default format for saving files. Supported formats: jpg, bmp, png, tif, webp	Dosyaları kaydetmek için varsayılan biçim. Desteklenen biçimler: jpg, bmp, png, tif, webp
+JPEG Save Quality	JPEG kaydetme kalitesi
+Quality when saving JPEG files (in 0..100 where 100 is the highest quality)	JPEG dosyaları kaydederken kalite (0..100 aralığında, 100 en yüksek kalitedir)
+WEBP Save Quality	WEBP kaydetme kalitesi
+Quality when saving WEBP files with lossy compression (in 0..100 where 100 is the highest quality)	WEBP dosyalarını kayıplı sıkıştırmayla kaydederken kalite (0..100 aralığında, 100 en yüksek kalitedir)
+Create Param DB Entry On Save	Kaydederken parametre veri tabanı kaydı oluştur
+Set to true to create a parameter DB entry when saving an image with Lucid Viewer to avoid processing it again	Lucid Viewer ile bir görüntü kaydederken tekrar işlenmesini önlemek için parametre veri tabanı kaydı oluşturmak üzere true yapın
+Print Margin	Yazdırma kenar boşluğu
+Default print margin (all sides) in centimeters	Varsayılan yazdırma kenar boşluğu (tüm kenarlar) santimetre cinsinden
+Print Width	Yazdırma genişliği
+Default print width in centimeters. Use negative numbers to set the 'Fit to paper' printing mode.	Varsayılan yazdırma genişliği santimetre cinsinden. 'Kağıda sığdır' yazdırma kipini ayarlamak için negatif sayı kullanın.
+Units	Birimler
+Units (centimeters, inches) used, one of 'auto', 'metric' or 'english'. 'auto' uses the system setting 'metric' uses the metric system, e.g. centimeters for length 'english' uses the English/US system, e.g. inches for length	Kullanılan birimler (santimetre, inç): 'auto', 'metric' veya 'english' değerlerinden biri. 'auto' sistem ayarını kullanır 'metric' metrik sistemi kullanır, örn. uzunluk için santimetre 'english' İngiliz/ABD sistemini kullanır, örn. uzunluk için inç
+uses the system setting	sistem ayarını kullanır
+uses the metric system, e.g. centimeters for length	metrik sistemi kullanır, örn. uzunluk için santimetre
+uses the English/US system, e.g. inches for length	İngiliz/ABD sistemini kullanır, örn. uzunluk için inç
+User Cmd 0	Kullanıcı komutu 0

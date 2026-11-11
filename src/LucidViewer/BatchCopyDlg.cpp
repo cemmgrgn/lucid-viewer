@@ -100,7 +100,6 @@ LRESULT CBatchCopyDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 
 	CString s;
 	s.Format(_T("%s '%s'"), CNLS::GetString(_T("Image files in folder")), m_fileList.CurrentDirectory());
-	m_lblFiles.SetWindowText(s);
 	m_lblTitlePlaceHolders.SetWindowText(CNLS::GetString(_T("Placeholders:")));
 	m_lblPlaceHolders1.SetWindowText(CString(_T("%x : ")) + CNLS::GetString(_T("Number (consecutively numbered)")) + _T("\n") +
 		CString(_T("%Nx : ")) + CNLS::GetString(_T("Number with N digits")) + _T("\n") +
@@ -134,6 +133,10 @@ LRESULT CBatchCopyDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 	m_lvFiles.InsertColumn(2, CNLS::GetString(_T("New name (>> : file gets copied)")), LVCFMT_LEFT, HelpersGUI::ScaleToScreen(600));
 
 	m_nNumFiles = CreateItemList();
+
+	HelpersGUI::FitDialogToTexts(m_hWnd);
+	// set after the fitting, a long path does not widen the dialog
+	m_lblFiles.SetWindowText(s);
 
 	return TRUE;
 }

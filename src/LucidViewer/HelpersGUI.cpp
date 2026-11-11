@@ -587,3 +587,107 @@ namespace HelpersGUI {
 		return bResult;
 	}
 }
+namespace HelpersGUI {
+
+	void FitDialogToTexts(HWND hDlg) {
+		HDC hDC = ::GetDC(hDlg);
+		if (hDC == NULL) return;
+		double dFactor = 1.0;
+		std::vector<HWND> children;
+		for (HWND hChild = ::GetWindow(hDlg, GW_CHILD); hChild != NULL; hChild = ::GetWindow(hChild, GW_HWNDNEXT)) {
+			children.push_back(hChild);
+			if ((::GetWindowLong(hChild, GWL_STYLE) & WS_VISIBLE) == 0) continue;
+			int nLength = ::GetWindowTextLength(hChild);
+			if (nLength <= 0) continue;
+			CString sText;
+			::GetWindowText(hChild, sText.GetBuffer(nLength + 1), nLength + 1);
+			sText.ReleaseBuffer();
+			TCHAR sClass[32] = { 0 };
+			::GetClassName(hChild, sClass, 32);
+			LONG nStyle = ::GetWindowLong(hChild, GWL_STYLE);
+			CRect rect;
+			::GetClientRect(hChild, &rect);
+			if (rect.Width() <= 0 || rect.Height() <= 0) continue;
+			HFONT hFont = (HFONT)::SendMessage(hChild, WM_GETFONT, 0, 0);
+			HGDIOBJ hOldFont = ::SelectObject(hDC, hFont != NULL ? (HGDIOBJ)hFont : ::GetStockObject(DEFAULT_GUI_FONT));
+			UINT nPrefix = 0;
+			double dNeeded = 1.0;
+			if (_tcsicmp(sClass, _T("Static")) == 0) {
+				LONG nType = nStyle & SS_TYPEMASK;
+				bool bText = nType == SS_LEFT || nType == SS_CENTER || nType == SS_RIGHT || nType == SS_SIMPLE || nType == SS_LEFTNOWORDWRAP;
+				if (bText && (nStyle & SS_ELLIPSISMASK) == 0) {
+					if ((nStyle & SS_NOPREFIX) != 0) nPrefix = DT_NOPREFIX;
+					CRect lineRect(0, 0, 0, 0);
+					::DrawText(hDC, _T("Ag"), -1, &lineRect, DT_CALCRECT | DT_SINGLELINE);
+					int nLines = max(1, rect.Height() / max(1, lineRect.Height()));
+					if (nLines == 1 && sText.Find(_T('\n')) < 0) {
+						CRect textRect(0, 0, 0, 0);
+						::DrawText(hDC, sText, -1, &textRect, DT_CALCRECT | DT_SINGLELINE | nPrefix);
+						dNeeded = (double)textRect.Width() / rect.Width();
+					} else {
+						CRect textRect(0, 0, rect.Width(), 0);
+						::DrawText(hDC, sText, -1, &textRect, DT_CALCRECT | DT_WORDBREAK | nPrefix);
+						// a wider control needs fewer lines, roughly in proportion
+						dNeeded = (double)textRect.Height() / (nLines * lineRect.Height());
+					}
+				}
+			} else if (_tcsicmp(sClass, _T("Button")) == 0) {
+				LONG nType = nStyle & BS_TYPEMASK;
+				CRect textRect(0, 0, 0, 0);
+				::DrawText(hDC, sText, -1, &textRect, DT_CALCRECT | DT_SINGLELINE);
+				int nExtra = -1;
+				if ((nStyle & BS_PUSHLIKE) != 0 || (nStyle & BS_MULTILINE) != 0) {
+					nExtra = -1;
+				} else if (nType == BS_PUSHBUTTON || nType == BS_DEFPUSHBUTTON) {
+					nExtra = ScaleToScreen(12);
+				} else if (nType == BS_CHECKBOX || nType == BS_AUTOCHECKBOX || nType == BS_RADIOBUTTON || nType == BS_AUTORADIOBUTTON ||
+					nType == BS_3STATE || nType == BS_AUTO3STATE) {
+					nExtra = ::GetSystemMetrics(SM_CXMENUCHECK) + ScaleToScreen(8);
+				} else if (nType == BS_GROUPBOX) {
+					nExtra = ScaleToScreen(16);
+				}
+				if (nExtra >= 0) dNeeded = (double)(textRect.Width() + nExtra) / rect.Width();
+			}
+			::SelectObject(hDC, hOldFont);
+			dFactor = max(dFactor, dNeeded);
+		}
+		::ReleaseDC(hDlg, hDC);
+		if (dFactor <= 1.01) return;
+
+		CRect windowRect, clientRect;
+		::GetWindowRect(hDlg, &windowRect);
+		::GetClientRect(hDlg, &clientRect);
+		// not wider than the monitor
+		HMONITOR hMonitor = ::MonitorFromWindow(hDlg, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+		::GetMonitorInfo(hMonitor, &monitorInfo);
+		int nMaxWidth = monitorInfo.rcWork.right - monitorInfo.rcWork.left - ScaleToScreen(20);
+		int nFrame = windowRect.Width() - clientRect.Width();
+		dFactor = min(dFactor * 1.02, min(2.0, (double)(nMaxWidth - nFrame) / max(1, clientRect.Width())));
+		if (dFactor <= 1.01) return;
+
+		HDWP hDefer = ::BeginDeferWindowPos((int)children.size());
+		for (HWND hChild : children) {
+			CRect rect;
+			::GetWindowRect(hChild, &rect);
+			::MapWindowPoints(NULL, hDlg, (LPPOINT)&rect, 2);
+			int nHeight = rect.Height();
+			TCHAR sClass[32] = { 0 };
+			::GetClassName(hChild, sClass, 32);
+			if (_tcsicmp(sClass, _T("ComboBox")) == 0) {
+				// the height of a combo box includes the drop down list
+				CRect droppedRect;
+				if (::SendMessage(hChild, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&droppedRect)) nHeight = max(nHeight, droppedRect.Height());
+			}
+			int nLeft = (int)(rect.left * dFactor + 0.5), nRight = (int)(rect.right * dFactor + 0.5);
+			if (hDefer != NULL) {
+				hDefer = ::DeferWindowPos(hDefer, hChild, NULL, nLeft, rect.top, nRight - nLeft, nHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+			}
+		}
+		if (hDefer != NULL) ::EndDeferWindowPos(hDefer);
+		int nNewWidth = (int)(clientRect.Width() * dFactor + 0.5) + nFrame;
+		int nX = windowRect.left - (nNewWidth - windowRect.Width()) / 2;
+		nX = max((int)monitorInfo.rcWork.left, min(nX, (int)monitorInfo.rcWork.right - nNewWidth));
+		::SetWindowPos(hDlg, NULL, nX, windowRect.top, nNewWidth, windowRect.Height(), SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+}

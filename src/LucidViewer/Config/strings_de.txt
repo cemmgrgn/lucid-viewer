@@ -1067,3 +1067,302 @@ Searching... %d images checked, %d found (Esc cancels)	Suche... %d Bilder geprü
 Search cancelled	Suche abgebrochen
 No photo found	Kein Foto gefunden
 %d photos found	%d Fotos gefunden
+Title	Titel
+Subject	Betreff
+Rating	Bewertung
+Tags	Tags
+Comments	Kommentare
+Authors	Autoren
+Copyright	Copyright
+Categories	Kategorien
+Company	Firma
+Program name	Programmname
+Software	Software
+Event	Ereignis
+People	Personen
+Camera maker	Kamerahersteller
+Camera model	Kameramodell
+Camera serial number	Seriennummer der Kamera
+Lens maker	Objektivhersteller
+Lens model	Objektivmodell
+F-number	Blendenzahl
+Exposure time	Belichtungszeit
+ISO speed	ISO-Empfindlichkeit
+Focal length	Brennweite
+35 mm focal length	Brennweite (Kleinbild-äquivalent)
+Exposure compensation	Belichtungskorrektur
+Exposure program	Belichtungsprogramm
+Metering mode	Messmethode
+Flash	Blitz
+White balance	Weißabgleich
+Light source	Lichtquelle
+Maximum aperture	Maximale Blendenöffnung
+Subject distance	Motivabstand
+Digital zoom	Digitalzoom
+Sharpness	Schärfe
+Orientation	Ausrichtung
+Dimensions	Abmessungen
+Horizontal resolution	Horizontale Auflösung
+Vertical resolution	Vertikale Auflösung
+Bit depth	Bittiefe
+Color space	Farbraum
+Compression	Komprimierung
+Latitude	Breitengrad
+Longitude	Längengrad
+Altitude	Höhe
+Choose fields...	Felder auswählen...
+Choose which fields are shown, also the technical ones	Auswählen, welche Felder angezeigt werden, auch die technischen
+Choose metadata fields...	Metadatenfelder auswählen...
+Choose metadata fields	Metadatenfelder auswählen
+Checked fields are shown on the Metadata tab. Normally only the common fields are shown, the others are mostly technical values.	Markierte Felder werden auf der Registerkarte 'Metadaten' angezeigt. Normalerweise werden nur die gängigen Felder angezeigt, die übrigen sind meist technische Werte.
+Show all fields of every file	Alle Felder jeder Datei anzeigen
+Field	Feld
+Value	Wert
+Name in Windows	Name in Windows
+Only common fields	Nur gängige Felder
+%d technical fields are hidden.	%d technische Felder sind ausgeblendet.
+Store To EXE Path	Im EXE-Pfad speichern
+Only set this to true if writing to the EXE directory makes sense, e.g. on an installation on an USB memory stick. Never set it to true when the EXE is located in the 'Program Files' folder, with Windows versions newer than Windows XP this would not work!	Nur auf true setzen, wenn das Schreiben in das EXE-Verzeichnis sinnvoll ist, z. B. bei einer Installation auf einem USB-Stick. Niemals auf true setzen, wenn sich die EXE im Ordner 'Program Files' befindet. Bei Windows-Versionen nach Windows XP würde das nicht funktionieren!
+Single Instance	Einzelne Instanz
+If set to true, only one single instance of Lucid Viewer runs at any time, if false multiple instances are allowed Set to true to open all images in the same Lucid Viewer window.	Bei true läuft immer nur eine einzige Instanz von Lucid Viewer, bei false sind mehrere Instanzen erlaubt. Auf true setzen, um alle Bilder im selben Lucid Viewer-Fenster zu öffnen.
+Skip File Open Dialog On Startup	Dialog 'Datei öffnen' beim Start überspringen
+Set to true to skip the 'File Open' dialog when starting Lucid Viewer without providing a file name as parameter	Auf true setzen, um den Dialog 'Datei öffnen' zu überspringen, wenn Lucid Viewer ohne Dateinamen als Parameter gestartet wird
+Files Processed By WIC	Von WIC verarbeitete Dateien
+File endings of files to be decoded by WIC (Windows Imaging Component) If the Microsoft Camera Codec pack is installed, full size camera RAW files can be read with WIC Add the file endings of the raw files to view here, e.g. FilesProcessedByWIC=*.wdp;*.hdp;*.jxr;*.nef	Dateiendungen von Dateien, die mit WIC (Windows Imaging Component) dekodiert werden. Wenn das Microsoft Camera Codec Pack installiert ist, können Kamera-RAW-Dateien in voller Größe mit WIC gelesen werden. Hier die Dateiendungen der anzuzeigenden RAW-Dateien ergänzen, z. B. FilesProcessedByWIC=*.wdp;*.hdp;*.jxr;*.nef
+File Endings RAW	Dateiendungen für RAW
+File endings of camera RAW files to be searched for embedded JPEG thumb images to display Reading just these embedded JPEGs is much faster than decoding the RAW using WIC	Dateiendungen von Kamera-RAW-Dateien, in denen nach eingebetteten JPEG-Vorschaubildern zur Anzeige gesucht wird. Das Lesen nur dieser eingebetteten JPEGs ist viel schneller als das Dekodieren der RAW-Datei mit WIC.
+Display Full Size RAW	RAW in voller Größe anzeigen
+Set behavior for opening RAW files listed in FileEndingsRAW 0: open embedded thumbnail 1: open full size 2: open thumbnail, fallback to full size 3: open full size, fallback to thumbnail	Legt fest, wie in FileEndingsRAW aufgeführte RAW-Dateien geöffnet werden. 0: eingebettetes Vorschaubild öffnen 1: in voller Größe öffnen 2: Vorschaubild öffnen, ersatzweise in voller Größe 3: in voller Größe öffnen, ersatzweise Vorschaubild
+open embedded thumbnail	eingebettetes Vorschaubild öffnen
+open full size	in voller Größe öffnen
+open thumbnail, fallback to full size	Vorschaubild öffnen, ersatzweise in voller Größe
+open full size, fallback to thumbnail	in voller Größe öffnen, ersatzweise Vorschaubild
+Keep Parameters	Parameter beibehalten
+Set to true to keep the zoom, pan, contrast, gamma, sharpen and rotation setting between the images	Auf true setzen, um Zoom, Verschiebung, Kontrast, Gamma, Schärfe und Drehung zwischen den Bildern beizubehalten
+Display Monitor	Anzeigemonitor
+Only for multi-monitor systems! Monitor to start the application on -1: Use monitor with largest resolution, primary monitor if several monitors have the same resolution 0: Use primary monitor 1...n: Use the non-primary monitor with index n	Nur für Systeme mit mehreren Monitoren! Monitor, auf dem die Anwendung gestartet wird -1: Monitor mit der größten Auflösung verwenden, bei gleicher Auflösung mehrerer Monitore den primären Monitor 0: Primären Monitor verwenden 1...n: Nicht primären Monitor mit dem Index n verwenden
+Use monitor with largest resolution, primary monitor if several monitors have the same resolution	Monitor mit der größten Auflösung verwenden, bei gleicher Auflösung mehrerer Monitore den primären Monitor
+Use primary monitor	Primären Monitor verwenden
+CPU Type	CPU-Typ
+CPUType can be AutoDetect, Generic, MMX, SSE or AVX2 Generic should work on all CPUs, MMX needs at least MMX II (starting from PIII) Use AutoDetect to detect the best possible algorithm to use	CPUType kann AutoDetect, Generic, MMX, SSE oder AVX2 sein. Generic sollte auf allen CPUs funktionieren, MMX benötigt mindestens MMX II (ab Pentium III). Mit AutoDetect wird der bestmögliche Algorithmus automatisch ermittelt
+CPU Cores Used	Verwendete CPU-Kerne
+Number of CPU cores used. Set to 0 for auto detection. Must be 1 to 4, or 0 for auto detect.	Anzahl der verwendeten CPU-Kerne. Auf 0 setzen für automatische Erkennung. Muss 1 bis 4 sein, oder 0 für automatische Erkennung.
+Ini Editor	INI-Editor
+Editor for INI files notepad : Use notepad.exe system : Use application registered for INI files other : Full path to application for editing INI files, %exepath% placeholder can be used	Editor für INI-Dateien notepad : notepad.exe verwenden system : die für INI-Dateien registrierte Anwendung verwenden other : vollständiger Pfad der Anwendung zum Bearbeiten von INI-Dateien, der Platzhalter %exepath% kann verwendet werden
+Wallpaper Path	Pfad für Desktophintergrund
+When setting a processed image as desktop wallpaper, the processed image must be saved somewhere. This INI setting sets the path to save the file. Default is %temp%, the system TEMP directory. You must have write access to the specified directory!	Wenn ein bearbeitetes Bild als Desktophintergrund festgelegt wird, muss es irgendwo gespeichert werden. Diese INI-Einstellung legt den Speicherpfad fest. Standard ist %temp%, das TEMP-Verzeichnis des Systems. Sie benötigen Schreibzugriff auf das angegebene Verzeichnis!
+Allow File Deletion	Löschen von Dateien erlauben
+Set to false to disallow deletion of images in Lucid Viewer. This hides the 'x' button on the navigation panel and disables the commands for deletion (IDM_MOVE_TO_RECYCLE_BIN etc.)	Auf false setzen, um das Löschen von Bildern in Lucid Viewer zu verbieten. Dadurch wird die Schaltfläche 'x' in der Navigationsleiste ausgeblendet und die Löschbefehle (IDM_MOVE_TO_RECYCLE_BIN usw.) werden deaktiviert
+Language	Sprache
+Specify language used in the user interface. Set to 'auto' to use the language of the operating system.	Legt die Sprache der Benutzeroberfläche fest. Auf 'auto' setzen, um die Sprache des Betriebssystems zu verwenden.
+Background Color	Hintergrundfarbe
+Background color, R G B, each component must be in [0..255], e.g. "128 128 128" for a middle gray	Hintergrundfarbe, R G B, jede Komponente muss im Bereich [0..255] liegen, z. B. "128 128 128" für ein mittleres Grau
+GUI Color	Farbe der Benutzeroberfläche
+GUI colors, R G B format as used by BackgroundColor	Farben der Benutzeroberfläche, im R-G-B-Format wie bei BackgroundColor
+Highlight Color	Hervorhebungsfarbe
+Selection Color	Auswahlfarbe
+Slider Color	Farbe der Schieberegler
+File Name Color	Farbe des Dateinamens
+Default GUI Font	Standardschrift der Benutzeroberfläche
+GUI font, format: "font name" fontSizeInPoints [bold] 'Default' for the default GUI font of Windows Example: DefaultGUIFont="Arial" 9.0 bold	Schrift der Benutzeroberfläche, Format: "Schriftname" Schriftgröße_in_Punkt [bold] 'Default' für die Standardschrift der Windows-Oberfläche Beispiel: DefaultGUIFont="Arial" 9.0 bold
+Allow Edit Global Settings	Bearbeiten der globalen Einstellungen erlauben
+Set to true to show the menu item that allows editing the global INI file option is found under Settings/Admin sub-menu	Auf true setzen, um den Menüeintrag zum Bearbeiten der globalen INI-Datei anzuzeigen. Die Option befindet sich im Untermenü Einstellungen/Administration
+Show Full Screen	Im Vollbild starten
+Start in full screen or windowed mode 'true' or 'false' to always start in full screen, respectively windowed mode 'auto' to choose best mode depending on image size of first image - windowed when it is small, full screen when it is large	Im Vollbild- oder im Fenstermodus starten 'true' oder 'false', um immer im Vollbild- bzw. im Fenstermodus zu starten 'auto', um je nach Größe des ersten Bildes den besten Modus zu wählen: Fenstermodus bei kleinen, Vollbild bei großen Bildern
+Single Full Screen Instance	Einzelne Vollbild-Instanz
+If set to true, only one single instance of Lucid Viewer runs in full screen mode, if false multiple instances are allowed The value is ignored if SingleInstance=true	Bei true läuft nur eine einzige Instanz von Lucid Viewer im Vollbildmodus, bei false sind mehrere Instanzen erlaubt. Der Wert wird ignoriert, wenn SingleInstance=true
+Default Window Rect	Standard-Fensterrechteck
+Sets the default position and size of the window in window mode. Possible values: 'auto' for 2/3 of screen size 'max' to start with maximized window 'image' to adjust the window size automatically to the image size 'sticky' to automatically restore the last used window size (when ShowFullScreen=auto only the upper,left position is restored) 'left top right bottom', space separated e.g: 100 100 900 700	Legt die Standardposition und -größe des Fensters im Fenstermodus fest. Mögliche Werte: 'auto' für 2/3 der Bildschirmgröße 'max', um mit maximiertem Fenster zu starten 'image', um die Fenstergröße automatisch an die Bildgröße anzupassen 'sticky', um die zuletzt verwendete Fenstergröße automatisch wiederherzustellen (bei ShowFullScreen=auto wird nur die Position oben links wiederhergestellt) 'left top right bottom', durch Leerzeichen getrennt, z. B.: 100 100 900 700
+2/3 of screen size	2/3 der Bildschirmgröße
+start with maximized window	mit maximiertem Fenster starten
+adjust the window size automatically to the image size	Fenstergröße automatisch an die Bildgröße anpassen
+automatically restore the last used window size (when ShowFullScreen=auto only the upper,left position is restored)	zuletzt verwendete Fenstergröße automatisch wiederherstellen (bei ShowFullScreen=auto wird nur die Position oben links wiederhergestellt)
+Sticky Window Rect	Gespeichertes Fensterrechteck
+Contains the stored window rectangle in case of DefaultWindowRect=sticky	Enthält das gespeicherte Fensterrechteck bei DefaultWindowRect=sticky
+Minimal Window Size	Minimale Fenstergröße
+Minimal window size in windowed mode (in pixels)	Minimale Fenstergröße im Fenstermodus (in Pixel)
+Window Borderless On Startup	Fenster beim Start rahmenlos
+If set to 'true', window starts in borderless mode (title bar hidden, cannot be manually resized) The window mode can be changed after startup	Bei 'true' startet das Fenster im rahmenlosen Modus (Titelleiste ausgeblendet, Größe nicht manuell änderbar). Der Fenstermodus kann nach dem Start geändert werden
+Window Always On Top On Startup	Fenster beim Start immer im Vordergrund
+If set to 'true', window starts in always-on-top mode (window will always be visible on top of other windows) The window mode can be changed after startup	Bei 'true' startet das Fenster im Modus „Immer im Vordergrund“ (das Fenster ist immer sichtbar vor anderen Fenstern). Der Fenstermodus kann nach dem Start geändert werden
+Show Toolbar	Symbolleiste anzeigen
+The toolbar (with the main menu), the status bar and the information side panel are shown next to the image, never over it. They are hidden in full screen mode and when the window title bar is hidden. They can also be switched on and off in the View menu, in the context menu and with Ctrl+T (toolbar), Ctrl+I (side panel).	Die Symbolleiste (mit dem Hauptmenü), die Statusleiste und die Informations-Seitenleiste werden neben dem Bild angezeigt, nie darüber. Im Vollbildmodus und bei ausgeblendeter Titelleiste sind sie ausgeblendet. Sie lassen sich auch im Menü Ansicht, im Kontextmenü und mit Ctrl+T (Symbolleiste) bzw. Ctrl+I (Seitenleiste) ein- und ausschalten.
+Show Status Bar	Statusleiste anzeigen
+Show Side Panel	Seitenleiste anzeigen
+Side Panel Collapsed	Seitenleiste eingeklappt
+Side panel collapsed to a narrow strip with icons (toggled with its arrow button)	Seitenleiste zu einem schmalen Streifen mit Symbolen eingeklappt (mit ihrer Pfeilschaltfläche umschaltbar)
+Escape Closes Window	Escape schließt das Fenster
+If true, the Esc key closes Lucid Viewer also in window mode (as in older versions). If false, Esc ends the current tool (crop, drawing, compare) and leaves full screen mode.	Bei true schließt die Taste Esc Lucid Viewer auch im Fenstermodus (wie in älteren Versionen). Bei false beendet Esc das aktuelle Werkzeug (Zuschneiden, Zeichnen, Vergleichen) und verlässt den Vollbildmodus.
+Show Start Screen	Startbildschirm anzeigen
+Start screen with the last opened photos and the photos pinned by the user, shown when no image is open (Alt+Home). If false, the file open dialog is shown when Lucid Viewer is started without an image.	Startbildschirm mit den zuletzt geöffneten und den vom Benutzer angehefteten Fotos, wird angezeigt, wenn kein Bild geöffnet ist (Alt+Home). Bei false wird der Dialog zum Öffnen von Dateien angezeigt, wenn Lucid Viewer ohne Bild gestartet wird.
+Open Last Image	Letztes Bild öffnen
+Started without an image, Lucid Viewer opens the photo viewed last (needs RememberRecentFiles=true)	Wird Lucid Viewer ohne Bild gestartet, öffnet er das zuletzt angesehene Foto (erfordert RememberRecentFiles=true)
+Remember Recent Files	Zuletzt geöffnete Dateien merken
+Remember the recently opened photos and show them on the start screen. If false, nothing is written to StartRecent.txt and the recent row stays empty.	Merkt sich die zuletzt geöffneten Fotos und zeigt sie auf dem Startbildschirm an. Bei false wird nichts in StartRecent.txt geschrieben und die Zeile der zuletzt geöffneten Fotos bleibt leer.
+Min Display Size	Minimale Anzeigegröße
+Small images are shown zoomed in so that their larger side has at least this size (pixels at 96 DPI) when the zoom mode does not enlarge images. 0 shows them in their original size.	Kleine Bilder werden vergrößert angezeigt, sodass ihre längere Seite mindestens diese Größe hat (Pixel bei 96 DPI), wenn der Zoommodus Bilder nicht vergrößert. 0 zeigt sie in Originalgröße an.
+Smooth Animations	Sanfte Animationen
+Smooth zooming with the mouse wheel and the zoom keys, smooth scrolling of the start screen and the thumbnail strip	Sanftes Zoomen mit dem Mausrad und den Zoomtasten, sanftes Scrollen des Startbildschirms und der Miniaturleiste
+Side Panel Width	Breite der Seitenleiste
+Width of the information side panel in pixels (at 96 DPI), 180 to 800	Breite der Informations-Seitenleiste in Pixel (bei 96 DPI), 180 bis 800
+Chrome Theme	Design der Oberfläche
+Colors of toolbar, status bar, side panel and menus: dark or light	Farben von Symbolleiste, Statusleiste, Seitenleiste und Menüs: dark oder light
+Convert Custom Presets	Benutzerdefinierte Konvertierungsvorgaben
+Additional conversions for the 'Convert to' menus, separated by semicolons. A conversion is 'format' or 'operation:format' with the formats jpg, png, webp, webpll (lossless), bmp, tiff, gif, ico, pdf and same (format of the source file) and the operations scaleN (N percent), fitN (long edge at most N pixels), rotl, rotr, rot180 and nometa (no EXIF/GPS). Example: ConvertCustomPresets=fit2560:webp;scale30:jpg Run LucidViewer.exe /registerconvertmenu (or Tools menu) again after changing this to update the Explorer menu.	Zusätzliche Konvertierungen für die Menüs 'Konvertieren in', durch Semikolons getrennt. Eine Konvertierung ist 'format' oder 'operation:format' mit den Formaten jpg, png, webp, webpll (verlustfrei), bmp, tiff, gif, ico, pdf und same (Format der Quelldatei) und den Operationen scaleN (N Prozent), fitN (lange Kante höchstens N Pixel), rotl, rotr, rot180 und nometa (keine EXIF/GPS-Daten). Beispiel: ConvertCustomPresets=fit2560:webp;scale30:jpg Nach einer Änderung LucidViewer.exe /registerconvertmenu (oder das Menü Extras) erneut ausführen, um das Explorer-Menü zu aktualisieren.
+Convert Output Folder	Ausgabeordner für Konvertierungen
+Folder for converted files. Empty: next to the source file. A relative name such as 'converted' is a sub folder of the source folder (created when needed), an absolute path is used for all files.	Ordner für konvertierte Dateien. Leer: neben der Quelldatei. Ein relativer Name wie 'converted' ist ein Unterordner des Quellordners (wird bei Bedarf erstellt), ein absoluter Pfad wird für alle Dateien verwendet.
+Screenshot Folder	Ordner für Bildschirmfotos
+Folder of saved screenshots. Empty: Pictures\Screenshots	Ordner der gespeicherten Bildschirmfotos. Leer: Bilder\Screenshots
+Screenshot Hotkey	Tastenkombination für Bildschirmfoto
+Global shortcuts of the screenshot tool in the notification area, e.g. PrintScreen, Shift+PrintScreen, Ctrl+Alt+S, F12. Empty switches a shortcut off. Windows 11 gives the Print Screen key to the Snipping Tool unless this is switched off in Settings > Accessibility > Keyboard.	Globale Tastenkombinationen des Bildschirmfoto-Werkzeugs im Infobereich, z. B. PrintScreen, Shift+PrintScreen, Ctrl+Alt+S, F12. Leer schaltet eine Tastenkombination aus. Windows 11 weist die Taste Print Screen dem Snipping Tool zu, sofern dies nicht unter Einstellungen > Barrierefreiheit > Tastatur ausgeschaltet ist.
+Screenshot Text Hotkey	Tastenkombination für Bildschirmfoto mit Text
+Screenshot History	Verlauf der Bildschirmfotos
+Screenshot history: if true, every screenshot is kept in the screenshot folder (also the ones only copied to the clipboard) and the start screen of the viewer shows them in a row.	Verlauf der Bildschirmfotos: Bei true wird jedes Bildschirmfoto im Bildschirmfoto-Ordner aufbewahrt (auch die, die nur in die Zwischenablage kopiert wurden) und der Startbildschirm des Viewers zeigt sie in einer Zeile an.
+Ocr Language	OCR-Sprache
+Language of the text recognition (OCR), e.g. tr or en-US. The language must be installed in Windows. Empty: the language of a non English keyboard layout, else the Windows display language.	Sprache der Texterkennung (OCR), z. B. tr oder en-US. Die Sprache muss in Windows installiert sein. Leer: die Sprache eines nicht englischen Tastaturlayouts, sonst die Anzeigesprache von Windows.
+Show Bottom Panel	Untere Leiste anzeigen
+Set to true to show the bottom panel when moving the mouse to the bottom of the screen/window. The bottom panel provides basic image processing functionality	Auf true setzen, um die untere Leiste anzuzeigen, wenn die Maus an den unteren Rand des Bildschirms bzw. Fensters bewegt wird. Die untere Leiste bietet grundlegende Bildbearbeitungsfunktionen
+Show Nav Panel	Navigationsleiste anzeigen
+Set to false if the navigation panel shall not be blended to the image	Auf false setzen, wenn die Navigationsleiste nicht über das Bild eingeblendet werden soll
+Show Zoom Navigator	Zoom-Navigator anzeigen
+Set to false to disable the thumbnail image blended in during zoom and pan	Auf false setzen, um das beim Zoomen und Verschieben eingeblendete Vorschaubild zu deaktivieren
+Blend Factor Nav Panel	Einblendfaktor der Navigationsleiste
+Blending factor of the navigation panel when the mouse is not on that panel. Set to 0.0 to only show the panel when the mouse is over the panel	Einblendfaktor der Navigationsleiste, wenn sich die Maus nicht auf der Leiste befindet. Auf 0.0 setzen, um die Leiste nur anzuzeigen, wenn sich die Maus darüber befindet
+Scale Factor Nav Panel	Skalierungsfaktor der Navigationsleiste
+Scaling factor for the navigation panel. Increase if the buttons on the panel are too small, e.g. on a touchscreen.	Skalierungsfaktor für die Navigationsleiste. Erhöhen, wenn die Schaltflächen auf der Leiste zu klein sind, z. B. auf einem Touchscreen.
+File Display Order	Sortierreihenfolge der Dateien
+Sorting order of the files when displaying the image files in a folder Can be LastModDate, CreationDate, FileName, FileSize, Random, Rating (star rating) or DateTaken (EXIF date the photo was taken)	Sortierreihenfolge der Dateien bei der Anzeige der Bilddateien eines Ordners Kann LastModDate, CreationDate, FileName, FileSize, Random, Rating (Sternebewertung) oder DateTaken (EXIF-Aufnahmedatum des Fotos) sein
+File Sort Ascending	Dateien aufsteigend sortieren
+Sort files ascending (increasing, e.g. A->Z, 0->9) or descending (decreasing, e.g. Z->A, 9->0)	Dateien aufsteigend (z. B. A->Z, 0->9) oder absteigend (z. B. Z->A, 9->0) sortieren
+Folder Navigation	Ordnernavigation
+Navigation within or between folders LoopFolder : Loop within the source folder and never leave this folder LoopSameFolderLevel: Loop to next folder on the same hierarchy level (sibling folders) LoopSubFolders: Loop into subfolders of the source folder	Navigation innerhalb von Ordnern oder zwischen Ordnern LoopFolder : Im Quellordner im Kreis navigieren und diesen Ordner nie verlassen LoopSameFolderLevel: Zum nächsten Ordner derselben Hierarchieebene wechseln (Geschwisterordner) LoopSubFolders: In die Unterordner des Quellordners wechseln
+Wrap Around Folder	Am Ordnerende umbrechen
+If true the files in a folder are shown with wrap around, thus going from last to first image and vice versa If false navigation stops on the last and first image	Bei true werden die Dateien eines Ordners umlaufend angezeigt, d. h. vom letzten zum ersten Bild und umgekehrt. Bei false stoppt die Navigation beim letzten bzw. ersten Bild
+Flash Window Alert	Fenster als Hinweis blinken lassen
+When WrapAroundFolder is false, alert when trying to go to the next file while at the end of the file list, or previous file while at the beginning of file list If true, window flashes briefly when there are no more new images to show If false, there is no visual feedback	Wenn WrapAroundFolder false ist: Hinweis, wenn am Ende der Dateiliste zur nächsten oder am Anfang der Dateiliste zur vorherigen Datei gewechselt werden soll. Bei true blinkt das Fenster kurz, wenn keine weiteren Bilder mehr anzuzeigen sind. Bei false gibt es keine visuelle Rückmeldung
+Beep Sound Alert	Signalton als Hinweis
+When WrapAroundFolder is false, alert when trying to go to the next file while at the end of the file list, or previous file while at the beginning of file list If true, system emits a short beep using the default system sound when there are no more new images to show If false, there is no audio feedback	Wenn WrapAroundFolder false ist: Hinweis, wenn am Ende der Dateiliste zur nächsten oder am Anfang der Dateiliste zur vorherigen Datei gewechselt werden soll. Bei true gibt das System mit dem Standard-Systemton einen kurzen Signalton aus, wenn keine weiteren Bilder mehr anzuzeigen sind. Bei false gibt es keine akustische Rückmeldung
+Navigate With Mouse Wheel	Mit dem Mausrad navigieren
+If true, the mouse wheel can be used to navigate forward and backward and zoom must be done with Ctrl-MouseWheel If false, zoom is done with the mousewheel (no Ctrl required)	Bei true kann das Mausrad zum Vor- und Zurückblättern verwendet werden, und das Zoomen muss mit Ctrl+Mausrad erfolgen. Bei false wird mit dem Mausrad gezoomt (ohne Ctrl)
+Exchange X Buttons	Zusatztasten der Maus vertauschen
+If true, the extended mouse buttons (Forward and backward) are reversed compared to Internet explorer This is useful to put the 'go to next image' functionality to the button that is better reachable e.g. Hitting Backwards button goes Forward in Lucid Viewer	Bei true sind die erweiterten Maustasten (Vor und Zurück) im Vergleich zum Internet Explorer vertauscht. Das ist nützlich, um die Funktion „Zum nächsten Bild“ auf die besser erreichbare Taste zu legen, z. B. blättert die Zurück-Taste in Lucid Viewer vorwärts
+Default Selection Mode	Standardauswahlmodus
+By default, Left-click and drag enables selection mode whenever pan is not available. CTRL+Left-click and drag enables selection mode when zoomed in. Set this to false to only use selection mode when CTRL is pressed	Standardmäßig aktiviert Linksklick und Ziehen den Auswahlmodus, sobald kein Verschieben möglich ist. Ctrl+Linksklick und Ziehen aktiviert den Auswahlmodus im vergrößerten Zustand. Auf false setzen, um den Auswahlmodus nur bei gedrückter Ctrl-Taste zu verwenden
+Mouse Wheel Zoom Speed	Zoomgeschwindigkeit des Mausrads
+Zoom speed with mouse wheel, 1.0 means default speed, smaller values slower zoom, larger faster zoom	Zoomgeschwindigkeit mit dem Mausrad, 1.0 bedeutet Standardgeschwindigkeit, kleinere Werte zoomen langsamer, größere schneller
+Reload When Displayed Image Changed	Neu laden, wenn das angezeigte Bild geändert wurde
+If true, reloads the currently displayed image automatically when it is changed by an external program on disk. Also reloads the image list when a file in the current directory is added or deleted. Set to false to turn off this behavior.	Bei true wird das aktuell angezeigte Bild automatisch neu geladen, wenn es von einem externen Programm auf dem Datenträger geändert wird. Die Bildliste wird ebenfalls neu geladen, wenn im aktuellen Verzeichnis eine Datei hinzugefügt oder gelöscht wird. Auf false setzen, um dieses Verhalten auszuschalten.
+High Quality Resampling	Hochwertiges Resampling
+Set to true to use high quality sampling as default.	Auf true setzen, um standardmäßig hochwertiges Resampling zu verwenden.
+Down Sampling Filter	Filter für Verkleinerung
+DownSamplingFilter can be BestQuality, NoAliasing or Narrow The BestQuality filter produces a very small amount of aliasing. The NoAliasing filter is a Lanczos filter that has almost no aliasing when sharpen is set to zero The Narrow filter produces quite a lot of aliasing but will sharpen much and also sharpens 100% images	DownSamplingFilter kann BestQuality, NoAliasing oder Narrow sein. Der Filter BestQuality erzeugt nur sehr wenig Aliasing. Der Filter NoAliasing ist ein Lanczos-Filter, der bei auf null gesetzter Schärfe fast kein Aliasing hat. Der Filter Narrow erzeugt recht viel Aliasing, schärft aber stark und schärft auch Bilder bei 100 %
+Auto Rotate EXIF	EXIF-Drehung automatisch anwenden
+If true, JPEG images are auto rotated according to EXIF image orientation tag if present.	Bei true werden JPEG-Bilder automatisch gemäß dem EXIF-Tag für die Bildausrichtung gedreht, sofern vorhanden.
+Minimal Display Time	Minimale Anzeigedauer
+Minimal display time of an image when manually navigating (with keyboard or mouse) (in milliseconds [0..1000 ms])	Minimale Anzeigedauer eines Bildes bei manueller Navigation (mit Tastatur oder Maus) (in Millisekunden [0..1000 ms])
+Force GDI Plus	GDI+ erzwingen
+Force using GDI+ for reading JPEG. Only use when you have problems reading your JPEGs with the default Turbo JPEG library. Note that using GDI+ is slower than the Turbo JPEG library! (Setting to true automatically disables Animated PNG support)	Erzwingt die Verwendung von GDI+ zum Lesen von JPEG. Nur verwenden, wenn beim Lesen Ihrer JPEGs mit der standardmäßigen Turbo-JPEG-Bibliothek Probleme auftreten. Beachten Sie, dass GDI+ langsamer ist als die Turbo-JPEG-Bibliothek! (Bei true wird die Unterstützung für animierte PNG automatisch deaktiviert)
+Use Embedded Color Profiles	Eingebettete Farbprofile verwenden
+If true, embedded ICC color profiles are used for JPEG, PNG and TIFF. This forces using GDI+ and therefore results in much slower loading of images! Only set to true if you really need this. (ICC color profiles are not supported for Animated PNG)	Bei true werden eingebettete ICC-Farbprofile für JPEG, PNG und TIFF verwendet. Dies erzwingt die Verwendung von GDI+ und führt daher zu deutlich langsamerem Laden von Bildern! Nur auf true setzen, wenn Sie es wirklich benötigen. (ICC-Farbprofile werden für animierte PNG nicht unterstützt)
+Transparency Color	Transparenzfarbe
+Color used for transparent parts of images, R G B format as used by BackgroundColor	Farbe für transparente Bildbereiche, im R-G-B-Format wie bei BackgroundColor
+Auto Zoom Mode	Auto-Zoom-Modus
+Auto zoom mode (for window mode only if AutoZoomModeFullscreen is present) FitNoZoom : Fit images to screen, never enlarge image FillNoZoom : Fill screen with no black borders, crop if necessary but not too much, never enlarge image Fit : Fit images to screen Fill : Fill screen with no black borders, crop if necessary	Auto-Zoom-Modus (für den Fenstermodus nur, wenn AutoZoomModeFullscreen vorhanden ist) FitNoZoom : Bilder an den Bildschirm anpassen, nie vergrößern FillNoZoom : Bildschirm ohne schwarze Ränder füllen, bei Bedarf beschneiden, aber nicht zu stark, nie vergrößern Fit : Bilder an den Bildschirm anpassen Fill : Bildschirm ohne schwarze Ränder füllen, bei Bedarf beschneiden
+Auto Zoom Mode Fullscreen	Auto-Zoom-Modus im Vollbild
+Auto zoom mode for fullscreen mode. If empty, same value as 'AutoZoomMode' is used.	Auto-Zoom-Modus für den Vollbildmodus. Wenn leer, wird derselbe Wert wie bei 'AutoZoomMode' verwendet.
+Zoom Pause Percent	Zoom-Pause in Prozent
+For convenience, when zooming continuously, it will pause at the set percent (default 100%) briefly before continuing in either direction This ensures that you can always zoom in or zoom out to the set percent reliably regardless of image size or zoom steps default: 100 set to 0 to disable the pause	Zur Vereinfachung hält das Zoomen bei kontinuierlichem Zoomen kurz beim eingestellten Prozentwert (Standard 100 %) an, bevor es in eine der beiden Richtungen weitergeht. So können Sie unabhängig von Bildgröße oder Zoomschritten jederzeit zuverlässig auf den eingestellten Prozentwert ein- oder auszoomen. Standard: 100 Auf 0 setzen, um die Pause zu deaktivieren
+Contrast correction to apply to all images. Must be in -0.5 .. 0.5 Values > 0 increase contrast, values < 0 decrease contrast	Auf alle Bilder angewendete Kontrastkorrektur. Muss zwischen -0.5 und 0.5 liegen. Werte > 0 erhöhen den Kontrast, Werte < 0 verringern ihn
+Gamma	Gamma
+Gamma correction to apply to all images. Must be between 0.5 and 2 Use gamma<1 to increase brightness and gamma>1 to decrease brightness	Auf alle Bilder angewendete Gammakorrektur. Muss zwischen 0.5 und 2 liegen. Gamma<1 erhöht die Helligkeit, Gamma>1 verringert sie
+Color saturation to apply to all images. Must be in 0.0 .. 2.0 0.0 means gray scale image, 1.0 no additional color saturation, 2.0 maximal saturation	Auf alle Bilder angewendete Farbsättigung. Muss zwischen 0.0 und 2.0 liegen. 0.0 bedeutet Graustufenbild, 1.0 keine zusätzliche Farbsättigung, 2.0 maximale Sättigung
+Sharpening to apply for downsampled images. Must be in 0 .. 0.5 Note that for 100 % zoom, the BestQuality filter will not apply any sharpening, only the other filters do	Beim Verkleinern angewendetes Schärfen. Muss zwischen 0 und 0.5 liegen. Beachten Sie, dass der Filter BestQuality bei 100 % Zoom nicht schärft, nur die anderen Filter tun das
+Unsharp Mask Parameters	Parameter für Unscharf maskieren
+Default parameters for unsharp masking: Radius Amount Threshold Note: unsharp masking cannot be applied automatically to every image This setting only provides the default parameters when entering the unsharp mask mode	Standardparameter für Unscharf maskieren: Radius Stärke Schwellenwert Hinweis: Unscharf maskieren kann nicht automatisch auf jedes Bild angewendet werden. Diese Einstellung liefert nur die Standardparameter beim Aufrufen des Modus „Unscharf maskieren“
+RT Show Grid Lines	Drehen/Perspektive: Gitterlinien anzeigen
+Default parameters for controlling rotation and perspective correction	Standardparameter zur Steuerung von Drehung und Perspektivkorrektur
+RT Auto Crop	Drehen/Perspektive: automatisch freistellen
+RT Preserve Aspect Ratio	Drehen/Perspektive: Seitenverhältnis beibehalten
+Cyan Red	Cyan-Rot
+Default color balance. Negative values for C,M,Y correction, positive for R,G,B. Values must be in -1.0 .. +1.0	Standard-Farbbalance. Negative Werte für die Korrektur von C, M, Y, positive für R, G, B. Die Werte müssen zwischen -1.0 und +1.0 liegen
+Magenta Green	Magenta-Grün
+Yellow Blue	Gelb-Blau
+Default Fixed Crop Size	Standardgröße für festen Zuschnitt
+The initial crop window size when using 'Fixed Size' crop mode	Die anfängliche Größe des Zuschneidefensters im Zuschneidemodus 'Feste Größe'
+User Crop Aspect Ratio	Benutzerdefiniertes Zuschnitt-Seitenverhältnis
+User defined crop aspect ratio (x y), meaning (x : y) Shows up as last item in crop popup menu	Benutzerdefiniertes Seitenverhältnis für den Zuschnitt (x y), also (x : y). Wird als letzter Eintrag im Zuschneide-Kontextmenü angezeigt
+Show EXIF Date In Title	EXIF-Datum im Titel anzeigen
+Show the acquisition date from EXIF data in the window title	Das Aufnahmedatum aus den EXIF-Daten im Fenstertitel anzeigen
+Show File Path In Title	Dateipfad im Titel anzeigen
+Show full file path and name in the window title (shows only file name by default)	Vollständigen Dateipfad und -namen im Fenstertitel anzeigen (standardmäßig wird nur der Dateiname angezeigt)
+Show File Name	Dateiname anzeigen
+Set to true to initially display the file name of each image in the upper, left corner of the screen	Auf true setzen, um den Dateinamen jedes Bildes anfangs in der oberen linken Ecke des Bildschirms anzuzeigen
+File Name Format	Format des Dateinamens
+The elements to show when showing the file name. Possible elements: %filename% : File name %filepath% : File name and path %index% : Index of image in folder, e.g. [1/12] %zoom% : Current zoom factor %size% : Size of image in pixels (w x h) %filesize% : Size of image on disk	Die Elemente, die bei der Anzeige des Dateinamens erscheinen. Mögliche Elemente: %filename% : Dateiname %filepath% : Dateiname und Pfad %index% : Index des Bildes im Ordner, z. B. [1/12] %zoom% : Aktueller Zoomfaktor %size% : Größe des Bildes in Pixeln (B x H) %filesize% : Größe des Bildes auf dem Datenträger
+File Name Font	Schrift des Dateinamens
+Font for the file name display, see DefaultGUIFont key for the format	Schrift für die Anzeige des Dateinamens, Format siehe Schlüssel DefaultGUIFont
+Show File Info	Dateiinfo anzeigen
+Set to true to initially display the file info box (EXIF info if available)	Auf true setzen, um das Dateiinfo-Feld (EXIF-Informationen, falls vorhanden) anfangs anzuzeigen
+Show JPEG Comments	JPEG-Kommentare anzeigen
+Set to true to show JPEG comments (EXIF user comment, EXIF image description or JPEG comment) in the file info box	Auf true setzen, um JPEG-Kommentare (EXIF-Benutzerkommentar, EXIF-Bildbeschreibung oder JPEG-Kommentar) im Dateiinfo-Feld anzuzeigen
+Show Histogram	Histogramm anzeigen
+Set to true to show the histogram on the file info panel by default	Auf true setzen, um das Histogramm standardmäßig im Dateiinfo-Bereich anzuzeigen
+GPS Map Provider	Kartenanbieter für GPS
+URL for the map provider to display GPS coordinates on a map (only shown when EXIF has GPS coordinates) OpenStreetmap: www.openstreetmap.org/?mlat={lat}&mlon={lng}&zoom=15 Google maps: https://www.google.com/maps/search/?api=1&query={lat},{lng}	URL des Kartenanbieters zur Anzeige von GPS-Koordinaten auf einer Karte (wird nur angezeigt, wenn EXIF GPS-Koordinaten enthält) OpenStreetmap: www.openstreetmap.org/?mlat={lat}&mlon={lng}&zoom=15 Google maps: https://www.google.com/maps/search/?api=1&query={lat},{lng}
+Metadata Fields	Metadatenfelder
+Fields of the Metadata tab that differ from the default, separated by semicolons. Normally only the common fields are shown. +name shows a field, -name hides it and +* shows all fields. The names are those of the Windows property system, e.g. +System.Photo.MakerNote;-System.Comment. The easiest way to change it is 'Choose fields...' on the Metadata tab.	Felder der Registerkarte Metadaten, die vom Standard abweichen, durch Semikolons getrennt. Normalerweise werden nur die gängigen Felder angezeigt. +name zeigt ein Feld an, -name blendet es aus und +* zeigt alle Felder an. Die Namen sind die des Windows-Eigenschaftensystems, z. B. +System.Photo.MakerNote;-System.Comment. Am einfachsten ändert man das über 'Felder auswählen...' auf der Registerkarte Metadaten.
+Auto Contrast Correction	Automatische Kontrastkorrektur
+Automatic contrast correction by histogram equalization F5 enables/disables the correction on the current image.	Automatische Kontrastkorrektur durch Histogrammausgleich. F5 schaltet die Korrektur für das aktuelle Bild ein bzw. aus.
+ACC Exclude	ACC-Ausschluss
+Using the following two keys, it is possible to explicitly exclude/include folders from the contrast correction. More specific patterns have precedence over less specific patterns and inclusion has precedence over exclusion if a folder matches both. Example: '*\pics\orig\* has precedence over *\pics\* because it is more specific Use the ; character to separate two expressions. Example: ACCExclude=%mypictures%\Digicam\edited\*;*.bmp This will exclude all files in the ..\My Pictures\Digicam\edited\ folder and all its subfolders and all bmp files from automatic contrast correction. The following two placeholders are recognized: %mypictures% : "My documents\My Pictures" folder %mydocuments% : "My documents" folder	Mit den folgenden zwei Schlüsseln lassen sich Ordner explizit von der Kontrastkorrektur ausschließen bzw. in sie einbeziehen. Spezifischere Muster haben Vorrang vor weniger spezifischen, und Einbeziehen hat Vorrang vor Ausschließen, wenn ein Ordner zu beiden passt. Beispiel: '*\pics\orig\* hat Vorrang vor *\pics\*, weil es spezifischer ist. Mehrere Ausdrücke mit dem Zeichen ; trennen. Beispiel: ACCExclude=%mypictures%\Digicam\edited\*;*.bmp Damit werden alle Dateien im Ordner ..\My Pictures\Digicam\edited\ mit allen Unterordnern sowie alle bmp-Dateien von der automatischen Kontrastkorrektur ausgeschlossen. Die folgenden zwei Platzhalter werden erkannt: %mypictures% : Ordner "My documents\My Pictures" %mydocuments% : Ordner "My documents"
+ACC Include	ACC-Einbeziehung
+Auto Contrast Correction Amount	Stärke der automatischen Kontrastkorrektur
+Amount of automatic contrast correction 0 means no contrast correction, 1 means full (to black and white point) contrast correction. Must be in (0 .. 1)	Stärke der automatischen Kontrastkorrektur. 0 bedeutet keine Kontrastkorrektur, 1 volle Kontrastkorrektur (bis zum Schwarz- und Weißpunkt). Muss im Bereich (0 .. 1) liegen
+Amount of color correction in the color channels reg, green, blue, cyan, magenta and yellow The numbers must be between 0.0 (no correction) and 1.0 (total correction towards the gray world model) Set all values to 0 to disable color correction	Stärke der Farbkorrektur in den Farbkanälen Rot, Grün, Blau, Cyan, Magenta und Gelb. Die Zahlen müssen zwischen 0.0 (keine Korrektur) und 1.0 (vollständige Korrektur in Richtung des Grauwelt-Modells) liegen. Alle Werte auf 0 setzen, um die Farbkorrektur zu deaktivieren
+Auto Brightness Correction Amount	Stärke der automatischen Helligkeitskorrektur
+Amount of automatic brightness correction 0 means no brightness correction, 1 means full correction to middle gray. Must be in (0 .. 1)	Stärke der automatischen Helligkeitskorrektur. 0 bedeutet keine Helligkeitskorrektur, 1 volle Korrektur auf mittleres Grau. Muss im Bereich (0 .. 1) liegen
+Local Density Correction	Lokale Dichtekorrektur
+Automatic correction of local density (local brightness of images) Can be enabled/disabled on the image with F6	Automatische Korrektur der lokalen Dichte (lokale Helligkeit von Bildern). Kann am Bild mit F6 ein- bzw. ausgeschaltet werden
+LDC Exclude	LDC-Ausschluss
+See remark about exclusion/inclusion at the ACCExclude setting. The same applies to these settings.	Siehe Hinweis zum Aus- und Einschließen bei der Einstellung ACCExclude. Dasselbe gilt für diese Einstellungen.
+LDC Include	LDC-Einbeziehung
+LDC Brighten Shadows	LDC: Schatten aufhellen
+Amount of local density correction of shadows Can be in [0, 1]	Stärke der lokalen Dichtekorrektur der Schatten. Möglich sind Werte in [0, 1]
+LDC Brighten Shadows Steepness	LDC: Steilheit der Schattenaufhellung
+Deep shadow steepness of enhancement Can be in [0, 1], values bigger than 0.9 are not recommended	Steilheit der Verbesserung in tiefen Schatten. Möglich sind Werte in [0, 1], Werte über 0.9 werden nicht empfohlen
+LDC Darken Highlights	LDC: Lichter abdunkeln
+Amount of local density correction of highlights Can be in [0, 1]	Stärke der lokalen Dichtekorrektur der Lichter. Möglich sind Werte in [0, 1]
+Landscape Mode	Landschaftsmodus
+Set to true to turn on landscape enhancement mode automatically	Auf true setzen, um den Landschaftsverbesserungsmodus automatisch einzuschalten
+Landscape Mode Params	Parameter des Landschaftsmodus
+Parameter set used in landscape enhancement mode Space separated, use -1 to leave parameter untouched Contrast Gamma Sharpen ColorCorrection ContrastCorrection LightenShadows DarkenHighlights DeepShadows CyanRed MagentaGreen YellowBlue Saturation	Parametersatz für den Landschaftsverbesserungsmodus Durch Leerzeichen getrennt, -1 lässt den Parameter unverändert Contrast Gamma Sharpen ColorCorrection ContrastCorrection LightenShadows DarkenHighlights DeepShadows CyanRed MagentaGreen YellowBlue Saturation
+Max Slide Show File List Size KB	Max. Größe der Diashow-Dateiliste (KB)
+Maximum size of slide show text files in KB	Maximale Größe der Diashow-Textdateien in KB
+Slide Show Transition Effect	Übergangseffekt der Diashow
+Transition effect for slide shows in full screen mode - ignored when used in window mode Possible transition effects: None, Blend, SlideRL, SlideLR, SlideTB, SlideBT, RollRL, RollLR, RollTB, RollBT, ScrollRL, ScrollLR, ScrollTB, ScrollBT	Übergangseffekt für Diashows im Vollbildmodus, im Fenstermodus wird er ignoriert. Mögliche Übergangseffekte: None, Blend, SlideRL, SlideLR, SlideTB, SlideBT, RollRL, RollLR, RollTB, RollBT, ScrollRL, ScrollLR, ScrollTB, ScrollBT
+Slide Show Effect Time	Dauer des Diashow-Effekts
+Time of the slide show transition effect in milliseconds, only used in full screen mode	Dauer des Übergangseffekts der Diashow in Millisekunden, nur im Vollbildmodus verwendet
+Overwrite Original File Without Save Dialog	Original ohne Speichern-Dialog überschreiben
+If set to true, Ctrl-S overwrites the original file on disk, applying the current processings without showing a dialog or prompting the user to confirm. CAUTION: Use at your own risk! Be aware that the original image file is overwritten and cannot be restored!	Bei true überschreibt Ctrl+S die Originaldatei auf dem Datenträger und wendet die aktuellen Bearbeitungen an, ohne einen Dialog anzuzeigen oder den Benutzer um Bestätigung zu bitten. ACHTUNG: Verwendung auf eigene Gefahr! Beachten Sie, dass die Originalbilddatei überschrieben wird und nicht wiederhergestellt werden kann!
+Crop Without Prompt Lossless JPEG	Verlustfreies JPEG-Zuschneiden ohne Rückfrage
+If set to true, lossless JPEG transformations will crop the image as needed without prompting the user. This will remove 15 pixel rows/columns at the image borders in worst case. CAUTION: Use at your own risk! Be aware that the original image file is overwritten and the cropped borders cannot be restored!	Bei true schneiden verlustfreie JPEG-Transformationen das Bild nach Bedarf ohne Rückfrage zu. Im ungünstigsten Fall werden dadurch 15 Pixelzeilen/-spalten an den Bildrändern entfernt. ACHTUNG: Verwendung auf eigene Gefahr! Beachten Sie, dass die Originalbilddatei überschrieben wird und die abgeschnittenen Ränder nicht wiederhergestellt werden können!
+Delete Confirmation	Löschbestätigung
+Type of confirmation required when deleting a file with the 'x' button on the navigation panel Possible values: Never, OnlyWhenNoRecycleBin, Always OnlyWhenNoRecycleBin means to only require a confirmation when there is no recycle bin available (e.g. on memory sticks) Notice: Does not apply to deleting files with the Del key. To change this edit the KeyMap.txt and assign another command to the Del key.	Art der Bestätigung beim Löschen einer Datei mit der Schaltfläche 'x' in der Navigationsleiste Mögliche Werte: Never, OnlyWhenNoRecycleBin, Always OnlyWhenNoRecycleBin bedeutet, dass nur dann eine Bestätigung verlangt wird, wenn kein Papierkorb verfügbar ist (z. B. auf USB-Sticks) Hinweis: Gilt nicht für das Löschen von Dateien mit der Taste Del. Um dies zu ändern, KeyMap.txt bearbeiten und der Taste Del einen anderen Befehl zuweisen.
+Default Save Format	Standardformat zum Speichern
+Default format for saving files. Supported formats: jpg, bmp, png, tif, webp	Standardformat zum Speichern von Dateien. Unterstützte Formate: jpg, bmp, png, tif, webp
+JPEG Save Quality	JPEG-Speicherqualität
+Quality when saving JPEG files (in 0..100 where 100 is the highest quality)	Qualität beim Speichern von JPEG-Dateien (0..100, wobei 100 die höchste Qualität ist)
+WEBP Save Quality	WEBP-Speicherqualität
+Quality when saving WEBP files with lossy compression (in 0..100 where 100 is the highest quality)	Qualität beim Speichern von WEBP-Dateien mit verlustbehafteter Komprimierung (0..100, wobei 100 die höchste Qualität ist)
+Create Param DB Entry On Save	Parameter-DB-Eintrag beim Speichern erstellen
+Set to true to create a parameter DB entry when saving an image with Lucid Viewer to avoid processing it again	Auf true setzen, um beim Speichern eines Bildes mit Lucid Viewer einen Parameter-DB-Eintrag zu erstellen, damit es nicht erneut bearbeitet wird
+Print Margin	Druckrand
+Default print margin (all sides) in centimeters	Standard-Druckrand (alle Seiten) in Zentimetern
+Print Width	Druckbreite
+Default print width in centimeters. Use negative numbers to set the 'Fit to paper' printing mode.	Standard-Druckbreite in Zentimetern. Mit negativen Zahlen wird der Druckmodus 'An Papier anpassen' eingestellt.
+Units	Einheiten
+Units (centimeters, inches) used, one of 'auto', 'metric' or 'english'. 'auto' uses the system setting 'metric' uses the metric system, e.g. centimeters for length 'english' uses the English/US system, e.g. inches for length	Verwendete Einheiten (Zentimeter, Zoll), eine von 'auto', 'metric' oder 'english'. 'auto' verwendet die Systemeinstellung 'metric' verwendet das metrische System, z. B. Zentimeter für Längen 'english' verwendet das englisch-amerikanische System, z. B. Zoll für Längen
+uses the system setting	verwendet die Systemeinstellung
+uses the metric system, e.g. centimeters for length	verwendet das metrische System, z. B. Zentimeter für Längen
+uses the English/US system, e.g. inches for length	verwendet das englisch-amerikanische System, z. B. Zoll für Längen
+User Cmd 0	Benutzerbefehl 0

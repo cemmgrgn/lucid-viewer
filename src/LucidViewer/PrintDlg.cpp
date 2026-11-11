@@ -235,6 +235,8 @@ LRESULT CPrintDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	SetupDataForCurrentPrinter();
 	Validate();
 
+	HelpersGUI::FitDialogToTexts(m_hWnd);
+
 	return TRUE;
 }
 

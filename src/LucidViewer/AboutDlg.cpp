@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "AboutDlg.h"
 #include "NLS.h"
+#include "HelpersGUI.h"
 #include "SettingsProvider.h"
 #include "Helpers.h"
 
@@ -86,6 +87,8 @@ LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	HICON hIconLarge = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MAINFRAME),
 		IMAGE_ICON, 64, 64, LR_DEFAULTCOLOR | LR_SHARED);
 	m_lblIcon.SetIcon(hIconLarge);
+
+	HelpersGUI::FitDialogToTexts(m_hWnd);
 
 	return TRUE;
 }

@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### New
+- **All texts of the settings window can be translated**: the names of the settings, their descriptions and the texts of
+  the list values go through the string tables (`strings_xx.txt`) like the rest of the program, so one file per language
+  is enough. Turkish, German, French and Spanish are complete. The search finds the English and the translated words.
+- **Metadata tab with names of its own**: the common fields have translated names of Lucid Viewer instead of the names
+  Windows gives, the technical fields (e.g. `System.Photo.FNumberDenominator`) are hidden. **Choose fields...** shows or
+  hides any field of the photo (setting `MetadataFields`).
+
+### Fixed
+- Translated texts that did not fit: the dialogs (batch rename, resize, crop size, print, open with, file extensions,
+  about) grow with longer texts, the buttons of the settings and keyboard shortcut windows are as wide as their text and
+  long setting names wrap. The settings window can be resized and maximized.
+
 ## 1.1.0 (2026-11-05)
 
 ### New

@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "ResizeDlg.h"
 #include "NLS.h"
+#include "HelpersGUI.h"
 #include "MaxImageDef.h"
 #include "Helpers.h"
 
@@ -63,6 +64,8 @@ LRESULT CResizeDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPar
 	m_blockUpdate = false;
 
 	m_dLastPercent = sm_dPercents;
+
+	HelpersGUI::FitDialogToTexts(m_hWnd);
 
 	return TRUE;
 }

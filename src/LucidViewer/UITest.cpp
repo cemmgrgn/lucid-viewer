@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "UITest.h"
 #include "DarkUI.h"
+#include "NLS.h"
+#include "SettingsProvider.h"
 #include "SettingsEditor.h"
 #include "PrintDlg.h"
 #include "PrintParameters.h"
@@ -173,6 +175,8 @@ int Run(LPCTSTR sCommandLine) {
 	int nPage = nIndex + 4 < nArgs ? _ttoi(pArgs[nIndex + 4]) : 0;
 	::LocalFree(pArgs);
 
+	// the texts in the language of the settings, to check translations
+	CNLS::ReadStringTable(CNLS::GetStringTableFileName(CSettingsProvider::This().Language()));
 	DarkUI::ForceTheme(sTheme.CompareNoCase(_T("dark")) == 0 ? 1 : 0);
 	DarkUI::SetSnapshotFile(sOutput);
 	int nResult = 1;

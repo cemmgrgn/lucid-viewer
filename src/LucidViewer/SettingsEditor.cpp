@@ -80,6 +80,32 @@ static CString HeaderToName(const CString& sHeader) {
 	return sLower;
 }
 
+// The names and descriptions of the settings are translated with the string table (strings_xx.txt).
+// The English text is the name made from the key ("ShowToolbar" -> "Show Toolbar") and the comment above the key in the
+// global INI file, joined to one line with single spaces. tools/i18n/settings_strings.py writes them into strings.txt.
+static CString OneLine(CString s) {
+	s.Replace(_T('\n'), _T(' '));
+	s.Replace(_T('\t'), _T(' '));
+	while (s.Replace(_T("  "), _T(" ")) > 0);
+	s.Trim();
+	return s;
+}
+
+static CString SettingName(const CSetting& setting) {
+	return CNLS::GetString(Humanize(setting.Key));
+}
+
+static CString SettingDescription(const CSetting& setting) {
+	CString sDescription = setting.Comment;
+	if (setting.Kind == KIND_LANGUAGE) {
+		// the language list is in the dropdown, the file name rules are not needed here
+		int nCut = sDescription.Find(_T("Lucid Viewer will"));
+		if (nCut > 0) sDescription = sDescription.Left(nCut);
+	}
+	sDescription = OneLine(sDescription);
+	return sDescription.IsEmpty() ? sDescription : CString(CNLS::GetString(sDescription));
+}
+
 static void SplitList(CString sList, std::vector<CString>& values) {
 	sList.Replace(_T(" or "), _T(","));
 	sList.Replace(_T(" and "), _T(","));
@@ -103,7 +129,7 @@ static CString OptionLabel(const CString& sValue, CString sRest) {
 	if (sRest.Left(4).CompareNoCase(_T("for ")) == 0) sRest = sRest.Mid(4);
 	else if (sRest.Left(3).CompareNoCase(_T("to ")) == 0) sRest = sRest.Mid(3);
 	sRest.TrimRight(_T(".,;"));
-	return sRest.IsEmpty() ? sValue : sValue + _T(" \x2014 ") + sRest;
+	return sRest.IsEmpty() ? sValue : sValue + _T(" \x2014 ") + CNLS::GetString(sRest);
 }
 
 static void ParseOptions(CSetting& setting) {
@@ -293,7 +319,8 @@ struct CEditor {
 	std::set<HWND> Descriptions;
 	std::set<HWND> Lines;
 	int Scroll, PageHeight;
-	bool Done, Saved, Updating, KeyMapChanged;
+	bool Done, Saved, Updating, KeyMapChanged, Sizing;
+	std::vector<std::pair<HWND, bool>> Buttons; // button, at the left side
 	int S(int n) { return ::MulDiv(n, Dpi, 96); }
 };
 
@@ -365,7 +392,9 @@ static void LayoutPage(CEditor& editor) {
 		if (sFind.IsEmpty()) {
 			if (setting.Category == sCategory) editor.Shown.push_back(i);
 		} else if (sCategory != COMMON_CATEGORY || true) {
-			CString sText = setting.Key + _T(" ") + Humanize(setting.Key) + _T(" ") + setting.Comment + _T(" ") + CNLS::GetString(setting.Category);
+			// the English and the translated texts
+			CString sText = setting.Key + _T(" ") + Humanize(setting.Key) + _T(" ") + setting.Comment + _T(" ") + CNLS::GetString(setting.Category) +
+				_T(" ") + SettingName(setting) + _T(" ") + SettingDescription(setting);
 			sText.MakeLower();
 			if (sText.Find(sFind) >= 0) editor.Shown.push_back(i);
 		}
@@ -408,20 +437,17 @@ static void LayoutPage(CEditor& editor) {
 			editor.Descriptions.insert(hHeader);
 			nY += editor.S(26);
 		}
-		CString sLabel = Humanize(setting.Key);
-		CString sDescription = setting.Comment;
-		sDescription.Replace(_T("\n"), _T(" "));
-		if (setting.Kind == KIND_LANGUAGE) {
-			// the language list is in the dropdown, the file name rules are not needed here
-			int nCut = sDescription.Find(_T("Lucid Viewer will"));
-			if (nCut > 0) sDescription = sDescription.Left(nCut);
-		}
-		sDescription.Trim();
+		CString sLabel = SettingName(setting);
+		CString sDescription = SettingDescription(setting);
 		sDescription += (sDescription.IsEmpty() ? _T("") : _T("  ")) + CString(_T("[")) + setting.Key + _T("]");
 		::SelectObject(hDC, editor.SmallFont);
 		CRect descriptionRect(0, 0, nTextWidth, 0);
 		::DrawText(hDC, sDescription, -1, &descriptionRect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
-		int nLabelHeight = editor.S(20);
+		// a long translated name takes more lines
+		::SelectObject(hDC, editor.BoldFont);
+		CRect labelRect(0, 0, nTextWidth, 0);
+		::DrawText(hDC, sLabel, -1, &labelRect, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+		int nLabelHeight = max((int)labelRect.Height() + editor.S(2), editor.S(20));
 		HWND hLabel = ::CreateWindow(_T("STATIC"), sLabel, WS_CHILD | WS_VISIBLE | SS_NOPREFIX, nPad, nY, nTextWidth, nLabelHeight,
 			editor.Page, NULL, hInstance, NULL);
 		::SendMessage(hLabel, WM_SETFONT, (WPARAM)editor.BoldFont, FALSE);
@@ -639,6 +665,47 @@ static bool HasChanges(CEditor& editor) {
 	return false;
 }
 
+// Places the search field, the category list, the page and the buttons into the window, the buttons are as wide as their text
+static void LayoutWindow(CEditor& editor) {
+	if (editor.Page == NULL) return;
+	CRect client;
+	::GetClientRect(editor.Window, &client);
+	int nPad = editor.S(10), nListWidth = editor.S(240), nButtonHeight = editor.S(30);
+	::MoveWindow(editor.Search, nPad, nPad, nListWidth, editor.S(26), TRUE);
+	::MoveWindow(editor.Categories, nPad, nPad + editor.S(32), nListWidth, max(0, client.Height() - 3 * nPad - nButtonHeight - editor.S(32)), TRUE);
+	::MoveWindow(editor.Page, 2 * nPad + nListWidth, nPad, max(0, client.Width() - 3 * nPad - nListWidth), max(0, client.Height() - 3 * nPad - nButtonHeight), TRUE);
+	HDC hDC = ::GetDC(editor.Window);
+	HGDIOBJ hOldFont = ::SelectObject(hDC, editor.Font);
+	int nLeftX = nPad, nRightX = client.Width() - nPad;
+	int nButtonY = client.Height() - nPad - nButtonHeight;
+	for (int i = (int)editor.Buttons.size() - 1; i >= 0; i--) {
+		bool bLeft = editor.Buttons[i].second;
+		HWND hButton = editor.Buttons[i].first;
+		TCHAR sText[256] = { 0 };
+		::GetWindowText(hButton, sText, 256);
+		CRect textRect(0, 0, 0, 0);
+		::DrawText(hDC, sText, -1, &textRect, DT_CALCRECT | DT_SINGLELINE);
+		int nButtonWidth = max(editor.S(bLeft ? 120 : 100), (int)textRect.Width() + editor.S(28));
+		if (!bLeft) {
+			nRightX -= nButtonWidth;
+			::MoveWindow(hButton, nRightX, nButtonY, nButtonWidth, nButtonHeight, TRUE);
+			nRightX -= editor.S(8);
+		}
+	}
+	for (auto& button : editor.Buttons) {
+		if (!button.second) continue;
+		TCHAR sText[256] = { 0 };
+		::GetWindowText(button.first, sText, 256);
+		CRect textRect(0, 0, 0, 0);
+		::DrawText(hDC, sText, -1, &textRect, DT_CALCRECT | DT_SINGLELINE);
+		int nButtonWidth = max(editor.S(120), (int)textRect.Width() + editor.S(28));
+		::MoveWindow(button.first, nLeftX, nButtonY, nButtonWidth, nButtonHeight, TRUE);
+		nLeftX += nButtonWidth + editor.S(8);
+	}
+	::SelectObject(hDC, hOldFont);
+	::ReleaseDC(editor.Window, hDC);
+}
+
 static LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
 	CEditor* pEditor = s_pEditor;
 	if (pEditor == NULL) return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
@@ -689,6 +756,29 @@ static LRESULT CALLBACK EditorWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 					return 0;
 			}
 			break;
+		case WM_SIZE:
+			if (pEditor->Page != NULL && wParam != SIZE_MINIMIZED) {
+				LayoutWindow(*pEditor);
+				// the page is built again when the user stops dragging the border
+				if (!pEditor->Sizing) LayoutPage(*pEditor);
+				::InvalidateRect(hWnd, NULL, TRUE);
+			}
+			break;
+		case WM_ENTERSIZEMOVE:
+			pEditor->Sizing = true;
+			break;
+		case WM_EXITSIZEMOVE:
+			if (pEditor->Sizing) {
+				pEditor->Sizing = false;
+				if (pEditor->Page != NULL) LayoutPage(*pEditor);
+			}
+			break;
+		case WM_GETMINMAXINFO: {
+			MINMAXINFO* pInfo = (MINMAXINFO*)lParam;
+			pInfo->ptMinTrackSize.x = pEditor->S(760);
+			pInfo->ptMinTrackSize.y = pEditor->S(460);
+			return 0;
+		}
 		case WM_MEASUREITEM: {
 			MEASUREITEMSTRUCT* pMeasure = (MEASUREITEMSTRUCT*)lParam;
 			pMeasure->itemHeight = pEditor->S(34);
@@ -782,7 +872,8 @@ void SetSnapshotCategory(int nCategory) {
 bool Show(HWND hParent, CResult& result) {
 	CSettingsProvider& sp = CSettingsProvider::This();
 	CEditor editor;
-	editor.Done = editor.Saved = editor.Updating = editor.KeyMapChanged = false;
+	editor.Done = editor.Saved = editor.Updating = editor.KeyMapChanged = editor.Sizing = false;
+	editor.Window = editor.Page = editor.Search = editor.Categories = NULL;
 	editor.Scroll = editor.PageHeight = 0;
 	ReadDefinitions(sp.GetGlobalINIFileName(), editor.Settings, editor.CategoryNames);
 	if (editor.Settings.empty()) {
@@ -843,8 +934,8 @@ bool Show(HWND hParent, CResult& result) {
 	nHeight = min(nHeight, (int)(monitorInfo.rcWork.bottom - monitorInfo.rcWork.top) - 20);
 	int nX = max((int)monitorInfo.rcWork.left, (int)(parentRect.left + parentRect.right - nWidth) / 2);
 	int nY = max((int)monitorInfo.rcWork.top, (int)(parentRect.top + parentRect.bottom - nHeight) / 2);
-	editor.Window = ::CreateWindowEx(WS_EX_DLGMODALFRAME, _T("LucidViewerSettingsEditor"), CNLS::GetString(_T("Settings")),
-		WS_POPUP | WS_CAPTION | WS_SYSMENU, nX, nY, nWidth, nHeight, hParent, NULL, hInstance, NULL);
+	editor.Window = ::CreateWindowEx(0, _T("LucidViewerSettingsEditor"), CNLS::GetString(_T("Settings")),
+		WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MAXIMIZEBOX, nX, nY, nWidth, nHeight, hParent, NULL, hInstance, NULL);
 	if (editor.Window == NULL) {
 		s_pEditor = NULL;
 		return false;
@@ -852,8 +943,9 @@ bool Show(HWND hParent, CResult& result) {
 	CRect client;
 	::GetClientRect(editor.Window, &client);
 	int nPad = editor.S(10), nListWidth = editor.S(240), nButtonHeight = editor.S(30);
-	editor.Search = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+	HWND hSearch = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
 		nPad, nPad, nListWidth, editor.S(26), editor.Window, (HMENU)(INT_PTR)ID_SEARCH, hInstance, NULL);
+	editor.Search = hSearch;
 	::SendMessage(editor.Search, EM_SETCUEBANNER, TRUE, (LPARAM)CNLS::GetString(_T("Search in all settings")));
 	editor.Categories = ::CreateWindowEx(0, _T("LISTBOX"), _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | LBS_OWNERDRAWFIXED | LBS_HASSTRINGS,
 		nPad, nPad + editor.S(32), nListWidth, client.Height() - 3 * nPad - nButtonHeight - editor.S(32), editor.Window, (HMENU)(INT_PTR)ID_CATEGORIES, hInstance, NULL);
@@ -862,38 +954,28 @@ bool Show(HWND hParent, CResult& result) {
 		::SendMessage(editor.Categories, LB_ADDSTRING, 0, (LPARAM)CNLS::GetString(sCategory));
 	}
 
-	editor.Page = ::CreateWindowEx(0, _T("LucidViewerSettingsPage"), _T(""), WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | WS_CLIPCHILDREN,
+	HWND hPage = ::CreateWindowEx(0, _T("LucidViewerSettingsPage"), _T(""), WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | WS_CLIPCHILDREN,
 		2 * nPad + nListWidth, nPad, client.Width() - 3 * nPad - nListWidth, client.Height() - 3 * nPad - nButtonHeight, editor.Window, NULL, hInstance, NULL);
 
 	struct { int Id; LPCTSTR Text; bool Left; } buttons[] = {
 		{ ID_EDIT_INI, _T("Edit INI file..."), true }, { ID_EDIT_KEYMAP, _T("Edit keyboard shortcuts..."), true }, { ID_DEFAULTS, _T("Defaults of this page"), true },
 		{ ID_SAVE, _T("Save"), false }, { ID_CANCEL, _T("Cancel"), false },
 	};
-	int nLeftX = nPad, nRightX = client.Width() - nPad;
-	int nButtonY = client.Height() - nPad - nButtonHeight;
-	for (int i = (int)(sizeof(buttons) / sizeof(buttons[0])) - 1; i >= 0; i--) {
-		if (buttons[i].Left) continue;
-		int nButtonWidth = editor.S(110);
-		nRightX -= nButtonWidth;
-		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(buttons[i].Text), WS_CHILD | WS_VISIBLE | WS_TABSTOP | (buttons[i].Id == ID_SAVE ? BS_DEFPUSHBUTTON : 0),
-			nRightX, nButtonY, nButtonWidth, nButtonHeight, editor.Window, (HMENU)(INT_PTR)buttons[i].Id, hInstance, NULL);
-		::SendMessage(hButton, WM_SETFONT, (WPARAM)editor.Font, FALSE);
-		nRightX -= editor.S(8);
-	}
+	// created in the tab order, placed by LayoutWindow
 	for (auto& button : buttons) {
-		if (!button.Left) continue;
-		int nButtonWidth = editor.S(180);
-		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(button.Text), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-			nLeftX, nButtonY, nButtonWidth, nButtonHeight, editor.Window, (HMENU)(INT_PTR)button.Id, hInstance, NULL);
+		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(button.Text), WS_CHILD | WS_VISIBLE | WS_TABSTOP | (button.Id == ID_SAVE ? BS_DEFPUSHBUTTON : 0),
+			0, 0, editor.S(110), nButtonHeight, editor.Window, (HMENU)(INT_PTR)button.Id, hInstance, NULL);
 		::SendMessage(hButton, WM_SETFONT, (WPARAM)editor.Font, FALSE);
-		nLeftX += nButtonWidth + editor.S(8);
+		editor.Buttons.push_back({ hButton, button.Left });
 	}
+	editor.Page = hPage;
 	::SendMessage(editor.Search, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	::SendMessage(editor.Categories, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	::SendMessage(editor.Categories, LB_SETCURSEL, DarkUI::IsSnapshotMode() ? s_nSnapshotCategory : 0, 0);
 	DarkUI::SetBackground(editor.Window, DarkUI::Colors().Window);
 	DarkUI::SetBackground(editor.Page, DarkUI::Colors().Surface);
 	DarkUI::ApplyToWindow(editor.Window);
+	LayoutWindow(editor);
 	LayoutPage(editor);
 
 	if (hParent != NULL) ::EnableWindow(hParent, FALSE);
@@ -1021,6 +1103,7 @@ static struct { LPCTSTR Name; LPCTSTR Text; } s_commandTexts[] = {
 	{ _T("IDM_FILTER_BY_TAG"), _T("Filter by tag...") }, { _T("IDM_SHOW_ON_MAP"), _T("Show on map") },
 	{ _T("IDM_FOLDER_GRID"), _T("Thumbnails of the folder") }, { _T("IDM_TIMELINE"), _T("Timeline (by date taken)") },
 	{ _T("IDM_SEARCH_PHOTOS"), _T("Search photos...") },
+	{ _T("IDM_METADATA_CHOOSE_FIELDS"), _T("Choose metadata fields...") },
 	{ _T("IDM_SAVE_SCREEN"), _T("Save as shown on screen...") },
 	{ _T("IDM_SAVE_ALLOW_NO_PROMPT"), _T("Save") },
 	{ _T("IDM_TOGGLE"), _T("Switch between this and the marked image") },
@@ -1576,21 +1659,33 @@ bool EditShortcuts(HWND hParent) {
 		{ ID_SC_SAVE, _T("Save"), false }, { ID_SC_CANCEL, _T("Cancel"), false },
 	};
 	int nLeftX = nPad, nRightX = client.Width() - nPad, nButtonY = client.Height() - nPad - nButtonHeight;
+	// the buttons are as wide as their (translated) text
+	HDC hMeasureDC = ::GetDC(editor.Window);
+	HGDIOBJ hOldMeasureFont = ::SelectObject(hMeasureDC, editor.Font);
+	auto ButtonWidth = [&](LPCTSTR sText, int nMin) {
+		CRect textRect(0, 0, 0, 0);
+		::DrawText(hMeasureDC, sText, -1, &textRect, DT_CALCRECT | DT_SINGLELINE);
+		return max(editor.S(nMin), (int)textRect.Width() + editor.S(28));
+	};
 	for (int i = (int)(sizeof(buttons) / sizeof(buttons[0])) - 1; i >= 0; i--) {
 		if (buttons[i].Left) continue;
-		nRightX -= editor.S(100);
+		int nButtonWidth = ButtonWidth(CNLS::GetString(buttons[i].Text), 100);
+		nRightX -= nButtonWidth;
 		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(buttons[i].Text), WS_CHILD | WS_VISIBLE | WS_TABSTOP | (buttons[i].Id == ID_SC_SAVE ? BS_DEFPUSHBUTTON : 0),
-			nRightX, nButtonY, editor.S(100), nButtonHeight, editor.Window, (HMENU)(INT_PTR)buttons[i].Id, hInstance, NULL);
+			nRightX, nButtonY, nButtonWidth, nButtonHeight, editor.Window, (HMENU)(INT_PTR)buttons[i].Id, hInstance, NULL);
 		::SendMessage(hButton, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 		nRightX -= editor.S(8);
 	}
 	for (auto& button : buttons) {
 		if (!button.Left) continue;
+		int nButtonWidth = ButtonWidth(CNLS::GetString(button.Text), 130);
 		HWND hButton = ::CreateWindow(_T("BUTTON"), CNLS::GetString(button.Text), WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-			nLeftX, nButtonY, editor.S(130), nButtonHeight, editor.Window, (HMENU)(INT_PTR)button.Id, hInstance, NULL);
+			nLeftX, nButtonY, nButtonWidth, nButtonHeight, editor.Window, (HMENU)(INT_PTR)button.Id, hInstance, NULL);
 		::SendMessage(hButton, WM_SETFONT, (WPARAM)editor.Font, FALSE);
-		nLeftX += editor.S(138);
+		nLeftX += nButtonWidth + editor.S(8);
 	}
+	::SelectObject(hMeasureDC, hOldMeasureFont);
+	::ReleaseDC(editor.Window, hMeasureDC);
 	::SendMessage(editor.Search, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	::SendMessage(editor.List, WM_SETFONT, (WPARAM)editor.Font, FALSE);
 	FillShortcutList(editor);

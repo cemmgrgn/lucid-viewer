@@ -3063,6 +3063,12 @@ void CMainDlg::ExecuteCommandInternal(int nCommand) {
 				m_pChrome->ShowMetadata();
 			}
 			break;
+		case IDM_METADATA_CHOOSE_FIELDS:
+			if (m_pChrome->IsEnabled()) {
+				m_pChrome->ShowMetadata();
+				if (Metadata::ChooseFields(m_hWnd, GetMetadata())) m_pChrome->Paint();
+			}
+			break;
 		case IDM_METADATA_COPY:
 			{
 				CString sText = Metadata::ToText(GetMetadata());

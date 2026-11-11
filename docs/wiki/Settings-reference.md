@@ -11,7 +11,7 @@ Most settings are in **Tools → Settings**, a searchable window that explains e
 | `StoreToEXEPath` | `false` | Only set this to true if writing to the EXE directory makes sense, e.g. on an installation on an USB memory stick. Never set it to true when the EXE is located in the 'Program Files' folder, with Windows versions newer than Windows XP this would not work! |
 | `SingleInstance` | `false` | If set to true, only one single instance of Lucid Viewer runs at any time, if false multiple instances are allowed. Set to true to open all images in the same Lucid Viewer window. |
 | `SkipFileOpenDialogOnStartup` | `false` | Set to true to skip the 'File Open' dialog when starting Lucid Viewer without providing a file name as parameter |
-| `FilesProcessedByWIC` | `*.wdp;*.hdp;*.jxr` | File endings of files to be decoded by WIC (Windows Image Converter). If the Microsoft Camera Codec pack is installed, full size camera RAW files can be read with WIC. Add the file endings of the raw files to view here, e.g. FilesProcessedByWIC=*.wdp;*.hdp;*.jxr;*.nef |
+| `FilesProcessedByWIC` | `*.wdp;*.hdp;*.jxr` | File endings of files to be decoded by WIC (Windows Imaging Component). If the Microsoft Camera Codec pack is installed, full size camera RAW files can be read with WIC. Add the file endings of the raw files to view here, e.g. FilesProcessedByWIC=*.wdp;*.hdp;*.jxr;*.nef |
 | `FileEndingsRAW` | `*.pef;*.dng;*.crw;*.nef;*.cr2;*.mrw;*.rw2;*.orf;*.x3f;*.arw;*.kdc;*.nrw;*.dcr;*.sr2;*.raf;*.kc2;*.erf;*.3fr;*.raw;*.mef;*.mos;*.mdc;*.cr3` | File endings of camera RAW files to be searched for embedded JPEG thumb images to display. Reading just these embedded JPEGs is much faster than decoding the RAW using WIC |
 | `DisplayFullSizeRAW` | `0` | Set behavior for opening RAW files listed in FileEndingsRAW. 0: open embedded thumbnail. 1: open full size. 2: open thumbnail, fallback to full size. 3: open full size, fallback to thumbnail |
 | `KeepParameters` | `false` | Set to true to keep the zoom, pan, contrast, gamma, sharpen and rotation setting between the images |
@@ -134,6 +134,7 @@ Most settings are in **Tools → Settings**, a searchable window that explains e
 | `ShowJPEGComments` | `true` | Set to true to show JPEG comments (EXIF user comment, EXIF image description or JPEG comment) in the file info box |
 | `ShowHistogram` | `false` | Set to true to show the histogram on the file info panel by default |
 | `GPSMapProvider` | `https://opentopomap.org/#marker=15/{lat}/{lng}` | URL for the map provider to display GPS coordinates on a map (only shown when EXIF has GPS coordinates). OpenStreetmap: www.openstreetmap.org/?mlat={lat}&mlon={lng}&zoom=15. Google maps: https://www.google.com/maps/search/?api=1&query={lat},{lng} |
+| `MetadataFields` | *(empty)* | Fields of the Metadata tab that differ from the default, separated by semicolons. Normally only the common fields are shown. +name shows a field, -name hides it and +* shows all fields. The names are those of the Windows property system, e.g. +System.Photo.MakerNote;-System.Comment. The easiest way to change it is 'Choose fields...' on the Metadata tab. |
 
 ## Automatic Correction Options
 

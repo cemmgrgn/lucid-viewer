@@ -369,6 +369,7 @@
 #define IDM_FOLDER_GRID			16690	// :KeyMap: thumbnails of the folder, several images can be selected for batch actions
 #define IDM_TIMELINE			16700	// :KeyMap: thumbnails of the folder sorted by the date taken, grouped by month
 #define IDM_SEARCH_PHOTOS		16710	// :KeyMap: search photos in a folder and its sub folders by tag, stars, date and name
+#define IDM_METADATA_CHOOSE_FIELDS	16720	// :KeyMap: choose the fields shown on the metadata tab of the information panel
 
 #define IDM_CROP_SEL		20000
 #define IDM_LOSSLESS_CROP_SEL 20010

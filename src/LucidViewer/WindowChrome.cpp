@@ -1732,7 +1732,7 @@ int CWindowChrome::PaintMetadata(CDC& dc, int nWidth, int nY) {
 	int nValueX = nPad + nDescWidth + nGap;
 	int nValueWidth = nPad + nInnerWidth - nValueX - nIcon - S(4);
 	bool bHasLocation = false, bHasWritable = false;
-	int nGroup = -1;
+	int nGroup = -1, nHidden = 0;
 	for (int i = 0; i < (int)entries.size(); i++) {
 		const Metadata::CEntry& entry = entries[i];
 		if (entry.Writable && entry.Present) {
@@ -1741,6 +1741,11 @@ int CWindowChrome::PaintMetadata(CDC& dc, int nWidth, int nY) {
 		}
 		// the location in the EXIF block of PNG and WebP files is removed by Lucid Viewer itself
 		if (entry.Embedded && entry.Present && entry.Group == Metadata::GROUP_LOCATION) bHasLocation = true;
+		// technical fields only if the user chose them, the index stays the index into the entries
+		if (!Metadata::IsShown(entry)) {
+			nHidden += entry.Present ? 1 : 0;
+			continue;
+		}
 		if (entry.Group != nGroup) {
 			nGroup = entry.Group;
 			nY += (i > 0) ? S(10) : 0;
@@ -1783,9 +1788,21 @@ int CWindowChrome::PaintMetadata(CDC& dc, int nWidth, int nY) {
 	}
 
 	// actions
+	if (nHidden > 0) {
+		nY += S(8);
+		dc.SetTextColor(m_colors.DimText);
+		CString sHidden;
+		sHidden.Format(CNLS::GetString(_T("%d technical fields are hidden.")), nHidden);
+		CRect hiddenRect(nPad, nY, nPad + nInnerWidth, nY);
+		dc.DrawText(sHidden, -1, &hiddenRect, DT_CALCRECT | DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+		hiddenRect.right = nPad + nInnerWidth;
+		dc.DrawText(sHidden, -1, &hiddenRect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+		nY = hiddenRect.bottom;
+	}
 	nY += S(14);
 	int nButtonHeight = S(SIDE_BUTTON_HEIGHT);
 	struct { LPCTSTR Text; int Command; bool Enabled; LPCTSTR Tooltip; } buttons[] = {
+		{ _T("Choose fields..."), IDM_METADATA_CHOOSE_FIELDS, true, _T("Choose which fields are shown, also the technical ones") },
 		{ _T("Copy all metadata"), IDM_METADATA_COPY, true, _T("Copies the metadata as text to the clipboard") },
 		{ _T("Remove location"), IDM_METADATA_REMOVE_LOCATION, bHasLocation, _T("Removes the GPS location from the file") },
 		{ _T("Remove all editable metadata"), IDM_METADATA_REMOVE_ALL, bHasWritable, _T("The orientation is kept") },

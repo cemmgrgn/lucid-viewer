@@ -23,4 +23,5 @@
 **Project**
 
 - [[Building from source|Building-from-source]]
+- [[Translating|Translating]]
 - [[Code signing and privacy|Code-signing-and-privacy]]

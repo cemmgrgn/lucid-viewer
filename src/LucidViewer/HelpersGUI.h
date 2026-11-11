@@ -92,4 +92,8 @@ namespace HelpersGUI {
 	bool ShowFileDialog(HWND hWnd, bool bSave, LPCTSTR sFilter, LPCTSTR sDefaultExtension, LPCTSTR sInitialFile,
 		LPCTSTR sTitle, int& nFilterIndex, CString& sFileName);
 
+	// Widens the dialog and all its controls by the same factor if a (translated) text does not fit into its static text,
+	// button, check box or radio button. Call at the end of OnInitDialog after all texts are set. The center stays in place.
+	void FitDialogToTexts(HWND hDlg);
+
 }

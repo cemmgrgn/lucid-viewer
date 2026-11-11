@@ -1,9 +1,13 @@
 #include "StdAfx.h"
 #include "Metadata.h"
 #include "NLS.h"
+#include "SettingsProvider.h"
+#include "DarkUI.h"
+#include <commctrl.h>
 #include <propkey.h>
 #include <propvarutil.h>
 #include <shobjidl.h>
+#include <shlobj.h>
 #include <algorithm>
 
 #pragma comment(lib, "propsys.lib")
@@ -39,6 +43,113 @@ static const struct { LPCTSTR Canonical; LPCTSTR Name; } s_fallbackNames[] = {
 	{ _T("System.GPS.ImgDirection"), _T("Camera direction") }, { _T("System.GPS.ImgDirectionRef"), _T("Camera direction reference") },
 	{ _T("System.GPS.Speed"), _T("Speed") }, { _T("System.GPS.SpeedRef"), _T("Speed unit") },
 };
+
+// Own English names of the common fields, translated with the string table. The names Windows gives depend on the
+// translation of Windows and the other fields are mostly technical (e.g. System.Photo.FNumberDenominator), they are hidden
+// unless the user chooses to show them (setting MetadataFields).
+static const struct { LPCTSTR Canonical; LPCTSTR Name; } s_names[] = {
+	// description
+	{ _T("System.Title"), _T("Title") }, { _T("System.Subject"), _T("Subject") }, { _T("System.Rating"), _T("Rating") },
+	{ _T("System.Keywords"), _T("Tags") }, { _T("System.Comment"), _T("Comments") }, { _T("System.Author"), _T("Authors") },
+	{ _T("System.Copyright"), _T("Copyright") }, { _T("System.Category"), _T("Categories") }, { _T("System.Company"), _T("Company") },
+	{ _T("System.ApplicationName"), _T("Program name") }, { _T("System.SoftwareUsed"), _T("Software") },
+	{ _T("System.Photo.Event"), _T("Event") }, { _T("System.Photo.PeopleNames"), _T("People") },
+	// camera
+	{ _T("System.Photo.DateTaken"), _T("Date taken") }, { _T("System.Photo.CameraManufacturer"), _T("Camera maker") },
+	{ _T("System.Photo.CameraModel"), _T("Camera model") }, { _T("System.Photo.CameraSerialNumber"), _T("Camera serial number") },
+	{ _T("System.Photo.LensManufacturer"), _T("Lens maker") }, { _T("System.Photo.LensModel"), _T("Lens model") },
+	{ _T("System.Photo.FNumber"), _T("F-number") }, { _T("System.Photo.ExposureTime"), _T("Exposure time") },
+	{ _T("System.Photo.ISOSpeed"), _T("ISO speed") }, { _T("System.Photo.FocalLength"), _T("Focal length") },
+	{ _T("System.Photo.FocalLengthInFilm"), _T("35 mm focal length") }, { _T("System.Photo.ExposureBias"), _T("Exposure compensation") },
+	{ _T("System.Photo.ProgramMode"), _T("Exposure program") }, { _T("System.Photo.MeteringMode"), _T("Metering mode") },
+	{ _T("System.Photo.Flash"), _T("Flash") }, { _T("System.Photo.WhiteBalance"), _T("White balance") },
+	{ _T("System.Photo.LightSource"), _T("Light source") }, { _T("System.Photo.MaxAperture"), _T("Maximum aperture") },
+	{ _T("System.Photo.SubjectDistance"), _T("Subject distance") }, { _T("System.Photo.DigitalZoom"), _T("Digital zoom") },
+	{ _T("System.Photo.Contrast"), _T("Contrast") }, { _T("System.Photo.Saturation"), _T("Saturation") },
+	{ _T("System.Photo.Sharpness"), _T("Sharpness") }, { _T("System.Photo.Orientation"), _T("Orientation") },
+	// image
+	{ _T("System.Image.Dimensions"), _T("Dimensions") }, { _T("System.Image.HorizontalSize"), _T("Width") },
+	{ _T("System.Image.VerticalSize"), _T("Height") }, { _T("System.Image.HorizontalResolution"), _T("Horizontal resolution") },
+	{ _T("System.Image.VerticalResolution"), _T("Vertical resolution") }, { _T("System.Image.BitDepth"), _T("Bit depth") },
+	{ _T("System.Image.ColorSpace"), _T("Color space") }, { _T("System.Image.Compression"), _T("Compression") },
+	// location
+	{ _T("Lucid.Coordinates"), _T("Coordinates") }, { _T("System.GPS.Latitude"), _T("Latitude") }, { _T("System.GPS.Longitude"), _T("Longitude") },
+	{ _T("System.GPS.Altitude"), _T("Altitude") }, { _T("System.GPS.Date"), _T("GPS time") }, { _T("System.GPS.ImgDirection"), _T("Camera direction") },
+	{ _T("System.GPS.Speed"), _T("Speed") }, { _T("System.GPS.DestBearing"), _T("Direction of the target") },
+};
+
+static LPCTSTR GetOwnName(const CString& sCanonical) {
+	for (const auto& name : s_names) {
+		if (sCanonical == name.Canonical) return name.Name;
+	}
+	return NULL;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Shown fields (setting MetadataFields: +name shows, -name hides, +* shows all)
+///////////////////////////////////////////////////////////////////////////////////
+
+// Value of the user INI file, else of the global INI file
+static CString ReadSetting(LPCTSTR sKey) {
+	CSettingsProvider& sp = CSettingsProvider::This();
+	for (LPCTSTR sFile : { (LPCTSTR)sp.GetUserINIFileName(), (LPCTSTR)sp.GetGlobalINIFileName() }) {
+		TCHAR buffer[4096];
+		const TCHAR* MISSING = _T("\x01\x02missing");
+		::GetPrivateProfileString(_T("LucidViewer"), sKey, MISSING, buffer, 4096, sFile);
+		if (_tcscmp(buffer, MISSING) != 0) return CString(buffer);
+	}
+	return CString();
+}
+
+static bool WriteSetting(LPCTSTR sKey, LPCTSTR sValue) {
+	CString sUserINI = CSettingsProvider::This().GetUserINIFileName();
+	int nSlash = sUserINI.ReverseFind(_T('\\'));
+	if (nSlash > 0) ::SHCreateDirectoryEx(NULL, sUserINI.Left(nSlash), NULL);
+	if (::GetFileAttributes(sUserINI) == INVALID_FILE_ATTRIBUTES) {
+		// a new user INI file in UTF-16 keeps non ASCII values
+		FILE* pFile = NULL;
+		if (_tfopen_s(&pFile, sUserINI, _T("w, ccs=UTF-16LE")) == 0 && pFile != NULL) {
+			fputws(L"[LucidViewer]\n", pFile);
+			fclose(pFile);
+		}
+	}
+	return ::WritePrivateProfileString(_T("LucidViewer"), sKey, sValue, sUserINI) != FALSE;
+}
+
+static bool s_bFieldsRead = false;
+static std::vector<CString> s_fieldOverrides;
+
+static const std::vector<CString>& GetFieldOverrides() {
+	if (!s_bFieldsRead) {
+		s_bFieldsRead = true;
+		CString sFields = ReadSetting(_T("MetadataFields"));
+		int nStart = 0;
+		CString sPart = sFields.Tokenize(_T(";, "), nStart);
+		while (nStart >= 0) {
+			sPart.Trim();
+			if (sPart.GetLength() > 1 && (sPart[0] == _T('+') || sPart[0] == _T('-'))) s_fieldOverrides.push_back(sPart);
+			sPart = sFields.Tokenize(_T(";, "), nStart);
+		}
+	}
+	return s_fieldOverrides;
+}
+
+static bool IsShownByDefault(const CString& sCanonical, bool bTechnical) {
+	bool bShown = !bTechnical, bAll = false;
+	for (const CString& sOverride : GetFieldOverrides()) {
+		CString sName = sOverride.Mid(1);
+		if (sName == _T("*")) bAll = sOverride[0] == _T('+');
+	}
+	if (bAll) bShown = true;
+	for (const CString& sOverride : GetFieldOverrides()) {
+		if (sOverride.Mid(1).CompareNoCase(sCanonical) == 0) bShown = sOverride[0] == _T('+');
+	}
+	return bShown;
+}
+
+bool IsShown(const CEntry& entry) {
+	return IsShownByDefault(entry.Canonical, entry.Technical);
+}
 
 LPCTSTR GetGroupName(EGroup eGroup) {
 	switch (eGroup) {
@@ -474,7 +585,12 @@ void Read(LPCTSTR sFileName, std::vector<CEntry>& entries) {
 			::CoTaskMemFree(pText);
 		}
 		pText = NULL;
-		if (SUCCEEDED(pDescription->GetDisplayName(&pText)) && pText != NULL && pText[0] != 0) {
+		entry.Canonical = sCanonical;
+		LPCTSTR sOwnName = GetOwnName(sCanonical);
+		entry.Technical = sOwnName == NULL;
+		if (sOwnName != NULL) {
+			entry.Name = CNLS::GetString(sOwnName);
+		} else if (SUCCEEDED(pDescription->GetDisplayName(&pText)) && pText != NULL && pText[0] != 0) {
 			entry.Name = pText;
 		} else {
 			entry.Name = sCanonical.Find(_T("System.")) == 0 ? sCanonical.Mid(7) : sCanonical;
@@ -529,6 +645,8 @@ void Read(LPCTSTR sFileName, std::vector<CEntry>& entries) {
 		CEntry coordinates;
 		coordinates.Key = PKEY_GPS_Latitude;
 		coordinates.Name = CNLS::GetString(_T("Coordinates"));
+		coordinates.Canonical = _T("Lucid.Coordinates");
+		coordinates.Technical = false;
 		coordinates.Value.Format(_T("%.6f, %.6f"), bSouth ? -dLatitude : dLatitude, bWest ? -dLongitude : dLongitude);
 		coordinates.EditValue = coordinates.Value;
 		coordinates.Group = GROUP_LOCATION;
@@ -1106,6 +1224,228 @@ bool WriteTexts(LPCTSTR sFileName, const std::vector<std::pair<PROPERTYKEY, CStr
 	bool bOK = !pointers.empty() && WriteValues(sFileName, pointers, nWritten);
 	for (PROPVARIANT& value : values) ::PropVariantClear(&value);
 	return bOK;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Window to choose the shown fields
+///////////////////////////////////////////////////////////////////////////////////
+
+static const int ID_FIELD_LIST = 200, ID_SHOW_ALL = 201, ID_COMMON_ONLY = 202;
+
+struct CFieldsWindow {
+	HWND List, ShowAll;
+	std::vector<const CEntry*> Fields; // one per list item
+	int Result;
+	bool Done;
+};
+
+static LRESULT CALLBACK FieldsWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam) {
+	CFieldsWindow* pWindow = (CFieldsWindow*)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	switch (nMsg) {
+		case WM_CREATE:
+			::SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams);
+			return 0;
+		case WM_CLOSE:
+			if (pWindow != NULL) {
+				pWindow->Result = 0;
+				pWindow->Done = true;
+				::PostMessage(hWnd, WM_NULL, 0, 0);
+			}
+			return 0;
+		case WM_COMMAND:
+			if (pWindow == NULL) break;
+			switch (LOWORD(wParam)) {
+				case IDOK:
+				case IDCANCEL:
+					pWindow->Result = LOWORD(wParam) == IDOK ? IDOK : 0;
+					pWindow->Done = true;
+					::PostMessage(hWnd, WM_NULL, 0, 0);
+					return 0;
+				case ID_COMMON_ONLY:
+					// the default: only the common fields
+					::SendMessage(pWindow->ShowAll, BM_SETCHECK, BST_UNCHECKED, 0);
+					for (int i = 0; i < (int)pWindow->Fields.size(); i++) {
+						ListView_SetCheckState(pWindow->List, i, !pWindow->Fields[i]->Technical);
+					}
+					return 0;
+				case ID_SHOW_ALL:
+					if (::SendMessage(pWindow->ShowAll, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+						for (int i = 0; i < (int)pWindow->Fields.size(); i++) ListView_SetCheckState(pWindow->List, i, TRUE);
+					}
+					return 0;
+			}
+			break;
+		case WM_NOTIFY: {
+			LRESULT result = 0;
+			if (DarkUI::CustomDrawButton(lParam, result)) return result;
+			break;
+		}
+		case WM_CTLCOLORSTATIC:
+		case WM_CTLCOLORBTN:
+		case WM_CTLCOLOREDIT:
+			return (LRESULT)DarkUI::CtlColor(nMsg, wParam, lParam, DarkUI::Colors().Window);
+		case WM_ERASEBKGND: {
+			RECT rect;
+			::GetClientRect(hWnd, &rect);
+			::FillRect((HDC)wParam, &rect, DarkUI::Brush(DarkUI::Colors().Window));
+			return 1;
+		}
+	}
+	return ::DefWindowProc(hWnd, nMsg, wParam, lParam);
+}
+
+static CString JoinOverrides(const std::vector<CString>& overrides) {
+	CString sValue;
+	for (const CString& sOverride : overrides) sValue += (sValue.IsEmpty() ? _T("") : _T(";")) + sOverride;
+	return sValue;
+}
+
+bool ChooseFields(HWND hParent, const std::vector<CEntry>& entries) {
+	HINSTANCE hInstance = ::GetModuleHandle(NULL);
+	WNDCLASS wndClass{ 0 };
+	wndClass.lpfnWndProc = FieldsWndProc;
+	wndClass.hInstance = hInstance;
+	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+	wndClass.hbrBackground = NULL;
+	wndClass.hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(128));
+	wndClass.lpszClassName = _T("LucidViewerMetadataFields");
+	::RegisterClass(&wndClass);
+
+	HDC hDC = ::GetDC(NULL);
+	int nDPI = ::GetDeviceCaps(hDC, LOGPIXELSX);
+	::ReleaseDC(NULL, hDC);
+	auto S = [nDPI](int n) { return ::MulDiv(n, nDPI, 96); };
+
+	CFieldsWindow window = { NULL, NULL, {}, 0, false };
+	for (const CEntry& entry : entries) {
+		if (!entry.Present || entry.Canonical.IsEmpty()) continue;
+		bool bFound = false;
+		for (const CEntry* pField : window.Fields) if (pField->Canonical == entry.Canonical) bFound = true;
+		if (!bFound) window.Fields.push_back(&entry);
+	}
+	bool bAll = false;
+	for (const CString& sOverride : GetFieldOverrides()) if (sOverride == _T("+*")) bAll = true;
+
+	int nWidth = S(640), nHeight = S(560);
+	RECT clientRect = { 0, 0, nWidth, nHeight };
+	DWORD nStyle = WS_POPUP | WS_CAPTION | WS_SYSMENU;
+	::AdjustWindowRectEx(&clientRect, nStyle, FALSE, 0);
+	RECT parentRect;
+	::GetWindowRect(hParent, &parentRect);
+	int nWindowWidth = clientRect.right - clientRect.left, nWindowHeight = clientRect.bottom - clientRect.top;
+	HWND hWnd = ::CreateWindowEx(0, _T("LucidViewerMetadataFields"), CNLS::GetString(_T("Choose metadata fields")), nStyle,
+		(parentRect.left + parentRect.right - nWindowWidth) / 2, (parentRect.top + parentRect.bottom - nWindowHeight) / 2,
+		nWindowWidth, nWindowHeight, hParent, NULL, hInstance, &window);
+	if (hWnd == NULL) return false;
+	NONCLIENTMETRICS metrics{ 0 };
+	metrics.cbSize = sizeof(metrics);
+	::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0);
+	HFONT hFont = ::CreateFontIndirect(&metrics.lfMessageFont);
+	int nPad = S(12), nInner = nWidth - 2 * nPad, nButtonHeight = S(30);
+
+	CString sHint = CNLS::GetString(_T("Checked fields are shown on the Metadata tab. Normally only the common fields are shown, the others are mostly technical values."));
+	HWND hHint = ::CreateWindow(_T("STATIC"), sHint, WS_CHILD | WS_VISIBLE | SS_NOPREFIX, nPad, nPad, nInner, S(36), hWnd, NULL, hInstance, NULL);
+	window.ShowAll = ::CreateWindow(_T("BUTTON"), CNLS::GetString(_T("Show all fields of every file")), WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTOCHECKBOX,
+		nPad, nPad + S(42), nInner, S(22), hWnd, (HMENU)(INT_PTR)ID_SHOW_ALL, hInstance, NULL);
+	::SendMessage(window.ShowAll, BM_SETCHECK, bAll ? BST_CHECKED : BST_UNCHECKED, 0);
+	int nListY = nPad + S(70);
+	window.List = ::CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T(""), WS_CHILD | WS_VISIBLE | WS_TABSTOP | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER,
+		nPad, nListY, nInner, nHeight - nListY - 2 * nPad - nButtonHeight, hWnd, (HMENU)(INT_PTR)ID_FIELD_LIST, hInstance, NULL);
+	ListView_SetExtendedListViewStyle(window.List, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	ListView_EnableGroupView(window.List, TRUE);
+	for (int nGroup = 0; nGroup < GROUP_COUNT; nGroup++) {
+		LVGROUP group = { sizeof(LVGROUP) };
+		group.mask = LVGF_HEADER | LVGF_GROUPID;
+		CString sHeader = CNLS::GetString(GetGroupName((EGroup)nGroup));
+		group.pszHeader = (LPWSTR)(LPCWSTR)sHeader;
+		group.iGroupId = nGroup;
+		ListView_InsertGroup(window.List, -1, &group);
+	}
+	struct { LPCTSTR Title; int Width; } columns[] = { { _T("Field"), 220 }, { _T("Value"), 210 }, { _T("Name in Windows"), 170 } };
+	for (int i = 0; i < 3; i++) {
+		LVCOLUMN column = { LVCF_TEXT | LVCF_WIDTH };
+		column.pszText = (LPTSTR)CNLS::GetString(columns[i].Title);
+		column.cx = S(columns[i].Width) - (i == 2 ? ::GetSystemMetrics(SM_CXVSCROLL) + S(4) : 0);
+		ListView_InsertColumn(window.List, i, &column);
+	}
+	for (int i = 0; i < (int)window.Fields.size(); i++) {
+		const CEntry& entry = *window.Fields[i];
+		LVITEM item = { LVIF_TEXT | LVIF_GROUPID };
+		item.iItem = i;
+		item.pszText = (LPTSTR)(LPCTSTR)entry.Name;
+		item.iGroupId = entry.Group;
+		ListView_InsertItem(window.List, &item);
+		ListView_SetItemText(window.List, i, 1, (LPTSTR)(LPCTSTR)entry.Value);
+		ListView_SetItemText(window.List, i, 2, (LPTSTR)(LPCTSTR)entry.Canonical);
+		ListView_SetCheckState(window.List, i, IsShown(entry));
+	}
+
+	// buttons as wide as their text
+	HDC hWindowDC = ::GetDC(hWnd);
+	HGDIOBJ hOldFont = ::SelectObject(hWindowDC, hFont);
+	auto ButtonWidth = [&](LPCTSTR sText) {
+		RECT textRect = { 0, 0, 0, 0 };
+		::DrawText(hWindowDC, sText, -1, &textRect, DT_CALCRECT | DT_SINGLELINE);
+		return max(S(100), (int)(textRect.right - textRect.left) + S(28));
+	};
+	int nButtonY = nHeight - nPad - nButtonHeight;
+	CString sCommon = CNLS::GetString(_T("Only common fields")), sOK = CNLS::GetString(_T("OK")), sCancel = CNLS::GetString(_T("Cancel"));
+	int nCommonWidth = ButtonWidth(sCommon), nOKWidth = ButtonWidth(sOK), nCancelWidth = ButtonWidth(sCancel);
+	::SelectObject(hWindowDC, hOldFont);
+	::ReleaseDC(hWnd, hWindowDC);
+	HWND hCommon = ::CreateWindow(_T("BUTTON"), sCommon, WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		nPad, nButtonY, nCommonWidth, nButtonHeight, hWnd, (HMENU)(INT_PTR)ID_COMMON_ONLY, hInstance, NULL);
+	HWND hCancel = ::CreateWindow(_T("BUTTON"), sCancel, WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		nWidth - nPad - nCancelWidth, nButtonY, nCancelWidth, nButtonHeight, hWnd, (HMENU)IDCANCEL, hInstance, NULL);
+	HWND hOK = ::CreateWindow(_T("BUTTON"), sOK, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
+		nWidth - nPad - nCancelWidth - S(8) - nOKWidth, nButtonY, nOKWidth, nButtonHeight, hWnd, (HMENU)IDOK, hInstance, NULL);
+	for (HWND hControl : { hHint, window.ShowAll, window.List, hCommon, hOK, hCancel }) {
+		::SendMessage(hControl, WM_SETFONT, (WPARAM)hFont, FALSE);
+	}
+	DarkUI::SetBackground(hWnd, DarkUI::Colors().Window);
+	DarkUI::ApplyToWindow(hWnd);
+
+	::EnableWindow(hParent, FALSE);
+	::ShowWindow(hWnd, SW_SHOWNORMAL);
+	::SetFocus(window.List);
+	if (!window.Fields.empty()) ListView_SetItemState(window.List, 0, LVIS_FOCUSED, LVIS_FOCUSED);
+	MSG msg;
+	while (!window.Done && ::GetMessage(&msg, NULL, 0, 0) > 0) {
+		if (!::IsDialogMessage(hWnd, &msg)) {
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+		}
+	}
+	bool bChanged = false;
+	if (window.Result == IDOK) {
+		bool bNewAll = ::SendMessage(window.ShowAll, BM_GETCHECK, 0, 0) == BST_CHECKED;
+		// the choices for fields that are not in this file are kept
+		std::vector<CString> overrides;
+		if (bNewAll) overrides.push_back(CString(_T("+*")));
+		for (const CString& sOverride : GetFieldOverrides()) {
+			CString sName = sOverride.Mid(1);
+			if (sName == _T("*")) continue;
+			bool bInList = false;
+			for (const CEntry* pField : window.Fields) if (pField->Canonical.CompareNoCase(sName) == 0) bInList = true;
+			if (!bInList) overrides.push_back(sOverride);
+		}
+		for (int i = 0; i < (int)window.Fields.size(); i++) {
+			bool bChecked = ListView_GetCheckState(window.List, i) != FALSE;
+			bool bDefault = bNewAll || !window.Fields[i]->Technical;
+			if (bChecked != bDefault) overrides.push_back(CString(bChecked ? _T("+") : _T("-")) + window.Fields[i]->Canonical);
+		}
+		CString sValue = JoinOverrides(overrides);
+		if (sValue != JoinOverrides(GetFieldOverrides())) {
+			WriteSetting(_T("MetadataFields"), sValue);
+			s_fieldOverrides = overrides;
+			bChanged = true;
+		}
+	}
+	::EnableWindow(hParent, TRUE);
+	::DestroyWindow(hWnd);
+	::SetActiveWindow(hParent);
+	::DeleteObject(hFont);
+	return bChanged;
 }
 
 CString ToText(const std::vector<CEntry>& entries) {
