@@ -188,7 +188,8 @@ jobs:
 
       - name: Checksums
         run: |
-          find artifacts -type f \( -name 'LucidViewer-*.zip' -o -name '*.exe' \) -print0 | xargs -0 sha256sum | sed -E 's|  .*/|  |' | sort -k2 > SHA256SUMS.txt
+          # the checksum is made in the folder of each file, so the list has the file names without folders
+          find artifacts -type f \( -name 'LucidViewer-*.zip' -o -name '*.exe' \) -exec sh -c 'cd "$(dirname "$1")" && sha256sum "$(basename "$1")"' _ {} \; | sort -k2 > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Release
