@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.2 (2026-11-11)
 
 ### Security
 - **BMP and TGA files with huge sizes**: the size of the pixel buffer was calculated in 32 bit and could wrap around

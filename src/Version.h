@@ -5,7 +5,7 @@
 
 #define LUCID_VERSION_MAJOR 1
 #define LUCID_VERSION_MINOR 1
-#define LUCID_VERSION_PATCH 1
+#define LUCID_VERSION_PATCH 2
 
 #define LUCID_STR2(x) #x
 #define LUCID_STR(x) LUCID_STR2(x)
